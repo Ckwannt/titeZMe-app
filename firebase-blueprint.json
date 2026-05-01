@@ -1,0 +1,143 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A platform user (Client or Barber).",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["client", "barber", "shop_owner"] },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" },
+        "isOnboarded": { "type": "boolean" },
+        "favoriteBarbers": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "A review from a client for a barber or shop.",
+      "type": "object",
+      "properties": {
+        "bookingId": { "type": "string" },
+        "providerId": { "type": "string" },
+        "providerType": { "type": "string", "enum": ["barber", "shop"] },
+        "clientId": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["bookingId", "providerId", "providerType", "clientId", "rating", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app notification for users.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "message": { "type": "string" },
+        "read": { "type": "boolean" },
+        "linkTo": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["userId", "message", "read", "createdAt"]
+    },
+    "BarberProfile": {
+      "title": "Barber Profile",
+      "description": "Public profile details for a barber.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "bio": { "type": "string" },
+        "city": { "type": "string" },
+        "languages": { "type": "array", "items": { "type": "string" } },
+        "vibes": { "type": "array", "items": { "type": "string" } },
+        "specialties": { "type": "array", "items": { "type": "string" } },
+        "photos": { "type": "array", "items": { "type": "string" } },
+        "isSolo": { "type": "boolean" },
+        "shopId": { "type": "string" },
+        "rating": { "type": "number" },
+        "totalCuts": { "type": "number" },
+        "isLive": { "type": "boolean" }
+      },
+      "required": ["userId", "bio", "city", "isLive"]
+    },
+    "Schedule": {
+      "title": "Schedule",
+      "description": "Availability schedule for a barber or shop.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "timezone": { "type": "string" },
+        "weeklyHours": { "type": "object" },
+        "blockedDates": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["userId", "timezone"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "A service offered by a barber or shop.",
+      "type": "object",
+      "properties": {
+        "providerId": { "type": "string" },
+        "providerType": { "type": "string", "enum": ["barber", "shop"] },
+        "name": { "type": "string" },
+        "duration": { "type": "number" },
+        "price": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["providerId", "providerType", "name", "duration", "price"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "An appointment booked by a client with a barber.",
+      "type": "object",
+      "properties": {
+        "clientId": { "type": "string" },
+        "barberId": { "type": "string" },
+        "serviceId": { "type": "string" },
+        "date": { "type": "string" },
+        "startTime": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "price": { "type": "number" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["clientId", "barberId", "serviceId", "date", "startTime", "status"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user records."
+    },
+    "barberProfiles/{profileId}": {
+      "schema": { "$ref": "#/entities/BarberProfile" },
+      "description": "Stores barber public profiles. Can use userId as document ID."
+    },
+    "schedules/{scheduleId}": {
+      "schema": { "$ref": "#/entities/Schedule" },
+      "description": "Stores scheduling config for barbers."
+    },
+    "services/{serviceId}": {
+      "schema": { "$ref": "#/entities/Service" },
+      "description": "Stores services for barbers."
+    },
+    "bookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "Stores all bookings/appointments."
+    },
+    "reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Stores user reviews for barbers/shops."
+    },
+    "notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Stores notifications for users."
+    }
+  }
+}

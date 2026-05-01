@@ -1,0 +1,344 @@
+/* eslint-disable react-hooks/purity */
+'use client';
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
+import { AvailabilityGrid } from "@/components/AvailabilityGrid";
+import useSWR from "swr";
+
+export default function BarberDashboard() {
+  const { user, appUser, loading } = useAuth();
+  const router = useRouter();
+  
+  const [activeTab, setActiveTab] = useState("Dashboard");
+  const [bookingsTab, setBookingsTab] = useState("today");
+  
+  // Services State
+  const [newServiceName, setNewServiceName] = useState("");
+  const [newServicePrice, setNewServicePrice] = useState("");
+  const [newServiceDuration, setNewServiceDuration] = useState("");
+  const [titzData, setTitzData] = useState({ duration: "45", price: "20" });
+  const [isSavingTitz, setIsSavingTitz] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login');
+    }
+  }, [user, loading, router]);
+
+  const { data: profile, mutate: mutateProfile } = useSWR(user ? ['profile', user.uid] : null, async () => {
+    const snap = await getDoc(doc(db, 'barberProfiles', user!.uid));
+    const data = snap.exists() ? snap.data() : null;
+    if (data?.titeZMeCut) {
+      setTitzData({
+        duration: data.titeZMeCut.durationMinutes?.toString() || "45",
+        price: data.titeZMeCut.price?.toString() || "20"
+      });
+    }
+    return data;
+  }, { dedupingInterval: 300000 });
+
+  const { data: schedule } = useSWR(user ? ['schedule', user.uid] : null, async () => {
+    const snap = await getDoc(doc(db, 'schedules', user!.uid));
+    return snap.exists() ? snap.data() : null;
+  }, { dedupingInterval: 300000 });
+
+  const { data: services = [], mutate: mutateServices } = useSWR(user ? ['services', user.uid] : null, async () => {
+    const q = query(collection(db, 'services'), where("providerId", "==", user!.uid));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+  }, { dedupingInterval: 300000 });
+
+  const { data: bookings = [], mutate: mutateBookings } = useSWR(user ? ['bookings', user.uid] : null, async () => {
+    const q = query(collection(db, 'bookings'), where("barberId", "==", user!.uid));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+  }, { dedupingInterval: 300000 });
+
+  const updateBookingStatus = async (id: string, status: string) => {
+    try { 
+      const timeNow = Date.now();
+      await updateDoc(doc(db, 'bookings', id), { status, updatedAt: timeNow }); 
+      mutateBookings();
+    }
+    catch (e: any) { console.error('Error updating status', e); }
+  };
+
+  const addService = async () => {
+    if (!newServiceName || !newServicePrice || !user) return;
+    try {
+      const ref = doc(collection(db, 'services'));
+      await setDoc(ref, {
+        providerId: user.uid,
+        providerType: 'barber',
+        name: newServiceName,
+        duration: parseInt(newServiceDuration) || 30,
+        price: parseFloat(newServicePrice),
+        isActive: true
+      });
+      setNewServiceName(""); setNewServicePrice(""); setNewServiceDuration("");
+      mutateServices();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const saveLiveStatus = async (isLive: boolean) => {
+    if (!user) return;
+    try { 
+      await updateDoc(doc(db, 'barberProfiles', user.uid), { isLive });
+      mutateProfile();
+    }
+    catch(e) { console.error(e); }
+  }
+
+  if (!profile && !loading && user) {
+    return <div className="p-10 text-center animate-pulse text-brand-text-secondary">Loading profile data...</div>;
+  }
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const displayBookings = bookings.filter(b => bookingsTab === "today" ? b.date === todayStr : true).sort((a,b) => a.startTime.localeCompare(b.startTime));
+
+  const saveTitzCut = async () => {
+    if (!user) return;
+    setIsSavingTitz(true);
+    try {
+      await updateDoc(doc(db, 'barberProfiles', user.uid), {
+        titeZMeCut: {
+          durationMinutes: parseInt(titzData.duration) || 45,
+          price: parseFloat(titzData.price) || 20,
+          currency: 'EUR'
+        }
+      });
+      mutateProfile();
+    } catch(e) {
+      console.error(e);
+    }
+    setIsSavingTitz(false);
+  };
+
+  // Stats calc
+  const todayEarnings = displayBookings.filter(b => b.status === "completed").reduce((sum, b) => sum + (b.price || 0), 0);
+  const totalCompleted = bookings.filter(b => b.status === "completed").length;
+  
+  const statusMap: Record<string, {text:string, bg:string, border:string}> = {
+    completed: { text: "text-brand-green", bg: "bg-[#0f2010]", border: "border-brand-green/30" },
+    confirmed: { text: "text-brand-yellow", bg: "bg-[#1a1500]", border: "border-brand-yellow/30" },
+    pending: { text: "text-brand-orange", bg: "bg-[#1a0800]", border: "border-brand-orange/30" },
+    cancelled: { text: "text-brand-red", bg: "bg-[#1a0808]", border: "border-brand-red/30" },
+    cancelled_by_client: { text: "text-brand-red", bg: "bg-[#1a0808]", border: "border-brand-red/30" },
+    cancelled_by_barber: { text: "text-brand-red", bg: "bg-[#1a0808]", border: "border-brand-red/30" },
+  };
+  const borderColorMap: Record<string, string> = {
+    completed: "border-l-brand-green",
+    confirmed: "border-l-brand-yellow",
+    pending: "border-l-brand-orange",
+    cancelled: "border-l-brand-red",
+    cancelled_by_client: "border-l-brand-red",
+    cancelled_by_barber: "border-l-brand-red",
+  };
+
+  return (
+    <div className="flex min-h-[calc(100vh-53px)] flex-col md:flex-row">
+      {/* Sidebar */}
+      <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
+        <div className="flex items-center gap-3 mb-7 px-2">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-base text-[#0a0a0a]">
+            {appUser?.firstName?.[0] || "B"}
+          </div>
+          <div>
+            <div className="font-extrabold text-sm">{appUser?.firstName} {appUser?.lastName?.charAt(0)}.</div>
+            {profile?.isLive ? (
+              <div className="text-[11px] text-brand-green font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse" /> Live</div>
+            ) : (
+              <div className="text-[11px] text-brand-text-secondary font-bold flex items-center gap-1">Hidden</div>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
+          {[
+            { id: "Dashboard", icon: "⚡", label: "Dashboard" },
+            { id: "Bookings", icon: "📅", label: "Bookings" },
+            { id: "Availability", icon: "⏰", label: "Availability" },
+            { id: "Services", icon: "✂️", label: "Services" },
+            { id: "Portfolio", icon: "📸", label: "Portfolio" },
+          ].map(l => (
+            <button 
+              key={l.id} 
+              onClick={() => setActiveTab(l.id)}
+              className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 ${
+                activeTab === l.id ? "bg-[#1a1a1a] text-brand-yellow" : "text-[#888] hover:bg-[#1a1a1a] hover:text-white"
+              }`}
+            >
+              <span>{l.icon}</span> {l.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="hidden md:block mt-auto pt-6 border-t border-brand-border">
+          <div className="flex items-center justify-between px-2">
+            <span className="text-xs font-bold text-brand-text-secondary">Accept bookings</span>
+            <label className="relative w-11 h-6 shrink-0 group cursor-pointer">
+              <input type="checkbox" checked={profile?.isLive || false} onChange={e => saveLiveStatus(e.target.checked)} className="peer sr-only" />
+              <span className="absolute inset-0 bg-[#2a2a2a] rounded-full transition-colors peer-checked:bg-brand-yellow" />
+              <span className="absolute w-[18px] h-[18px] left-[3px] top-[3px] bg-white rounded-full transition-transform peer-checked:translate-x-5 peer-checked:bg-[#0a0a0a]" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Area */}
+      <div className="flex-1 p-6 md:p-8 md:px-10 overflow-y-auto max-h-[calc(100vh-53px)]">
+        
+        {activeTab === "Dashboard" || activeTab === "Bookings" ? (
+          <div className="animate-fadeUp">
+            <div className="flex flex-col md:flex-row justify-between items-start mb-7 gap-4">
+              <div>
+                <h1 className="text-2xl font-black">Good morning, {appUser?.firstName} ✂️</h1>
+                <p className="text-brand-text-secondary text-sm mt-1">{new Date().toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'})} · {displayBookings.length} appointments today</p>
+              </div>
+              <button className="bg-brand-orange text-white px-7 py-3 rounded-full font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px">
+                + Block time off
+              </button>
+            </div>
+
+            {/* Stats */}
+            {activeTab === "Dashboard" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-8">
+                {[
+                  { val: `€${todayEarnings}`, label: "Today's earnings", delta: `${displayBookings.filter(b=>b.status==='completed').length} cuts`, color: "text-brand-yellow" },
+                  { val: `${profile?.totalCuts + totalCompleted}`, label: "Total cuts", delta: `This month: ${totalCompleted}`, color: "text-brand-orange" },
+                  { val: `${profile?.rating || 'New'}`, label: "Rating", delta: "★ 0 reviews", color: "text-brand-green" },
+                  { val: "100%", label: "Show rate", delta: "0 no-shows", color: "text-brand-green" },
+                ].map((s, i) => (
+                  <div key={i} className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
+                    <div className={`text-[28px] font-black leading-none ${s.color}`}>{s.val}</div>
+                    <div className="text-xs text-brand-text-secondary font-bold">{s.label}</div>
+                    <div className="text-[11px] font-extrabold text-[#444] mt-1">{s.delta}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Bookings List */}
+            <div className="flex gap-1 border-b border-brand-border mb-5">
+              {["today", "this week", "this month"].map(t => (
+                <button 
+                  key={t} onClick={() => setBookingsTab(t)} 
+                  className={`px-4.5 py-2.5 text-[13px] font-extrabold capitalize transition-all border-b-2 -mb-[1px] ${bookingsTab === t ? "text-brand-yellow border-brand-yellow" : "text-brand-text-secondary border-transparent hover:text-white"}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              {displayBookings.length === 0 ? (
+                <div className="text-center py-10 bg-brand-surface border border-brand-border rounded-2xl text-brand-text-secondary text-sm">No bookings found for {bookingsTab}.</div>
+              ) : displayBookings.map((b) => (
+                <div key={b.id} className={`flex flex-wrap sm:flex-nowrap items-center gap-3.5 bg-brand-surface border border-brand-border rounded-[14px] p-3.5 px-4.5 border-l-[4px] ${borderColorMap[b.status]}`}>
+                  <div className="text-center shrink-0 w-11">
+                    <div className="text-base font-black">{b.startTime}</div>
+                  </div>
+                  <div className="w-px h-9 bg-brand-border hidden sm:block" />
+                  <div className="flex-1 min-w-[150px]">
+                    <div className="font-extrabold text-sm">Client {b.clientId.substring(0,4)}...</div>
+                    <div className="text-xs text-brand-text-secondary">Service ID: {b.serviceId.substring(0,4)}...</div>
+                  </div>
+                  <div className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${statusMap[b.status]?.bg} ${statusMap[b.status]?.text} ${statusMap[b.status]?.border}`}>
+                    {b.status}
+                  </div>
+                  <div className="font-black text-[15px] text-brand-yellow min-w-[32px] sm:ml-2 text-right">
+                    €{b.price}
+                  </div>
+                  {b.status === "pending" && (
+                    <div className="flex gap-1.5 w-full sm:w-auto mt-2 sm:mt-0 justify-end">
+                      <button onClick={() => updateBookingStatus(b.id, 'confirmed')} className="bg-[#0f2010] border border-brand-green/30 text-brand-green rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-green/20">✓ Accept</button>
+                      <button onClick={() => updateBookingStatus(b.id, 'cancelled_by_barber')} className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-red/20">✕ Decline</button>
+                    </div>
+                  )}
+                  {b.status === "confirmed" && (
+                    <div className="flex gap-1.5 w-full sm:w-auto mt-2 sm:mt-0 justify-end">
+                      <button onClick={() => updateBookingStatus(b.id, 'completed')} className="bg-brand-surface border border-brand-border text-white rounded-lg px-3 py-1.5 text-xs font-extrabold hover:border-[#444]">Mark Complete</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : activeTab === "Services" ? (
+          <div className="animate-fadeUp max-w-[600px]">
+            <h2 className="text-2xl font-black mb-6">Manage Services</h2>
+            <div className="flex flex-col gap-3 mb-8">
+              {/* Locked titeZMe Cut */}
+              <div className="bg-brand-surface border border-brand-border rounded-2xl p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-l-4 border-l-brand-yellow">
+                <div className="flex-1">
+                  <div className="font-black flex items-center gap-1.5">⚡ titeZMe Cut</div>
+                  <div className="text-[11px] text-brand-text-secondary mt-1 max-w-[220px]">The barber chooses the cut for you based on your vibe and your budget.</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl overflow-hidden focus-within:border-brand-yellow transition-colors">
+                    <input value={titzData.duration} onChange={e=>setTitzData(prev=>({...prev, duration: e.target.value}))} className="w-14 bg-transparent px-2 py-2 text-white text-xs outline-none text-center border-r-[1.5px] border-[#2a2a2a]" type="number" />
+                    <span className="text-[10px] font-extrabold text-[#888] self-center px-1.5">MIN</span>
+                  </div>
+                  <div className="flex bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl overflow-hidden focus-within:border-brand-yellow transition-colors">
+                    <span className="text-[#888] self-center pl-2 text-xs font-extrabold">€</span>
+                    <input value={titzData.price} onChange={e=>setTitzData(prev=>({...prev, price: e.target.value}))} className="w-12 bg-transparent px-1 py-2 text-white text-xs outline-none text-center" type="number" />
+                  </div>
+                  <button onClick={saveTitzCut} disabled={isSavingTitz} className="text-[10px] font-black bg-brand-yellow text-[#0a0a0a] px-3 py-2 rounded-xl ml-1 disabled:opacity-50 hover:opacity-90">{isSavingTitz ? "..." : "Save"}</button>
+                  <span className="text-[#555] text-sm ml-2">🔒</span>
+                </div>
+              </div>
+
+              {services.map((svc) => (
+                <div key={svc.id} className="bg-brand-surface border border-brand-border rounded-2xl p-4 flex justify-between items-center">
+                  <div>
+                    <div className="font-bold">{svc.name}</div>
+                    <div className="text-xs text-brand-text-secondary">{svc.duration} mins</div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="font-black text-brand-yellow">€{svc.price}</div>
+                    <button onClick={async () => { await deleteDoc(doc(db, 'services', svc.id)); mutateServices(); }} className="text-[#555] hover:text-brand-red font-bold text-xs p-2">✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <h3 className="font-extrabold text-sm mb-3">Add New Service</h3>
+            <div className="grid grid-cols-[2fr_1fr_1fr] gap-2.5 items-end mb-3">
+              <div>
+                <label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">NAME</label>
+                <input value={newServiceName} onChange={e=>setNewServiceName(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" placeholder="E.g. Buzz Cut" />
+              </div>
+              <div>
+                <label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">MINS</label>
+                <input value={newServiceDuration} onChange={e=>setNewServiceDuration(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" type="number" placeholder="30" />
+              </div>
+              <div>
+                <label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">PRICE €</label>
+                <input value={newServicePrice} onChange={e=>setNewServicePrice(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" type="number" placeholder="0" />
+              </div>
+            </div>
+            <button onClick={addService} className="bg-brand-yellow text-[#0a0a0a] w-full mt-2 px-7 py-3 rounded-xl font-black text-sm transition-all hover:opacity-90">
+              Add Service
+            </button>
+          </div>
+        ) : activeTab === "Availability" ? (
+          <div className="animate-fadeUp max-w-[800px]">
+             <h2 className="text-2xl font-black mb-6">Weekly Schedule</h2>
+             <p className="text-brand-text-secondary text-sm mb-6">Drag across the grid to set your working hours. Click a green block to remove it.</p>
+             <AvailabilityGrid mode="barber" barberId={user?.uid || ""} />
+          </div>
+        ) : (
+          <div className="animate-fadeUp flex items-center justify-center min-h-[40vh] border-2 border-dashed border-[#2a2a2a] rounded-3xl text-brand-text-secondary text-sm font-bold">
+            {activeTab} content goes here.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
