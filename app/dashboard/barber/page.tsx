@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import useSWR from "swr";
 
@@ -203,6 +204,25 @@ export default function BarberDashboard() {
               <span>{l.icon}</span> {l.label}
             </button>
           ))}
+        </div>
+
+        <div className="md:mt-6 border-t border-brand-border pt-6 hidden md:block">
+          <div className="text-[10px] font-extrabold text-[#555] uppercase tracking-wider mb-3 px-2">My Shop</div>
+          {appUser?.ownsShop ? (
+             <Link 
+               href="/dashboard/shop"
+               className="flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors text-brand-yellow bg-brand-yellow/10 hover:bg-brand-yellow/20"
+             >
+               <span>🏪</span> Manage My Shop
+             </Link>
+          ) : (
+            <Link 
+              href="/dashboard/barber/create-shop"
+              className="flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors text-white bg-[#1a1a1a] hover:bg-[#2a2a2a]"
+            >
+              <span>🏪</span> Create Shop Profile
+            </Link>
+          )}
         </div>
 
         <div className="hidden md:block mt-auto pt-6 border-t border-brand-border">

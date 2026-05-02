@@ -34,6 +34,7 @@ service cloud.firestore {
         && data.lastName is string && data.lastName.size() <= 100
         && data.createdAt is number
         && data.isOnboarded is bool
+        && (data.get('ownsShop', false) is bool)
         && data.get('favoriteBarbers', []) is list;
     }
 
@@ -48,6 +49,7 @@ service cloud.firestore {
         && data.get('photos', []) is list
         && data.get('isSolo', true) is bool
         && (data.get('shopId', null) == null || data.get('shopId', null) is string)
+        && (data.get('ownsShop', false) is bool)
         && (data.get('rating', 0) is number || data.get('rating', 0) is float)
         && data.get('totalCuts', 0) is number
         && data.get('reviewCount', 0) is number
@@ -61,6 +63,23 @@ service cloud.firestore {
         && data.timezone is string && data.timezone.size() <= 50
         && data.weeklyHours is map
         && data.blockedDates is list;
+    }
+
+    function isValidBarbershop(data) {
+      return data.keys().hasAll(['ownerId', 'name', 'contactPhone', 'address', 'status', 'createdAt'])
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.contactPhone is string && data.contactPhone.size() <= 20
+        && data.address is map
+        && data.address.keys().hasAll(['street', 'city', 'country'])
+        && data.address.street is string && data.address.street.size() <= 200
+        && data.address.city is string && data.address.city.size() <= 100
+        && data.address.country is string && data.address.country.size() <= 100
+        && data.get('description', '') is string && data.get('description', '').size() <= 2000
+        && data.get('photos', []) is list
+        && data.get('barbers', []) is list
+        && data.status in ['active', 'inactive', 'suspended']
+        && data.createdAt is number;
     }
 
     function isValidService(data) {
@@ -158,6 +177,18 @@ service cloud.firestore {
         && request.auth.uid == existing().userId
         && isValidSchedule(incoming())
         && incoming().userId == existing().userId; // immutable id
+    }
+
+    // Barbershops
+    match /barbershops/{shopId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && request.auth.uid == incoming().ownerId
+        && isValidBarbershop(incoming());
+      allow update: if isSignedIn()
+        && request.auth.uid == existing().ownerId
+        && isValidBarbershop(incoming())
+        && incoming().ownerId == existing().ownerId;
     }
 
     // Services
