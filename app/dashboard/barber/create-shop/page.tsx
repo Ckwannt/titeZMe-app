@@ -1,24 +1,95 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 
+import Select from "react-select";
+import { Country, City } from "country-state-city";
+
 export default function CreateShopPage() {
   const router = useRouter();
   const { user, appUser, loading } = useAuth();
   
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [country, setCountry] = useState('');
-  const [city, setCity] = useState('');
+  
+  const [phoneCode, setPhoneCode] = useState<any>(null);
+  const [phoneNumberInput, setPhoneNumberInput] = useState("");
+
+  const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
+
   const [street, setStreet] = useState('');
+  const [buildingNumber, setBuildingNumber] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [floor, setFloor] = useState('');
+
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorStatus, setErrorStatus] = useState('');
+
+  const countryOptions = useMemo(() => Country.getAllCountries().map(c => ({
+    value: c.isoCode,
+    label: `${c.flag} ${c.name}`
+  })), []);
+  
+  const phoneCodeOptions = useMemo(() => Country.getAllCountries().map(c => ({
+    value: c.phonecode,
+    label: `${c.flag} ${c.name} (+${c.phonecode})`
+  })), []);
+
+  const selectStyles = {
+    control: (base: any, state: any) => ({
+      ...base,
+      background: '#0a0a0a',
+      borderColor: state.isFocused ? '#FFD700' : '#2a2a2a',
+      borderRadius: '0.75rem',
+      padding: '2px',
+      color: 'white',
+      boxShadow: 'none',
+      '&:hover': {
+        borderColor: state.isFocused ? '#FFD700' : '#2a2a2a',
+      }
+    }),
+    menu: (base: any) => ({
+      ...base,
+      background: '#141414',
+      border: '1.5px solid #2a2a2a',
+      borderRadius: '0.75rem',
+      overflow: 'hidden',
+      zIndex: 50
+    }),
+    option: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: state.isFocused ? '#2a2a2a' : '#141414',
+      color: 'white',
+      cursor: 'pointer',
+      '&:hover': {
+        backgroundColor: '#2a2a2a'
+      }
+    }),
+    singleValue: (base: any) => ({
+      ...base,
+      color: 'white'
+    }),
+    input: (base: any) => ({
+      ...base,
+      color: 'white'
+    }),
+    placeholder: (base: any) => ({
+      ...base,
+      color: '#444'
+    }),
+  };
+
+  const googleMapsUrl = useMemo(() => {
+    if (!street || !buildingNumber || !postalCode || !selectedCityOption || !selectedCountry) return '';
+    const query = `${street} ${buildingNumber} ${postalCode} ${selectedCityOption.value} ${selectedCountry.label.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]\s*/g, '')}`;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  }, [street, buildingNumber, postalCode, selectedCityOption, selectedCountry]);
 
   if (loading) return null;
 
@@ -34,7 +105,7 @@ export default function CreateShopPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone || !country || !city || !street) {
+    if (!name || !phoneCode || !phoneNumberInput || !selectedCountry || !selectedCityOption || !street || !buildingNumber || !postalCode) {
       setErrorStatus('Please fill in all required fields.');
       return;
     }
@@ -47,12 +118,16 @@ export default function CreateShopPage() {
       await setDoc(shopRef, {
         ownerId: user.uid,
         name: name,
-        contactPhone: phone,
+        contactPhone: `+${phoneCode.value} ${phoneNumberInput}`,
         address: {
           street: street,
-          city: city,
-          country: country
+          number: buildingNumber,
+          postalCode: postalCode,
+          floor: floor || '',
+          city: selectedCityOption.value,
+          country: selectedCountry.label.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]\s*/g, '')
         },
+        googleMapsUrl: googleMapsUrl,
         description: description,
         photos: [],
         status: 'active',
@@ -80,7 +155,7 @@ export default function CreateShopPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-53px)] bg-[#0a0a0a] flex items-center justify-center p-6">
+    <div className="min-h-[calc(100vh-53px)] bg-[#0a0a0a] flex items-center justify-center p-6 pb-20">
       <div className="w-full max-w-lg bg-[#141414] border border-[#2a2a2a] rounded-3xl p-8 shadow-2xl relative overflow-hidden">
         
         {/* Decorative Blob */}
@@ -109,42 +184,107 @@ export default function CreateShopPage() {
 
           <div>
             <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">CONTACT PHONE <span className="text-brand-red">*</span></label>
-            <input 
-              required
-              value={phone} onChange={e => setPhone(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-              placeholder="+1 234 567 8900" 
-            />
+            <div className="flex gap-2">
+              <div className="flex-none w-1/3">
+                <Select 
+                  options={phoneCodeOptions} 
+                  value={phoneCode}
+                  onChange={setPhoneCode}
+                  styles={selectStyles}
+                  placeholder="Code"
+                />
+              </div>
+              <div className="flex-1">
+                <input 
+                  type="text"
+                  inputMode="numeric"
+                  value={phoneNumberInput}
+                  onChange={e => setPhoneNumberInput(e.target.value.replace(/\D/g, ''))}
+                  className="w-full bg-[#0a0a0a] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[52px]" 
+                  placeholder="600 000 000" 
+                />
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">COUNTRY <span className="text-brand-red">*</span></label>
-              <input 
-                required
-                value={country} onChange={e => setCountry(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-                placeholder="Country" 
+              <Select 
+                options={countryOptions} 
+                value={selectedCountry}
+                onChange={(option) => {
+                  setSelectedCountry(option);
+                  setSelectedCityOption(null);
+                }}
+                styles={selectStyles}
+                placeholder="Country..."
               />
             </div>
             <div>
               <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">CITY <span className="text-brand-red">*</span></label>
+              <Select 
+                options={selectedCountry ? 
+                  City.getCitiesOfCountry(selectedCountry.value)?.map(c => ({
+                    value: c.name,
+                    label: c.name
+                  })) || [] 
+                  : []
+                } 
+                value={selectedCityOption}
+                onChange={setSelectedCityOption}
+                isDisabled={!selectedCountry}
+                styles={selectStyles}
+                placeholder="City..."
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">STREET NAME <span className="text-brand-red">*</span></label>
               <input 
                 required
-                value={city} onChange={e => setCity(e.target.value)}
+                value={street} onChange={e => setStreet(e.target.value)}
                 className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-                placeholder="City" 
+                placeholder="Calle Gran Vía" 
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">NUMBER <span className="text-brand-red">*</span></label>
+              <input 
+                required
+                value={buildingNumber} onChange={e => setBuildingNumber(e.target.value)}
+                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
+                placeholder="42" 
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">POSTAL CODE <span className="text-brand-red">*</span></label>
+              <input 
+                required
+                value={postalCode} onChange={e => setPostalCode(e.target.value)}
+                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
+                placeholder="28013" 
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">FLOOR / SUITE (Optional)</label>
+              <input 
+                value={floor} onChange={e => setFloor(e.target.value)}
+                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
+                placeholder="Local 3, 2nd floor..." 
               />
             </div>
           </div>
 
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">STREET ADDRESS <span className="text-brand-red">*</span></label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">GOOGLE MAPS LINK</label>
             <input 
-              required
-              value={street} onChange={e => setStreet(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-              placeholder="123 Main St" 
+              readOnly
+              value={googleMapsUrl}
+              className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-[#555] text-xs outline-none cursor-not-allowed" 
+              placeholder="Auto-generated based on address..." 
             />
           </div>
 
