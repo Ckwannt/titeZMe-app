@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import useSWR from "swr";
+import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 
 export default function BarberDashboard() {
   const { user, appUser, loading } = useAuth();
@@ -226,7 +227,7 @@ export default function BarberDashboard() {
         </div>
 
         <div className="hidden md:block mt-auto pt-6 border-t border-brand-border">
-          <div className="flex items-center justify-between px-2">
+          <div className="flex items-center justify-between px-2 mb-4">
             <span className="text-xs font-bold text-brand-text-secondary">Accept bookings</span>
             <label className="relative w-11 h-6 shrink-0 group cursor-pointer">
               <input type="checkbox" checked={profile?.isLive || false} onChange={e => saveLiveStatus(e.target.checked)} className="peer sr-only" />
@@ -234,6 +235,8 @@ export default function BarberDashboard() {
               <span className="absolute w-[18px] h-[18px] left-[3px] top-[3px] bg-white rounded-full transition-transform peer-checked:translate-x-5 peer-checked:bg-[#0a0a0a]" />
             </label>
           </div>
+          
+          <DeleteAccountButton role="barber" />
         </div>
       </div>
 

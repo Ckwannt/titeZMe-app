@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, 
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
+import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 
 export default function ClientDashboard() {
   const { user, appUser, loading } = useAuth();
@@ -128,6 +129,10 @@ export default function ClientDashboard() {
               <span>{l.icon}</span> {l.label}
             </button>
           ))}
+        </div>
+
+        <div className="mt-auto hidden md:block">
+          <DeleteAccountButton role="client" />
         </div>
       </div>
 

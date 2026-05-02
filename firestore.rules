@@ -152,6 +152,8 @@ service cloud.firestore {
         && isValidUser(incoming())
         && incoming().uid == existing().uid
         && (incoming().role == existing().role || incoming().role == 'barber');
+        
+      allow delete: if isSignedIn() && request.auth.uid == userId;
     }
 
     // Barber Profiles
@@ -169,6 +171,8 @@ service cloud.firestore {
           ||
           (incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalCuts']) && isValidBarberProfile(incoming()))
         );
+        
+      allow delete: if isSignedIn() && request.auth.uid == profileId;
     }
 
     // Schedules
@@ -181,6 +185,8 @@ service cloud.firestore {
         && request.auth.uid == existing().userId
         && isValidSchedule(incoming())
         && incoming().userId == existing().userId; // immutable id
+        
+      allow delete: if isSignedIn() && request.auth.uid == userId;
     }
 
     // Barbershops
@@ -193,6 +199,8 @@ service cloud.firestore {
         && request.auth.uid == existing().ownerId
         && isValidBarbershop(incoming())
         && incoming().ownerId == existing().ownerId;
+        
+      allow delete: if isSignedIn() && request.auth.uid == existing().ownerId;
     }
 
     // Services
@@ -257,6 +265,7 @@ service cloud.firestore {
         && isValidReview(incoming())
         && incoming().clientId == existing().clientId
         && incoming().providerId == existing().providerId;
+      allow delete: if isSignedIn() && (request.auth.uid == existing().clientId || request.auth.uid == existing().providerId);
     }
 
     // Locks for double booking checks
@@ -277,6 +286,8 @@ service cloud.firestore {
         && isValidNotification(incoming())
         && incoming().userId == existing().userId
         && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+        
+      allow delete: if isSignedIn() && request.auth.uid == existing().userId;
     }
   }
 }
