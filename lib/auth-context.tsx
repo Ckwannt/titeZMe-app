@@ -12,11 +12,14 @@ import { auth, db } from './firebase';
 export interface AppUser {
   uid: string;
   email: string;
-  role: 'client' | 'barber' | 'shop_owner';
+  role: 'client' | 'barber';
   firstName: string;
   lastName: string;
   isOnboarded: boolean;
   favoriteBarbers?: string[];
+  ownsShop?: boolean;
+  shopId?: string | null;
+  barberCode?: string;
 }
 
 interface AuthContextType {
@@ -82,7 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               role: 'client', // Default fallback
               firstName: '',
               lastName: '',
-              isOnboarded: false
+              isOnboarded: false,
+              ownsShop: false
             });
           }
         } catch (error) {
