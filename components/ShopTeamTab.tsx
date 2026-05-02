@@ -26,7 +26,7 @@ export function ShopTeamTab() {
       // Need to fetch barber names manually since invites just have barberId in this spec 
       // Actually, wait, let's keep it simple or store barberName in invite?
       // Let's fetch the barberProfiles to get names.
-      const invitesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const invitesData = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
       
       const invitesWithNames = await Promise.all(invitesData.map(async (inv) => {
         const bSnap = await getDocs(query(collection(db, 'users'), where('uid', '==', inv.barberId)));
