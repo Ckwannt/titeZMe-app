@@ -22,6 +22,15 @@ export default function BarberDashboard() {
   const [newServiceDuration, setNewServiceDuration] = useState("");
   const [titzData, setTitzData] = useState({ duration: "45", price: "20" });
   const [isSavingTitz, setIsSavingTitz] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const handleCopyCode = () => {
+    if (profile?.barberCode) {
+      navigator.clipboard.writeText(profile.barberCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -145,7 +154,7 @@ export default function BarberDashboard() {
     <div className="flex min-h-[calc(100vh-53px)] flex-col md:flex-row">
       {/* Sidebar */}
       <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
-        <div className="flex items-center gap-3 mb-7 px-2">
+        <div className="flex items-center gap-3 mb-6 px-2">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-base text-[#0a0a0a]">
             {appUser?.firstName?.[0] || "B"}
           </div>
@@ -158,6 +167,23 @@ export default function BarberDashboard() {
             )}
           </div>
         </div>
+
+        {profile?.barberCode && (
+          <div className="mb-7 px-2">
+            <div className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider mb-1">Your Barber Code</div>
+            <div className="flex items-center justify-between bg-[#141414] border border-[#2a2a2a] rounded-lg p-2">
+              <span className="font-mono text-xs font-black text-brand-yellow">{profile.barberCode}</span>
+              <button 
+                onClick={handleCopyCode} 
+                className="text-xs text-[#888] hover:text-white transition-colors p-1"
+                title="Copy to clipboard"
+              >
+                {copiedCode ? '✓' : '📋'}
+              </button>
+            </div>
+            <div className="text-[9px] text-[#555] font-bold mt-1.5 leading-tight">Share this with shops to receive invites</div>
+          </div>
+        )}
         
         <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
           {[
