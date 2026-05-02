@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
+import { ShopTeamTab } from '@/components/ShopTeamTab';
 
 export default function ShopDashboard() {
   const [selectedBarber, setSelectedBarber] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("Overview");
 
   const barbers = [
     { name: "Carlos M.", avatar: "C", color: "bg-brand-orange", cuts: 42, hours: 84, revenue: 1250, rating: 4.9, status: "working" },
@@ -26,8 +28,8 @@ export default function ShopDashboard() {
         </div>
         <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
           {[
-            { icon: "🏪", label: "Overview", active: true },
-            { icon: "👥", label: "My Barbers" },
+            { icon: "🏪", label: "Overview" },
+            { icon: "👥", label: "Team" },
             { icon: "📅", label: "All Bookings" },
             { icon: "💰", label: "Earnings" },
             { icon: "✂️", label: "Services" },
@@ -35,8 +37,11 @@ export default function ShopDashboard() {
             { icon: "⭐", label: "Reviews" },
             { icon: "⚙️", label: "Settings" },
           ].map(l => (
-            <div key={l.label} className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer transition-colors shrink-0 ${
-              l.active ? "bg-[#1a1a1a] text-brand-yellow" : "text-[#888] hover:bg-[#1a1a1a] hover:text-white"
+            <div 
+              key={l.label} 
+              onClick={() => setActiveTab(l.label)}
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer transition-colors shrink-0 ${
+              activeTab === l.label ? "bg-[#1a1a1a] text-brand-yellow" : "text-[#888] hover:bg-[#1a1a1a] hover:text-white"
             }`}>
               <span>{l.icon}</span> {l.label}
             </div>
@@ -50,17 +55,23 @@ export default function ShopDashboard() {
 
       {/* Content */}
       <div className="flex-1 p-6 md:p-8 md:px-10 max-h-[calc(100vh-53px)] overflow-y-auto">
-        <div className="animate-fadeUp flex flex-col md:flex-row justify-between items-start mb-7 gap-4">
-          <div>
-            <h1 className="text-2xl font-black">Shop Overview 🏪</h1>
-            <p className="text-brand-text-secondary text-sm mt-1">April 2026 · 4 active barbers</p>
-          </div>
-          <button className="bg-brand-yellow text-[#0a0a0a] px-7 py-3 rounded-full font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px">
-            + Invite Barber
-          </button>
-        </div>
+        {activeTab === 'Team' ? (
+          <ShopTeamTab />
+        ) : (
+          <>
+            <div className="animate-fadeUp flex flex-col md:flex-row justify-between items-start mb-7 gap-4">
+              <div>
+                <h1 className="text-2xl font-black">Shop Overview 🏪</h1>
+                <p className="text-brand-text-secondary text-sm mt-1">April 2026 · 4 active barbers</p>
+              </div>
+              <button 
+                onClick={() => setActiveTab('Team')}
+                className="bg-brand-yellow text-[#0a0a0a] px-7 py-3 rounded-full font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px">
+                + Invite Barber
+              </button>
+            </div>
 
-        {/* Shop stats */}
+            {/* Shop stats */}
         <div className="animate-fadeUp !delay-[50ms] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-8">
           {[
             { val: "€3,460", label: "Monthly Revenue", delta: "+12% vs last month", color: "text-brand-yellow" },
@@ -166,6 +177,8 @@ export default function ShopDashboard() {
             ))}
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   );

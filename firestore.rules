@@ -123,6 +123,16 @@ service cloud.firestore {
         && data.createdAt is number;
     }
 
+    function isValidInvite(data) {
+      return data.keys().hasAll(['shopId', 'shopName', 'barberId', 'status', 'createdAt'])
+        && data.shopId is string && data.shopId.size() <= 128
+        && data.shopName is string && data.shopName.size() <= 100
+        && data.barberId is string && data.barberId.size() <= 128
+        && data.status in ['pending', 'accepted', 'declined', 'cancelled']
+        && data.createdAt is number
+        && (data.get('respondedAt', 0) is number);
+    }
+
     function isValidNotification(data) {
       return data.keys().hasAll(['userId', 'message', 'read', 'createdAt'])
         && data.userId is string && data.userId.size() <= 128
@@ -272,6 +282,27 @@ service cloud.firestore {
     match /bookingLocks/{lockId} {
       allow read: if isSignedIn();
       allow write: if isSignedIn();
+    }
+    
+    // Invites
+    match /invites/{inviteId} {
+      allow read: if isSignedIn() && (resource.data.shopId == request.auth.uid || resource.data.barberId == request.auth.uid);
+      allow list: if isSignedIn() && (resource.data.shopId == request.auth.uid || resource.data.barberId == request.auth.uid);
+      
+      allow create: if isSignedIn()
+        && request.auth.uid == incoming().shopId
+        && isValidInvite(incoming());
+        
+      allow update: if isSignedIn()
+        && (
+          (request.auth.uid == existing().barberId && incoming().status in ['accepted', 'declined']) // barber accepts/declines
+          ||
+          (request.auth.uid == existing().shopId && incoming().status == 'cancelled') // shop cancels
+        )
+        && isValidInvite(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'respondedAt']);
+        
+      allow delete: if isSignedIn() && (request.auth.uid == existing().shopId || request.auth.uid == existing().barberId);
     }
     
     // Notifications

@@ -87,8 +87,30 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
            <div className="flex items-start justify-between">
              <div>
                <h1 className="text-3xl font-black leading-tight mb-1">{profile.user?.firstName} {profile.user?.lastName}</h1>
-               <div className="text-brand-text-secondary font-bold text-sm mb-3">
-                 📍 {profile.city} • 🌍 {profile.languages?.join(', ') || 'English'}
+               <div className="flex items-center gap-3 mb-2">
+                 {(profile.instagram || profile.facebook || profile.tiktok) && (
+                   <div className="flex items-center gap-2">
+                     {profile.instagram && (
+                       <a href={`https://instagram.com/${profile.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-[#888] hover:text-[#E1306C] transition-colors" title="Instagram">
+                         📷
+                       </a>
+                     )}
+                     {profile.facebook && (
+                       <a href={`https://facebook.com/${profile.facebook}`} target="_blank" rel="noopener noreferrer" className="text-[#888] hover:text-[#1877F2] transition-colors" title="Facebook">
+                         📘
+                       </a>
+                     )}
+                     {profile.tiktok && (
+                       <a href={`https://tiktok.com/@${profile.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-[#888] hover:text-white transition-colors" title="TikTok">
+                         🎵
+                       </a>
+                     )}
+                     <span className="text-[#333]">|</span>
+                   </div>
+                 )}
+                 <div className="text-brand-text-secondary font-bold text-sm">
+                   📍 {profile.city} • 🌍 {profile.languages?.join(', ') || 'English'}
+                 </div>
                </div>
              </div>
              <button onClick={toggleFavorite} className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${isFav ? 'border-brand-yellow text-brand-yellow bg-[#1a1500]' : 'border-[#2a2a2a] text-[#888] hover:border-white hover:text-white'}`}>
