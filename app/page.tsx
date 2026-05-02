@@ -2,25 +2,59 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import useSWR from 'swr';
 
-const fetchBarbers = async () => {
-  const q = query(collection(db, 'barberProfiles'), where('searchSnapshot.isLive', '==', true));
-  const snap = await getDocs(q);
-  
-  return snap.docs.map(d => ({
+const fetchListings = async () => {
+  // 1. Fetch all barbers where isLive == true
+  const barbersQ = query(collection(db, 'barberProfiles'), where('isLive', '==', true));
+  const barbersSnap = await getDocs(barbersQ);
+  const barbersData = barbersSnap.docs.map(d => ({
     userId: d.id,
-    ...(d.data().searchSnapshot || {}) // Fallback in case searchSnapshot is missing
+    ...(d.data().searchSnapshot || d.data()),
+    type: 'barber' as const
   }));
+
+  // Ensure they are also isOnboarded == true via the users collection
+  const finalBarbers = [];
+  for (const b of barbersData) {
+    const userSnap = await getDoc(doc(db, 'users', b.userId));
+    if (userSnap.exists() && userSnap.data().isOnboarded === true) {
+      finalBarbers.push(b);
+    }
+  }
+
+  // 2. Fetch all barbershops where status == 'active'
+  const shopsQ = query(collection(db, 'barbershops'), where('status', '==', 'active'));
+  const shopsSnap = await getDocs(shopsQ);
+  const shopsData = shopsSnap.docs.map(d => {
+    const data = d.data();
+    return {
+      userId: d.id,
+      name: data.name,
+      city: data.address?.city,
+      rating: data.rating || 0,
+      reviewCount: data.reviewCount || 0,
+      photos: data.photos || [],
+      lowestPrice: null,
+      topSpecialties: [],
+      vibes: [],
+      languages: [],
+      isSolo: false,
+      isOpenToday: true,
+      type: 'shop' as const
+    };
+  });
+
+  return [...finalBarbers, ...shopsData];
 };
 
 export default function Home() {
   const [cityFilter, setCityFilter] = useState('');
   const [specialtyFilter, setSpecialtyFilter] = useState('');
   
-  const { data: profiles = [], isLoading: loading } = useSWR('searchBarbers', fetchBarbers, {
+  const { data: profiles = [], isLoading: loading } = useSWR('searchListings', fetchListings, {
     dedupingInterval: 300000, // 5 minute cache
   });
 
@@ -71,7 +105,7 @@ export default function Home() {
             </div>
           ) : (
             filtered.map((item, i) => (
-              <Link href={`/barber/${item.userId}`} key={i} className="group bg-brand-surface border border-brand-border rounded-3xl overflow-hidden hover:border-[#444] transition-all hover:-translate-y-1 block">
+              <Link href={item.type === 'shop' ? `/shop/${item.userId}` : `/barber/${item.userId}`} key={i} className="group bg-brand-surface border border-brand-border rounded-3xl overflow-hidden hover:border-[#444] transition-all hover:-translate-y-1 block">
                 <div className="h-[180px] bg-[#1a1a1a] relative">
                   {item.photos && item.photos.length > 0 ? (
                     /* eslint-disable-next-line @next/next/no-img-element */

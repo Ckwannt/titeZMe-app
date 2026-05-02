@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from "react";
+import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 
 export default function ShopDashboard() {
   const [selectedBarber, setSelectedBarber] = useState<number | null>(null);
@@ -40,6 +41,10 @@ export default function ShopDashboard() {
               <span>{l.icon}</span> {l.label}
             </div>
           ))}
+        </div>
+        
+        <div className="mt-auto hidden md:block">
+          <DeleteAccountButton role="barber" />
         </div>
       </div>
 
