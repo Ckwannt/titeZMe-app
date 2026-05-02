@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from 'next/link';
 
 import { useRouter } from "next/navigation";
-import { doc, collection, setDoc, updateDoc } from "firebase/firestore";
+import { doc, collection, setDoc, updateDoc, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import Select from "react-select";
@@ -135,6 +135,19 @@ export default function BarberOnboarding() {
         throw new Error("Step 0: Data Integrity Setup failed - " + e.message); 
       }
 
+      // Generate Unique Barber Code
+      let uniqueCode = '';
+      let isUnique = false;
+      while (!isUnique) {
+        const randomString = Math.random().toString(36).substring(2, 8).toUpperCase();
+        uniqueCode = `TZB-${randomString}`;
+        const q = query(collection(db, 'barberProfiles'), where('barberCode', '==', uniqueCode));
+        const qs = await getDocs(q);
+        if (qs.empty) {
+          isUnique = true;
+        }
+      }
+
       // 1. BarberProfile
       const profileRef = doc(db, 'barberProfiles', user.uid);
       try {
@@ -148,6 +161,7 @@ export default function BarberOnboarding() {
           vibes: vibe,
           specialties: specialty,
           clientele: clientele,
+          barberCode: uniqueCode,
           titeZMeCut: {
             durationMinutes: parseInt(titzData.duration || "45"),
             price: parseFloat(titzData.price || "20")

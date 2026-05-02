@@ -51,7 +51,8 @@ service cloud.firestore {
         && (data.get('rating', 0) is number || data.get('rating', 0) is float)
         && data.get('totalCuts', 0) is number
         && data.get('reviewCount', 0) is number
-        && data.isLive is bool;
+        && data.isLive is bool
+        && (data.get('barberCode', '') == '' || (data.get('barberCode', '') is string && data.get('barberCode', '').matches('^TZB-[A-Z0-9]{6}$')));
     }
 
     function isValidSchedule(data) {
@@ -139,6 +140,7 @@ service cloud.firestore {
         && isValidBarberProfile(incoming());
         
       allow update: if isSignedIn()
+        && (existing().get('barberCode', '') == '' || incoming().get('barberCode', '') == existing().get('barberCode', ''))
         && (
           (request.auth.uid == existing().userId && isValidBarberProfile(incoming()) && incoming().userId == existing().userId)
           ||
