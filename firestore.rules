@@ -69,12 +69,16 @@ service cloud.firestore {
       return data.keys().hasAll(['ownerId', 'name', 'contactPhone', 'address', 'status', 'createdAt'])
         && data.ownerId is string && data.ownerId.size() <= 128
         && data.name is string && data.name.size() > 0 && data.name.size() <= 100
-        && data.contactPhone is string && data.contactPhone.size() <= 20
+        && data.contactPhone is string && data.contactPhone.size() <= 50
         && data.address is map
-        && data.address.keys().hasAll(['street', 'city', 'country'])
+        && data.address.keys().hasAll(['street', 'city', 'country', 'number', 'postalCode', 'floor'])
         && data.address.street is string && data.address.street.size() <= 200
         && data.address.city is string && data.address.city.size() <= 100
         && data.address.country is string && data.address.country.size() <= 100
+        && data.address.number is string && data.address.number.size() <= 50
+        && data.address.postalCode is string && data.address.postalCode.size() <= 50
+        && data.address.floor is string && data.address.floor.size() <= 100
+        && data.get('googleMapsUrl', '') is string
         && data.get('description', '') is string && data.get('description', '').size() <= 2000
         && data.get('photos', []) is list
         && data.get('barbers', []) is list
