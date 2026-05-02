@@ -9,7 +9,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import useSWR from "swr";
-import { DeleteAccountButton } from '@/components/DeleteAccountButton';
+import { BarberInvitesTab } from '@/components/BarberInvitesTab';
+import { BarberPortfolioTab } from '@/components/BarberPortfolioTab';
+import { BarberSettingsTab } from '@/components/BarberSettingsTab';
 
 export default function BarberDashboard() {
   const { user, appUser, loading } = useAuth();
@@ -25,6 +27,7 @@ export default function BarberDashboard() {
   const [titzData, setTitzData] = useState({ duration: "45", price: "20" });
   const [isSavingTitz, setIsSavingTitz] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   const handleCopyCode = () => {
     if (profile?.barberCode) {
@@ -102,6 +105,8 @@ export default function BarberDashboard() {
     try { 
       await updateDoc(doc(db, 'barberProfiles', user.uid), { isLive });
       mutateProfile();
+      setToastMessage(isLive ? "You are now accepting bookings ✓" : "Bookings paused");
+      setTimeout(() => setToastMessage(''), 3000);
     }
     catch(e) { console.error(e); }
   }
@@ -157,9 +162,16 @@ export default function BarberDashboard() {
       {/* Sidebar */}
       <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
         <div className="flex items-center gap-3 mb-6 px-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-base text-[#0a0a0a]">
-            {appUser?.firstName?.[0] || "B"}
-          </div>
+          {profile?.profilePhotoUrl || appUser?.photoUrl ? (
+            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
+               {/* eslint-disable-next-line @next/next/no-img-element */}
+               <img src={profile?.profilePhotoUrl || appUser?.photoUrl} alt="Avatar" className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-base text-[#0a0a0a]">
+              {appUser?.firstName?.[0] || "B"}
+            </div>
+          )}
           <div>
             <div className="font-extrabold text-sm">{appUser?.firstName} {appUser?.lastName?.charAt(0)}.</div>
             {profile?.isLive ? (
@@ -194,6 +206,8 @@ export default function BarberDashboard() {
             { id: "Availability", icon: "⏰", label: "Availability" },
             { id: "Services", icon: "✂️", label: "Services" },
             { id: "Portfolio", icon: "📸", label: "Portfolio" },
+            { id: "Invites", icon: "📨", label: "Invites" },
+            { id: "Settings", icon: "⚙️", label: "Settings" },
           ].map(l => (
             <button 
               key={l.id} 
@@ -235,15 +249,18 @@ export default function BarberDashboard() {
               <span className="absolute w-[18px] h-[18px] left-[3px] top-[3px] bg-white rounded-full transition-transform peer-checked:translate-x-5 peer-checked:bg-[#0a0a0a]" />
             </label>
           </div>
-          
-          <DeleteAccountButton role="barber" />
         </div>
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 p-6 md:p-8 md:px-10 overflow-y-auto max-h-[calc(100vh-53px)]">
-        
-        {activeTab === "Dashboard" || activeTab === "Bookings" ? (
+      <div className="flex-1 p-6 md:p-8 md:px-10 overflow-y-auto max-h-[calc(100vh-53px)] relative">
+        {activeTab === "Invites" ? (
+          <BarberInvitesTab />
+        ) : activeTab === "Portfolio" ? (
+          <BarberPortfolioTab profile={profile} mutateProfile={mutateProfile} />
+        ) : activeTab === "Settings" ? (
+          <BarberSettingsTab profile={profile} mutateProfile={mutateProfile} />
+        ) : activeTab === "Dashboard" || activeTab === "Bookings" ? (
           <div className="animate-fadeUp">
             <div className="flex flex-col md:flex-row justify-between items-start mb-7 gap-4">
               <div>
@@ -385,6 +402,12 @@ export default function BarberDashboard() {
         ) : (
           <div className="animate-fadeUp flex items-center justify-center min-h-[40vh] border-2 border-dashed border-[#2a2a2a] rounded-3xl text-brand-text-secondary text-sm font-bold">
             {activeTab} content goes here.
+          </div>
+        )}
+        
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 bg-[#1a0808] border border-brand-yellow/30 text-brand-yellow px-6 py-3 rounded-full font-bold text-sm shadow-xl animate-fadeUp z-50">
+            {toastMessage}
           </div>
         )}
       </div>
