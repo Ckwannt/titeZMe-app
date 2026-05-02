@@ -11,7 +11,7 @@ import { useAuth } from '@/lib/auth-context';
 export default function SignupPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [role, setRole] = useState<'client' | 'barber' | 'shop_owner'>('client');
+  const [role, setRole] = useState<'client' | 'barber'>('client');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -50,14 +50,14 @@ export default function SignupPage() {
         firstName: firstName,
         lastName: lastName,
         createdAt: Date.now(),
-        isOnboarded: false
+        isOnboarded: false,
+        ownsShop: false
       });
 
       // 3. Redirect to login or straight to dashboard
       // Immediately redirect without waiting for auth observer
       if (role === 'client') router.push('/onboarding/client');
       else if (role === 'barber') router.push('/onboarding/barber');
-      else router.push('/dashboard/shop');
 
     } catch (err: any) {
       console.error("Signup validation or save error:", err);
@@ -82,7 +82,6 @@ export default function SignupPage() {
             {[
               { id: 'client', label: 'Client', icon: '👤' },
               { id: 'barber', label: 'Barber', icon: '✂️' },
-              { id: 'shop_owner', label: 'Shop', icon: '🏪' },
             ].map(r => (
               <button
                 key={r.id}
