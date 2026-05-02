@@ -20,6 +20,23 @@ export interface AppUser {
   ownsShop?: boolean;
   shopId?: string | null;
   barberCode?: string;
+  photoUrl?: string;
+  profilePhotoUrl?: string;
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  videos?: string[];
+  photos?: string[];
+  isLive?: boolean;
+  phone?: string;
+  city?: string;
+  country?: string;
+  bio?: string;
+  languages?: string[];
+  isSolo?: boolean;
+  rating?: number;
+  reviewCount?: number;
+  totalCuts?: number;
 }
 
 interface AuthContextType {
