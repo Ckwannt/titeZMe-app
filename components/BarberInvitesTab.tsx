@@ -19,7 +19,7 @@ export function BarberInvitesTab() {
     );
     
     const unsub = onSnapshot(q, (snap) => {
-      const invitesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const invitesData = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
       invitesData.sort((a: any, b: any) => b.createdAt - a.createdAt);
       setInvites(invitesData);
     });
