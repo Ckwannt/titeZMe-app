@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 import Select from "react-select";
 import { Country, City } from "country-state-city";
 import ISO6391 from "iso-639-1";
+import { userUpdateSchema, scheduleSchema, barberSchema } from "@/lib/schemas";
 
 export default function BarberOnboarding() {
   const router = useRouter();
@@ -127,10 +128,10 @@ export default function BarberOnboarding() {
       // 0. Data Integrity Fix
       const userRef = doc(db, 'users', user.uid);
       try {
-        await setDoc(userRef, { 
-          createdAt: Date.now(), 
-          role: 'barber'
-        }, { merge: true });
+        await setDoc(userRef, userUpdateSchema.parse({ 
+                  createdAt: Date.now(), 
+                  role: 'barber'
+                }), { merge: true });
       } catch (e: any) { 
         throw new Error("Step 0: Data Integrity Setup failed - " + e.message); 
       }
@@ -151,47 +152,47 @@ export default function BarberOnboarding() {
       // 1. BarberProfile
       const profileRef = doc(db, 'barberProfiles', user.uid);
       try {
-        await setDoc(profileRef, {
-          userId: user.uid,
-          bio: bio || "Professional barber.",
-          city: selectedCityOption ? selectedCityOption.value : "Unknown",
-          country: selectedCountry ? selectedCountry.value : "Unknown",
-          phone: phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null,
-          languages: selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : ["English"],
-          vibes: vibe,
-          specialties: specialty,
-          clientele: clientele,
-          barberCode: uniqueCode,
-          titeZMeCut: {
-            durationMinutes: parseInt(titzData.duration || "45"),
-            price: parseFloat(titzData.price || "20")
-          },
-          isSolo: true,
-          shopId: null,
-          rating: 0,
-          totalCuts: 0,
-          reviewCount: 0,
-          photos: [],
-          isLive: true
-        });
+        await setDoc(profileRef, barberSchema.parse({
+                  userId: user.uid,
+                  bio: bio || "Professional barber.",
+                  city: selectedCityOption ? selectedCityOption.value : "Unknown",
+                  country: selectedCountry ? selectedCountry.value : "Unknown",
+                  phone: phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null,
+                  languages: selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : ["English"],
+                  vibes: vibe,
+                  specialties: specialty,
+                  clientele: clientele,
+                  barberCode: uniqueCode,
+                  titeZMeCut: {
+                    durationMinutes: parseInt(titzData.duration || "45"),
+                    price: parseFloat(titzData.price || "20")
+                  },
+                  isSolo: true,
+                  shopId: null,
+                  rating: 0,
+                  totalCuts: 0,
+                  reviewCount: 0,
+                  photos: [],
+                  isLive: true
+                }));
       } catch (e: any) { throw new Error("Step 1: Profile creation failed - " + e.message); }
 
       // 2. Schedule
       const scheduleRef = doc(db, 'schedules', user.uid);
       try {
-        await setDoc(scheduleRef, {
-          userId: user.uid,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Madrid',
-          weeklyHours: {
-            days: [], // Closed on all days by default
-            opensAt: "09:00",
-            closesAt: "18:00",
-            lunchBreak: true,
-            slotDuration: 30,
-            cleanupBuffer: 0
-          },
-          blockedDates: []
-        });
+        await setDoc(scheduleRef, scheduleSchema.parse({
+                  userId: user.uid,
+                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Madrid',
+                  weeklyHours: {
+                    days: [], // Closed on all days by default
+                    opensAt: "09:00",
+                    closesAt: "18:00",
+                    lunchBreak: true,
+                    slotDuration: 30,
+                    cleanupBuffer: 0
+                  },
+                  blockedDates: []
+                }));
       } catch (e: any) { throw new Error("Step 2: Schedule creation failed - " + e.message); }
 
       // 3. Services
@@ -212,7 +213,7 @@ export default function BarberOnboarding() {
 
       // 4. User update
       try {
-        await updateDoc(userRef, { isOnboarded: true });
+        await updateDoc(userRef, userUpdateSchema.parse({ isOnboarded: true }));
       } catch(e: any) { throw new Error("Step 4: User confirmation flag failed - " + e.message); }
 
       // await batch.commit(); // Batch replaced to help debug

@@ -9,6 +9,7 @@ import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import Select from "react-select";
 import { Country, City } from "country-state-city";
 import ISO6391 from "iso-639-1";
+import { userUpdateSchema, barberUpdateSchema } from "@/lib/schemas";
 
 interface BarberSettingsTabProps {
   profile: any;
@@ -186,8 +187,8 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       async () => {
         try {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          await updateDoc(doc(db, 'users', user.uid), { photoUrl: downloadURL });
-          await updateDoc(doc(db, 'barberProfiles', user.uid), { profilePhotoUrl: downloadURL });
+          await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({ photoUrl: downloadURL }));
+          await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ profilePhotoUrl: downloadURL }));
           setLocalPhotoUrl(downloadURL);
           mutateProfile();
           setSuccessMsg('Profile photo updated!');
@@ -211,22 +212,22 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       const countryStr = selectedCountry ? selectedCountry.value : "";
       const langArr = selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : [];
 
-      await updateDoc(doc(db, 'users', user.uid), {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: phoneStr,
-        phoneCountryCode: phoneCode ? phoneCode.value : null,
-        city: cityStr,
-        country: countryStr,
-        languages: langArr
-      });
-      await updateDoc(doc(db, 'barberProfiles', user.uid), {
-        phone: phoneStr,
-        city: cityStr,
-        country: countryStr,
-        bio: formData.bio,
-        languages: langArr,
-      });
+      await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              phone: phoneStr,
+              phoneCountryCode: phoneCode ? phoneCode.value : null,
+              city: cityStr,
+              country: countryStr,
+              languages: langArr
+            }));
+      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({
+              phone: phoneStr,
+              city: cityStr,
+              country: countryStr,
+              bio: formData.bio,
+              languages: langArr,
+            }));
       mutateProfile();
       setSuccessMsg('Personal info saved!');
     } catch (e) {
@@ -242,11 +243,11 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      await updateDoc(doc(db, 'barberProfiles', user.uid), {
-        instagram: socialData.instagram,
-        facebook: socialData.facebook,
-        tiktok: socialData.tiktok
-      });
+      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({
+              instagram: socialData.instagram,
+              facebook: socialData.facebook,
+              tiktok: socialData.tiktok
+            }));
       mutateProfile();
       setSuccessMsg('Social links saved!');
     } catch (e) {

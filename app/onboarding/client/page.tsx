@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth-context';
 import Select from 'react-select';
 import { Country, City } from 'country-state-city';
 import ISO6391 from 'iso-639-1';
+import { userUpdateSchema } from "@/lib/schemas";
 
 export default function ClientOnboarding() {
   const router = useRouter();
@@ -114,14 +115,14 @@ export default function ClientOnboarding() {
 
     try {
       const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
-        phone: `+${phoneCode.value} ${phoneNumberInput}`,
-        phoneCountryCode: phoneCode.value,
-        country: selectedCountry.value,
-        city: selectedCityOption.value,
-        languages: selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : ["English"],
-        isOnboarded: true
-      });
+      await updateDoc(userRef, userUpdateSchema.parse({
+              phone: `+${phoneCode.value} ${phoneNumberInput}`,
+              phoneCountryCode: phoneCode.value,
+              country: selectedCountry.value,
+              city: selectedCityOption.value,
+              languages: selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : ["English"],
+              isOnboarded: true
+            }));
       
       // Reload so that AuthContext fetches the updated isOnboarded state
       window.location.href = '/dashboard/client';

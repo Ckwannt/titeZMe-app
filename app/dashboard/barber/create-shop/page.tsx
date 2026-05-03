@@ -9,6 +9,7 @@ import Link from 'next/link';
 
 import Select from "react-select";
 import { Country, City } from "country-state-city";
+import { barberUpdateSchema, userUpdateSchema, barbershopSchema } from "@/lib/schemas";
 
 export default function CreateShopPage() {
   const router = useRouter();
@@ -115,36 +116,36 @@ export default function CreateShopPage() {
 
     try {
       const shopRef = doc(db, 'barbershops', user.uid);
-      await setDoc(shopRef, {
-        ownerId: user.uid,
-        name: name,
-        contactPhone: `+${phoneCode.value} ${phoneNumberInput}`,
-        address: {
-          street: street,
-          number: buildingNumber,
-          postalCode: postalCode,
-          floor: floor || '',
-          city: selectedCityOption.value,
-          country: selectedCountry.label.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]\s*/g, '')
-        },
-        googleMapsUrl: googleMapsUrl,
-        description: description,
-        photos: [],
-        status: 'active',
-        barbers: [],
-        createdAt: Date.now()
-      });
+      await setDoc(shopRef, barbershopSchema.parse({
+              ownerId: user.uid,
+              name: name,
+              contactPhone: `+${phoneCode.value} ${phoneNumberInput}`,
+              address: {
+                street: street,
+                number: buildingNumber,
+                postalCode: postalCode,
+                floor: floor || '',
+                city: selectedCityOption.value,
+                country: selectedCountry.label.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]\s*/g, '')
+              },
+              googleMapsUrl: googleMapsUrl,
+              description: description,
+              photos: [],
+              status: 'active',
+              barbers: [],
+              createdAt: Date.now()
+            }));
 
       const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
-        ownsShop: true
-      });
+      await updateDoc(userRef, userUpdateSchema.parse({
+              ownsShop: true
+            }));
 
       const profileRef = doc(db, 'barberProfiles', user.uid);
-      await updateDoc(profileRef, {
-        ownsShop: true,
-        shopId: user.uid
-      });
+      await updateDoc(profileRef, barberUpdateSchema.parse({
+              ownsShop: true,
+              shopId: user.uid
+            }));
 
       router.push('/dashboard/shop');
     } catch (err: any) {

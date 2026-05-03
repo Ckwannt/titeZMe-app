@@ -8,6 +8,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
+import { userUpdateSchema } from "@/lib/schemas";
 
 export interface AppUser {
   uid: string;
@@ -86,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 console.log("Healing Incomplete State: Barber profile exists. Setting isOnboarded to true.");
                 try {
                   const { updateDoc } = await import('firebase/firestore');
-                  await updateDoc(docRef, { isOnboarded: true });
+                  await updateDoc(docRef, userUpdateSchema.parse({ isOnboarded: true }));
                   userData.isOnboarded = true;
                 } catch (e) {
                   console.error("Failed to heal profile", e);

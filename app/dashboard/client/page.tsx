@@ -9,6 +9,7 @@ import useSWR from 'swr';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import { BookingRowSkeleton } from '@/components/skeletons';
 import { toast } from 'react-hot-toast';
+import { userUpdateSchema, bookingUpdateSchema } from "@/lib/schemas";
 
 export default function ClientDashboard() {
   const { user, appUser, loading } = useAuth();
@@ -76,7 +77,7 @@ export default function ClientDashboard() {
     const loadingToast = toast.loading("Cancelling appointment...");
     try {
       const timeNow = Date.now();
-      await updateDoc(doc(db, 'bookings', bId), { status: 'cancelled_by_client', updatedAt: timeNow });
+      await updateDoc(doc(db, 'bookings', bId), bookingUpdateSchema.parse({ status: 'cancelled_by_client', updatedAt: timeNow }));
       mutate();
       toast.success("Appointment cancelled.", { id: loadingToast });
     } catch(e) {
@@ -88,7 +89,7 @@ export default function ClientDashboard() {
   const removeFavorite = async (barberId: string) => {
     if (!user) return;
     try {
-      await updateDoc(doc(db, 'users', user.uid), { favoriteBarbers: arrayRemove(barberId) });
+      await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({ favoriteBarbers: arrayRemove(barberId) }));
       mutate();
     } catch(e) { console.error(e); }
   }

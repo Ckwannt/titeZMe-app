@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { barberUpdateSchema } from "@/lib/schemas";
 
 interface BarberPortfolioTabProps {
   profile: any;
@@ -54,7 +55,7 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
         try {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           const newPhotos = [...photos, downloadURL];
-          await updateDoc(doc(db, 'barberProfiles', user.uid), { photos: newPhotos });
+          await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ photos: newPhotos }));
           mutateProfile();
         } catch (err) {
           console.error(err);
@@ -76,7 +77,7 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
       const fileRef = ref(storage, photoUrl);
       await deleteObject(fileRef).catch(console.error); // We don't await/fail if the file is already deleted or not found
       
-      await updateDoc(doc(db, 'barberProfiles', user.uid), { photos: newPhotos });
+      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ photos: newPhotos }));
       mutateProfile();
     } catch (e) {
       console.error(e);
@@ -118,7 +119,7 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
         try {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           const newVideos = [...videos, downloadURL];
-          await updateDoc(doc(db, 'barberProfiles', user.uid), { videos: newVideos });
+          await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ videos: newVideos }));
           mutateProfile();
         } catch (err) {
           console.error(err);
@@ -138,7 +139,7 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
       const fileRef = ref(storage, videoUrl);
       await deleteObject(fileRef).catch(console.error);
       
-      await updateDoc(doc(db, 'barberProfiles', user.uid), { videos: newVideos });
+      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ videos: newVideos }));
       mutateProfile();
     } catch (e) {
       console.error(e);

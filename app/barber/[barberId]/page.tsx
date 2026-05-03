@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { BarberProfileSkeleton } from '@/components/skeletons';
+import { userUpdateSchema } from "@/lib/schemas";
 
 export default function BarberProfilePage({ params }: { params: Promise<{ barberId: string }> }) {
   const resolvedParams = use(params);
@@ -59,9 +60,9 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
     const isFav = appUser?.favoriteBarbers?.includes(barberId);
     try {
       if (isFav) {
-        await updateDoc(doc(db, 'users', user.uid), { favoriteBarbers: arrayRemove(barberId) });
+        await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({ favoriteBarbers: arrayRemove(barberId) }));
       } else {
-        await updateDoc(doc(db, 'users', user.uid), { favoriteBarbers: arrayUnion(barberId) });
+        await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({ favoriteBarbers: arrayUnion(barberId) }));
       }
     } catch(e) {
       console.error(e);

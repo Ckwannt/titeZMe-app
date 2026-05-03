@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { userSchema } from '@/lib/schemas';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 
@@ -43,7 +44,7 @@ export default function SignupPage() {
       const newUser = userCredential.user;
 
       // 2. Create firestore doc
-      await setDoc(doc(db, 'users', newUser.uid), {
+      const userData = userSchema.parse({
         uid: newUser.uid,
         email: newUser.email,
         role: role,
@@ -53,6 +54,7 @@ export default function SignupPage() {
         isOnboarded: false,
         ownsShop: false
       });
+      await setDoc(doc(db, 'users', newUser.uid), userSchema.parse(userData));
 
       // 3. Redirect to login or straight to dashboard
       // Immediately redirect without waiting for auth observer

@@ -13,6 +13,7 @@ import { BarberInvitesTab } from '@/components/BarberInvitesTab';
 import { BarberPortfolioTab } from '@/components/BarberPortfolioTab';
 import { BarberSettingsTab } from '@/components/BarberSettingsTab';
 import { BookingRowSkeleton, StatCardSkeleton } from '@/components/skeletons';
+import { barberUpdateSchema, bookingUpdateSchema } from "@/lib/schemas";
 
 export default function BarberDashboard() {
   const { user, appUser, loading } = useAuth();
@@ -76,7 +77,7 @@ export default function BarberDashboard() {
   const updateBookingStatus = async (id: string, status: string) => {
     try { 
       const timeNow = Date.now();
-      await updateDoc(doc(db, 'bookings', id), { status, updatedAt: timeNow }); 
+      await updateDoc(doc(db, 'bookings', id), bookingUpdateSchema.parse({ status, updatedAt: timeNow })); 
       mutateBookings();
     }
     catch (e: any) { console.error('Error updating status', e); }
@@ -104,7 +105,7 @@ export default function BarberDashboard() {
   const saveLiveStatus = async (isLive: boolean) => {
     if (!user) return;
     try { 
-      await updateDoc(doc(db, 'barberProfiles', user.uid), { isLive });
+      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ isLive }));
       mutateProfile();
       setToastMessage(isLive ? "You are now accepting bookings ✓" : "Bookings paused");
       setTimeout(() => setToastMessage(''), 3000);
@@ -145,13 +146,13 @@ export default function BarberDashboard() {
     if (!user) return;
     setIsSavingTitz(true);
     try {
-      await updateDoc(doc(db, 'barberProfiles', user.uid), {
-        titeZMeCut: {
-          durationMinutes: parseInt(titzData.duration) || 45,
-          price: parseFloat(titzData.price) || 20,
-          currency: 'EUR'
-        }
-      });
+      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({
+              titeZMeCut: {
+                durationMinutes: parseInt(titzData.duration) || 45,
+                price: parseFloat(titzData.price) || 20,
+                currency: 'EUR'
+              }
+            }));
       mutateProfile();
     } catch(e) {
       console.error(e);

@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc, addD
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { notificationSchema, barberUpdateSchema } from "@/lib/schemas";
 
 export default function ReviewPage({ params }: { params: Promise<{ bookingId: string }> }) {
   const resolvedParams = use(params);
@@ -84,20 +85,20 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
          const newCount = currentCount + 1;
          const newRating = ((currentRating * currentCount) + rating) / newCount;
          
-         await updateDoc(pRef, {
-            rating: newRating,
-            reviewCount: newCount
-         });
+         await updateDoc(pRef, barberUpdateSchema.parse({
+                     rating: newRating,
+                     reviewCount: newCount
+                  }));
       }
 
       // 3. Notify Barber
-      await addDoc(collection(db, 'notifications'), {
-        userId: booking.barberId,
-        message: `Client left you a ${rating}-star review for your service.`,
-        read: false,
-        linkTo: `/barber/${booking.barberId}`,
-        createdAt: Date.now()
-      });
+      await addDoc(collection(db, 'notifications'), notificationSchema.parse({
+              userId: booking.barberId,
+              message: `Client left you a ${rating}-star review for your service.`,
+              read: false,
+              linkTo: `/barber/${booking.barberId}`,
+              createdAt: Date.now()
+            }));
 
       router.push('/dashboard/client');
 
