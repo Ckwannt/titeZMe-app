@@ -38,6 +38,7 @@ export interface AppUser {
   rating?: number;
   reviewCount?: number;
   totalCuts?: number;
+  [key: string]: any;
 }
 
 interface AuthContextType {
