@@ -1,15 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
+import Select from "react-select";
+import { Country, City } from "country-state-city";
+import ISO6391 from "iso-639-1";
 
 export function BarberSettingsTab({ profile, mutateProfile }: { profile: any, mutateProfile: () => void }) {
   const { user, appUser } = useAuth();
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [localPhotoUrl, setLocalPhotoUrl] = useState('');
   const [savingGlobal, setSavingGlobal] = useState(false);
   const [savingSocial, setSavingSocial] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -18,12 +22,128 @@ export function BarberSettingsTab({ profile, mutateProfile }: { profile: any, mu
   const [formData, setFormData] = useState({
     firstName: appUser?.firstName || '',
     lastName: appUser?.lastName || '',
-    phone: profile?.phone || '',
-    city: profile?.city || '',
-    country: profile?.country || '',
     bio: profile?.bio || '',
-    languages: profile?.languages || [],
   });
+
+  const existingPhoneParts = (profile?.phone || '').split(' ');
+  const initPhoneCodeStr = existingPhoneParts[0]?.replace('+', '') || '';
+  const initPhoneNumStr = existingPhoneParts.length > 1 ? existingPhoneParts.slice(1).join('') : (existingPhoneParts[0] && !existingPhoneParts[0].startsWith('+') ? existingPhoneParts[0] : '');
+
+  const [phoneNumberInput, setPhoneNumberInput] = useState(initPhoneNumStr);
+  const [phoneCode, setPhoneCode] = useState<any>(null);
+  
+  const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
+  const [selectedLanguages, setSelectedLanguages] = useState<any>([]);
+
+  const countryOptions = useMemo(() => Country.getAllCountries().map(c => ({
+    value: c.isoCode,
+    label: `${c.flag} ${c.name}`
+  })), []);
+  
+  const phoneCodeOptions = useMemo(() => Country.getAllCountries().map(c => ({
+    value: c.phonecode,
+    label: `${c.flag} ${c.name} (+${c.phonecode})`
+  })), []);
+
+  const languageOptions = useMemo(() => ISO6391.getAllNames().map(name => ({
+    value: name,
+    label: name
+  })), []);
+  
+  useEffect(() => {
+    if (initPhoneCodeStr) {
+      const match = phoneCodeOptions.find(o => o.value === initPhoneCodeStr);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (match) setPhoneCode(match);
+    }
+    if (profile?.country) {
+      const match = countryOptions.find(o => o.value === profile.country);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (match) setSelectedCountry(match);
+    }
+    if (profile?.languages?.length) {
+      const matches = languageOptions.filter(o => profile.languages.includes(o.value));
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedLanguages(matches);
+    }
+  }, [initPhoneCodeStr, profile?.country, profile?.languages, phoneCodeOptions, countryOptions, languageOptions]);
+
+  useEffect(() => {
+    if (profile?.city && selectedCountry) {
+      const cities = City.getCitiesOfCountry(selectedCountry.value) || [];
+      const match = cities.find(c => c.name === profile.city);
+      if (match) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedCityOption({ value: match.name, label: match.name });
+      } else if (profile.city) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedCityOption({ value: profile.city, label: profile.city });
+      }
+    }
+  }, [profile?.city, selectedCountry]);
+
+  const selectStyles = {
+    control: (base: any, state: any) => ({
+      ...base,
+      background: '#141414',
+      borderColor: state.isFocused ? '#FFD700' : '#2a2a2a',
+      borderRadius: '0.75rem',
+      padding: '2px',
+      color: 'white',
+      boxShadow: 'none',
+      '&:hover': {
+        borderColor: state.isFocused ? '#FFD700' : '#2a2a2a',
+      }
+    }),
+    menu: (base: any) => ({
+      ...base,
+      background: '#141414',
+      border: '1.5px solid #2a2a2a',
+      borderRadius: '0.75rem',
+      overflow: 'hidden',
+      zIndex: 50
+    }),
+    option: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: state.isFocused ? '#2a2a2a' : '#141414',
+      color: 'white',
+      cursor: 'pointer',
+      '&:hover': {
+        backgroundColor: '#2a2a2a'
+      }
+    }),
+    singleValue: (base: any) => ({
+      ...base,
+      color: 'white'
+    }),
+    multiValue: (base: any) => ({
+      ...base,
+      backgroundColor: '#2a2a2a',
+      borderRadius: '6px'
+    }),
+    multiValueLabel: (base: any) => ({
+      ...base,
+      color: 'white'
+    }),
+    multiValueRemove: (base: any) => ({
+      ...base,
+      color: '#888',
+      cursor: 'pointer',
+      '&:hover': {
+        color: '#FFD700',
+        backgroundColor: 'transparent'
+      }
+    }),
+    input: (base: any) => ({
+      ...base,
+      color: 'white'
+    }),
+    placeholder: (base: any) => ({
+      ...base,
+      color: '#444'
+    }),
+  };
 
   const [socialData, setSocialData] = useState({
     instagram: profile?.instagram || '',
@@ -57,17 +177,18 @@ export function BarberSettingsTab({ profile, mutateProfile }: { profile: any, mu
       (error) => {
         setPhotoLoading(false);
         setErrorMsg('Upload failed. Please try again.');
-        console.error(error);
+        console.error("Upload Error:", error);
       }, 
       async () => {
         try {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           await updateDoc(doc(db, 'users', user.uid), { photoUrl: downloadURL });
           await updateDoc(doc(db, 'barberProfiles', user.uid), { profilePhotoUrl: downloadURL });
+          setLocalPhotoUrl(downloadURL);
           mutateProfile();
           setSuccessMsg('Profile photo updated!');
         } catch (err) {
-           console.error(err);
+           console.error("Database Update Error:", err);
            setErrorMsg('Failed to update profile photo URL in database.');
         }
         setPhotoLoading(false);
@@ -81,16 +202,26 @@ export function BarberSettingsTab({ profile, mutateProfile }: { profile: any, mu
     setErrorMsg('');
     setSuccessMsg('');
     try {
+      const phoneStr = phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null;
+      const cityStr = selectedCityOption ? selectedCityOption.value : "";
+      const countryStr = selectedCountry ? selectedCountry.value : "";
+      const langArr = selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : [];
+
       await updateDoc(doc(db, 'users', user.uid), {
         firstName: formData.firstName,
-        lastName: formData.lastName
+        lastName: formData.lastName,
+        phone: phoneStr,
+        phoneCountryCode: phoneCode ? phoneCode.value : null,
+        city: cityStr,
+        country: countryStr,
+        languages: langArr
       });
       await updateDoc(doc(db, 'barberProfiles', user.uid), {
-        phone: formData.phone,
-        city: formData.city,
-        country: formData.country,
+        phone: phoneStr,
+        city: cityStr,
+        country: countryStr,
         bio: formData.bio,
-        languages: formData.languages,
+        languages: langArr,
       });
       mutateProfile();
       setSuccessMsg('Personal info saved!');
@@ -121,7 +252,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: { profile: any, mu
     setSavingSocial(false);
   };
 
-  const currentPhoto = profile?.profilePhotoUrl || appUser?.photoUrl;
+  const currentPhoto = localPhotoUrl || profile?.profilePhotoUrl || appUser?.photoUrl;
 
   return (
     <div className="animate-fadeUp max-w-2xl">
@@ -195,32 +326,58 @@ export function BarberSettingsTab({ profile, mutateProfile }: { profile: any, mu
 
         <div className="mb-4">
           <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Phone Number</label>
-          <input 
-            type="text" 
-            value={formData.phone}
-            onChange={e => setFormData({...formData, phone: e.target.value})}
-            className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
-            placeholder="+1 234 567 890"
-          />
+          <div className="flex gap-2">
+            <div className="flex-[0.8] sm:flex-[0.6] min-w-[120px]">
+              <Select 
+                options={phoneCodeOptions} 
+                value={phoneCode}
+                onChange={setPhoneCode}
+                styles={selectStyles}
+                placeholder="Code"
+              />
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text"
+                inputMode="numeric"
+                value={phoneNumberInput}
+                onChange={e => setPhoneNumberInput(e.target.value.replace(/\D/g, ''))}
+                className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[48px]" 
+                placeholder="600 000 000" 
+              />
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Country</label>
-            <input 
-              type="text" 
-              value={formData.country}
-              onChange={e => setFormData({...formData, country: e.target.value})}
-              className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
+            <Select 
+              options={countryOptions} 
+              value={selectedCountry}
+              onChange={(option) => {
+                setSelectedCountry(option);
+                setSelectedCityOption(null);
+              }}
+              styles={selectStyles}
+              placeholder="Country..."
             />
           </div>
           <div>
             <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">City</label>
-            <input 
-              type="text" 
-              value={formData.city}
-              onChange={e => setFormData({...formData, city: e.target.value})}
-              className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
+            <Select 
+              options={selectedCountry ? 
+                City.getCitiesOfCountry(selectedCountry.value)?.map(c => ({
+                  value: c.name,
+                  label: c.name
+                })) || [] 
+                : []
+              } 
+              value={selectedCityOption}
+              onChange={setSelectedCityOption}
+              isDisabled={!selectedCountry}
+              styles={selectStyles}
+              placeholder="City..."
             />
           </div>
         </div>
@@ -230,24 +387,21 @@ export function BarberSettingsTab({ profile, mutateProfile }: { profile: any, mu
           <textarea 
             value={formData.bio}
             onChange={e => setFormData({...formData, bio: e.target.value})}
-            className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm h-24 resize-none"
+            className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm h-24 resize-none focus:border-brand-yellow outline-none"
             placeholder="Tell your clients a bit about yourself..."
           />
         </div>
 
         <div className="mb-6">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Languages (comma separated)</label>
-          <input 
-            type="text" 
-            value={formData.languages.join(', ')}
-            onChange={e => {
-              const str = e.target.value;
-              const arr = str.split(',').map(s => s.trim()).filter(s => s.length > 0);
-              setFormData({...formData, languages: arr});
-            }}
-            className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
-            placeholder="English, Spanish, French..."
-          />
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Languages</label>
+          <Select 
+              isMulti
+              options={languageOptions} 
+              value={selectedLanguages}
+              onChange={setSelectedLanguages}
+              styles={selectStyles}
+              placeholder="Select languages..."
+            />
         </div>
 
         <button 
