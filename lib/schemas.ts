@@ -93,7 +93,7 @@ export const serviceUpdateSchema = serviceSchema.partial();
 
 export const scheduleSchema = z.object({
   barberId: z.string().optional(),
-  availableSlots: z.record(z.array(z.string())).optional(),
+  availableSlots: z.record(z.string(), z.array(z.string())).optional(),
 }).passthrough();
 
 export const scheduleUpdateSchema = scheduleSchema.partial();
