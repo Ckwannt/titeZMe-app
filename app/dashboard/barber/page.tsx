@@ -8,7 +8,7 @@ import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AvailabilityGrid } from "@/components/AvailabilityGrid";
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BarberInvitesTab } from '@/components/BarberInvitesTab';
 import { BarberPortfolioTab } from '@/components/BarberPortfolioTab';
 import { BarberSettingsTab } from '@/components/BarberSettingsTab';
@@ -45,40 +45,62 @@ export default function BarberDashboard() {
     }
   }, [user, loading, router]);
 
-  const { data: profile, mutate: mutateProfile } = useSWR(user ? ['profile', user.uid] : null, async () => {
-    const snap = await getDoc(doc(db, 'barberProfiles', user!.uid));
-    const data = snap.exists() ? snap.data() : null;
-    if (data?.titeZMeCut) {
-      setTitzData({
-        duration: data.titeZMeCut.durationMinutes?.toString() || "45",
-        price: data.titeZMeCut.price?.toString() || "20"
-      });
-    }
-    return data;
-  }, { dedupingInterval: 300000 });
+  const queryClient = useQueryClient();
 
-  const { data: schedule } = useSWR(user ? ['schedule', user.uid] : null, async () => {
-    const snap = await getDoc(doc(db, 'schedules', user!.uid));
-    return snap.exists() ? snap.data() : null;
-  }, { dedupingInterval: 300000 });
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.uid],
+    queryFn: async () => {
+      const snap = await getDoc(doc(db, 'barberProfiles', user!.uid));
+      const data = snap.exists() ? snap.data() : null;
+      if (data?.titeZMeCut) {
+        setTitzData({
+          duration: data.titeZMeCut.durationMinutes?.toString() || "45",
+          price: data.titeZMeCut.price?.toString() || "20"
+        });
+      }
+      return data;
+    },
+    enabled: !!user
+  });
 
-  const { data: services = [], mutate: mutateServices } = useSWR(user ? ['services', user.uid] : null, async () => {
-    const q = query(collection(db, 'services'), where("providerId", "==", user!.uid));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-  }, { dedupingInterval: 300000 });
+  const { data: schedule } = useQuery({
+    queryKey: ['schedule', user?.uid],
+    queryFn: async () => {
+      const snap = await getDoc(doc(db, 'schedules', user!.uid));
+      return snap.exists() ? snap.data() : null;
+    },
+    enabled: !!user
+  });
 
-  const { data: bookings = [], mutate: mutateBookings } = useSWR(user ? ['bookings', user.uid] : null, async () => {
-    const q = query(collection(db, 'bookings'), where("barberId", "==", user!.uid));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-  }, { dedupingInterval: 300000 });
+  const { data: services = [] } = useQuery({
+    queryKey: ['services', user?.uid],
+    queryFn: async () => {
+      const q = query(collection(db, 'services'), where("providerId", "==", user!.uid));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+    },
+    enabled: !!user
+  });
+
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['bookings', user?.uid],
+    queryFn: async () => {
+      const q = query(collection(db, 'bookings'), where("barberId", "==", user!.uid));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+    },
+    enabled: !!user
+  });
+
+  const mutateProfile = () => queryClient.invalidateQueries({ queryKey: ['profile', user?.uid] });
+  const mutateServices = () => queryClient.invalidateQueries({ queryKey: ['services', user?.uid] });
+  const mutateBookings = () => queryClient.invalidateQueries({ queryKey: ['bookings', user?.uid] });
 
   const updateBookingStatus = async (id: string, status: string) => {
     try { 
       const timeNow = Date.now();
       await updateDoc(doc(db, 'bookings', id), bookingUpdateSchema.parse({ status, updatedAt: timeNow })); 
-      mutateBookings();
+      queryClient.invalidateQueries({ queryKey: ['bookings', user?.uid] });
     }
     catch (e: any) { console.error('Error updating status', e); }
   };
@@ -96,7 +118,7 @@ export default function BarberDashboard() {
         isActive: true
       });
       setNewServiceName(""); setNewServicePrice(""); setNewServiceDuration("");
-      mutateServices();
+      queryClient.invalidateQueries({ queryKey: ['services', user?.uid] });
     } catch (e) {
       console.error(e);
     }
@@ -106,7 +128,7 @@ export default function BarberDashboard() {
     if (!user) return;
     try { 
       await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ isLive }));
-      mutateProfile();
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.uid] });
       setToastMessage(isLive ? "You are now accepting bookings ✓" : "Bookings paused");
       setTimeout(() => setToastMessage(''), 3000);
     }

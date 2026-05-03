@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import { BookingRowSkeleton } from '@/components/skeletons';
 import { toast } from 'react-hot-toast';
@@ -62,7 +62,12 @@ export default function ClientDashboard() {
     return { bookings: bResults, favorites: fResults };
   };
 
-  const { data, isLoading: fetching, mutate } = useSWR((user && appUser?.role === 'client') ? ['clientData', user.uid] : null, fetchClientData, { dedupingInterval: 300000 });
+  const queryClient = useQueryClient();
+  const { data, isLoading: fetching } = useQuery({
+    queryKey: ['clientData', user?.uid],
+    queryFn: fetchClientData,
+    enabled: !!user && appUser?.role === 'client'
+  });
   const bookings = data?.bookings || [];
   const favorites = data?.favorites || [];
 
@@ -78,7 +83,7 @@ export default function ClientDashboard() {
     try {
       const timeNow = Date.now();
       await updateDoc(doc(db, 'bookings', bId), bookingUpdateSchema.parse({ status: 'cancelled_by_client', updatedAt: timeNow }));
-      mutate();
+      queryClient.invalidateQueries({ queryKey: ['clientData', user?.uid] });
       toast.success("Appointment cancelled.", { id: loadingToast });
     } catch(e) {
       console.error(e);
@@ -90,7 +95,7 @@ export default function ClientDashboard() {
     if (!user) return;
     try {
       await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({ favoriteBarbers: arrayRemove(barberId) }));
-      mutate();
+      queryClient.invalidateQueries({ queryKey: ['clientData', user?.uid] });
     } catch(e) { console.error(e); }
   }
 
