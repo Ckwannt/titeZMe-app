@@ -30,7 +30,7 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
     queryFn: async () => {
       const pSnap = await getDoc(doc(db, 'barberProfiles', barberId));
       if (!pSnap.exists()) return null;
-      const pData = pSnap.data();
+      const pData = pSnap.data() as any;
       const uSnap = await getDoc(doc(db, 'users', barberId));
       return { id: pSnap.id, ...pData, user: uSnap.exists() ? uSnap.data() : null };
     },
