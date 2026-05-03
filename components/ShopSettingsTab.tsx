@@ -56,26 +56,30 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   })), []);
   
   useEffect(() => {
-    if (initPhoneCodeStr) {
-      const match = phoneCodeOptions.find(o => o.value === initPhoneCodeStr);
-      if (match) setPhoneCode(match);
-    }
-    if (shop?.address?.country) {
-      const match = countryOptions.find(o => o.value === shop.address.country);
-      if (match) setSelectedCountry(match);
-    }
+    setTimeout(() => {
+      if (initPhoneCodeStr) {
+        const match = phoneCodeOptions.find(o => o.value === initPhoneCodeStr);
+        if (match) setPhoneCode(match);
+      }
+      if (shop?.address?.country) {
+        const match = countryOptions.find(o => o.value === shop.address.country);
+        if (match) setSelectedCountry(match);
+      }
+    }, 0);
   }, [initPhoneCodeStr, shop?.address?.country, phoneCodeOptions, countryOptions]);
 
   useEffect(() => {
-    if (shop?.address?.city && selectedCountry) {
-      const cities = City.getCitiesOfCountry(selectedCountry.value) || [];
-      const match = cities.find(c => c.name === shop.address.city);
-      if (match) {
-        setSelectedCityOption({ value: match.name, label: match.name });
-      } else if (shop.address.city) {
-        setSelectedCityOption({ value: shop.address.city, label: shop.address.city });
+    setTimeout(() => {
+      if (shop?.address?.city && selectedCountry) {
+        const cities = City.getCitiesOfCountry(selectedCountry.value) || [];
+        const match = cities.find(c => c.name === shop.address.city);
+        if (match) {
+          setSelectedCityOption({ value: match.name, label: match.name });
+        } else if (shop.address.city) {
+          setSelectedCityOption({ value: shop.address.city, label: shop.address.city });
+        }
       }
-    }
+    }, 0);
   }, [shop?.address?.city, selectedCountry]);
 
   const selectStyles = {

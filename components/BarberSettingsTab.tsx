@@ -57,30 +57,34 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
   })), []);
   
   useEffect(() => {
-    if (initPhoneCodeStr) {
-      const match = phoneCodeOptions.find(o => o.value === initPhoneCodeStr);
-      if (match) setPhoneCode(match);
-    }
-    if (profile?.country) {
-      const match = countryOptions.find(o => o.value === profile.country);
-      if (match) setSelectedCountry(match);
-    }
-    if (profile?.languages?.length) {
-      const matches = languageOptions.filter(o => profile.languages.includes(o.value));
-      setSelectedLanguages(matches);
-    }
+    setTimeout(() => {
+      if (initPhoneCodeStr) {
+        const match = phoneCodeOptions.find(o => o.value === initPhoneCodeStr);
+        if (match) setPhoneCode(match);
+      }
+      if (profile?.country) {
+        const match = countryOptions.find(o => o.value === profile.country);
+        if (match) setSelectedCountry(match);
+      }
+      if (profile?.languages?.length) {
+        const matches = languageOptions.filter(o => profile.languages.includes(o.value));
+        setSelectedLanguages(matches);
+      }
+    }, 0);
   }, [initPhoneCodeStr, profile?.country, profile?.languages, phoneCodeOptions, countryOptions, languageOptions]);
 
   useEffect(() => {
-    if (profile?.city && selectedCountry) {
-      const cities = City.getCitiesOfCountry(selectedCountry.value) || [];
-      const match = cities.find(c => c.name === profile.city);
-      if (match) {
-        setSelectedCityOption({ value: match.name, label: match.name });
-      } else if (profile.city) {
-        setSelectedCityOption({ value: profile.city, label: profile.city });
+    setTimeout(() => {
+      if (profile?.city && selectedCountry) {
+        const cities = City.getCitiesOfCountry(selectedCountry.value) || [];
+        const match = cities.find(c => c.name === profile.city);
+        if (match) {
+          setSelectedCityOption({ value: match.name, label: match.name });
+        } else if (profile.city) {
+          setSelectedCityOption({ value: profile.city, label: profile.city });
+        }
       }
-    }
+    }, 0);
   }, [profile?.city, selectedCountry]);
 
   const selectStyles = {
