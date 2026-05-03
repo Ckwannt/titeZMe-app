@@ -6,7 +6,12 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 
-export function BarberPortfolioTab({ profile, mutateProfile }: { profile: any, mutateProfile: () => void }) {
+interface BarberPortfolioTabProps {
+  profile: any;
+  mutateProfile: () => void;
+}
+
+export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTabProps) {
   const { user } = useAuth();
   const [photoLoading, setPhotoLoading] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);

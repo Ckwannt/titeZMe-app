@@ -6,7 +6,12 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 
-export function ShopPhotosTab({ shop, mutateShop }: { shop: any, mutateShop: () => void }) {
+interface ShopPhotosTabProps {
+  shop: any;
+  mutateShop: () => void;
+}
+
+export function ShopPhotosTab({ shop, mutateShop }: ShopPhotosTabProps) {
   const { user } = useAuth();
   const [photoLoading, setPhotoLoading] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);

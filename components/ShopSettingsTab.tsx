@@ -10,7 +10,12 @@ import Select from "react-select";
 import { Country, City } from "country-state-city";
 import { useRouter } from "next/navigation";
 
-export function ShopSettingsTab({ shop, mutateShop }: { shop: any, mutateShop: () => void }) {
+interface ShopSettingsTabProps {
+  shop: any;
+  mutateShop: () => void;
+}
+
+export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [photoLoading, setPhotoLoading] = useState(false);

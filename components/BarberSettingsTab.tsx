@@ -10,7 +10,12 @@ import Select from "react-select";
 import { Country, City } from "country-state-city";
 import ISO6391 from "iso-639-1";
 
-export function BarberSettingsTab({ profile, mutateProfile }: { profile: any, mutateProfile: () => void }) {
+interface BarberSettingsTabProps {
+  profile: any;
+  mutateProfile: () => void;
+}
+
+export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabProps) {
   const { user, appUser } = useAuth();
   const [photoLoading, setPhotoLoading] = useState(false);
   const [localPhotoUrl, setLocalPhotoUrl] = useState('');

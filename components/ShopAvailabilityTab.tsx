@@ -6,7 +6,12 @@ import { doc, updateDoc, collection, addDoc, serverTimestamp, setDoc } from 'fir
 import { db } from '@/lib/firebase';
 import { AvailabilityGrid } from './AvailabilityGrid';
 
-export function ShopAvailabilityTab({ schedule, mutateSchedule }: { schedule: any, mutateSchedule: () => void }) {
+interface ShopAvailabilityTabProps {
+  schedule: any;
+  mutateSchedule: () => void;
+}
+
+export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabilityTabProps) {
   const { user } = useAuth();
   const [successMsg, setSuccessMsg] = useState("");
 
