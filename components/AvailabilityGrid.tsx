@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, doc, setDoc, getDoc, onSnapshot } fr
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'react-hot-toast';
+import { scheduleUpdateSchema } from "@/lib/schemas";
 
 export interface AvailabilityGridProps {
   mode?: 'barber' | 'shop' | 'client';
@@ -138,7 +139,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
     if (!uid) return;
     setSaving(true);
     try {
-      await setDoc(doc(db, 'schedules', uid), { availableSlots }, { merge: true });
+      await setDoc(doc(db, 'schedules', uid), scheduleUpdateSchema.parse({ availableSlots }), { merge: true });
     } catch (e) {
       console.error(e);
     }

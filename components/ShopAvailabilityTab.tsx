@@ -5,6 +5,7 @@ import { doc, updateDoc, collection, addDoc, serverTimestamp, setDoc } from 'fir
 import { db } from '@/lib/firebase';
 import { AvailabilityGrid } from './AvailabilityGrid';
 import { toast } from 'react-hot-toast';
+import { scheduleSchema } from "@/lib/schemas";
 
 interface ShopAvailabilityTabProps {
   schedule: any;
@@ -18,12 +19,12 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
     if(!user) return;
     const loadingToast = toast.loading("Saving schedule...");
     try {
-      await setDoc(doc(db, 'schedules', user.uid), {
-        ownerId: user.uid,
-        weeklyHours: scheduleData.weeklyHours,
-        blockedDates: scheduleData.blockedDates,
-        bufferMins: scheduleData.bufferMins
-      });
+      await setDoc(doc(db, 'schedules', user.uid), scheduleSchema.parse({
+              ownerId: user.uid,
+              weeklyHours: scheduleData.weeklyHours,
+              blockedDates: scheduleData.blockedDates,
+              bufferMins: scheduleData.bufferMins
+            }));
       mutateSchedule();
       toast.success("Shop hours saved!", { id: loadingToast });
     } catch(e) {

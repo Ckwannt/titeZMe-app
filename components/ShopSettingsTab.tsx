@@ -9,6 +9,7 @@ import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import Select from "react-select";
 import { Country, City } from "country-state-city";
 import { useRouter } from "next/navigation";
+import { barbershopUpdateSchema } from "@/lib/schemas";
 
 interface ShopSettingsTabProps {
   shop: any;
@@ -162,7 +163,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       async () => {
         try {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          await updateDoc(doc(db, 'barbershops', user.uid), { coverPhotoUrl: downloadURL });
+          await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ coverPhotoUrl: downloadURL }));
           setLocalPhotoUrl(downloadURL);
           mutateShop();
           setSuccessMsg('Shop photo updated!');
@@ -190,20 +191,20 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       const cityStr = selectedCityOption ? selectedCityOption.value : "";
       const countryStr = selectedCountry ? selectedCountry.value : "";
 
-      await updateDoc(doc(db, 'barbershops', user.uid), {
-        name: formData.name,
-        contactEmail: shop.contactEmail,
-        contactPhone: phoneStr,
-        address: {
-          country: countryStr,
-          city: cityStr,
-          street: formData.street,
-          buildingNumber: formData.buildingNumber,
-          postalCode: formData.postalCode,
-          floorSuite: formData.floorSuite
-        },
-        description: formData.description,
-      });
+      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({
+              name: formData.name,
+              contactEmail: shop.contactEmail,
+              contactPhone: phoneStr,
+              address: {
+                country: countryStr,
+                city: cityStr,
+                street: formData.street,
+                buildingNumber: formData.buildingNumber,
+                postalCode: formData.postalCode,
+                floorSuite: formData.floorSuite
+              },
+              description: formData.description,
+            }));
       mutateShop();
       setSuccessMsg('Shop info saved!');
     } catch (e) {
@@ -219,11 +220,11 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      await updateDoc(doc(db, 'barbershops', user.uid), {
-        instagram: socialData.instagram,
-        facebook: socialData.facebook,
-        tiktok: socialData.tiktok
-      });
+      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({
+              instagram: socialData.instagram,
+              facebook: socialData.facebook,
+              tiktok: socialData.tiktok
+            }));
       mutateShop();
       setSuccessMsg('Social links saved!');
     } catch (e) {

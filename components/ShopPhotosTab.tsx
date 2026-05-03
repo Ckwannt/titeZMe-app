@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { barbershopUpdateSchema } from "@/lib/schemas";
 
 interface ShopPhotosTabProps {
   shop: any;
@@ -54,7 +55,7 @@ export function ShopPhotosTab({ shop, mutateShop }: ShopPhotosTabProps) {
         try {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           const newPhotos = [...photos, downloadURL];
-          await updateDoc(doc(db, 'barbershops', user.uid), { photos: newPhotos });
+          await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ photos: newPhotos }));
           mutateShop();
         } catch (err) {
           console.error(err);
@@ -74,7 +75,7 @@ export function ShopPhotosTab({ shop, mutateShop }: ShopPhotosTabProps) {
       const fileRef = ref(storage, photoUrl);
       await deleteObject(fileRef).catch(console.error);
       
-      await updateDoc(doc(db, 'barbershops', user.uid), { photos: newPhotos });
+      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ photos: newPhotos }));
       mutateShop();
     } catch (e) {
       console.error(e);
@@ -116,7 +117,7 @@ export function ShopPhotosTab({ shop, mutateShop }: ShopPhotosTabProps) {
         try {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           const newVideos = [...videos, downloadURL];
-          await updateDoc(doc(db, 'barbershops', user.uid), { videos: newVideos });
+          await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ videos: newVideos }));
           mutateShop();
         } catch (err) {
           console.error(err);
@@ -136,7 +137,7 @@ export function ShopPhotosTab({ shop, mutateShop }: ShopPhotosTabProps) {
       const fileRef = ref(storage, videoUrl);
       await deleteObject(fileRef).catch(console.error);
       
-      await updateDoc(doc(db, 'barbershops', user.uid), { videos: newVideos });
+      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ videos: newVideos }));
       mutateShop();
     } catch (e) {
       console.error(e);

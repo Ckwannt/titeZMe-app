@@ -5,6 +5,7 @@ import { collection, query, where, onSnapshot, updateDoc, doc, orderBy } from 'f
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
+import { notificationUpdateSchema } from "@/lib/schemas";
 
 export function NotificationBell() {
   const { user } = useAuth();
@@ -30,7 +31,7 @@ export function NotificationBell() {
 
   const handleNotifClick = async (n: any) => {
     try {
-      await updateDoc(doc(db, 'notifications', n.id), { read: true });
+      await updateDoc(doc(db, 'notifications', n.id), notificationUpdateSchema.parse({ read: true }));
       setShowDropdown(false);
       if (n.linkTo) router.push(n.linkTo);
     } catch (e) {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { collection, addDoc, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { barbershopUpdateSchema, serviceSchema } from "@/lib/schemas";
 
 interface ShopServicesTabProps {
   services: any[];
@@ -27,15 +28,15 @@ export function ShopServicesTab({ services = [], mutateServices, shop, mutateSho
   const handleCreateService = async () => {
     if (!newServiceName || !newServicePrice || !newServiceDuration || !user) return;
     try {
-      await addDoc(collection(db, 'services'), {
-        providerId: user.uid,
-        providerType: 'shop',
-        name: newServiceName,
-        price: Number(newServicePrice),
-        currency: 'EUR',
-        durationMinutes: Number(newServiceDuration),
-        createdAt: new Date().toISOString()
-      });
+      await addDoc(collection(db, 'services'), serviceSchema.parse({
+              providerId: user.uid,
+              providerType: 'shop',
+              name: newServiceName,
+              price: Number(newServicePrice),
+              currency: 'EUR',
+              durationMinutes: Number(newServiceDuration),
+              createdAt: new Date().toISOString()
+            }));
       setNewServiceName("");
       setNewServicePrice("");
       setNewServiceDuration("");
@@ -58,13 +59,13 @@ export function ShopServicesTab({ services = [], mutateServices, shop, mutateSho
     if (!user) return;
     setIsSavingTitz(true);
     try {
-      await updateDoc(doc(db, 'barbershops', user.uid), {
-        titeZMeCut: {
-          durationMinutes: Number(titzData.duration),
-          price: Number(titzData.price),
-          currency: 'EUR'
-        }
-      });
+      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({
+              titeZMeCut: {
+                durationMinutes: Number(titzData.duration),
+                price: Number(titzData.price),
+                currency: 'EUR'
+              }
+            }));
       mutateShop();
     } catch (e) {
       console.error(e);

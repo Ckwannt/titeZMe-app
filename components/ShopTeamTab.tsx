@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, setDoc, doc, addDoc, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
+import { inviteUpdateSchema, notificationSchema, inviteSchema } from "@/lib/schemas";
 
 export function ShopTeamTab() {
   const { user, appUser } = useAuth();
@@ -106,22 +107,22 @@ export function ShopTeamTab() {
 
       // 3. Create Invite
       const currentTime = new Date().getTime();
-      await addDoc(collection(db, 'invites'), {
-        shopId: user.uid,
-        shopName: shopName,
-        barberId: foundBarber.userId,
-        status: 'pending',
-        createdAt: currentTime
-      });
+      await addDoc(collection(db, 'invites'), inviteSchema.parse({
+              shopId: user.uid,
+              shopName: shopName,
+              barberId: foundBarber.userId,
+              status: 'pending',
+              createdAt: currentTime
+            }));
 
       // 4. Send Notification
-      await addDoc(collection(db, 'notifications'), {
-        userId: foundBarber.userId,
-        message: `${shopName} invited you to join their team! Check your invites.`,
-        read: false,
-        linkTo: '/dashboard/barber', // Actually the user wants /dashboard/barber/invites, but we don't have routes inside dashboard maybe? We will just link to /dashboard/barber
-        createdAt: currentTime
-      });
+      await addDoc(collection(db, 'notifications'), notificationSchema.parse({
+              userId: foundBarber.userId,
+              message: `${shopName} invited you to join their team! Check your invites.`,
+              read: false,
+              linkTo: '/dashboard/barber', // Actually the user wants /dashboard/barber/invites, but we don't have routes inside dashboard maybe? We will just link to /dashboard/barber
+              createdAt: currentTime
+            }));
 
       setFoundBarber(null);
       setInviteCode('');
@@ -134,7 +135,7 @@ export function ShopTeamTab() {
 
   const handleCancelInvite = async (inviteId: string) => {
     try {
-      await setDoc(doc(db, 'invites', inviteId), { status: 'cancelled', respondedAt: new Date().getTime() }, { merge: true });
+      await setDoc(doc(db, 'invites', inviteId), inviteUpdateSchema.parse({ status: 'cancelled', respondedAt: new Date().getTime() }), { merge: true });
     } catch (e) {
       console.error(e);
     }

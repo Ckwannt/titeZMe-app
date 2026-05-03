@@ -9,6 +9,7 @@ import { BarberProfileSkeleton } from '@/components/skeletons';
 import { toast } from 'react-hot-toast';
 
 import { useRouter } from 'next/navigation';
+import { notificationSchema } from "@/lib/schemas";
 
 export default function BookingPage({ params }: { params: Promise<{ barberId: string }> }) {
   const resolvedParams = use(params);
@@ -160,22 +161,22 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
 
       // After transaction success
       // Notify barber
-      await addDoc(collection(db, 'notifications'), {
-        userId: barberId,
-        message: `New booking request for ${selectedDate} at ${selectedTime}.`,
-        read: false,
-        linkTo: '/dashboard/barber',
-        createdAt: Date.now()
-      });
+      await addDoc(collection(db, 'notifications'), notificationSchema.parse({
+              userId: barberId,
+              message: `New booking request for ${selectedDate} at ${selectedTime}.`,
+              read: false,
+              linkTo: '/dashboard/barber',
+              createdAt: Date.now()
+            }));
       
       // Notify client
-      await addDoc(collection(db, 'notifications'), {
-        userId: user.uid,
-        message: `Your booking for ${selectedDate} at ${selectedTime} is pending confirmation.`,
-        read: false,
-        linkTo: '/dashboard/client',
-        createdAt: Date.now()
-      });
+      await addDoc(collection(db, 'notifications'), notificationSchema.parse({
+              userId: user.uid,
+              message: `Your booking for ${selectedDate} at ${selectedTime} is pending confirmation.`,
+              read: false,
+              linkTo: '/dashboard/client',
+              createdAt: Date.now()
+            }));
 
       router.push('/dashboard/client');
 
