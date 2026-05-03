@@ -220,7 +220,7 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
            <p className="text-brand-text-secondary text-sm mb-6 font-bold">{bookingContext === 'solo' ? `${profile?.user?.firstName}'s direct services` : 'Shop services'}</p>
            
            <div className="flex flex-col gap-3 mb-8">
-             {services.map((svc) => {
+             {services.map((svc: any) => {
                const isSelected = selectedServices.some(s => s.id === svc.id);
                return (
                  <label key={svc.id} className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer ${isSelected ? 'border-brand-yellow bg-[#1a1500]' : 'border-[#2a2a2a] bg-[#141414] hover:border-[#444]'} ${svc.isTitz ? '!border-l-4 !border-l-brand-yellow' : ''}`}>
