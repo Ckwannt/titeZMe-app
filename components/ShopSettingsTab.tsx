@@ -9,6 +9,8 @@ import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import Select from "react-select";
 import { Country, City } from "country-state-city";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import imageCompression from "browser-image-compression";
 import { barbershopUpdateSchema } from "@/lib/schemas";
 
 interface ShopSettingsTabProps {
@@ -133,7 +135,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     tiktok: shop?.tiktok || ''
   });
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     
@@ -141,39 +143,49 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       setErrorMsg('Only jpg, png, and webp images are allowed.');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('Profile photo size must be less than 5MB.');
-      return;
-    }
 
     setPhotoLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
 
-    const storageRef = ref(storage, `shop-profile/${user.uid}/cover.jpg`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    try {
+      const options = {
+        maxSizeMB: 1, // Shop profile max 1MB
+        maxWidthOrHeight: 1200, // Shop profile max 1200px
+        useWebWorker: true,
+      };
+      
+      const compressedFile = await imageCompression(file, options);
 
-    uploadTask.on('state_changed', 
-      null, 
-      (error) => {
-        setPhotoLoading(false);
-        setErrorMsg('Upload failed. Please try again.');
-        console.error("Upload Error:", error);
-      }, 
-      async () => {
-        try {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ coverPhotoUrl: downloadURL }));
-          setLocalPhotoUrl(downloadURL);
-          mutateShop();
-          setSuccessMsg('Shop photo updated!');
-        } catch (err) {
-           console.error("Database Update Error:", err);
-           setErrorMsg('Failed to update shop photo URL in database.');
+      const storageRef = ref(storage, `shop-profile/${user.uid}/cover.jpg`);
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile, { cacheControl: 'public, max-age=31536000' });
+
+      uploadTask.on('state_changed', 
+        null, 
+        (error) => {
+          setPhotoLoading(false);
+          setErrorMsg('Upload failed. Please try again.');
+          console.error("Upload Error:", error);
+        }, 
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ coverPhotoUrl: downloadURL }));
+            setLocalPhotoUrl(downloadURL);
+            mutateShop();
+            setSuccessMsg('Shop photo updated!');
+          } catch (err) {
+             console.error("Database Update Error:", err);
+             setErrorMsg('Failed to update shop photo URL in database.');
+          }
+          setPhotoLoading(false);
         }
-        setPhotoLoading(false);
-      }
-    );
+      );
+    } catch (error) {
+      console.error(error);
+      setErrorMsg('Image compression failed.');
+      setPhotoLoading(false);
+    }
   };
 
   const handleSaveInfo = async () => {
@@ -301,10 +313,9 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
         <h2 className="text-lg font-black mb-4">Shop Photo</h2>
         <div className="flex items-center gap-6">
-          <div className="w-24 h-24 rounded-2xl overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] shrink-0">
+          <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] shrink-0">
             {currentPhoto ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={currentPhoto} alt={shop?.name || 'Shop'} className="w-full h-full object-cover" />
+              <Image src={currentPhoto} alt={shop?.name || 'Shop'} fill className="object-cover" referrerPolicy="no-referrer" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-3xl font-black text-[#555] uppercase">
                 {shop?.name?.[0] || 'S'}

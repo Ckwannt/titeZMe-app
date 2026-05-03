@@ -5,6 +5,8 @@ import { useAuth } from '@/lib/auth-context';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import Image from 'next/image';
+import imageCompression from 'browser-image-compression';
 import { barbershopUpdateSchema } from "@/lib/schemas";
 
 interface ShopPhotosTabProps {
@@ -21,16 +23,12 @@ export function ShopPhotosTab({ shop, mutateShop }: ShopPhotosTabProps) {
   const photos = shop?.photos || [];
   const videos = shop?.videos || [];
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       setErrorMsg('Only jpg, png, and webp images are allowed.');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setErrorMsg('Photo file size must be less than 10MB.');
       return;
     }
     if (photos.length >= 30) {
@@ -41,28 +39,42 @@ export function ShopPhotosTab({ shop, mutateShop }: ShopPhotosTabProps) {
     setPhotoLoading(true);
     setErrorMsg('');
 
-    const storageRef = ref(storage, `shop-photos/${user.uid}/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    try {
+      const options = {
+        maxSizeMB: 1, // Max 1MB
+        maxWidthOrHeight: 1200, // Max 1200px
+        useWebWorker: true,
+      };
 
-    uploadTask.on('state_changed', 
-      null, 
-      (error) => {
-        setPhotoLoading(false);
-        setErrorMsg('Upload failed. Please try again.');
-        console.error(error);
-      }, 
-      async () => {
-        try {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          const newPhotos = [...photos, downloadURL];
-          await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ photos: newPhotos }));
-          mutateShop();
-        } catch (err) {
-          console.error(err);
+      const compressedFile = await imageCompression(file, options);
+
+      const storageRef = ref(storage, `shop-photos/${user.uid}/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile, { cacheControl: 'public, max-age=31536000' });
+
+      uploadTask.on('state_changed', 
+        null, 
+        (error) => {
+          setPhotoLoading(false);
+          setErrorMsg('Upload failed. Please try again.');
+          console.error(error);
+        }, 
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            const newPhotos = [...photos, downloadURL];
+            await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ photos: newPhotos }));
+            mutateShop();
+          } catch (err) {
+            console.error(err);
+          }
+          setPhotoLoading(false);
         }
-        setPhotoLoading(false);
-      }
-    );
+      );
+    } catch (error) {
+      console.error(error);
+      setErrorMsg('Image compression failed.');
+      setPhotoLoading(false);
+    }
     e.target.value = ""; // Reset input
   };
 
@@ -104,7 +116,7 @@ export function ShopPhotosTab({ shop, mutateShop }: ShopPhotosTabProps) {
     setErrorMsg('');
 
     const storageRef = ref(storage, `shop-videos/${user.uid}/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    const uploadTask = uploadBytesResumable(storageRef, file, { cacheControl: 'public, max-age=31536000' });
 
     uploadTask.on('state_changed', 
       null, 
@@ -183,8 +195,7 @@ export function ShopPhotosTab({ shop, mutateShop }: ShopPhotosTabProps) {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {photos.map((url: string, i: number) => (
               <div key={i} className="aspect-video sm:aspect-square bg-[#141414] rounded-2xl overflow-hidden relative group border border-[#2a2a2a]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt={`Shop ${i}`} className="w-full h-full object-cover" />
+                <Image src={url} alt={`Shop ${i}`} fill className="object-cover" referrerPolicy="no-referrer" />
                 <button 
                   onClick={() => handlePhotoDelete(url)}
                   className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 backdrop-blur-sm transition-all hover:bg-brand-red pointer-events-auto"

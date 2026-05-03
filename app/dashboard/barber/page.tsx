@@ -7,6 +7,7 @@ import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, ge
 import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BarberInvitesTab } from '@/components/BarberInvitesTab';
@@ -209,9 +210,8 @@ export default function BarberDashboard() {
       <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
         <div className="flex items-center gap-3 mb-6 px-2">
           {profile?.profilePhotoUrl || appUser?.photoUrl ? (
-            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
-               {/* eslint-disable-next-line @next/next/no-img-element */}
-               <img src={profile?.profilePhotoUrl || appUser?.photoUrl} alt="Avatar" className="w-full h-full object-cover" />
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0">
+               <Image src={profile?.profilePhotoUrl || appUser?.photoUrl as string} alt="Avatar" fill className="object-cover" referrerPolicy="no-referrer" />
             </div>
           ) : (
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-base text-[#0a0a0a]">
