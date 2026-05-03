@@ -1,58 +1,45 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 
 export default function ShopProfilePage() {
   const params = useParams();
   const shopId = params.shopId as string;
 
-  const [shop, setShop] = useState<any>(null);
-  const [barbers, setBarbers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!shopId) return;
-
-    const fetchShopAndBarbers = async () => {
-      try {
-        const shopSnap = await getDoc(doc(db, 'barbershops', shopId));
-        if (!shopSnap.exists()) {
-          setError('Shop not found');
-          setLoading(false);
-          return;
-        }
-        setShop({ id: shopSnap.id, ...shopSnap.data() });
-
-        const barbersQuery = query(collection(db, 'barberProfiles'), where('shopId', '==', shopId));
-        const barbersSnap = await getDocs(barbersQuery);
-        const barbersList = barbersSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-        
-        // Let's also fetch user document for firstName and lastName of the barbers, but for now we only show their names if we have them. 
-        // We'll also fetch their user documents:
-        const enrichedBarbers = await Promise.all(barbersList.map(async (b) => {
-          const uSnap = await getDoc(doc(db, 'users', b.userId));
-          if (uSnap.exists()) {
-            return { ...b, firstName: uSnap.data().firstName, lastName: uSnap.data().lastName };
-          }
-          return b;
-        }));
-
-        setBarbers(enrichedBarbers);
-      } catch (err: any) {
-        console.error('Error fetching shop:', err);
-        setError('Failed to load shop details.');
-      } finally {
-        setLoading(false);
+  const { data, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ['shopProfile', shopId],
+    queryFn: async () => {
+      const shopSnap = await getDoc(doc(db, 'barbershops', shopId));
+      if (!shopSnap.exists()) {
+        throw new Error('Shop not found');
       }
-    };
+      const shopData = { id: shopSnap.id, ...shopSnap.data() };
 
-    fetchShopAndBarbers();
-  }, [shopId]);
+      const barbersQuery = query(collection(db, 'barberProfiles'), where('shopId', '==', shopId));
+      const barbersSnap = await getDocs(barbersQuery);
+      const barbersList = barbersSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      
+      const enrichedBarbers = await Promise.all(barbersList.map(async (b) => {
+        const uSnap = await getDoc(doc(db, 'users', b.userId));
+        if (uSnap.exists()) {
+          return { ...b, firstName: uSnap.data().firstName, lastName: uSnap.data().lastName };
+        }
+        return b;
+      }));
+
+      return { shop: shopData, barbers: enrichedBarbers };
+    },
+    enabled: !!shopId,
+    retry: false
+  });
+
+  const shop = data?.shop;
+  const barbers = data?.barbers || [];
+  const error = queryError?.message;
 
   if (loading) {
     return (

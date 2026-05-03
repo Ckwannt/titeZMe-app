@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from "next/navigation";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ShopTeamTab } from '@/components/ShopTeamTab';
 import { ShopPhotosTab } from '@/components/ShopPhotosTab';
@@ -27,21 +27,38 @@ export default function ShopDashboard() {
     }
   }, [user, loading, router]);
 
-  const { data: shop, mutate: mutateShop } = useSWR(user ? ['shop', user.uid] : null, async () => {
-    const snap = await getDoc(doc(db, 'barbershops', user!.uid));
-    return snap.exists() ? snap.data() : null;
-  });
+  const queryClient = useQueryClient();
 
-  const { data: schedule, mutate: mutateSchedule } = useSWR(user ? ['schedule', user.uid] : null, async () => {
-    const snap = await getDoc(doc(db, 'schedules', user!.uid));
-    return snap.exists() ? snap.data() : null;
+  const { data: shop } = useQuery({
+    queryKey: ['shop', user?.uid],
+    queryFn: async () => {
+      const snap = await getDoc(doc(db, 'barbershops', user!.uid));
+      return snap.exists() ? snap.data() : null;
+    },
+    enabled: !!user
   });
+  const mutateShop = () => queryClient.invalidateQueries({ queryKey: ['shop', user?.uid] });
 
-  const { data: services = [], mutate: mutateServices } = useSWR(user ? ['shopServices', user.uid] : null, async () => {
-    const q = query(collection(db, 'services'), where("providerId", "==", user!.uid), where("providerType", "==", "shop"));
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+  const { data: schedule } = useQuery({
+    queryKey: ['schedule', user?.uid],
+    queryFn: async () => {
+      const snap = await getDoc(doc(db, 'schedules', user!.uid));
+      return snap.exists() ? snap.data() : null;
+    },
+    enabled: !!user
   });
+  const mutateSchedule = () => queryClient.invalidateQueries({ queryKey: ['schedule', user?.uid] });
+
+  const { data: services = [] } = useQuery({
+    queryKey: ['shopServices', user?.uid],
+    queryFn: async () => {
+      const q = query(collection(db, 'services'), where("providerId", "==", user!.uid), where("providerType", "==", "shop"));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+    },
+    enabled: !!user
+  });
+  const mutateServices = () => queryClient.invalidateQueries({ queryKey: ['shopServices', user?.uid] });
 
   // Calculate Open/Closed status
   let shopStatus = { text: "Closed today", color: "text-brand-red", statusId: "closed" };

@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, doc, getDoc, orderBy, limit, updateD
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import useSWR from 'swr';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BarberProfileSkeleton } from '@/components/skeletons';
 import { userUpdateSchema } from "@/lib/schemas";
 
@@ -47,7 +47,11 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
     return { profile: profileData, services, reviews: fetchedReviews };
   };
 
-  const { data, isLoading: loading } = useSWR(['barberProfile', barberId], fetchProfileData, { dedupingInterval: 300000 });
+  const queryClient = useQueryClient();
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['barberProfile', barberId],
+    queryFn: fetchProfileData
+  });
   const profile = data?.profile;
   const services = data?.services || [];
   const reviews = data?.reviews || [];
@@ -64,6 +68,8 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
       } else {
         await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({ favoriteBarbers: arrayUnion(barberId) }));
       }
+      queryClient.invalidateQueries({ queryKey: ['clientData', user.uid] });
+      queryClient.invalidateQueries({ queryKey: ['barberProfile', barberId] });
     } catch(e) {
       console.error(e);
     }

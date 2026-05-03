@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import useSWR from 'swr';
+import { useQuery } from '@tanstack/react-query';
 import { BarberCardSkeleton } from '@/components/skeletons';
 
 const fetchListings = async () => {
@@ -55,8 +55,9 @@ export default function Home() {
   const [cityFilter, setCityFilter] = useState('');
   const [specialtyFilter, setSpecialtyFilter] = useState('');
   
-  const { data: profiles = [], isLoading: loading } = useSWR('searchListings', fetchListings, {
-    dedupingInterval: 300000, // 5 minute cache
+  const { data: profiles = [], isLoading: loading } = useQuery({
+    queryKey: ['searchListings'],
+    queryFn: fetchListings
   });
 
   const filtered = profiles.filter((p: any) => {

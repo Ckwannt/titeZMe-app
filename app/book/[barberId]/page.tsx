@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { AvailabilityGrid } from '@/components/AvailabilityGrid';
 import { BarberProfileSkeleton } from '@/components/skeletons';
 import { toast } from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
 
 import { useRouter } from 'next/navigation';
 import { notificationSchema } from "@/lib/schemas";
@@ -18,79 +19,70 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
   const router = useRouter();
 
   const [step, setStep] = useState(1);
-  const [profile, setProfile] = useState<any>(null);
-
-  const [services, setServices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Booking State
   const [bookingContext, setBookingContext] = useState<'solo'|'shop'>('solo');
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
-  
-  // Available slots logic
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data: profile, isLoading: loadingProfile } = useQuery({
+    queryKey: ['bookProfile', barberId],
+    queryFn: async () => {
+      const pSnap = await getDoc(doc(db, 'barberProfiles', barberId));
+      if (!pSnap.exists()) return null;
+      const pData = pSnap.data();
+      const uSnap = await getDoc(doc(db, 'users', barberId));
+      return { id: pSnap.id, ...pData, user: uSnap.exists() ? uSnap.data() : null };
+    },
+    enabled: !!user
+  });
+
+  useEffect(() => {
+    if (profile && step === 1) {
+      if (profile.isSolo && profile.shopId) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStep(1);
+      } else {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setBookingContext(profile.shopId && !profile.isSolo ? 'shop' : 'solo');
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStep(2);
+      }
+    }
+  }, [profile]); // eslint-disable-line
 
   useEffect(() => {
     if (!user) {
       router.replace('/login');
-      return;
     }
+  }, [user, router]);
 
-    const initData = async () => {
-      try {
-        const pSnap = await getDoc(doc(db, 'barberProfiles', barberId));
-        if (pSnap.exists()) {
-          const pData = pSnap.data();
-          const uSnap = await getDoc(doc(db, 'users', barberId));
-          setProfile({ id: pSnap.id, ...pData, user: uSnap.exists() ? uSnap.data() : null });
-          
-          if (pData.isSolo && pData.shopId) {
-             // Let user choose context
-             setStep(1);
-          } else {
-             // Skip to step 2
-             setBookingContext(pData.shopId && !pData.isSolo ? 'shop' : 'solo');
-             setStep(2);
-          }
-        }
-        
+  const { data: services = [], isLoading: loadingServices } = useQuery({
+    queryKey: ['bookServices', barberId, bookingContext, profile?.shopId],
+    queryFn: async () => {
+      if (!profile) return [];
+      const providerId = bookingContext === 'shop' && profile.shopId ? profile.shopId : barberId;
+      const pType = bookingContext === 'shop' ? 'shop' : 'barber';
+      
+      const qSvc = query(collection(db, 'services'), where('providerId', '==', providerId), where('providerType', '==', pType));
+      const snap = await getDocs(qSvc);
+      const fetchedServices = snap.docs.map(d => ({id: d.id, ...d.data()}));
+      
+      const titzCut = {
+        id: 'titezme-cut',
+        name: 'titeZMe Cut',
+        description: 'The barber chooses the cut for you based on your vibe and your budget.',
+        duration: profile?.titeZMeCut?.durationMinutes || 45,
+        price: profile?.titeZMeCut?.price || 20,
+        isTitz: true
+      };
+      
+      return [titzCut, ...fetchedServices];
+    },
+    enabled: !!profile && step >= 2
+  });
 
-
-      } catch (e) {
-        console.error(e);
-      }
-      setLoading(false);
-    };
-    initData();
-  }, [barberId, user, router]);
-
-  useEffect(() => {
-    // Fetch services when context is known
-    if ((step >= 2) && profile) {
-      const fetchServices = async () => {
-         const providerId = bookingContext === 'shop' && profile.shopId ? profile.shopId : barberId;
-         const pType = bookingContext === 'shop' ? 'shop' : 'barber';
-         
-         const qSvc = query(collection(db, 'services'), where('providerId', '==', providerId), where('providerType', '==', pType));
-         const snap = await getDocs(qSvc);
-         const fetchedServices = snap.docs.map(d => ({id: d.id, ...d.data()}));
-         
-         const titzCut = {
-           id: 'titezme-cut',
-           name: 'titeZMe Cut',
-           description: 'The barber chooses the cut for you based on your vibe and your budget.',
-           duration: profile?.titeZMeCut?.durationMinutes || 45,
-           price: profile?.titeZMeCut?.price || 20,
-           isTitz: true
-         };
-         
-         setServices([titzCut, ...fetchedServices]);
-      }
-      fetchServices();
-    }
-  }, [step, bookingContext, profile, barberId]);
+  const loading = loadingProfile || (step >= 2 && loadingServices);
 
   const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
