@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc, addDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 export default function ReviewPage({ params }: { params: Promise<{ bookingId: string }> }) {
   const resolvedParams = use(params);
@@ -30,7 +31,7 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
         if (bSnap.exists()) {
            const bData = bSnap.data();
            if (bData.clientId !== user.uid || bData.status !== 'completed') {
-              alert("You can only review completed bookings of your own.");
+              toast.error("You can only review completed bookings of your own.");
               router.push('/dashboard/client');
               return;
            }
@@ -39,7 +40,7 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
            const qR = query(collection(db, 'reviews'), where('bookingId', '==', bookingId));
            const rSnap = await getDocs(qR);
            if (!rSnap.empty) {
-              alert("You have already reviewed this booking.");
+              toast.error("You have already reviewed this booking.");
               router.push('/dashboard/client');
               return;
            }
@@ -102,7 +103,7 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
 
     } catch (e: any) {
       console.error(e);
-      alert("Failed to complete review. " + e.message);
+      toast.error("Failed to complete review. " + e.message);
     }
     setIsSubmitting(false);
   }

@@ -12,6 +12,7 @@ import useSWR from "swr";
 import { BarberInvitesTab } from '@/components/BarberInvitesTab';
 import { BarberPortfolioTab } from '@/components/BarberPortfolioTab';
 import { BarberSettingsTab } from '@/components/BarberSettingsTab';
+import { BookingRowSkeleton, StatCardSkeleton } from '@/components/skeletons';
 
 export default function BarberDashboard() {
   const { user, appUser, loading } = useAuth();
@@ -112,7 +113,29 @@ export default function BarberDashboard() {
   }
 
   if (!profile && !loading && user) {
-    return <div className="p-10 text-center animate-pulse text-brand-text-secondary">Loading profile data...</div>;
+    return (
+      <div className="flex min-h-[calc(100vh-53px)] flex-col md:flex-row">
+        <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
+          <div className="flex items-center gap-3 mb-7 px-2">
+             <div className="w-10 h-10 rounded-xl bg-[#2a2a2a] animate-pulse"></div>
+             <div>
+               <div className="h-4 w-24 bg-[#2a2a2a] rounded animate-pulse mb-1"></div>
+               <div className="h-3 w-12 bg-[#2a2a2a] rounded animate-pulse"></div>
+             </div>
+          </div>
+        </div>
+        <div className="flex-1 p-6 md:p-8 md:px-10">
+          <div className="max-w-[700px]">
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+            <div className="h-8 w-48 bg-[#2a2a2a] rounded-lg animate-pulse mb-6"></div>
+            {[1, 2, 3].map((i) => <BookingRowSkeleton key={i} />)}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const todayStr = new Date().toISOString().split('T')[0];

@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import useSWR from 'swr';
+import { BarberProfileSkeleton } from '@/components/skeletons';
 
 export default function BarberProfilePage({ params }: { params: Promise<{ barberId: string }> }) {
   const resolvedParams = use(params);
@@ -67,7 +68,7 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
     }
   }
 
-  if (loading) return <div className="text-center py-20 text-brand-text-secondary animate-pulse">Loading profile...</div>;
+  if (loading) return <BarberProfileSkeleton />;
   if (!profile) return <div className="text-center py-20 text-brand-text-secondary">Barber not found.</div>;
 
   const isFav = appUser?.favoriteBarbers?.includes(barberId);

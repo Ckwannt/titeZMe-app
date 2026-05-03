@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { doc, updateDoc, collection, addDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AvailabilityGrid } from './AvailabilityGrid';
+import { toast } from 'react-hot-toast';
 
 interface ShopAvailabilityTabProps {
   schedule: any;
@@ -13,10 +13,10 @@ interface ShopAvailabilityTabProps {
 
 export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabilityTabProps) {
   const { user } = useAuth();
-  const [successMsg, setSuccessMsg] = useState("");
 
   const handleSave = async (scheduleData: { weeklyHours: any; blockedDates: any[]; bufferMins: number }) => {
     if(!user) return;
+    const loadingToast = toast.loading("Saving schedule...");
     try {
       await setDoc(doc(db, 'schedules', user.uid), {
         ownerId: user.uid,
@@ -25,11 +25,10 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
         bufferMins: scheduleData.bufferMins
       });
       mutateSchedule();
-      setSuccessMsg("Shop hours saved!");
-      setTimeout(() => setSuccessMsg(""), 3000);
+      toast.success("Shop hours saved!", { id: loadingToast });
     } catch(e) {
       console.error(e);
-      alert("Failed to save schedule.");
+      toast.error("Failed to save schedule.", { id: loadingToast });
     }
   };
 
@@ -38,12 +37,6 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
       <h1 className="text-2xl font-black mb-2">Availability ⏰</h1>
       <p className="text-brand-text-secondary text-sm mb-8">Set your shop&apos;s working hours and closed days. This applies to the shop overall.</p>
       
-      {successMsg && (
-        <div className="bg-[#0f2010] border border-[#1b3b1c] text-brand-green rounded-xl px-4 py-3 text-sm font-bold mb-6">
-          {successMsg}
-        </div>
-      )}
-
       <AvailabilityGrid initialData={schedule} onSave={handleSave} />
     </div>
   );

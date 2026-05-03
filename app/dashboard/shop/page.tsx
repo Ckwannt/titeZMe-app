@@ -12,6 +12,7 @@ import { ShopPhotosTab } from '@/components/ShopPhotosTab';
 import { ShopServicesTab } from '@/components/ShopServicesTab';
 import { ShopSettingsTab } from '@/components/ShopSettingsTab';
 import { ShopAvailabilityTab } from '@/components/ShopAvailabilityTab';
+import { StatCardSkeleton, BookingRowSkeleton } from '@/components/skeletons';
 
 export default function ShopDashboard() {
   const { user, appUser, loading } = useAuth();
@@ -81,6 +82,32 @@ export default function ShopDashboard() {
         }
       }
     }
+  }
+
+  if (!shop && !loading && user) {
+    return (
+      <div className="flex min-h-[calc(100vh-53px)] flex-col md:flex-row">
+        <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
+          <div className="flex items-center gap-3 mb-7 px-2">
+             <div className="w-10 h-10 rounded-xl bg-[#2a2a2a] animate-pulse"></div>
+             <div>
+               <div className="h-4 w-24 bg-[#2a2a2a] rounded animate-pulse mb-1"></div>
+               <div className="h-3 w-12 bg-[#2a2a2a] rounded animate-pulse"></div>
+             </div>
+          </div>
+        </div>
+        <div className="flex-1 p-6 md:p-8 md:px-10">
+          <div className="max-w-[700px]">
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+            <div className="h-8 w-48 bg-[#2a2a2a] rounded-lg animate-pulse mb-6"></div>
+            {[1, 2, 3].map((i) => <BookingRowSkeleton key={i} />)}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const barbers = [
