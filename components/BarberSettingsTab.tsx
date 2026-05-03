@@ -59,17 +59,14 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
   useEffect(() => {
     if (initPhoneCodeStr) {
       const match = phoneCodeOptions.find(o => o.value === initPhoneCodeStr);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (match) setPhoneCode(match);
     }
     if (profile?.country) {
       const match = countryOptions.find(o => o.value === profile.country);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (match) setSelectedCountry(match);
     }
     if (profile?.languages?.length) {
       const matches = languageOptions.filter(o => profile.languages.includes(o.value));
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedLanguages(matches);
     }
   }, [initPhoneCodeStr, profile?.country, profile?.languages, phoneCodeOptions, countryOptions, languageOptions]);
@@ -79,10 +76,8 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       const cities = City.getCitiesOfCountry(selectedCountry.value) || [];
       const match = cities.find(c => c.name === profile.city);
       if (match) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedCityOption({ value: match.name, label: match.name });
       } else if (profile.city) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedCityOption({ value: profile.city, label: profile.city });
       }
     }
@@ -281,7 +276,10 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         <div className="flex items-center gap-6">
           <div className="w-24 h-24 rounded-full overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] shrink-0">
             {currentPhoto ? (
-              <img src={currentPhoto} alt={appUser?.firstName || 'Profile'} className="w-full h-full object-cover" />
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={currentPhoto} alt={appUser?.firstName || 'Profile'} className="w-full h-full object-cover" />
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-3xl font-black text-[#555] uppercase">
                 {appUser?.firstName?.[0] || 'B'}

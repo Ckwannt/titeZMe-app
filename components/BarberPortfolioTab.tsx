@@ -184,7 +184,10 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {photos.map((url: string, i: number) => (
               <div key={i} className="aspect-square bg-[#141414] rounded-2xl overflow-hidden relative group border border-[#2a2a2a]">
-                <img src={url} alt={`Portfolio ${i}`} className="w-full h-full object-cover" />
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt={`Portfolio ${i}`} className="w-full h-full object-cover" />
+                </>
                 <button 
                   onClick={() => handlePhotoDelete(url)}
                   className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 backdrop-blur-sm transition-all hover:bg-brand-red hover:text-white pointer-events-auto"
