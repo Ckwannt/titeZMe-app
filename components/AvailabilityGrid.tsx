@@ -7,15 +7,25 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 
 export interface AvailabilityGridProps {
-  mode: 'barber' | 'client';
-  barberId: string;
+  mode?: 'barber' | 'shop' | 'client';
+  barberId?: string;
   totalDuration?: number; // In minutes, used for client mode
+  initialData?: {
+    weeklyHours?: any;
+    blockedDates?: string[];
+    bufferMins?: number;
+  } | null;
+  onSave?: (scheduleData: {
+    weeklyHours: any;
+    blockedDates: any[];
+    bufferMins: number;
+  }) => Promise<void>;
   onSlotSelect?: (date: string, time: string) => void;
   selectedDate?: string;
   selectedTime?: string;
 }
 
-export function AvailabilityGrid({ mode, barberId, totalDuration = 0, onSlotSelect, selectedDate, selectedTime }: AvailabilityGridProps) {
+export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration = 0, onSlotSelect, selectedDate, selectedTime, initialData, onSave }: AvailabilityGridProps) {
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [availableSlots, setAvailableSlots] = useState<Record<string, string[]>>({});
   const [bookings, setBookings] = useState<any[]>([]);
