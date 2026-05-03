@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -142,9 +143,8 @@ export default function ShopDashboard() {
       <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
         <div className="flex items-center gap-3 mb-6 px-2">
           {shop?.coverPhotoUrl ? (
-            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
-               {/* eslint-disable-next-line @next/next/no-img-element */}
-               <img src={shop.coverPhotoUrl} alt="Shop avatar" className="w-full h-full object-cover" />
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0">
+               <Image src={shop.coverPhotoUrl} alt="Shop avatar" fill className="object-cover" referrerPolicy="no-referrer" />
             </div>
           ) : (
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-base text-[#0a0a0a]">

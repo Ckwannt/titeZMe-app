@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, doc, getDoc, orderBy, limit, updateD
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BarberProfileSkeleton } from '@/components/skeletons';
 import { userUpdateSchema } from "@/lib/schemas";
@@ -87,9 +88,8 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
        
        {/* Header */}
        <div className="flex flex-col sm:flex-row gap-8 items-start sm:items-center mb-10">
-         <div className="w-[120px] h-[120px] rounded-[32px] bg-[#1a1a1a] flex items-center justify-center text-5xl overflow-hidden shrink-0 border border-brand-border">
-           {/* eslint-disable-next-line @next/next/no-img-element */}
-           {profile.photos?.[0] ? <img src={profile.photos[0]} alt="" className="w-full h-full object-cover" /> : "💈"}
+         <div className="relative w-[120px] h-[120px] rounded-[32px] bg-[#1a1a1a] flex items-center justify-center text-5xl overflow-hidden shrink-0 border border-brand-border">
+           {profile.photos?.[0] ? <Image src={profile.photos[0]} alt="Barber photo" fill className="object-cover" referrerPolicy="no-referrer" /> : "💈"}
          </div>
          <div className="flex-1">
            <div className="flex items-start justify-between">

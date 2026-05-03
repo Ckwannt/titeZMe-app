@@ -5,6 +5,8 @@ import { useAuth } from '@/lib/auth-context';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import Image from 'next/image';
+import imageCompression from 'browser-image-compression';
 import { barberUpdateSchema } from "@/lib/schemas";
 
 interface BarberPortfolioTabProps {
@@ -21,16 +23,12 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
   const photos = profile?.photos || [];
   const videos = profile?.videos || [];
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       setErrorMsg('Only jpg, png, and webp images are allowed.');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setErrorMsg('Photo file size must be less than 10MB.');
       return;
     }
     if (photos.length >= 20) {
@@ -41,28 +39,42 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
     setPhotoLoading(true);
     setErrorMsg('');
 
-    const storageRef = ref(storage, `portfolios/${user.uid}/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    try {
+      const options = {
+        maxSizeMB: 1, // Max 1MB
+        maxWidthOrHeight: 1200, // Max 1200px
+        useWebWorker: true,
+      };
 
-    uploadTask.on('state_changed', 
-      null, 
-      (error) => {
-        setPhotoLoading(false);
-        setErrorMsg('Upload failed. Please try again.');
-        console.error(error);
-      }, 
-      async () => {
-        try {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          const newPhotos = [...photos, downloadURL];
-          await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ photos: newPhotos }));
-          mutateProfile();
-        } catch (err) {
-          console.error(err);
+      const compressedFile = await imageCompression(file, options);
+
+      const storageRef = ref(storage, `portfolios/${user.uid}/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile, { cacheControl: 'public, max-age=31536000' });
+
+      uploadTask.on('state_changed', 
+        null, 
+        (error) => {
+          setPhotoLoading(false);
+          setErrorMsg('Upload failed. Please try again.');
+          console.error(error);
+        }, 
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            const newPhotos = [...photos, downloadURL];
+            await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ photos: newPhotos }));
+            mutateProfile();
+          } catch (err) {
+            console.error(err);
+          }
+          setPhotoLoading(false);
         }
-        setPhotoLoading(false);
-      }
-    );
+      );
+    } catch (error) {
+      console.error(error);
+      setErrorMsg('Image compression failed.');
+      setPhotoLoading(false);
+    }
     e.target.value = ""; // Reset input
   };
 
@@ -106,7 +118,7 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
     setErrorMsg('');
 
     const storageRef = ref(storage, `portfolios/${user.uid}/videos/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    const uploadTask = uploadBytesResumable(storageRef, file, { cacheControl: 'public, max-age=31536000' });
 
     uploadTask.on('state_changed', 
       null, 
@@ -186,8 +198,7 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
             {photos.map((url: string, i: number) => (
               <div key={i} className="aspect-square bg-[#141414] rounded-2xl overflow-hidden relative group border border-[#2a2a2a]">
                 <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt={`Portfolio ${i}`} className="w-full h-full object-cover" />
+                  <Image src={url} alt={`Portfolio ${i}`} fill className="object-cover" referrerPolicy="no-referrer" />
                 </>
                 <button 
                   onClick={() => handlePhotoDelete(url)}

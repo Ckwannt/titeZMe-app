@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
@@ -114,8 +115,7 @@ export default function Home() {
               <Link href={item.type === 'shop' ? `/shop/${item.userId}` : `/barber/${item.userId}`} key={i} className="group bg-brand-surface border border-brand-border rounded-3xl overflow-hidden hover:border-[#444] transition-all hover:-translate-y-1 block">
                 <div className="h-[180px] bg-[#1a1a1a] relative">
                   {item.photos && item.photos.length > 0 ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={item.photos[0]} alt="Barber" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <Image src={item.photos[0]} alt="Barber" fill className="object-cover opacity-80 group-hover:opacity-100 transition-opacity" referrerPolicy="no-referrer" />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-5xl">💈</div>
                   )}

@@ -9,6 +9,8 @@ import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import Select from "react-select";
 import { Country, City } from "country-state-city";
 import ISO6391 from "iso-639-1";
+import Image from "next/image";
+import imageCompression from "browser-image-compression";
 import { userUpdateSchema, barberUpdateSchema } from "@/lib/schemas";
 
 interface BarberSettingsTabProps {
@@ -156,7 +158,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     tiktok: profile?.tiktok || ''
   });
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     
@@ -164,41 +166,50 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       setErrorMsg('Only jpg, png, and webp images are allowed.');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('Profile photo size must be less than 5MB.');
-      return;
-    }
 
     setPhotoLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
 
-    // Always same filename to overwrite
-    const storageRef = ref(storage, `profile-photos/${user.uid}/profile.jpg`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    try {
+      const options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 800,
+        useWebWorker: true,
+      };
 
-    uploadTask.on('state_changed', 
-      null, 
-      (error) => {
-        setPhotoLoading(false);
-        setErrorMsg('Upload failed. Please try again.');
-        console.error("Upload Error:", error);
-      }, 
-      async () => {
-        try {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({ photoUrl: downloadURL }));
-          await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ profilePhotoUrl: downloadURL }));
-          setLocalPhotoUrl(downloadURL);
-          mutateProfile();
-          setSuccessMsg('Profile photo updated!');
-        } catch (err) {
-           console.error("Database Update Error:", err);
-           setErrorMsg('Failed to update profile photo URL in database.');
+      const compressedFile = await imageCompression(file, options);
+      
+      const storageRef = ref(storage, `profile-photos/${user.uid}/profile.jpg`);
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile, { cacheControl: 'public, max-age=31536000' });
+
+      uploadTask.on('state_changed', 
+        null, 
+        (error) => {
+          setPhotoLoading(false);
+          setErrorMsg('Upload failed. Please try again.');
+          console.error("Upload Error:", error);
+        }, 
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({ photoUrl: downloadURL }));
+            await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ profilePhotoUrl: downloadURL }));
+            setLocalPhotoUrl(downloadURL);
+            mutateProfile();
+            setSuccessMsg('Profile photo updated!');
+          } catch (err) {
+             console.error("Database Update Error:", err);
+             setErrorMsg('Failed to update profile photo URL in database.');
+          }
+          setPhotoLoading(false);
         }
-        setPhotoLoading(false);
-      }
-    );
+      );
+    } catch (error) {
+      console.error(error);
+      setErrorMsg('Image compression failed.');
+      setPhotoLoading(false);
+    }
   };
 
   const handleSaveInfo = async () => {
@@ -279,11 +290,10 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
         <h2 className="text-lg font-black mb-4">Profile Photo</h2>
         <div className="flex items-center gap-6">
-          <div className="w-24 h-24 rounded-full overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] shrink-0">
+          <div className="relative w-24 h-24 rounded-full overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] shrink-0">
             {currentPhoto ? (
               <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={currentPhoto} alt={appUser?.firstName || 'Profile'} className="w-full h-full object-cover" />
+                <Image src={currentPhoto} alt={appUser?.firstName || 'Profile'} fill className="object-cover" referrerPolicy="no-referrer" />
               </>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-3xl font-black text-[#555] uppercase">
