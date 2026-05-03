@@ -1,12 +1,87 @@
 'use client';
 
-import { useState } from "react";
-import { DeleteAccountButton } from '@/components/DeleteAccountButton';
+import { useState, useEffect } from "react";
+import { useAuth } from '@/lib/auth-context';
+import { useRouter } from "next/navigation";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import useSWR from "swr";
+
 import { ShopTeamTab } from '@/components/ShopTeamTab';
+import { ShopPhotosTab } from '@/components/ShopPhotosTab';
+import { ShopServicesTab } from '@/components/ShopServicesTab';
+import { ShopSettingsTab } from '@/components/ShopSettingsTab';
+import { ShopAvailabilityTab } from '@/components/ShopAvailabilityTab';
 
 export default function ShopDashboard() {
+  const { user, appUser, loading } = useAuth();
+  const router = useRouter();
+  
   const [selectedBarber, setSelectedBarber] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("Overview");
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login');
+    }
+  }, [user, loading, router]);
+
+  const { data: shop, mutate: mutateShop } = useSWR(user ? ['shop', user.uid] : null, async () => {
+    const snap = await getDoc(doc(db, 'barbershops', user!.uid));
+    return snap.exists() ? snap.data() : null;
+  });
+
+  const { data: schedule, mutate: mutateSchedule } = useSWR(user ? ['schedule', user.uid] : null, async () => {
+    const snap = await getDoc(doc(db, 'schedules', user!.uid));
+    return snap.exists() ? snap.data() : null;
+  });
+
+  const { data: services = [], mutate: mutateServices } = useSWR(user ? ['shopServices', user.uid] : null, async () => {
+    const q = query(collection(db, 'services'), where("providerId", "==", user!.uid), where("providerType", "==", "shop"));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+  });
+
+  // Calculate Open/Closed status
+  let shopStatus = { text: "Closed today", color: "text-brand-red", statusId: "closed" };
+  if (schedule) {
+    const today = new Date();
+    const dayOfWeekStr = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // Simplistic approach for MVP: checking local time instead of proper shop timezone calculation
+    // "blockedDates"
+    if (schedule.blockedDates?.includes(todayStr)) {
+      shopStatus = { text: "On leave", color: "text-brand-red", statusId: "leave" };
+    } else {
+      const todayHours = schedule.weeklyHours?.[dayOfWeekStr];
+      if (!todayHours?.isOpen) {
+        shopStatus = { text: "Closed today", color: "text-brand-red", statusId: "closed" };
+      } else {
+        const nowMins = today.getHours() * 60 + today.getMinutes();
+        const startMins = parseInt(todayHours.start.split(':')[0]) * 60 + parseInt(todayHours.start.split(':')[1]);
+        const endMins = parseInt(todayHours.end.split(':')[0]) * 60 + parseInt(todayHours.end.split(':')[1]);
+        
+        let onBreak = false;
+        if (todayHours.breaks) {
+          onBreak = todayHours.breaks.some((br: any) => {
+            if (!br.start || !br.end) return false;
+            const bStart = parseInt(br.start.split(':')[0]) * 60 + parseInt(br.start.split(':')[1]);
+            const bEnd = parseInt(br.end.split(':')[0]) * 60 + parseInt(br.end.split(':')[1]);
+            return nowMins >= bStart && nowMins < bEnd;
+          });
+        }
+
+        if (nowMins >= startMins && nowMins < endMins && !onBreak) {
+          shopStatus = { text: "Open now", color: "text-brand-green", statusId: "open" };
+        } else if (nowMins < startMins) {
+          shopStatus = { text: `Closed · Opens at ${todayHours.start}`, color: "text-brand-red", statusId: "closed" };
+        } else {
+          shopStatus = { text: `Closed`, color: "text-brand-red", statusId: "closed" };
+        }
+      }
+    }
+  }
 
   const barbers = [
     { name: "Carlos M.", avatar: "C", color: "bg-brand-orange", cuts: 42, hours: 84, revenue: 1250, rating: 4.9, status: "working" },
@@ -21,16 +96,34 @@ export default function ShopDashboard() {
     <div className="flex min-h-[calc(100vh-53px)] flex-col md:flex-row">
       {/* Sidebar */}
       <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
-        <div className="mb-7 px-2">
-          <div className="font-black text-base">The Blade Room</div>
-          <div className="text-[11px] text-brand-text-secondary mt-0.5">📍 Malasaña, Madrid</div>
-          <div className="text-[11px] text-brand-green mt-1 font-bold">● Open now</div>
+        <div className="flex items-center gap-3 mb-6 px-2">
+          {shop?.coverPhotoUrl ? (
+            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
+               {/* eslint-disable-next-line @next/next/no-img-element */}
+               <img src={shop.coverPhotoUrl} alt="Shop avatar" className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-base text-[#0a0a0a]">
+              {shop?.name?.[0] || "S"}
+            </div>
+          )}
+          <div>
+            <div className="font-extrabold text-sm truncate max-w-[120px]">{shop?.name || "Loading..."}</div>
+            <div className="text-[11px] text-brand-text-secondary mt-0.5 truncate max-w-[120px]">
+              📍 {shop?.address?.street && shop?.address?.city ? `${shop.address.street}, ${shop.address.city}` : "Address not set"}
+            </div>
+            <div className={`text-[11px] mt-1 font-bold ${shopStatus.color}`}>
+              {shopStatus.statusId === "open" ? "● " : ""}{shopStatus.text}
+            </div>
+          </div>
         </div>
+        
         <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
           {[
             { icon: "🏪", label: "Overview" },
             { icon: "👥", label: "Team" },
             { icon: "📅", label: "All Bookings" },
+            { icon: "⏰", label: "Availability" },
             { icon: "💰", label: "Earnings" },
             { icon: "✂️", label: "Services" },
             { icon: "📸", label: "Shop Photos" },
@@ -48,21 +141,26 @@ export default function ShopDashboard() {
           ))}
         </div>
         
-        <div className="mt-auto hidden md:block">
-          <DeleteAccountButton role="barber" />
-        </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 p-6 md:p-8 md:px-10 max-h-[calc(100vh-53px)] overflow-y-auto">
         {activeTab === 'Team' ? (
           <ShopTeamTab />
-        ) : (
+        ) : activeTab === 'Availability' ? (
+          <ShopAvailabilityTab schedule={schedule} mutateSchedule={mutateSchedule} />
+        ) : activeTab === 'Services' ? (
+          <ShopServicesTab services={services} mutateServices={mutateServices} shop={shop} mutateShop={mutateShop} />
+        ) : activeTab === 'Shop Photos' ? (
+          <ShopPhotosTab shop={shop} mutateShop={mutateShop} />
+        ) : activeTab === 'Settings' ? (
+          <ShopSettingsTab shop={shop} mutateShop={mutateShop} />
+        ) : activeTab === 'Overview' || activeTab === 'All Bookings' || activeTab === 'Earnings' || activeTab === 'Reviews' ? (
           <>
             <div className="animate-fadeUp flex flex-col md:flex-row justify-between items-start mb-7 gap-4">
               <div>
-                <h1 className="text-2xl font-black">Shop Overview 🏪</h1>
-                <p className="text-brand-text-secondary text-sm mt-1">April 2026 · 4 active barbers</p>
+                <h1 className="text-2xl font-black">{activeTab} {activeTab === "Overview" ? "🏪" : ""}</h1>
+                {activeTab === "Overview" && <p className="text-brand-text-secondary text-sm mt-1">April 2026 · 4 active barbers</p>}
               </div>
               <button 
                 onClick={() => setActiveTab('Team')}
@@ -178,7 +276,7 @@ export default function ShopDashboard() {
           </div>
         </div>
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );
