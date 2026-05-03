@@ -29,6 +29,7 @@ export interface AppUser {
   photos?: string[];
   isLive?: boolean;
   phone?: string;
+  phoneCountryCode?: string;
   city?: string;
   country?: string;
   bio?: string;
