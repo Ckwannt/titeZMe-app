@@ -7,7 +7,11 @@ import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/fir
 import { db } from '@/lib/firebase';
 import { auth } from '@/lib/firebase';
 
-export function DeleteAccountButton({ role }: { role: 'client' | 'barber' }) {
+interface DeleteAccountButtonProps {
+  role?: 'client' | 'barber';
+}
+
+export function DeleteAccountButton({ role = 'client' }: DeleteAccountButtonProps) {
   const router = useRouter();
   const { user, appUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);

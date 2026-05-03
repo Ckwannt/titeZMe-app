@@ -5,7 +5,14 @@ import { useAuth } from '@/lib/auth-context';
 import { collection, addDoc, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export function ShopServicesTab({ services, mutateServices, shop, mutateShop }: { services: any[], mutateServices: () => void, shop: any, mutateShop: () => void }) {
+interface ShopServicesTabProps {
+  services: any[];
+  mutateServices: () => void;
+  shop: any;
+  mutateShop: () => void;
+}
+
+export function ShopServicesTab({ services = [], mutateServices, shop, mutateShop }: ShopServicesTabProps) {
   const { user } = useAuth();
   const [newServiceName, setNewServiceName] = useState("");
   const [newServicePrice, setNewServicePrice] = useState("");
