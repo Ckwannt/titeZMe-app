@@ -8,7 +8,7 @@ export default function NotFound() {
       </div>
       
       <h2 className="text-8xl font-black mb-4">404</h2>
-      <p className="text-xl text-[#888888] mb-8 font-medium">This page doesn't exist</p>
+      <p className="text-xl text-[#888888] mb-8 font-medium">This page doesn&apos;t exist</p>
       
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
         <Link 

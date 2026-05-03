@@ -58,12 +58,10 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   useEffect(() => {
     if (initPhoneCodeStr) {
       const match = phoneCodeOptions.find(o => o.value === initPhoneCodeStr);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (match) setPhoneCode(match);
     }
     if (shop?.address?.country) {
       const match = countryOptions.find(o => o.value === shop.address.country);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (match) setSelectedCountry(match);
     }
   }, [initPhoneCodeStr, shop?.address?.country, phoneCodeOptions, countryOptions]);
@@ -73,10 +71,8 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       const cities = City.getCitiesOfCountry(selectedCountry.value) || [];
       const match = cities.find(c => c.name === shop.address.city);
       if (match) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedCityOption({ value: match.name, label: match.name });
       } else if (shop.address.city) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedCityOption({ value: shop.address.city, label: shop.address.city });
       }
     }
