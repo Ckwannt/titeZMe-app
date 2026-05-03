@@ -66,7 +66,7 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
       
       const qSvc = query(collection(db, 'services'), where('providerId', '==', providerId), where('providerType', '==', pType));
       const snap = await getDocs(qSvc);
-      const fetchedServices = snap.docs.map(d => ({id: d.id, ...d.data()}));
+      const fetchedServices = snap.docs.map(d => ({id: d.id, ...d.data()} as any));
       
       const titzCut = {
         id: 'titezme-cut',

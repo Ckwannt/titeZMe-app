@@ -31,7 +31,7 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
     // Fetch Services
     const svQ = query(collection(db, 'services'), where('providerId', '==', barberId), where('providerType', '==', 'barber'));
     const svSnap = await getDocs(svQ);
-    const services: any[] = svSnap.docs.map(d => ({id: d.id, ...d.data()}));
+    const services: any[] = svSnap.docs.map(d => ({id: d.id, ...d.data()} as any));
 
     // Fetch Reviews
     const rQ = query(collection(db, 'reviews'), where('providerId', '==', barberId), orderBy('createdAt', 'desc'), limit(10));

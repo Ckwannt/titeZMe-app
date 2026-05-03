@@ -17,7 +17,7 @@ export default function ShopProfilePage() {
       if (!shopSnap.exists()) {
         throw new Error('Shop not found');
       }
-      const shopData = { id: shopSnap.id, ...shopSnap.data() };
+      const shopData = { id: shopSnap.id, ...shopSnap.data() } as any;
 
       const barbersQuery = query(collection(db, 'barberProfiles'), where('shopId', '==', shopId));
       const barbersSnap = await getDocs(barbersQuery);

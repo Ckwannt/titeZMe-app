@@ -55,7 +55,7 @@ export default function ClientDashboard() {
       const fSnap = await getDoc(doc(db, 'barberProfiles', fId));
       if (fSnap.exists()) {
          const uSnap = await getDoc(doc(db, 'users', fId));
-         fResults.push({ id: fId, ...fSnap.data(), user: uSnap.exists() ? uSnap.data() : null });
+         fResults.push({ id: fId, ...fSnap.data(), user: uSnap.exists() ? uSnap.data() : null } as any);
       }
     }
 
