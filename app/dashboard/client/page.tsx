@@ -7,6 +7,8 @@ import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
+import { BookingRowSkeleton } from '@/components/skeletons';
+import { toast } from 'react-hot-toast';
 
 export default function ClientDashboard() {
   const { user, appUser, loading } = useAuth();
@@ -68,14 +70,19 @@ export default function ClientDashboard() {
     const bDate = new Date(`${dateStr}T${timeStr}`);
     const now = new Date();
     if ((bDate.getTime() - now.getTime()) < 2 * 60 * 60 * 1000) {
-      alert("Cannot cancel within 2 hours of appointment time.");
+      toast.error("Cannot cancel within 2 hours of appointment time.");
       return;
     }
+    const loadingToast = toast.loading("Cancelling appointment...");
     try {
       const timeNow = Date.now();
       await updateDoc(doc(db, 'bookings', bId), { status: 'cancelled_by_client', updatedAt: timeNow });
       mutate();
-    } catch(e) { console.error(e); }
+      toast.success("Appointment cancelled.", { id: loadingToast });
+    } catch(e) {
+      console.error(e);
+      toast.error("Failed to cancel.", { id: loadingToast });
+    }
   }
 
   const removeFavorite = async (barberId: string) => {

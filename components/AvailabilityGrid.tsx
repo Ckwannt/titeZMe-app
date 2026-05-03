@@ -5,6 +5,7 @@ import { startOfWeek, addDays, format, isBefore, isPast, parseISO, addWeeks, sub
 import { collection, query, where, getDocs, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
+import { toast } from 'react-hot-toast';
 
 export interface AvailabilityGridProps {
   mode?: 'barber' | 'shop' | 'client';
@@ -212,7 +213,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
     }
     
     if (overlap) {
-      alert("Not enough consecutive time for this service starting here. Try another slot.");
+      toast.error("Not enough consecutive time for this service starting here. Try another slot.");
       return;
     }
 

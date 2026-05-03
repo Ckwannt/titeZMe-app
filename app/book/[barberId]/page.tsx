@@ -5,6 +5,8 @@ import { useAuth } from '@/lib/auth-context';
 import { collection, query, where, getDocs, doc, getDoc, runTransaction, setDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AvailabilityGrid } from '@/components/AvailabilityGrid';
+import { BarberProfileSkeleton } from '@/components/skeletons';
+import { toast } from 'react-hot-toast';
 
 import { useRouter } from 'next/navigation';
 
@@ -180,17 +182,17 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
     } catch (e: any) {
       console.error(e);
       if (e.message === "OVERLAP") {
-         alert("Oh no! This slot was just taken. Please choose another time.");
+         toast.error("Oh no! This slot was just taken. Please choose another time.");
          setSelectedTime('');
          setStep(3); // Go back to slots
       } else {
-         alert("Failed to book constraint check. " + e.message);
+         toast.error("Failed to book constraint check. " + e.message);
       }
     }
     setIsSubmitting(false);
   }
 
-  if (loading) return <div className="p-20 text-center text-brand-text-secondary animate-pulse">Loading...</div>;
+  if (loading) return <BarberProfileSkeleton />;
 
   return (
     <div className="max-w-[600px] mx-auto px-6 py-10 md:py-16">

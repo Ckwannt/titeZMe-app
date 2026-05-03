@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import useSWR from 'swr';
+import { BarberCardSkeleton } from '@/components/skeletons';
 
 const fetchListings = async () => {
   // 1. Fetch all barbers where isLive == true
@@ -96,7 +97,11 @@ export default function Home() {
       </div>
 
       {loading ? (
-        <div className="text-center text-brand-text-secondary animate-pulse font-bold mt-20">Searching...</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-20">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <BarberCardSkeleton key={i} />
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 animate-fadeUp !delay-[100ms]">
           {filtered.length === 0 ? (
