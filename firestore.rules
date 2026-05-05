@@ -1,0 +1,324 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /connection_test/{docId} {
+      allow read, write: if true; // Temporary test rule
+    }
+
+    // Phase 3: Primitive Definition
+    function isSignedIn() { 
+      return request.auth != null && request.auth.uid != null; 
+    }
+    
+    function isValidId(id) { 
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // Validations (Phase 2 & 4)
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'firstName', 'lastName', 'createdAt', 'isOnboarded']) 
+        && data.uid is string && data.uid.size() <= 128
+        && data.email is string && data.email.size() <= 256
+        && data.role in ['client', 'barber', 'shop_owner']
+        && data.firstName is string && data.firstName.size() <= 100
+        && data.lastName is string && data.lastName.size() <= 100
+        && data.createdAt is number
+        && data.isOnboarded is bool
+        && (data.get('ownsShop', false) is bool)
+        && data.get('favoriteBarbers', []) is list;
+    }
+
+    function isValidBarberProfile(data) {
+      return data.keys().hasAll(['userId', 'bio', 'city', 'isLive']) 
+        && data.userId is string && data.userId.size() <= 128
+        && data.bio is string && data.bio.size() <= 2000
+        && data.city is string && data.city.size() <= 100
+        && data.get('languages', []) is list
+        && data.get('vibes', []) is list
+        && data.get('specialties', []) is list
+        && data.get('photos', []) is list
+        && data.get('isSolo', true) is bool
+        && (data.get('shopId', null) == null || data.get('shopId', null) is string)
+        && (data.get('ownsShop', false) is bool)
+        && (data.get('rating', 0) is number || data.get('rating', 0) is float)
+        && data.get('totalCuts', 0) is number
+        && data.get('reviewCount', 0) is number
+        && data.isLive is bool
+        && (data.get('barberCode', '') == '' || (data.get('barberCode', '') is string && data.get('barberCode', '').matches('^TZB-[A-Z0-9]{6}$')));
+    }
+
+    function isValidSchedule(data) {
+      return data.keys().hasAll(['userId', 'timezone', 'weeklyHours', 'blockedDates'])
+        && data.userId is string && data.userId.size() <= 128
+        && data.timezone is string && data.timezone.size() <= 50
+        && data.weeklyHours is map
+        && data.blockedDates is list;
+    }
+
+    function isValidBarbershop(data) {
+      return data.keys().hasAll(['ownerId', 'name', 'contactPhone', 'address', 'status', 'createdAt'])
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.contactPhone is string && data.contactPhone.size() <= 50
+        && data.address is map
+        && data.address.keys().hasAll(['street', 'city', 'country', 'number', 'postalCode', 'floor'])
+        && data.address.street is string && data.address.street.size() <= 200
+        && data.address.city is string && data.address.city.size() <= 100
+        && data.address.country is string && data.address.country.size() <= 100
+        && data.address.number is string && data.address.number.size() <= 50
+        && data.address.postalCode is string && data.address.postalCode.size() <= 50
+        && data.address.floor is string && data.address.floor.size() <= 100
+        && data.get('googleMapsUrl', '') is string
+        && data.get('description', '') is string && data.get('description', '').size() <= 2000
+        && data.get('photos', []) is list
+        && data.get('barbers', []) is list
+        && data.status in ['active', 'inactive', 'suspended']
+        && data.createdAt is number;
+    }
+
+    function isValidService(data) {
+      return data.keys().hasAll(['providerId', 'providerType', 'name', 'duration', 'price'])
+        && data.providerId is string && data.providerId.size() <= 128
+        && data.providerType in ['barber', 'shop']
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.duration is number && data.duration > 0
+        && data.price is number && data.price >= 0;
+    }
+
+    function isValidBooking(data) {
+      return data.keys().hasAll(['clientId', 'barberId', 'date', 'startTime', 'status', 'price'])
+        && data.clientId is string && data.clientId.size() <= 128
+        && data.barberId is string && data.barberId.size() <= 128
+        && (data.get('serviceId', '') == '' || data.get('serviceId', '') is string)
+        && (data.get('serviceIds', []) is list)
+        && data.date is string && data.date.size() <= 20
+        && data.startTime is string && data.startTime.size() <= 20
+        && (data.get('endTime', '') == '' || data.get('endTime', '') is string)
+        && (data.get('totalDuration', 0) is number)
+        && data.status in ['pending', 'confirmed', 'completed', 'cancelled', 'cancelled_by_client', 'cancelled_by_barber']
+        && data.price is number
+        && (data.get('shopId', null) == null || data.get('shopId', '') is string)
+        && (data.get('paymentMethod', '') == '' || data.get('paymentMethod', '') is string)
+        && (data.get('bookingContext', '') == '' || data.get('bookingContext', '') is string);
+    }
+
+    function isValidReview(data) {
+      return data.keys().hasAll(['bookingId', 'providerId', 'providerType', 'clientId', 'rating', 'createdAt'])
+        && data.bookingId is string && data.bookingId.size() <= 128
+        && data.providerId is string && data.providerId.size() <= 128
+        && data.providerType in ['barber', 'shop']
+        && data.clientId is string && data.clientId.size() <= 128
+        && data.rating is number && data.rating >= 1 && data.rating <= 5
+        && data.get('comment', '') is string && data.get('comment', '').size() <= 1000
+        && data.createdAt is number;
+    }
+
+    function isValidInvite(data) {
+      return data.keys().hasAll(['shopId', 'shopName', 'barberId', 'status', 'createdAt'])
+        && data.shopId is string && data.shopId.size() <= 128
+        && data.shopName is string && data.shopName.size() <= 100
+        && data.barberId is string && data.barberId.size() <= 128
+        && data.status in ['pending', 'accepted', 'declined', 'cancelled']
+        && data.createdAt is number
+        && (data.get('respondedAt', 0) is number);
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['userId', 'message', 'read', 'createdAt'])
+        && data.userId is string && data.userId.size() <= 128
+        && data.message is string && data.message.size() <= 500
+        && data.read is bool
+        && data.get('linkTo', null) == null || data.get('linkTo', null) is string
+        && data.createdAt is number;
+    }
+
+    // Role Checks
+    // Assuming users don't override their role maliciously on creation, we shouldn't trust it fully.
+    // In production, user roles are assigned via Admin SDK using custom claims or a trusted backend,
+    // but for MVP, we'll allow an authenticated user to write their own user doc on creation, but NOT modify their uid or role later.
+    
+    // Users
+    match /users/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid; // don't allow scraping
+      
+      allow create: if isSignedIn() 
+        && request.auth.uid == userId 
+        && isValidUser(incoming()) 
+        && incoming().uid == request.auth.uid;
+        
+      allow update: if isSignedIn() 
+        && request.auth.uid == userId 
+        && isValidUser(incoming())
+        && incoming().uid == existing().uid
+        && (incoming().role == existing().role || incoming().role == 'barber');
+        
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Barber Profiles
+    match /barberProfiles/{profileId} {
+      allow read: if true; // public profiles
+      
+      allow create: if isSignedIn() 
+        && request.auth.uid == incoming().userId
+        && isValidBarberProfile(incoming());
+        
+      allow update: if isSignedIn()
+        && (existing().get('barberCode', '') == '' || incoming().get('barberCode', '') == existing().get('barberCode', ''))
+        && (
+          (request.auth.uid == existing().userId && isValidBarberProfile(incoming()) && incoming().userId == existing().userId)
+          ||
+          (incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalCuts']) && isValidBarberProfile(incoming()))
+        );
+        
+      allow delete: if isSignedIn() && request.auth.uid == profileId;
+    }
+
+    // Schedules
+    match /schedules/{userId} {
+      allow read: if true; 
+      allow create: if isSignedIn() 
+        && request.auth.uid == incoming().userId
+        && isValidSchedule(incoming());
+      allow update: if isSignedIn()
+        && request.auth.uid == existing().userId
+        && isValidSchedule(incoming())
+        && incoming().userId == existing().userId; // immutable id
+        
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Barbershops
+    match /barbershops/{shopId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && request.auth.uid == incoming().ownerId
+        && isValidBarbershop(incoming());
+      allow update: if isSignedIn()
+        && request.auth.uid == existing().ownerId
+        && isValidBarbershop(incoming())
+        && incoming().ownerId == existing().ownerId;
+        
+      allow delete: if isSignedIn() && request.auth.uid == existing().ownerId;
+    }
+
+    // Services
+    match /services/{serviceId} {
+      allow read: if true; // services are public to everyone
+      
+      allow create: if isSignedIn()
+        && request.auth.uid == incoming().providerId
+        && isValidService(incoming())
+        && exists(/databases/$(database)/documents/barberProfiles/$(request.auth.uid));
+        
+      allow update: if isSignedIn()
+        && request.auth.uid == existing().providerId
+        && isValidService(incoming())
+        && incoming().providerId == existing().providerId;
+        
+      allow delete: if isSignedIn() && request.auth.uid == existing().providerId;
+    }
+
+    // Bookings
+    match /bookings/{bookingId} {
+      // Both the client and the barber can read the booking
+      allow get: if isSignedIn() && isValidId(bookingId) 
+        && (resource.data.clientId == request.auth.uid || resource.data.barberId == request.auth.uid);
+      
+      allow list: if isSignedIn() 
+        && (resource.data.clientId == request.auth.uid || resource.data.barberId == request.auth.uid);
+        
+      allow create: if isSignedIn()
+        && request.auth.uid == incoming().clientId
+        && isValidBooking(incoming())
+        && incoming().status == 'pending' // New bookings start as pending
+        && exists(/databases/$(database)/documents/services/$(incoming().serviceId))
+        && exists(/databases/$(database)/documents/barberProfiles/$(incoming().barberId));
+
+      allow update: if isSignedIn() && isValidBooking(incoming()) && (
+        // Action: Client cancels their booking
+        (
+          request.auth.uid == existing().clientId
+          && incoming().status == 'cancelled_by_client'
+          && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+        ) 
+        ||
+        // Action: Barber updates booking status
+        (
+          request.auth.uid == existing().barberId
+          && incoming().status in ['confirmed', 'completed', 'cancelled', 'cancelled_by_barber']
+          && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+        )
+      );
+    }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && request.auth.uid == incoming().clientId
+        && isValidReview(incoming())
+        && exists(/databases/$(database)/documents/barberProfiles/$(incoming().providerId));
+      allow update: if isSignedIn()
+        && request.auth.uid == existing().clientId
+        && isValidReview(incoming())
+        && incoming().clientId == existing().clientId
+        && incoming().providerId == existing().providerId;
+      allow delete: if isSignedIn() && (request.auth.uid == existing().clientId || request.auth.uid == existing().providerId);
+    }
+
+    // Locks for double booking checks
+    match /bookingLocks/{lockId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+    
+    // Invites
+    match /invites/{inviteId} {
+      allow read: if isSignedIn() && (resource.data.shopId == request.auth.uid || resource.data.barberId == request.auth.uid);
+      allow list: if isSignedIn() && (resource.data.shopId == request.auth.uid || resource.data.barberId == request.auth.uid);
+      
+      allow create: if isSignedIn()
+        && request.auth.uid == incoming().shopId
+        && isValidInvite(incoming());
+        
+      allow update: if isSignedIn()
+        && (
+          (request.auth.uid == existing().barberId && incoming().status in ['accepted', 'declined']) // barber accepts/declines
+          ||
+          (request.auth.uid == existing().shopId && incoming().status == 'cancelled') // shop cancels
+        )
+        && isValidInvite(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'respondedAt']);
+        
+      allow delete: if isSignedIn() && (request.auth.uid == existing().shopId || request.auth.uid == existing().barberId);
+    }
+    
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // System generated usually, but if client/barber triggers them, they might write:
+      allow create: if isSignedIn() && isValidNotification(incoming());
+      
+      allow update: if isSignedIn() 
+        && request.auth.uid == existing().userId
+        && isValidNotification(incoming())
+        && incoming().userId == existing().userId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+        
+      allow delete: if isSignedIn() && request.auth.uid == existing().userId;
+    }
+  }
+}
