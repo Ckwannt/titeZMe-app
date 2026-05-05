@@ -514,7 +514,7 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
          {activeTab === 'Availability' && (
            <div className="animate-fadeIn">
              <div className="bg-brand-surface border border-brand-border rounded-[24px] p-6 mb-6 overflow-hidden">
-                <AvailabilityGrid uid={barberId} mode="client" />
+                <AvailabilityGrid barberId={barberId} mode="client" />
              </div>
              <button onClick={() => handleBookClick()} disabled={!profile.isLive} className={`w-full py-4 rounded-[14px] text-sm font-black transition-all border-2 border-transparent shadow-sm ${profile.isLive ? 'bg-brand-yellow text-brand-bg hover:bg-yellow-400 focus:scale-[0.98]' : 'bg-[#1a1a1a] text-[#555] cursor-not-allowed border-[#222]'}`}>
                Book a slot ⚡
