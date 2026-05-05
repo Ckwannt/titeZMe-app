@@ -49,7 +49,7 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
   }, [barberId]);
 
   const fetchReviewsData = async (rSnap: any) => {
-    const fetchedReviews = [];
+    const fetchedReviews: any[] = [];
     for(const rDoc of rSnap.docs) {
       const rev = { id: rDoc.id, ...rDoc.data() } as any;
       const rUser = await getDoc(doc(db, 'users', rev.clientId || rev.userId));
