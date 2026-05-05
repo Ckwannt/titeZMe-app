@@ -33,21 +33,6 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
   const [activeTab, setActiveTab] = useState<'Services' | 'Reviews' | 'Availability'>('Services');
   const [bookingContext, setBookingContext] = useState<'solo' | 'shop'>('solo');
 
-  // Load static stuff once
-  useEffect(() => {
-    const fetchStatic = async () => {
-      try {
-        const uSnap = await getDoc(doc(db, 'users', barberId));
-        if (uSnap.exists()) setUserDoc(uSnap.data());
-        
-        const rQ = query(collection(db, 'reviews'), where('providerId', '==', barberId), orderBy('createdAt', 'desc'), limit(10));
-        const rSnap = await getDocs(rQ);
-        fetchReviewsData(rSnap);
-      } catch(e) { console.error(e); }
-    };
-    fetchStatic();
-  }, [barberId]);
-
   const fetchReviewsData = async (rSnap: any) => {
     const fetchedReviews: any[] = [];
     for(const rDoc of rSnap.docs) {
@@ -64,6 +49,21 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
     });
     if (rSnap.docs.length > 0) setLastReview(rSnap.docs[rSnap.docs.length - 1]);
   };
+
+  // Load static stuff once
+  useEffect(() => {
+    const fetchStatic = async () => {
+      try {
+        const uSnap = await getDoc(doc(db, 'users', barberId));
+        if (uSnap.exists()) setUserDoc(uSnap.data());
+        
+        const rQ = query(collection(db, 'reviews'), where('providerId', '==', barberId), orderBy('createdAt', 'desc'), limit(10));
+        const rSnap = await getDocs(rQ);
+        fetchReviewsData(rSnap);
+      } catch(e) { console.error(e); }
+    };
+    fetchStatic();
+  }, [barberId]);
 
   const loadMoreReviews = async () => {
     if (!lastReview) return;
@@ -484,7 +484,7 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
                            </div>
                            <div>
                              <div className="font-extrabold text-white text-[15px] tracking-tight">{r.user?.firstName} {r.user?.lastName?.[0] ? `${r.user.lastName[0]}.` : ''}</div>
-                             <div className="text-[11px] font-bold text-[#666] uppercase tracking-wider mt-0.5">{new Date(r.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'})}</div>
+                             <div className="text-[11px] font-bold text-[#666] uppercase tracking-wider mt-0.5">{r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) : 'RECENTLY'}</div>
                            </div>
                          </div>
                          <div className="flex gap-0.5 text-brand-yellow text-[13px]">
