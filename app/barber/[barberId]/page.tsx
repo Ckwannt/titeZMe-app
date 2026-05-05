@@ -26,7 +26,7 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
     const uSnap = await getDoc(doc(db, 'users', barberId));
     if (uSnap.exists()) profileData.user = uSnap.data();
     
-    const sSnap = await getDoc(doc(db, 'schedules', barberId));
+    const sSnap = await getDoc(doc(db, 'schedules', `${barberId}_shard_0`));
     if (sSnap.exists()) profileData.schedule = sSnap.data();
 
     // Fetch Services

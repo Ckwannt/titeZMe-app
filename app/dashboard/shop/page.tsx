@@ -43,7 +43,7 @@ export default function ShopDashboard() {
   const { data: schedule } = useQuery({
     queryKey: ['schedule', user?.uid],
     queryFn: async () => {
-      const snap = await getDoc(doc(db, 'schedules', user!.uid));
+      const snap = await getDoc(doc(db, 'schedules', `${user!.uid}_shard_0`));
       return snap.exists() ? snap.data() : null;
     },
     enabled: !!user

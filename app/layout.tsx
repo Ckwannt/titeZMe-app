@@ -1,5 +1,6 @@
 import type {Metadata} from 'next';
 import { Nunito } from 'next/font/google';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { TopNav } from '@/components/TopNav';
 import Providers from '@/lib/query-provider';
 import { AuthProvider } from '@/lib/auth-context';
@@ -50,6 +51,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
                 },
               }}
             />
+            <SpeedInsights />
           </AuthProvider>
         </Providers>
       </body>

@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, getDocs, writeBatch, increment } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -67,7 +67,7 @@ export default function BarberDashboard() {
   const { data: schedule } = useQuery({
     queryKey: ['schedule', user?.uid],
     queryFn: async () => {
-      const snap = await getDoc(doc(db, 'schedules', user!.uid));
+      const snap = await getDoc(doc(db, 'schedules', `${user!.uid}_shard_0`));
       return snap.exists() ? snap.data() : null;
     },
     enabled: !!user
@@ -100,7 +100,38 @@ export default function BarberDashboard() {
   const updateBookingStatus = async (id: string, status: string) => {
     try { 
       const timeNow = Date.now();
-      await updateDoc(doc(db, 'bookings', id), bookingUpdateSchema.parse({ status, updatedAt: timeNow })); 
+      const booking = bookings.find((b: any) => b.id === id);
+      
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'bookings', id), bookingUpdateSchema.parse({ status, updatedAt: timeNow })); 
+      
+      if (status === 'completed' && booking && booking.status !== 'completed' && user) {
+        batch.update(doc(db, 'barberProfiles', user.uid), { 
+          totalCuts: increment(1)
+        });
+        
+        if (profile?.shopId) {
+          batch.update(doc(db, 'barbershops', profile.shopId), {
+            totalBookings: increment(1)
+          });
+        }
+
+        // Monthly Aggregations
+        const dateObj = new Date(booking.date || timeNow);
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const aggRef = doc(db, 'aggregations', `${user.uid}_${yyyy}_${mm}`);
+        
+        // Use set with merge: true in batch to handle document creation if it doesn't exist
+        batch.set(aggRef, {
+          totalCuts: increment(1),
+          totalRevenue: increment(Number(booking.price) || 0),
+          totalHours: increment((Number(booking.duration) || 30) / 60)
+        }, { merge: true });
+      }
+      
+      await batch.commit();
+      
       queryClient.invalidateQueries({ queryKey: ['bookings', user?.uid] });
     }
     catch (e: any) { console.error('Error updating status', e); }

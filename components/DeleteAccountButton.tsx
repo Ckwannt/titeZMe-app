@@ -78,8 +78,8 @@ export function DeleteAccountButton({ role = 'client' }: DeleteAccountButtonProp
           batch.delete(d.ref);
         });
 
-        // 3. schedules/{uid}
-        batch.delete(doc(db, 'schedules', uid));
+        // 3. schedules/{uid}_shard_0
+        batch.delete(doc(db, 'schedules', `${uid}_shard_0`));
 
         // 4. All reviews where barberId == uid (as providerId) 
         // Wait, the Review model uses providerId for barbers and shops.

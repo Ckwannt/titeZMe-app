@@ -81,14 +81,16 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
       if (pSnap.exists()) {
          const pData = pSnap.data();
          const currentRating = pData.rating || 0;
-         const currentCount = pData.reviewCount || 0;
+         const currentCount = pData.totalReviews || pData.reviewCount || 0;
          const newCount = currentCount + 1;
          const newRating = ((currentRating * currentCount) + rating) / newCount;
          
-         await updateDoc(pRef, barberUpdateSchema.parse({
-                     rating: newRating,
-                     reviewCount: newCount
-                  }));
+         const updateData: any = {
+           rating: newRating,
+           totalReviews: increment(1)
+         };
+         
+         await updateDoc(pRef, updateData);
       }
 
       // 3. Notify Barber

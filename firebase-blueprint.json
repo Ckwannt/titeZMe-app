@@ -121,7 +121,7 @@
     },
     "schedules/{scheduleId}": {
       "schema": { "$ref": "#/entities/Schedule" },
-      "description": "Stores scheduling config for barbers."
+      "description": "Stores scheduling config for barbers. Designed for sharding: scheduleId = barberId_shard_0 to barberId_shard_9."
     },
     "services/{serviceId}": {
       "schema": { "$ref": "#/entities/Service" },

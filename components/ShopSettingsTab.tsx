@@ -272,7 +272,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       invitesSnap.docs.forEach(d => batch.delete(d.ref));
 
       // 4. Delete schedule
-      batch.delete(doc(db, 'schedules', user!.uid));
+      batch.delete(doc(db, 'schedules', `${user!.uid}_shard_0`));
 
       // 5. Delete shop
       batch.delete(doc(db, 'barbershops', user!.uid));
