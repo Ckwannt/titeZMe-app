@@ -47,7 +47,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
     if (!uid) return;
     
     // Subscribe to Schedule
-    const unsubSchedule = onSnapshot(doc(db, 'schedules', uid), (docSnap) => {
+    const unsubSchedule = onSnapshot(doc(db, 'schedules', `${uid}_shard_0`), (docSnap) => {
       if (docSnap.exists() && docSnap.data().availableSlots) {
         setAvailableSlots(docSnap.data().availableSlots);
       } else {
@@ -139,7 +139,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
     if (!uid) return;
     setSaving(true);
     try {
-      await setDoc(doc(db, 'schedules', uid), scheduleUpdateSchema.parse({ availableSlots }), { merge: true });
+      await setDoc(doc(db, 'schedules', `${uid}_shard_0`), scheduleUpdateSchema.parse({ availableSlots }), { merge: true });
     } catch (e) {
       console.error(e);
     }

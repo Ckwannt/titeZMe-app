@@ -19,7 +19,7 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
     if(!user) return;
     const loadingToast = toast.loading("Saving schedule...");
     try {
-      await setDoc(doc(db, 'schedules', user.uid), scheduleSchema.parse({
+      await setDoc(doc(db, 'schedules', `${user.uid}_shard_0`), scheduleSchema.parse({
               ownerId: user.uid,
               weeklyHours: scheduleData.weeklyHours,
               blockedDates: scheduleData.blockedDates,

@@ -178,7 +178,7 @@ export default function BarberOnboarding() {
       } catch (e: any) { throw new Error("Step 1: Profile creation failed - " + e.message); }
 
       // 2. Schedule
-      const scheduleRef = doc(db, 'schedules', user.uid);
+      const scheduleRef = doc(db, 'schedules', `${user.uid}_shard_0`);
       try {
         await setDoc(scheduleRef, scheduleSchema.parse({
                   userId: user.uid,
