@@ -66,7 +66,7 @@ export default function ShopProfilePage({ params }: { params: Promise<{ shopId: 
     const unsubBarbers = onSnapshot(bQ, async (bSnap) => {
       const barbersData: any[] = [];
       for (const d of bSnap.docs) {
-        const bInfo = { id: d.id, ...d.data() };
+        const bInfo: any = { id: d.id, ...d.data() };
         // Fetch user data for each barber
         const uSnap = await getDoc(doc(db, 'users', d.id));
         if (uSnap.exists()) {
