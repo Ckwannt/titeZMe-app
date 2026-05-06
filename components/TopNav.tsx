@@ -42,8 +42,8 @@ export function TopNav() {
               <NotificationBell />
               <div className="hidden md:block">
                 {appUser?.role === 'client' && <Link href="/dashboard/client" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">Dashboard</Link>}
-                {appUser?.role === 'barber' && <Link href="/dashboard/barber" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">Dashboard</Link>}
-                {appUser?.role === 'shop_owner' && <Link href="/dashboard/shop" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">Dashboard</Link>}
+                {appUser?.role === 'barber' && !appUser.ownsShop && <Link href="/dashboard/barber" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">Dashboard</Link>}
+                {appUser?.role === 'barber' && appUser.ownsShop && <Link href="/dashboard/shop" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">Dashboard</Link>}
               </div>
               <button 
                 onClick={handleLogout}
