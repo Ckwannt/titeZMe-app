@@ -19,7 +19,7 @@ const fetchBarbers = async () => {
   );
   try {
     const snap = await getDocs(barbersQ);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
   } catch (err) {
     // collection might not exist
     return [];
