@@ -20,7 +20,7 @@ export function CookieBanner() {
   useEffect(() => {
     const saved = localStorage.getItem('titezme_cookie_settings');
     if (!saved) {
-      setIsVisible(true);
+      setTimeout(() => setIsVisible(true), 0);
     }
   }, []);
 

@@ -19,7 +19,7 @@ export default function CookiesPage() {
 
             <div>
               <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 2 — What Are Cookies?</h2>
-              <p>Cookies are small files placed on your computer or mobile device by a website. They hold a modest amount of data specific to you and the website, enabling the website to "remember" your actions or preferences over time.</p>
+              <p>Cookies are small files placed on your computer or mobile device by a website. They hold a modest amount of data specific to you and the website, enabling the website to &quot;remember&quot; your actions or preferences over time.</p>
             </div>
 
             <div>
@@ -57,7 +57,7 @@ export default function CookiesPage() {
 
             <div>
               <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 5 — Changes to this Cookie Policy</h2>
-              <p>We may update this Cookie Policy from time to time. The updated version will be indicated by an updated "Last updated" date. We encourage you to review this Cookie Policy frequently to be informed of how we are using cookies.</p>
+              <p>We may update this Cookie Policy from time to time. The updated version will be indicated by an updated &quot;Last updated&quot; date. We encourage you to review this Cookie Policy frequently to be informed of how we are using cookies.</p>
             </div>
 
             <div>
