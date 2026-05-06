@@ -15,8 +15,10 @@ type BarberDocument = Barber & { id: string, photoUrl?: string, firstName?: stri
 
 const fetchBarbers = async () => {
   const barbersQ = query(
-    collection(db, 'barbers'),
+    collection(db, 'barberProfiles'),
     where('isLive', '==', true),
+    where('isOnboarded', '==', true),
+    where('isSolo', '==', true),
     orderBy('rating', 'desc'),
     limit(6)
   );
@@ -77,7 +79,8 @@ export default function LandingPage() {
   useEffect(() => {
     if (!loading && appUser) {
       if (appUser.role === 'client') router.push('/dashboard/client');
-      else if (appUser.role === 'barber') router.push(appUser.ownsShop ? '/dashboard/shop' : '/dashboard/barber');
+      else if (appUser.role === 'barber') router.push('/dashboard/barber');
+      else if (appUser.role === 'shop_owner') router.push('/dashboard/shop');
       else router.push('/dashboard/client');
     }
   }, [loading, appUser, router]);

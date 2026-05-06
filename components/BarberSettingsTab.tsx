@@ -477,7 +477,98 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         </button>
       </section>
 
-      {/* SECTION D: DANGER ZONE */}
+      {/* SECTION D: SHOP & SOLO BOOKINGS */}
+      <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6 relative">
+        <h2 className="text-lg font-black mb-4">Shop & Solo Bookings</h2>
+        
+        {profile?.shopId ? (
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-4 rounded-2xl mb-6 flex justify-between items-center flex-col sm:flex-row gap-4">
+            <div>
+              <div className="font-bold text-white mb-1">Assigned to a Shop</div>
+              <div className="text-xs text-[#888]">You receive bookings through your shop.</div>
+            </div>
+            <button
+              onClick={async () => {
+                if (confirm('Are you sure you want to leave your shop?')) {
+                  try {
+                    const { writeBatch, doc } = await import('firebase/firestore');
+                    const batch = writeBatch(db);
+                    batch.update(doc(db, 'barberProfiles', user!.uid), {
+                      shopId: null,
+                      isSolo: true
+                    });
+                    await batch.commit();
+                    alert('You are now visible in barber search');
+                    // Force refresh or reload profile
+                    window.location.reload();
+                  } catch (e) {
+                    console.error('Failed to leave shop', e);
+                  }
+                }
+              }}
+              className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#3b1a1a] transition-colors whitespace-nowrap"
+            >
+              Leave Shop
+            </button>
+          </div>
+        ) : (
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-4 rounded-2xl mb-6">
+            <div className="font-bold text-white mb-1">Independent Barber</div>
+            <div className="text-xs text-[#888]">You are working independently. Provide your code to a shop owner if you want to join them.</div>
+          </div>
+        )}
+
+        <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-5 rounded-2xl flex items-start justify-between gap-4">
+          <div>
+            <div className="font-bold text-white mb-1">Accept solo bookings</div>
+            <div className="text-xs text-[#888] leading-relaxed max-w-sm">
+              When ON, you appear in barber search for direct bookings. When OFF, you only receive bookings through your shop.
+            </div>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+            <input 
+              type="checkbox" 
+              className="sr-only peer" 
+              checked={profile?.isSolo ?? true}
+              onChange={async (e) => {
+                const checked = e.target.checked;
+                if (!checked) {
+                  // Count pending solo bookings
+                  try {
+                    const { collection, query, where, getDocs } = await import('firebase/firestore');
+                    const q = query(
+                      collection(db, 'bookings'), 
+                      where('barberId', '==', user!.uid),
+                      where('bookingContext', '==', 'solo'),
+                      where('status', 'in', ['pending', 'confirmed'])
+                    );
+                    const snap = await getDocs(q);
+                    const count = snap.size;
+                    
+                    if (confirm(`Are you sure? You have ${count} pending solo bookings that will still be honoured. New solo bookings will stop coming in.`)) {
+                       const { updateDoc, doc } = await import('firebase/firestore');
+                       await updateDoc(doc(db, 'barberProfiles', user!.uid), { isSolo: false });
+                       window.alert('Solo bookings turned off');
+                       window.location.reload();
+                    }
+                  } catch (err) {
+                    console.error(err);
+                  }
+                } else {
+                  // Turn ON
+                  const { updateDoc, doc } = await import('firebase/firestore');
+                  await updateDoc(doc(db, 'barberProfiles', user!.uid), { isSolo: true });
+                  window.alert('Solo bookings turned on');
+                  window.location.reload();
+                }
+              }}
+            />
+            <div className="w-11 h-6 bg-[#333] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-yellow"></div>
+          </label>
+        </div>
+      </section>
+
+      {/* SECTION E: DANGER ZONE */}
       <section className="bg-[#1a0808] border border-brand-red/30 rounded-3xl p-6">
         <h2 className="text-lg font-black text-brand-red mb-2">Delete Account</h2>
         <p className="text-[#888] text-sm mb-6">This permanently deletes your profile, services, bookings and all your data. This cannot be undone.</p>

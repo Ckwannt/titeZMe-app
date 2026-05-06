@@ -1,6 +1,16 @@
 {
   "indexes": [
     {
+      "collectionGroup": "barberProfiles",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isLive", "order": "ASCENDING" },
+        { "fieldPath": "isOnboarded", "order": "ASCENDING" },
+        { "fieldPath": "isSolo", "order": "ASCENDING" },
+        { "fieldPath": "rating", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "bookings",
       "queryScope": "COLLECTION",
       "fields": [

@@ -27,7 +27,9 @@ export function BarberInvitesTab() {
     return () => unsub();
   }, [user]);
 
-    const processAccept = async (invite: any) => {
+    const [showSoloModal, setShowSoloModal] = useState<any>(null); // holds invite object if solo modal is open
+
+  const processAccept = async (invite: any) => {
     if (!user) return;
     setActionLoading(invite.id);
     try {
@@ -40,10 +42,9 @@ export function BarberInvitesTab() {
         respondedAt: currentTime
       });
 
-      // Update barber profile
+      // Update barber profile (isSolo stays true by default)
       batch.update(doc(db, 'barberProfiles', user.uid), {
         shopId: invite.shopId,
-        // isSolo stays true as requested
       });
 
       // Notify shop owner
@@ -57,8 +58,29 @@ export function BarberInvitesTab() {
 
       await batch.commit();
       setShowWarningModal(null);
+      // Immediately ask if they want to keep solo bookings
+      setShowSoloModal(invite);
     } catch (e) {
       console.error("Failed to accept", e);
+    }
+    setActionLoading(null);
+  };
+
+  const handleKeepSolo = async (keep: boolean) => {
+    if (!user || !showSoloModal) return;
+    setActionLoading(showSoloModal.id);
+    try {
+      if (!keep) {
+        // Toggle isSolo to false
+        const batch = writeBatch(db);
+        batch.update(doc(db, 'barberProfiles', user.uid), {
+          isSolo: false
+        });
+        await batch.commit();
+      }
+      setShowSoloModal(null);
+    } catch (e) {
+      console.error("Failed to update solo preference", e);
     }
     setActionLoading(null);
   };
@@ -173,6 +195,33 @@ export function BarberInvitesTab() {
                 className="flex-[1.5] bg-brand-green text-black py-3 rounded-xl font-bold text-sm hover:bg-green-500 transition-colors disabled:opacity-50"
               >
                 {actionLoading === showWarningModal.id ? 'Accepting...' : 'Yes, link new shop'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSoloModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 max-w-sm w-full relative">
+            <h2 className="text-xl font-black text-white mb-2">Solo Bookings</h2>
+            <p className="text-[#888] text-sm mb-6 leading-relaxed">
+              You joined {showSoloModal.shopName}. Do you still want to accept solo bookings outside the shop?
+            </p>
+            <div className="flex flex-col gap-3">
+              <button 
+                disabled={actionLoading === showSoloModal.id}
+                onClick={() => handleKeepSolo(true)}
+                className="w-full bg-brand-yellow text-black py-3 rounded-xl font-bold text-sm hover:bg-yellow-500 transition-colors disabled:opacity-50"
+              >
+                Yes, keep solo bookings
+              </button>
+              <button 
+                disabled={actionLoading === showSoloModal.id}
+                onClick={() => handleKeepSolo(false)}
+                className="w-full bg-[#2a2a2a] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#333] transition-colors disabled:opacity-50"
+              >
+                No, shop bookings only
               </button>
             </div>
           </div>
