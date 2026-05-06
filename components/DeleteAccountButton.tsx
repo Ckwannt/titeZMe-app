@@ -68,6 +68,21 @@ export function DeleteAccountButton({ role = 'client' }: DeleteAccountButtonProp
           const status = d.data().status;
           if (status === 'pending' || status === 'confirmed') {
             batch.update(d.ref, { status: 'cancelled_by_barber', updatedAt: Date.now() });
+
+            // Send notification to client
+            if (d.data().clientId) {
+              const notifRef = doc(collection(db, 'notifications'));
+              let msg = `Your booking was cancelled because the barber deleted their account.`;
+              if (status === 'confirmed') {
+                msg = `Your booking was cancelled because the barber deleted their account. Please arrange payment directly with another barber.`;
+              }
+              batch.set(notifRef, {
+                userId: d.data().clientId,
+                message: msg,
+                read: false,
+                createdAt: Date.now()
+              });
+            }
           }
         });
 

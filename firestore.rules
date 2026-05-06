@@ -177,9 +177,11 @@ service cloud.firestore {
       allow update: if isSignedIn()
         && (existing().get('barberCode', '') == '' || incoming().get('barberCode', '') == existing().get('barberCode', ''))
         && (
+          (request.auth.uid == profileId && incoming().diff(existing()).affectedKeys().hasOnly(['isSolo', 'isLive', 'updatedAt']))
+          ||
           (request.auth.uid == existing().userId && isValidBarberProfile(incoming()) && incoming().userId == existing().userId)
           ||
-          (incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalCuts']) && isValidBarberProfile(incoming()))
+          (incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalCuts', 'shopId', 'isSolo']) && isValidBarberProfile(incoming()))
         );
         
       allow delete: if isSignedIn() && request.auth.uid == profileId;
