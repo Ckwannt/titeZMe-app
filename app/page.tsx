@@ -19,7 +19,7 @@ const fetchBarbers = async () => {
   );
   try {
     const snap = await getDocs(barbersQ);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
     // collection might not exist
     return [];
@@ -113,7 +113,7 @@ export default function LandingPage() {
                 <span className="text-xl mr-3 opacity-50">☐</span>
                 <input type="text" placeholder="Specialty — Skill" className="bg-transparent w-full text-white font-bold outline-none placeholder:text-gray-600"/>
               </div>
-              <Link href="#browse-barbers" className="bg-[#0f0f0f] border border-[#2a2a2a] text-white font-black px-8 py-3.5 rounded-xl transition-colors hover:bg-[#1a1a1a] flex justify-center items-center gap-2">
+              <Link href="/search" className="bg-[#0f0f0f] border border-[#2a2a2a] text-white font-black px-8 py-3.5 rounded-xl transition-colors hover:bg-[#1a1a1a] flex justify-center items-center gap-2">
                 <span>☐</span> Find
               </Link>
             </div>
@@ -195,7 +195,7 @@ export default function LandingPage() {
                    <div>
                      <div className="text-lg font-black text-white">80-160 MAD</div>
                    </div>
-                   <Link href="#browse-barbers" className="bg-brand-yellow text-black font-black px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
+                   <Link href="/search" className="bg-brand-yellow text-black font-black px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
                      Book Now →
                    </Link>
                 </div>
@@ -235,7 +235,7 @@ export default function LandingPage() {
                    <div className="text-xl font-black text-white h-[38px] flex items-center">
                      80-160 MAD
                    </div>
-                   <Link href="#browse-barbers" className="bg-brand-yellow text-black font-black px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
+                   <Link href="/search" className="bg-brand-yellow text-black font-black px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
                      Book Now →
                    </Link>
                 </div>
@@ -263,7 +263,7 @@ export default function LandingPage() {
       </section>
 
       {/* SECTION 3 — BROWSE BARBERS */}
-      <section id="browse-barbers" className="bg-[#0A0A0A] border-t border-[#1a1a1a] py-20 px-6">
+      <section className="bg-[#0A0A0A] border-t border-[#1a1a1a] py-20 px-6">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
             <div>
@@ -335,7 +335,7 @@ export default function LandingPage() {
           </div>
           
           <div className="text-center mt-12">
-            <Link href="#browse-barbers" className="inline-block border border-[#2a2a2a] text-white font-bold text-sm px-6 py-3 rounded-full hover:bg-[#111] transition-colors">
+            <Link href="/search" className="inline-block border border-[#2a2a2a] text-white font-bold text-sm px-6 py-3 rounded-full hover:bg-[#111] transition-colors">
               See all barbers →
             </Link>
           </div>
@@ -365,7 +365,7 @@ export default function LandingPage() {
                  <div key={i} className="bg-[#111] border border-[#2a2a2a] p-6 rounded-3xl flex flex-col justify-between">
                    <div>
                      <div className="flex gap-1 text-brand-yellow mb-4 text-xs">★★★★★</div>
-                     <p className="text-sm font-bold text-gray-300 leading-relaxed mb-6">"{rev.r}"</p>
+                     <p className="text-sm font-bold text-gray-300 leading-relaxed mb-6">&quot;{rev.r}&quot;</p>
                    </div>
                    <div className="flex items-center gap-3">
                      <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-[10px] font-black text-gray-400">{rev.i}</div>
@@ -485,7 +485,7 @@ export default function LandingPage() {
       <section id="cities" className="bg-[#0A0A0A] py-24 px-6 border-b border-[#1a1a1a]">
          <div className="max-w-[1200px] mx-auto">
             <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">CITIES</div>
-            <h2 className="text-4xl md:text-5xl font-black mb-12">We're live where you are</h2>
+            <h2 className="text-4xl md:text-5xl font-black mb-12">We&apos;re live where you are</h2>
             
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                {[
@@ -521,7 +521,7 @@ export default function LandingPage() {
                Your next cut is <br/> 30 seconds away.
             </h2>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-               <Link href="#browse-barbers" className="bg-[#0A0A0A] text-white font-black px-8 py-4 rounded-full transition-opacity hover:bg-[#1a1a1a]">
+               <Link href="/search" className="bg-[#0A0A0A] text-white font-black px-8 py-4 rounded-full transition-opacity hover:bg-[#1a1a1a]">
                   Find a barber now →
                </Link>
                <Link href="/signup" className="border-2 border-black bg-transparent text-black font-black px-8 py-4 rounded-full hover:bg-black hover:text-white transition-colors">
