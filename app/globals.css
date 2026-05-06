@@ -17,6 +17,12 @@
   --animate-fadeUp: fadeUp 0.4s ease both;
   --animate-fadeIn: fadeIn 0.4s ease both;
   --animate-pulse: pulse 0.6s ease;
+  --animate-marquee: marquee 20s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 @keyframes fadeUp {
