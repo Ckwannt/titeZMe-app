@@ -9,6 +9,9 @@ import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { BarberCardSkeleton } from '@/components/skeletons';
+import type { Barber, Barbershop } from '@/lib/schemas';
+
+type BarberDocument = Barber & { id: string, photoUrl?: string, firstName?: string, lastName?: string, name?: string, isOpenToday?: boolean, topSpecialties?: string[], lowestPrice?: number, currency?: string };
 
 const fetchBarbers = async () => {
   const barbersQ = query(
@@ -19,7 +22,7 @@ const fetchBarbers = async () => {
   );
   try {
     const snap = await getDocs(barbersQ);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as BarberDocument));
   } catch (err) {
     // collection might not exist
     return [];
@@ -35,13 +38,15 @@ const fetchCities = async () => {
     
     const cityCounts: Record<string, number> = {};
     shopsSnap.docs.forEach(doc => {
-      const city = doc.data().address?.city;
+      const data = doc.data() as Barbershop;
+      const city = data.address?.city;
       if (city) cityCounts[city] = (cityCounts[city] || 0) + 1;
     });
     
     // For standalone barbers
     barbersSnap.docs.forEach(doc => {
-      const city = doc.data().city;
+      const data = doc.data() as Barber;
+      const city = data.city;
       if (city) cityCounts[city] = (cityCounts[city] || 0) + 1;
     });
 
