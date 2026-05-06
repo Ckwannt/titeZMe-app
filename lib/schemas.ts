@@ -16,8 +16,11 @@ export const userSchema = z.object({
   createdAt: z.number().optional(),
 }).passthrough();
 
+export type User = z.infer<typeof userSchema>;
+
 // Used for partial updates
 export const userUpdateSchema = userSchema.partial();
+export type UserUpdate = z.infer<typeof userUpdateSchema>;
 
 export const barberSchema = z.object({
   userId: z.string().optional(),
@@ -40,7 +43,10 @@ export const barberSchema = z.object({
   createdAt: z.number().optional(),
 }).passthrough();
 
+export type Barber = z.infer<typeof barberSchema>;
+
 export const barberUpdateSchema = barberSchema.partial();
+export type BarberUpdate = z.infer<typeof barberUpdateSchema>;
 
 export const barbershopSchema = z.object({
   ownerId: z.string().optional(),
@@ -59,7 +65,10 @@ export const barbershopSchema = z.object({
   createdAt: z.number().optional(),
 }).passthrough();
 
+export type Barbershop = z.infer<typeof barbershopSchema>;
+
 export const barbershopUpdateSchema = barbershopSchema.partial();
+export type BarbershopUpdate = z.infer<typeof barbershopUpdateSchema>;
 
 export const bookingSchema = z.object({
   barberId: z.string().optional(),
@@ -77,7 +86,10 @@ export const bookingSchema = z.object({
   barberName: z.string().optional(),
 }).passthrough();
 
+export type Booking = z.infer<typeof bookingSchema>;
+
 export const bookingUpdateSchema = bookingSchema.partial();
+export type BookingUpdate = z.infer<typeof bookingUpdateSchema>;
 
 export const serviceSchema = z.object({
   barberId: z.string().optional(),
@@ -89,14 +101,20 @@ export const serviceSchema = z.object({
   createdAt: z.number().optional(),
 }).passthrough();
 
+export type Service = z.infer<typeof serviceSchema>;
+
 export const serviceUpdateSchema = serviceSchema.partial();
+export type ServiceUpdate = z.infer<typeof serviceUpdateSchema>;
 
 export const scheduleSchema = z.object({
   barberId: z.string().optional(),
   availableSlots: z.record(z.string(), z.array(z.string())).optional(),
 }).passthrough();
 
+export type Schedule = z.infer<typeof scheduleSchema>;
+
 export const scheduleUpdateSchema = scheduleSchema.partial();
+export type ScheduleUpdate = z.infer<typeof scheduleUpdateSchema>;
 
 export const inviteSchema = z.object({
   shopId: z.string().optional(),
@@ -107,7 +125,10 @@ export const inviteSchema = z.object({
   respondedAt: z.number().optional(),
 }).passthrough();
 
+export type Invite = z.infer<typeof inviteSchema>;
+
 export const inviteUpdateSchema = inviteSchema.partial();
+export type InviteUpdate = z.infer<typeof inviteUpdateSchema>;
 
 export const reviewSchema = z.object({
   bookingId: z.string().optional(),
@@ -120,7 +141,10 @@ export const reviewSchema = z.object({
   createdAt: z.number().optional(),
 }).passthrough();
 
+export type Review = z.infer<typeof reviewSchema>;
+
 export const reviewUpdateSchema = reviewSchema.partial();
+export type ReviewUpdate = z.infer<typeof reviewUpdateSchema>;
 
 export const notificationSchema = z.object({
   recipientId: z.string().optional(),
@@ -132,4 +156,7 @@ export const notificationSchema = z.object({
   data: z.any().optional(),
 }).passthrough();
 
+export type Notification = z.infer<typeof notificationSchema>;
+
 export const notificationUpdateSchema = notificationSchema.partial();
+export type NotificationUpdate = z.infer<typeof notificationUpdateSchema>;
