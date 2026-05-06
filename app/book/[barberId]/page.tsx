@@ -40,12 +40,9 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
   useEffect(() => {
     if (profile && step === 1) {
       if (profile.isSolo && profile.shopId) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStep(1);
       } else {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setBookingContext(profile.shopId && !profile.isSolo ? 'shop' : 'solo');
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStep(2);
       }
     }
