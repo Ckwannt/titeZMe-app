@@ -118,7 +118,7 @@ export default function LandingPage() {
                 <span className="text-xl mr-3 opacity-50">☐</span>
                 <input type="text" placeholder="Specialty — Skill" className="bg-transparent w-full text-white font-bold outline-none placeholder:text-gray-600"/>
               </div>
-              <Link href="/search" className="bg-[#0f0f0f] border border-[#2a2a2a] text-white font-black px-8 py-3.5 rounded-xl transition-colors hover:bg-[#1a1a1a] flex justify-center items-center gap-2">
+              <Link href="#browse-barbers" className="bg-[#0f0f0f] border border-[#2a2a2a] text-white font-black px-8 py-3.5 rounded-xl transition-colors hover:bg-[#1a1a1a] flex justify-center items-center gap-2">
                 <span>☐</span> Find
               </Link>
             </div>
@@ -200,7 +200,7 @@ export default function LandingPage() {
                    <div>
                      <div className="text-lg font-black text-white">80-160 MAD</div>
                    </div>
-                   <Link href="/search" className="bg-brand-yellow text-black font-black px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
+                   <Link href="/#browse-barbers" className="bg-brand-yellow text-black font-black px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
                      Book Now →
                    </Link>
                 </div>
@@ -240,7 +240,7 @@ export default function LandingPage() {
                    <div className="text-xl font-black text-white h-[38px] flex items-center">
                      80-160 MAD
                    </div>
-                   <Link href="/search" className="bg-brand-yellow text-black font-black px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
+                   <Link href="/#browse-barbers" className="bg-brand-yellow text-black font-black px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
                      Book Now →
                    </Link>
                 </div>
@@ -268,7 +268,7 @@ export default function LandingPage() {
       </section>
 
       {/* SECTION 3 — BROWSE BARBERS */}
-      <section className="bg-[#0A0A0A] border-t border-[#1a1a1a] py-20 px-6">
+      <section id="browse-barbers" className="bg-[#0A0A0A] border-t border-[#1a1a1a] py-20 px-6">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
             <div>
@@ -340,7 +340,7 @@ export default function LandingPage() {
           </div>
           
           <div className="text-center mt-12">
-            <Link href="/search" className="inline-block border border-[#2a2a2a] text-white font-bold text-sm px-6 py-3 rounded-full hover:bg-[#111] transition-colors">
+            <Link href="#browse-barbers" className="inline-block border border-[#2a2a2a] text-white font-bold text-sm px-6 py-3 rounded-full hover:bg-[#111] transition-colors">
               See all barbers →
             </Link>
           </div>
@@ -404,7 +404,7 @@ export default function LandingPage() {
       </section>
 
       {/* SECTION 5 — HOW IT WORKS */}
-      <section className="bg-[#0A0A0A] py-32 px-6">
+      <section id="how-it-works" className="bg-[#0A0A0A] py-32 px-6">
          <div className="max-w-[1200px] mx-auto text-center mb-20">
             <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">HOW IT WORKS</div>
             <h2 className="text-4xl md:text-5xl font-black">Booked in 3 steps. No drama.</h2>
@@ -519,14 +519,14 @@ export default function LandingPage() {
       </section>
 
       {/* SECTION 8 — FINAL CTA */}
-      <section className="bg-brand-yellow text-black py-32 px-6 text-center">
+      <section id="contact" className="bg-brand-yellow text-black py-32 px-6 text-center">
          <div className="max-w-[800px] mx-auto">
             <div className="text-[11px] font-black uppercase tracking-widest mb-6 opacity-70">ONE LAST THING</div>
             <h2 className="text-5xl md:text-7xl font-black leading-[0.9] tracking-tight mb-12">
                Your next cut is <br/> 30 seconds away.
             </h2>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-               <Link href="/search" className="bg-[#0A0A0A] text-white font-black px-8 py-4 rounded-full transition-opacity hover:bg-[#1a1a1a]">
+               <Link href="#browse-barbers" className="bg-[#0A0A0A] text-white font-black px-8 py-4 rounded-full transition-opacity hover:bg-[#1a1a1a]">
                   Find a barber now →
                </Link>
                <Link href="/signup" className="border-2 border-black bg-transparent text-black font-black px-8 py-4 rounded-full hover:bg-black hover:text-white transition-colors">
@@ -535,35 +535,6 @@ export default function LandingPage() {
             </div>
          </div>
       </section>
-
-      {/* FOOTER */}
-      <footer className="bg-[#050505] py-12 px-6">
-         <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6 pb-12 border-b border-[#1a1a1a] mb-8">
-            <div className="flex flex-col items-center md:items-start">
-               <div className="font-black text-brand-yellow text-2xl tracking-tight mb-2">
-                 tite<span className="text-brand-orange">Z</span>Me
-               </div>
-               <div className="text-xs font-bold text-gray-500">Keeping you sharp.</div>
-            </div>
-            
-            <div className="flex gap-6 sm:gap-8">
-               <Link href="/about" className="text-xs font-bold text-gray-400 hover:text-white">About</Link>
-               <Link href="#for-barbers" className="text-xs font-bold text-gray-400 hover:text-white">For Barbers</Link>
-               <Link href="#cities" className="text-xs font-bold text-gray-400 hover:text-white">Cities</Link>
-               <Link href="/privacy" className="text-xs font-bold text-gray-400 hover:text-white">Privacy</Link>
-               <Link href="/terms" className="text-xs font-bold text-gray-400 hover:text-white">Terms</Link>
-            </div>
-            
-            <div className="flex gap-4 opacity-50">
-               {/* Placeholders for social icons */}
-               <div className="w-8 h-8 rounded-full border border-gray-700 flex items-center justify-center text-xs">IG</div>
-               <div className="w-8 h-8 rounded-full border border-gray-700 flex items-center justify-center text-xs">TT</div>
-            </div>
-         </div>
-         <div className="text-center text-[10px] font-bold text-gray-600">
-            © 2026 titeZMe. All rights reserved.
-         </div>
-      </footer>
     </div>
   );
 }
