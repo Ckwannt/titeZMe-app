@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import { Nunito } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { TopNav } from '@/components/TopNav';
+import { Footer } from '@/components/Footer';
 import Providers from '@/lib/query-provider';
 import { AuthProvider } from '@/lib/auth-context';
 import { RouteGuard } from '@/components/RouteGuard';
@@ -18,28 +19,29 @@ export const metadata: Metadata = {
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en" className={nunito.variable}>
-      <body className="font-sans antialiased selection:bg-brand-yellow selection:text-brand-bg flex flex-col min-h-screen" suppressHydrationWarning>
+      <body className="font-sans antialiased text-[#F0EDE8] bg-[#0A0A0A] selection:bg-[#FFD600] selection:text-[#0A0A0A] flex flex-col min-h-screen" suppressHydrationWarning>
         <Providers>
           <AuthProvider>
             <TopNav />
-            <main className="flex-1 overflow-x-hidden">
+            <main className="flex-1 overflow-x-hidden min-h-screen">
               <RouteGuard>
                 {children}
               </RouteGuard>
             </main>
+            <Footer />
             <Toaster
               position="bottom-right"
               toastOptions={{
                 style: {
-                  background: '#181818',
-                  color: '#ffffff',
-                  border: '1px solid #2a2a2a',
+                  background: '#111111',
+                  color: '#F0EDE8',
+                  border: '1px solid #1E1E1E',
                   fontFamily: 'Nunito, sans-serif',
                   fontSize: '13px',
                 },
                 success: {
                   iconTheme: {
-                    primary: '#F5C518',
+                    primary: '#FFD600',
                     secondary: '#0a0a0a',
                   },
                 },
