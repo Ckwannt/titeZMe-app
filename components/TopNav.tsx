@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { NotificationBell } from './NotificationBell';
@@ -15,21 +16,36 @@ export function TopNav() {
     router.push('/login');
   };
 
+  const getLinkClass = (path: string) => {
+    return pathname === path 
+      ? 'text-sm font-bold text-[#FFD600] transition-colors' 
+      : 'text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors';
+  };
+
   return (
     <div className="sticky top-0 left-0 right-0 z-50 flex flex-col w-full">
       {/* ROW 1: Main Nav */}
       <div className="bg-[#0A0A0A] border-b border-[#1E1E1E] px-6 py-4 flex items-center justify-between">
         <div className="flex-1 flex justify-start items-center space-x-8">
-          <Link href="/" className="font-black text-[#FFD600] whitespace-nowrap text-2xl tracking-tight flex items-center mr-4">
-            titeZMe
+          <Link href="/" className="flex items-center mr-4">
+            <Image 
+              src="/wordmark.png" 
+              alt="titeZMe"
+              height={32}
+              width={120}
+              style={{ objectFit: 'contain' }}
+            />
           </Link>
-          <div className="hidden md:flex flex-1 justify-start space-x-6">
-            <Link href="/" className="text-sm font-bold text-[#F0EDE8] hover:text-[#FFD600] transition-colors">Home</Link>
-            <Link href="/#how-it-works" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">How it works</Link>
-            <Link href="/#cuts" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Cuts</Link>
-            <Link href="/#browse-barbers" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Barbers</Link>
-            <Link href="/#cities" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Shops</Link>
-            <Link href="/#contact" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Contact</Link>
+          <div className="hidden md:flex flex-1 justify-start space-x-6 items-center">
+            <Link href="/" className={getLinkClass('/')}>Home</Link>
+            <Link href="/how-it-works" className={getLinkClass('/how-it-works')}>How it works</Link>
+            <div className="flex items-center cursor-default">
+              <span className="text-sm font-bold text-[#888580] cursor-default">Cuts</span>
+              <span style={{ marginLeft: '4px', background: '#1a1a1a', color: '#F5C518', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '99px', border: '1px solid #2a2a2a', verticalAlign: 'middle' }}>Soon</span>
+            </div>
+            <Link href="/barbers" className={getLinkClass('/barbers')}>Barbers</Link>
+            <Link href="/shops" className={getLinkClass('/shops')}>Shops</Link>
+            <Link href="/contact" className={getLinkClass('/contact')}>Contact</Link>
           </div>
         </div>
         
