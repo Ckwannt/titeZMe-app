@@ -85,7 +85,7 @@ export function TopNav() {
               <span>Find barbers near you →</span>
             </div>
           </div>
-          <Link href="/search" className="ml-4 shrink-0 text-xs font-bold text-brand-orange hover:text-brand-yellow transition-colors bg-[#2a2a2a] px-3 py-1 rounded-full">
+          <Link href="#browse-barbers" className="ml-4 shrink-0 text-xs font-bold text-brand-orange hover:text-brand-yellow transition-colors bg-[#2a2a2a] px-3 py-1 rounded-full">
             Book now →
           </Link>
         </div>
