@@ -41,10 +41,12 @@ export default function LoginPage() {
           else router.push('/onboarding/client');
         }
         else if (udata.role === 'barber') {
-          if (udata.isOnboarded) router.push('/dashboard/barber');
-          else router.push('/onboarding/barber');
+          if (udata.isOnboarded) {
+            router.push(udata.ownsShop ? '/dashboard/shop' : '/dashboard/barber');
+          } else {
+            router.push('/onboarding/barber');
+          }
         } 
-        else if (udata.role === 'shop_owner') router.push('/dashboard/shop');
         else router.push('/');
       } else {
         router.push('/');

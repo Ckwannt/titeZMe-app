@@ -77,8 +77,7 @@ export default function LandingPage() {
   useEffect(() => {
     if (!loading && appUser) {
       if (appUser.role === 'client') router.push('/dashboard/client');
-      else if (appUser.role === 'barber') router.push('/dashboard/barber');
-      else if (appUser.role === 'shop_owner') router.push('/dashboard/shop');
+      else if (appUser.role === 'barber') router.push(appUser.ownsShop ? '/dashboard/shop' : '/dashboard/barber');
       else router.push('/dashboard/client');
     }
   }, [loading, appUser, router]);
