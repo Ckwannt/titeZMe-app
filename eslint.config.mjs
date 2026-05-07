@@ -12,9 +12,6 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals"),
   {
-    linterOptions: {
-      noInlineConfig: true
-    },
     rules: {
       "react/no-unescaped-entities": "off",
       "@next/next/no-img-element": "warn"
