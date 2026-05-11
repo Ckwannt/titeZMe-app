@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-import * as admin from 'firebase-admin';
-
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
 export async function POST(req: Request) {
   try {
+    const admin = await import('firebase-admin');
+    if (!admin.apps.length) {
+      admin.initializeApp();
+    }
     const authHeader = req.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

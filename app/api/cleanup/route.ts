@@ -1,13 +1,10 @@
 import { NextResponse } from 'next/server';
-import * as admin from 'firebase-admin';
-
-// Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
 export async function GET(req: Request) {
   try {
+    const admin = await import('firebase-admin');
+    if (!admin.apps.length) {
+      admin.initializeApp();
+    }
     const db = admin.firestore();
     const auth = admin.auth();
 
