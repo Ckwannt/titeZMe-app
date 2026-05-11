@@ -13,6 +13,7 @@ import { Country, City } from 'country-state-city';
 import ISO6391 from 'iso-639-1';
 import { userUpdateSchema } from "@/lib/schemas";
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import Image from 'next/image';
 
 export default function ClientSettings() {
   const { user, appUser, loading, refreshUser } = useAuth();
@@ -223,7 +224,14 @@ export default function ClientSettings() {
       <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
         <div className="flex items-center gap-3 mb-7 px-2">
           {appUser?.photoUrl ? (
-            <img src={appUser.photoUrl} alt="Profile" className="w-10 h-10 rounded-xl object-cover" />
+            <Image 
+              src={appUser.photoUrl} 
+              alt="Profile" 
+              width={40} 
+              height={40} 
+              className="w-10 h-10 rounded-xl object-cover" 
+              style={{ objectFit: 'contain' }} 
+            />
           ) : (
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2a2a2a] to-[#111] flex items-center justify-center font-black text-base text-white">
               {appUser?.firstName?.[0] || "C"}
@@ -262,7 +270,14 @@ export default function ClientSettings() {
             <h3 className="font-bold text-lg mb-4">Profile Photo</h3>
             <div className="flex items-center gap-6">
               {appUser?.photoUrl ? (
-                <img src={appUser.photoUrl} alt="Profile" className="w-20 h-20 rounded-full object-cover border-2 border-[#2a2a2a]" />
+                <Image 
+                  src={appUser.photoUrl} 
+                  alt="Profile" 
+                  width={80} 
+                  height={80} 
+                  className="w-20 h-20 rounded-full object-cover border-2 border-[#2a2a2a]" 
+                  style={{ objectFit: 'contain' }} 
+                />
               ) : (
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#2a2a2a] to-[#111] flex items-center justify-center font-black text-2xl text-white border-2 border-[#2a2a2a]">
                   {appUser?.firstName?.[0] || "C"}
