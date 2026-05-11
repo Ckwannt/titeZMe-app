@@ -44,7 +44,7 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
         setStep(2);
       }
     }
-  }, [profile]); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, step]);
 
   useEffect(() => {
     if (!user) {
