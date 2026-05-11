@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import { BookingRowSkeleton } from '@/components/skeletons';
 import { toast } from 'react-hot-toast';
+import Link from 'next/link';
+import { collection } from 'firebase/firestore';
 import { userUpdateSchema, bookingUpdateSchema } from "@/lib/schemas";
 
 export default function ClientDashboard() {
@@ -48,18 +50,7 @@ export default function ClientDashboard() {
     }
     bResults.sort((a,b) => new Date(`${b.date}T${b.startTime}`).getTime() - new Date(`${a.date}T${a.startTime}`).getTime());
 
-    // Favorites
-    const favIds = appUser?.favoriteBarbers || [];
-    const fResults: any[] = [];
-    for (const fId of favIds) {
-      const fSnap = await getDoc(doc(db, 'barberProfiles', fId));
-      if (fSnap.exists()) {
-         const uSnap = await getDoc(doc(db, 'users', fId));
-         fResults.push({ id: fId, ...fSnap.data(), user: uSnap.exists() ? uSnap.data() : null } as any);
-      }
-    }
-
-    return { bookings: bResults, favorites: fResults };
+    return { bookings: bResults };
   };
 
   const queryClient = useQueryClient();
@@ -69,7 +60,6 @@ export default function ClientDashboard() {
     enabled: !!user && appUser?.role === 'client'
   });
   const bookings = data?.bookings || [];
-  const favorites = data?.favorites || [];
 
   const cancelBooking = async (bId: string, dateStr: string, timeStr: string) => {
     // Check if more than 2 hours
@@ -91,14 +81,6 @@ export default function ClientDashboard() {
     }
   }
 
-  const removeFavorite = async (barberId: string) => {
-    if (!user) return;
-    try {
-      await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({ favoriteBarbers: arrayRemove(barberId) }));
-      queryClient.invalidateQueries({ queryKey: ['clientData', user?.uid] });
-    } catch(e) { console.error(e); }
-  }
-
   if (fetching || loading) return <div className="p-10 text-center animate-pulse text-brand-text-secondary">Loading...</div>;
 
   const now = new Date();
@@ -118,9 +100,13 @@ export default function ClientDashboard() {
     <div className="flex min-h-[calc(100vh-53px)] flex-col md:flex-row">
       <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
         <div className="flex items-center gap-3 mb-7 px-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2a2a2a] to-[#111] flex items-center justify-center font-black text-base text-white">
-            {appUser?.firstName?.[0] || "C"}
-          </div>
+          {appUser?.photoUrl ? (
+            <img src={appUser.photoUrl} alt="Profile" className="w-10 h-10 rounded-xl object-cover" />
+          ) : (
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2a2a2a] to-[#111] flex items-center justify-center font-black text-base text-white">
+              {appUser?.firstName?.[0] || "C"}
+            </div>
+          )}
           <div>
             <div className="font-extrabold text-sm">{appUser?.firstName} {appUser?.lastName?.charAt(0)}.</div>
             <div className="text-[11px] text-brand-text-secondary font-bold">Client</div>
@@ -128,20 +114,18 @@ export default function ClientDashboard() {
         </div>
         
         <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
-          {[
-            { id: "Bookings", icon: "📅", label: "My Bookings" },
-            { id: "Favorites", icon: "⭐", label: "Favorites" },
-          ].map(l => (
-            <button 
-              key={l.id} 
-              onClick={() => setActiveTab(l.id)}
-              className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 ${
-                activeTab === l.id ? "bg-[#1a1a1a] text-brand-yellow" : "text-[#888] hover:bg-[#1a1a1a] hover:text-white"
-              }`}
-            >
-              <span>{l.icon}</span> {l.label}
-            </button>
-          ))}
+          <button 
+            onClick={() => setActiveTab("Bookings")}
+            className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 bg-[#1a1a1a] text-brand-yellow`}
+          >
+            <span>📅</span> My Bookings
+          </button>
+          <button 
+            onClick={() => router.push('/dashboard/client/settings')}
+            className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 text-[#888] hover:bg-[#1a1a1a] hover:text-white`}
+          >
+            <span>⚙️</span> Settings
+          </button>
         </div>
 
         <div className="mt-auto hidden md:block">
@@ -156,7 +140,7 @@ export default function ClientDashboard() {
              <div className="flex flex-col gap-3.5 mb-10">
                {upcomingBookings.length === 0 ? (
                  <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 text-center text-sm font-bold text-brand-text-secondary">
-                   No upcoming bookings. <button onClick={()=>router.push('/')} className="text-brand-yellow underline">Find a barber</button>
+                   No upcoming bookings. <Link href="/" className="text-brand-yellow underline">Find a barber</Link>
                  </div>
                ) : (
                  upcomingBookings.map(b => (
@@ -203,34 +187,6 @@ export default function ClientDashboard() {
                            <button onClick={() => router.push(`/review/${b.id}`)} className="text-[10px] font-extrabold text-brand-yellow hover:underline">Review</button>
                         )}
                       </div>
-                   </div>
-                 ))
-               )}
-             </div>
-           </div>
-        )}
-
-        {activeTab === "Favorites" && (
-           <div className="animate-fadeUp max-w-[700px]">
-             <h2 className="text-2xl font-black mb-6">My Favorite Barbers</h2>
-             <div className="flex flex-col gap-3.5">
-               {favorites.length === 0 ? (
-                 <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 text-center text-sm font-bold text-brand-text-secondary">
-                   You haven&apos;t saved any barbers yet.
-                 </div>
-               ) : (
-                 favorites.map(f => (
-                   <div key={f.id} className="bg-brand-surface border border-brand-border rounded-2xl p-4 flex justify-between items-center hover:border-brand-yellow transition-colors cursor-pointer" onClick={(e)=>{
-                     if((e.target as any).tagName !== 'BUTTON') router.push(`/barber/${f.id}`)
-                   }}>
-                     <div className="flex items-center gap-4">
-                       <div className="text-4xl">💈</div>
-                       <div>
-                         <div className="font-black text-base">{f.user?.firstName} {f.user?.lastName}</div>
-                         <div className="text-xs text-brand-text-secondary font-bold">{f.city}</div>
-                       </div>
-                     </div>
-                     <button onClick={() => removeFavorite(f.id)} className="bg-[#1a1a1a] text-brand-text-secondary hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold border border-[#2a2a2a]">Remove</button>
                    </div>
                  ))
                )}
