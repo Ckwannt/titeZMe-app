@@ -12,6 +12,7 @@ import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 import { collection } from 'firebase/firestore';
 import { userUpdateSchema, bookingUpdateSchema } from "@/lib/schemas";
+import Image from 'next/image';
 
 export default function ClientDashboard() {
   const { user, appUser, loading } = useAuth();
@@ -101,7 +102,14 @@ export default function ClientDashboard() {
       <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
         <div className="flex items-center gap-3 mb-7 px-2">
           {appUser?.photoUrl ? (
-            <img src={appUser.photoUrl} alt="Profile" className="w-10 h-10 rounded-xl object-cover" />
+            <Image 
+              src={appUser.photoUrl} 
+              alt="Profile" 
+              width={40} 
+              height={40} 
+              className="w-10 h-10 rounded-xl object-cover" 
+              style={{ objectFit: 'contain' }} 
+            />
           ) : (
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2a2a2a] to-[#111] flex items-center justify-center font-black text-base text-white">
               {appUser?.firstName?.[0] || "C"}
