@@ -10,8 +10,8 @@ export function Footer() {
                <Image 
                  src="/wordmark.png"
                  alt="titeZMe"
-                 height={24}
-                 width={90}
+                 height={28}
+                 width={100}
                  style={{ objectFit: 'contain' }}
                  priority
                />

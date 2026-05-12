@@ -2,7 +2,6 @@ import type {Metadata} from 'next';
 import { Nunito } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { TopNav } from '@/components/TopNav';
-import { Footer } from '@/components/Footer';
 import { CookieBanner } from '@/components/CookieBanner';
 import Providers from '@/lib/query-provider';
 import { AuthProvider } from '@/lib/auth-context';
@@ -29,7 +28,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
                 {children}
               </RouteGuard>
             </main>
-            <Footer />
             <CookieBanner />
             <Toaster
               position="bottom-right"
