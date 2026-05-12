@@ -1,102 +1,315 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { collection, query, where, getDocs, doc, getDoc, orderBy, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useQuery } from '@tanstack/react-query';
+import { Country, City } from 'country-state-city';
+
+// ─── types ───────────────────────────────────────────────────────────────────
+
+type BarberCard = {
+  id: string;
+  profile: {
+    city?: string;
+    rating?: number;
+    reviewCount?: number;
+    specialties?: string[];
+    languages?: string[];
+    profilePhotoUrl?: string;
+    currency?: string;
+  };
+  user: {
+    firstName?: string;
+    lastName?: string;
+    photoUrl?: string;
+    city?: string;
+    country?: string;
+  };
+  schedule: { availableSlots?: Record<string, string[]> } | null;
+  minPrice: number | null;
+};
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+function getOpenBadge(schedule: BarberCard['schedule']) {
+  if (!schedule?.availableSlots) return null;
+  const today = new Date().toISOString().split('T')[0];
+  const slots = schedule.availableSlots[today] || [];
+  if (slots.length === 0) return { label: 'Closed today', color: 'text-[#ef4444]', dot: 'bg-[#ef4444]' };
+  const nowHour = new Date().getHours();
+  const nowStr = `${String(nowHour).padStart(2, '0')}:00`;
+  if (slots.includes(nowStr)) return { label: 'Open now', color: 'text-[#22c55e]', dot: 'bg-[#22c55e]' };
+  if (nowHour < parseInt(slots[0])) return { label: `Opens ${slots[0]}`, color: 'text-[#f59e0b]', dot: 'bg-[#f59e0b]' };
+  return { label: 'Closed today', color: 'text-[#ef4444]', dot: 'bg-[#ef4444]' };
+}
+
+// ─── fetcher ─────────────────────────────────────────────────────────────────
+
+async function fetchBarbers(filterCity?: string): Promise<BarberCard[]> {
+  const q = query(
+    collection(db, 'barberProfiles'),
+    where('isLive', '==', true),
+    where('isOnboarded', '==', true),
+    where('isSolo', '==', true),
+    orderBy('rating', 'desc'),
+    limit(filterCity ? 100 : 20),
+  );
+  const snap = await getDocs(q);
+  let docs = snap.docs;
+
+  if (filterCity) {
+    docs = docs.filter(d =>
+      (d.data().city || '').toLowerCase() === filterCity.toLowerCase()
+    );
+  }
+
+  if (docs.length === 0) return [];
+
+  const ids = docs.map(d => d.id);
+  const [userSnaps, scheduleSnaps, serviceSnaps] = await Promise.all([
+    Promise.all(ids.map(id => getDoc(doc(db, 'users', id)))),
+    Promise.all(ids.map(id => getDoc(doc(db, 'schedules', `${id}_shard_0`)))),
+    Promise.all(ids.map(id =>
+      getDocs(query(collection(db, 'services'), where('providerId', '==', id), where('isActive', '==', true)))
+    )),
+  ]);
+
+  return docs.map((d, i) => {
+    const profile = d.data() as BarberCard['profile'];
+    const user = (userSnaps[i].exists() ? userSnaps[i].data() : {}) as BarberCard['user'];
+    const schedule = scheduleSnaps[i].exists()
+      ? (scheduleSnaps[i].data() as { availableSlots?: Record<string, string[]> })
+      : null;
+    const barberServices = serviceSnaps[i].docs
+      .map(s => s.data() as any)
+      .filter(s => s.providerType === 'barber');
+    const prices = barberServices.map(s => s.price || 0).filter(p => p > 0);
+    const minPrice = prices.length > 0 ? Math.min(...prices) : null;
+    return { id: d.id, profile, user, schedule, minPrice };
+  });
+}
+
+// ─── component ───────────────────────────────────────────────────────────────
 
 export default function BarbersPage() {
+  const [selectedCountryCode, setSelectedCountryCode] = useState('');
+  const [selectedCountryName, setSelectedCountryName] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [activeFilter, setActiveFilter] = useState<{ city: string; country: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const countries = Country.getAllCountries();
+  const cities = selectedCountryCode ? (City.getCitiesOfCountry(selectedCountryCode) ?? []) : [];
+
+  const { data: barbers = [], isLoading } = useQuery({
+    queryKey: ['barbersPage', activeFilter?.city ?? null],
+    queryFn: () => fetchBarbers(activeFilter?.city),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const handleSearch = () => {
+    if (selectedCountryName && selectedCity) {
+      setActiveFilter({ city: selectedCity, country: selectedCountryName });
+    }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.origin + '/barbers');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="bg-[#0A0A0A] text-white pt-24 min-h-screen font-sans border-t border-[#1a1a1a]">
-      <section className="bg-[#111] py-32 px-6 border-b border-[#1a1a1a]">
-        <div className="max-w-[1200px] mx-auto grid lg:grid-cols-[1.2fr_1fr] gap-16 lg:gap-8 items-center">
-          <div>
-            <div className="text-xs font-bold text-brand-orange uppercase tracking-widest mb-4">FOR BARBERS</div>
-            <h1 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-6">
-              Join thousands of barbers already on titeZMe
-            </h1>
-            <h2 className="text-3xl md:text-4xl font-black leading-[1.05] tracking-tight mb-6 mt-12 text-gray-400">
-              Your chair. <br/>
-              <span className="text-brand-yellow">Your rules.</span> <br/>
-              <span className="text-brand-yellow">Your money.</span>
-            </h2>
-            <p className="text-lg font-bold text-gray-400 mb-10 max-w-[420px]">
-              No commission fees during beta. Set your hours, set your price, keep everything. We send clients to your chair.
-            </p>
-            
-            <div className="flex flex-col gap-4 mb-10">
-              {['0% commission — keep every dirham/euro', 'Profile live in under 10 minutes', 'Your own schedule — no one owns your time', 'Clients find you — you just cut'].map((text, i) => (
-                <div key={i} className="flex gap-3 items-start">
-                  <div className="w-6 h-6 rounded-full bg-brand-yellow/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-brand-yellow text-xs font-black">✓</span>
-                  </div>
-                  <span className="font-bold text-gray-300">{text}</span>
-               </div>
-              ))}
-            </div>
+    <div className="bg-[#0a0a0a] text-white min-h-screen">
 
-            <div className="flex flex-wrap gap-4 mt-12">
-              <Link href="/signup" className="bg-brand-yellow text-black font-black px-8 py-4 rounded-full transition-opacity hover:opacity-90">
-                Join free during beta →
-              </Link>
-            </div>
-          </div>
-          
-          <div>
-            <div className="grid grid-cols-2 gap-4 mb-12">
-               <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
-                 <div className="text-5xl font-black text-brand-yellow mb-2">0%</div>
-                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">commission</div>
-               </div>
-               <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
-                 <div className="text-5xl font-black text-white mb-2">10 min</div>
-                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">to set up your profile</div>
-               </div>
-               <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px] border border-brand-yellow/20">
-                 <div className="text-5xl font-black text-white mb-2">400+</div>
-                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">barbers already joined</div>
-               </div>
-               <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
-                 <div className="text-3xl font-black text-brand-orange mb-2">Beta = Free</div>
-                 <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Join now, pay nothing during beta</div>
-               </div>
-            </div>
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <div className="max-w-[1200px] mx-auto px-6 pt-12 pb-8">
+        <h1 className="text-4xl md:text-5xl font-black mb-2">Find your barber</h1>
+        <p className="text-[#888] font-bold text-lg mb-8">
+          Browse barbers by city. Real availability. Book in seconds.
+        </p>
 
-            <div className="bg-[#0A0A0A] border border-[#2a2a2a] p-8 rounded-3xl mt-4">
-               <h3 className="text-2xl font-black mb-6">How to get started</h3>
-               <div className="flex flex-col gap-6">
-                 <div className="flex gap-4 items-start">
-                   <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center font-black text-gray-400 shrink-0">1</div>
-                   <div>
-                     <h4 className="font-bold text-white text-lg">Create your profile (10 minutes)</h4>
-                     <p className="text-sm font-bold text-gray-500 mt-1">Add your photos, services, and location.</p>
-                   </div>
-                 </div>
-                 <div className="flex gap-4 items-start">
-                   <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center font-black text-gray-400 shrink-0">2</div>
-                   <div>
-                     <h4 className="font-bold text-white text-lg">Set your availability</h4>
-                     <p className="text-sm font-bold text-gray-500 mt-1">Decide when you want to work.</p>
-                   </div>
-                 </div>
-                 <div className="flex gap-4 items-start">
-                   <div className="w-8 h-8 rounded-full bg-brand-yellow flex items-center justify-center font-black text-black shrink-0 relative"><span className="absolute top-0 bottom-0 left-0 right-0 animate-ping rounded-full bg-brand-yellow opacity-20"></span>3</div>
-                   <div>
-                     <h4 className="font-bold text-white text-lg">Clients find you and book</h4>
-                     <p className="text-sm font-bold text-gray-500 mt-1">Receive bookings directly. Paid in cash.</p>
-                   </div>
-                 </div>
-               </div>
-            </div>
+        {/* Search bar */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <select
+            value={selectedCountryCode}
+            onChange={e => {
+              const opt = countries.find(c => c.isoCode === e.target.value);
+              setSelectedCountryCode(e.target.value);
+              setSelectedCountryName(opt?.name ?? '');
+              setSelectedCity('');
+            }}
+            className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors"
+          >
+            <option value="">Choose a country</option>
+            {countries.map(c => (
+              <option key={c.isoCode} value={c.isoCode}>{c.name}</option>
+            ))}
+          </select>
 
-            <div className="bg-[#1A1A1A] rounded-3xl p-8 mt-4 border border-[#2a2a2a]">
-               <div className="text-brand-yellow mb-4 text-xs font-black tracking-widest uppercase">Testimonial</div>
-               <p className="text-lg font-bold text-gray-300 leading-relaxed mb-6 italic">&quot;Since joining titeZMe, my schedule has been fully booked. The app gives me total control over my hours and my clients directly.&quot;</p>
-               <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-full bg-[#0A0A0A] flex items-center justify-center text-sm font-black text-gray-400">AM</div>
-                 <div className="text-sm font-bold text-white uppercase tracking-wider">Ayoub M. - Master Barber</div>
-               </div>
-            </div>
-          </div>
+          <select
+            value={selectedCity}
+            onChange={e => setSelectedCity(e.target.value)}
+            disabled={!selectedCountryCode}
+            className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <option value="">Choose a city</option>
+            {cities.map(c => (
+              <option key={c.name} value={c.name}>{c.name}</option>
+            ))}
+          </select>
+
+          <button
+            onClick={handleSearch}
+            disabled={!selectedCity}
+            className="bg-brand-yellow text-[#0a0a0a] font-black px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            Search barbers →
+          </button>
         </div>
-      </section>
+
+        {activeFilter && (
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="text-sm text-[#888]">Results for</span>
+            <span className="bg-[#1a1a1a] border border-[#2a2a2a] text-white text-xs font-bold px-3 py-1 rounded-full">
+              {activeFilter.city}, {activeFilter.country}
+            </span>
+            <button
+              onClick={() => { setActiveFilter(null); setSelectedCity(''); setSelectedCountryCode(''); }}
+              className="text-xs text-[#555] hover:text-white transition-colors"
+            >
+              Clear ✕
+            </button>
+          </div>
+        )}
+
+        <div className="border-t border-[#1a1a1a] mt-4" />
+      </div>
+
+      {/* ── Results ─────────────────────────────────────────────────────── */}
+      <div className="max-w-[1200px] mx-auto px-6 pb-16">
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="bg-[#111] border border-[#1a1a1a] rounded-2xl h-[240px] animate-pulse" />
+            ))}
+          </div>
+        ) : barbers.length === 0 ? (
+          <div className="text-center py-24">
+            <div className="text-5xl mb-4">💈</div>
+            <h3 className="text-xl font-black mb-2">
+              {activeFilter ? `No barbers in ${activeFilter.city} yet` : 'No barbers available'}
+            </h3>
+            <p className="text-[#555] text-sm mb-6">
+              {activeFilter
+                ? 'Know a barber there? Share titeZMe with them.'
+                : 'Check back soon.'}
+            </p>
+            {activeFilter && (
+              <button
+                onClick={handleShare}
+                className="bg-[#1a1a1a] border border-[#2a2a2a] text-white font-bold px-6 py-3 rounded-full text-sm hover:border-[#444] transition-colors"
+              >
+                {copied ? '✓ Copied!' : '🔗 Share titeZMe'}
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {barbers.map(b => {
+              const badge = getOpenBadge(b.schedule);
+              const currency = b.profile.currency ?? '€';
+              const name = `${b.user.firstName ?? ''} ${b.user.lastName ?? ''}`.trim() || 'Barber';
+              const city = b.profile.city ?? b.user.city ?? '';
+              const country = b.user.country ?? '';
+              const photo = b.profile.profilePhotoUrl ?? b.user.photoUrl;
+              const specialties = b.profile.specialties ?? [];
+              const languages = b.profile.languages ?? [];
+
+              return (
+                <Link
+                  href={`/barber/${b.id}`}
+                  key={b.id}
+                  className="group bg-[#111] border border-[#1a1a1a] rounded-2xl p-5 hover:border-[#2a2a2a] transition-all hover:-translate-y-0.5 block"
+                >
+                  {/* Avatar + info */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="relative w-14 h-14 rounded-[14px] overflow-hidden shrink-0 border border-[#2a2a2a] bg-[#1a1a1a]">
+                      {photo ? (
+                        <Image src={photo} alt={name} fill className="object-cover" referrerPolicy="no-referrer" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center font-black text-xl text-[#0a0a0a] bg-gradient-to-br from-brand-orange to-brand-yellow">
+                          {name[0] ?? 'B'}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black text-white text-[15px] leading-tight truncate group-hover:text-brand-yellow transition-colors">
+                        {name}
+                      </h3>
+                      <div className="text-xs text-[#666] font-bold mt-0.5 truncate">
+                        📍 {[city, country].filter(Boolean).join(', ')}
+                      </div>
+                      {badge && (
+                        <div className={`flex items-center gap-1.5 mt-1 ${badge.color}`}>
+                          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${badge.dot}`} />
+                          <span className="text-[11px] font-bold">{badge.label}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      {(b.profile.reviewCount ?? 0) > 0 ? (
+                        <>
+                          <div className="font-black text-brand-yellow text-sm">
+                            ★ {typeof b.profile.rating === 'number' ? b.profile.rating.toFixed(1) : '—'}
+                          </div>
+                          <div className="text-[10px] text-[#555]">({b.profile.reviewCount})</div>
+                        </>
+                      ) : (
+                        <div className="text-[11px] text-[#555] font-bold">New ✨</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Specialties */}
+                  {specialties.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                      {specialties.slice(0, 2).map(s => (
+                        <span key={s} className="bg-brand-yellow/10 text-brand-yellow text-[10px] font-black px-2 py-0.5 rounded-full border border-brand-yellow/20">
+                          {s}
+                        </span>
+                      ))}
+                      {specialties.length > 2 && (
+                        <span className="text-[10px] text-[#555] font-bold">+{specialties.length - 2} more</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Languages */}
+                  {languages.length > 0 && (
+                    <div className="text-[11px] text-[#555] font-bold mb-3">
+                      🌍 {languages.slice(0, 2).join(' · ')}{languages.length > 2 ? ` +${languages.length - 2}` : ''}
+                    </div>
+                  )}
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between pt-3 border-t border-[#1a1a1a]">
+                    <span className="text-sm font-extrabold text-white">
+                      {b.minPrice !== null ? `from ${currency}${b.minPrice}` : 'Prices on request'}
+                    </span>
+                    <span className="text-xs font-black text-brand-orange group-hover:text-brand-yellow transition-colors">
+                      View profile →
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
