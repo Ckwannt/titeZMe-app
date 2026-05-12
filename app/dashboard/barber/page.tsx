@@ -1,4 +1,4 @@
-﻿﻿'use client';
+﻿﻿﻿﻿﻿'use client';
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -344,16 +344,16 @@ export default function BarberDashboard() {
                 <p className="text-brand-text-secondary text-sm mt-1">{new Date().toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'})} · {displayBookings.length} appointments today</p>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => user && window.open(`/barber/${user.uid}`, '_blank')}
-                  className="border border-[#2a2a2a] text-[#888] hover:border-[#F5C518] hover:text-[#F5C518] rounded-full text-[13px] font-extrabold px-5 py-2.5 transition-colors bg-transparent"
+                <a
+                  href={`/barber/${user?.uid}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="border border-[#2a2a2a] text-[#888] hover:border-[#F5C518] hover:text-[#F5C518] rounded-full text-[13px] font-extrabold px-5 py-2.5 transition-colors inline-flex items-center"
                 >
                   👁 View public profile
-                </button>
+                </a>
                 <button className="bg-brand-orange text-white px-7 py-3 rounded-full font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px">
                   + Block time off
                 </button>
-              </div>
             </div>
 
             {/* Stats */}
