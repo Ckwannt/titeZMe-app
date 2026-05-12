@@ -1,13 +1,11 @@
 ﻿'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/lib/auth-context';
 import { BarberCardSkeleton } from '@/components/skeletons';
 import type { Barber, Barbershop } from '@/lib/schemas';
 
@@ -59,8 +57,6 @@ const fetchCities = async () => {
 };
 
 export default function LandingPage() {
-  const router = useRouter();
-  const { appUser, loading } = useAuth();
   const [browserCity, setBrowserCity] = useState('Madrid');
   
   // Try to keep it consistent
@@ -76,16 +72,6 @@ export default function LandingPage() {
     staleTime: 5 * 60 * 1000
   });
 
-  useEffect(() => {
-    if (!loading && appUser) {
-      if (appUser.role === 'client') router.push('/dashboard/client');
-      else if (appUser.role === 'barber') router.push('/dashboard/barber');
-      else if (appUser.role === 'shop_owner') router.push('/dashboard/shop');
-      else router.push('/dashboard/client');
-    }
-  }, [loading, appUser, router]);
-
-  if (loading || appUser) return <div className="min-h-screen bg-[#0A0A0A]" />;
 
   const featuredBarber = barbers.length > 0 ? barbers[0] : null;
 
