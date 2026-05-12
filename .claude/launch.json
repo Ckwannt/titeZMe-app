@@ -1,0 +1,18 @@
+﻿{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Next.js Dev Server",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "Firebase Functions Emulator",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["firebase", "emulators:start", "--only", "functions"],
+      "cwd": "functions",
+      "port": 5001
+    }
+  ]
+}
