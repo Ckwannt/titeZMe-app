@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { collection, query, where, getDocs, doc, getDoc, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { Country, City } from 'country-state-city';
@@ -37,59 +37,13 @@ type BarberCard = {
 function getOpenBadge(schedule: BarberCard['schedule']) {
   if (!schedule?.availableSlots) return null;
   const today = new Date().toISOString().split('T')[0];
-  const slots = schedule.availableSlots[today] || [];
+  const slots = schedule.availableSlots[today] ?? [];
   if (slots.length === 0) return { label: 'Closed today', color: 'text-[#ef4444]', dot: 'bg-[#ef4444]' };
   const nowHour = new Date().getHours();
   const nowStr = `${String(nowHour).padStart(2, '0')}:00`;
   if (slots.includes(nowStr)) return { label: 'Open now', color: 'text-[#22c55e]', dot: 'bg-[#22c55e]' };
   if (nowHour < parseInt(slots[0])) return { label: `Opens ${slots[0]}`, color: 'text-[#f59e0b]', dot: 'bg-[#f59e0b]' };
   return { label: 'Closed today', color: 'text-[#ef4444]', dot: 'bg-[#ef4444]' };
-}
-
-// ─── fetcher ─────────────────────────────────────────────────────────────────
-
-async function fetchBarbers(filterCity?: string): Promise<BarberCard[]> {
-  const q = query(
-    collection(db, 'barberProfiles'),
-    where('isLive', '==', true),
-    where('isOnboarded', '==', true),
-    where('isSolo', '==', true),
-    orderBy('rating', 'desc'),
-    limit(filterCity ? 100 : 20),
-  );
-  const snap = await getDocs(q);
-  let docs = snap.docs;
-
-  if (filterCity) {
-    docs = docs.filter(d =>
-      (d.data().city || '').toLowerCase() === filterCity.toLowerCase()
-    );
-  }
-
-  if (docs.length === 0) return [];
-
-  const ids = docs.map(d => d.id);
-  const [userSnaps, scheduleSnaps, serviceSnaps] = await Promise.all([
-    Promise.all(ids.map(id => getDoc(doc(db, 'users', id)))),
-    Promise.all(ids.map(id => getDoc(doc(db, 'schedules', `${id}_shard_0`)))),
-    Promise.all(ids.map(id =>
-      getDocs(query(collection(db, 'services'), where('providerId', '==', id), where('isActive', '==', true)))
-    )),
-  ]);
-
-  return docs.map((d, i) => {
-    const profile = d.data() as BarberCard['profile'];
-    const user = (userSnaps[i].exists() ? userSnaps[i].data() : {}) as BarberCard['user'];
-    const schedule = scheduleSnaps[i].exists()
-      ? (scheduleSnaps[i].data() as { availableSlots?: Record<string, string[]> })
-      : null;
-    const barberServices = serviceSnaps[i].docs
-      .map(s => s.data() as any)
-      .filter(s => s.providerType === 'barber');
-    const prices = barberServices.map(s => s.price || 0).filter(p => p > 0);
-    const minPrice = prices.length > 0 ? Math.min(...prices) : null;
-    return { id: d.id, profile, user, schedule, minPrice };
-  });
 }
 
 // ─── component ───────────────────────────────────────────────────────────────
@@ -101,14 +55,77 @@ export default function BarbersPage() {
   const [activeFilter, setActiveFilter] = useState<{ city: string; country: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Live barber profiles via onSnapshot (real-time)
+  const [liveProfiles, setLiveProfiles] = useState<{ id: string; data: any }[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+
+  useEffect(() => {
+    // NOTE: isOnboarded is stored in the `users` collection, NOT in barberProfiles.
+    // The query only checks fields that exist in barberProfiles: isLive and isSolo.
+    const q = query(
+      collection(db, 'barberProfiles'),
+      where('isLive', '==', true),
+      where('isSolo', '==', true),
+      orderBy('rating', 'desc'),
+      limit(activeFilter?.city ? 100 : 20),
+    );
+    const unsub = onSnapshot(q, snap => {
+      let docs = snap.docs;
+      if (activeFilter?.city) {
+        docs = docs.filter(d =>
+          (d.data().city ?? '').toLowerCase() === activeFilter.city.toLowerCase()
+        );
+      }
+      setLiveProfiles(docs.map(d => ({ id: d.id, data: d.data() })));
+      setListLoading(false);
+    });
+    return () => unsub();
+  }, [activeFilter?.city]);
+
+  // Supplementary data (user names/photos, schedules, min prices) — cached via React Query
+  const barberIds = liveProfiles.map(b => b.id);
+
+  const { data: suppData, isLoading: suppLoading } = useQuery({
+    queryKey: ['barbersSuppData', ...barberIds],
+    queryFn: async () => {
+      if (barberIds.length === 0) return {} as Record<string, { user: any; schedule: any; minPrice: number | null }>;
+      const [userSnaps, scheduleSnaps, serviceSnaps] = await Promise.all([
+        Promise.all(barberIds.map(id => getDoc(doc(db, 'users', id)))),
+        Promise.all(barberIds.map(id => getDoc(doc(db, 'schedules', `${id}_shard_0`)))),
+        Promise.all(barberIds.map(id =>
+          getDocs(query(collection(db, 'services'), where('providerId', '==', id), where('isActive', '==', true)))
+        )),
+      ]);
+      const result: Record<string, { user: any; schedule: any; minPrice: number | null }> = {};
+      barberIds.forEach((id, i) => {
+        const barberServices = serviceSnaps[i].docs
+          .map(s => s.data() as any)
+          .filter(s => s.providerType === 'barber');
+        const prices = barberServices.map((s: any) => s.price || 0).filter((p: number) => p > 0);
+        result[id] = {
+          user: userSnaps[i].exists() ? userSnaps[i].data() : {},
+          schedule: scheduleSnaps[i].exists() ? scheduleSnaps[i].data() : null,
+          minPrice: prices.length > 0 ? Math.min(...prices) : null,
+        };
+      });
+      return result;
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: barberIds.length > 0,
+  });
+
+  const isLoading = listLoading || (barberIds.length > 0 && suppLoading);
+
+  const barbers: BarberCard[] = liveProfiles.map(b => ({
+    id: b.id,
+    profile: b.data as BarberCard['profile'],
+    user: (suppData?.[b.id]?.user ?? {}) as BarberCard['user'],
+    schedule: (suppData?.[b.id]?.schedule ?? null) as BarberCard['schedule'],
+    minPrice: suppData?.[b.id]?.minPrice ?? null,
+  }));
+
   const countries = Country.getAllCountries();
   const cities = selectedCountryCode ? (City.getCitiesOfCountry(selectedCountryCode) ?? []) : [];
-
-  const { data: barbers = [], isLoading } = useQuery({
-    queryKey: ['barbersPage', activeFilter?.city ?? null],
-    queryFn: () => fetchBarbers(activeFilter?.city),
-    staleTime: 5 * 60 * 1000,
-  });
 
   const handleSearch = () => {
     if (selectedCountryName && selectedCity) {
@@ -178,7 +195,7 @@ export default function BarbersPage() {
               {activeFilter.city}, {activeFilter.country}
             </span>
             <button
-              onClick={() => { setActiveFilter(null); setSelectedCity(''); setSelectedCountryCode(''); }}
+              onClick={() => { setActiveFilter(null); setSelectedCity(''); setSelectedCountryCode(''); setSelectedCountryName(''); }}
               className="text-xs text-[#555] hover:text-white transition-colors"
             >
               Clear ✕
@@ -204,9 +221,7 @@ export default function BarbersPage() {
               {activeFilter ? `No barbers in ${activeFilter.city} yet` : 'No barbers available'}
             </h3>
             <p className="text-[#555] text-sm mb-6">
-              {activeFilter
-                ? 'Know a barber there? Share titeZMe with them.'
-                : 'Check back soon.'}
+              {activeFilter ? 'Know a barber there? Share titeZMe with them.' : 'Check back soon.'}
             </p>
             {activeFilter && (
               <button

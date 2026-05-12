@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { collection, query, where, getDocs, doc, getDoc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { Country, City } from 'country-state-city';
@@ -36,39 +36,6 @@ function getOpenBadge(schedule: ShopCard['schedule']) {
   return { label: 'Closed today', color: 'text-[#ef4444]', dot: 'bg-[#ef4444]' };
 }
 
-// ─── fetcher ─────────────────────────────────────────────────────────────────
-
-async function fetchShops(filterCity?: string): Promise<ShopCard[]> {
-  const q = query(
-    collection(db, 'barbershops'),
-    where('status', '==', 'active'),
-    limit(filterCity ? 100 : 20),
-  );
-  const snap = await getDocs(q);
-  let docs = snap.docs;
-
-  if (filterCity) {
-    docs = docs.filter(d =>
-      (d.data().address?.city ?? '').toLowerCase() === filterCity.toLowerCase()
-    );
-  }
-
-  if (docs.length === 0) return [];
-
-  const ids = docs.map(d => d.id);
-  const scheduleSnaps = await Promise.all(
-    ids.map(id => getDoc(doc(db, 'schedules', `${id}_shard_0`)))
-  );
-
-  return docs.map((d, i) => ({
-    id: d.id,
-    shop: d.data() as ShopCard['shop'],
-    schedule: scheduleSnaps[i].exists()
-      ? (scheduleSnaps[i].data() as { availableSlots?: Record<string, string[]> })
-      : null,
-  }));
-}
-
 // ─── component ───────────────────────────────────────────────────────────────
 
 export default function ShopsPage() {
@@ -77,14 +44,61 @@ export default function ShopsPage() {
   const [selectedCity, setSelectedCity] = useState('');
   const [activeFilter, setActiveFilter] = useState<{ city: string; country: string } | null>(null);
 
+  // Live shops list via onSnapshot (real-time)
+  const [liveShops, setLiveShops] = useState<{ id: string; data: ShopCard['shop'] }[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(
+      collection(db, 'barbershops'),
+      where('status', '==', 'active'),
+      limit(activeFilter?.city ? 100 : 20),
+    );
+    const unsub = onSnapshot(q, snap => {
+      let docs = snap.docs;
+      if (activeFilter?.city) {
+        docs = docs.filter(d =>
+          (d.data().address?.city ?? '').toLowerCase() === activeFilter.city.toLowerCase()
+        );
+      }
+      setLiveShops(docs.map(d => ({ id: d.id, data: d.data() as ShopCard['shop'] })));
+      setListLoading(false);
+    });
+    return () => unsub();
+  }, [activeFilter?.city]);
+
+  // Supplementary schedule data — cached via React Query, re-fetches when shop list changes
+  const shopIds = liveShops.map(s => s.id);
+
+  const { data: scheduleData, isLoading: schedLoading } = useQuery({
+    queryKey: ['shopSchedules', ...shopIds],
+    queryFn: async () => {
+      if (shopIds.length === 0) return {} as Record<string, ShopCard['schedule']>;
+      const snaps = await Promise.all(
+        shopIds.map(id => getDoc(doc(db, 'schedules', `${id}_shard_0`)))
+      );
+      const result: Record<string, ShopCard['schedule']> = {};
+      shopIds.forEach((id, i) => {
+        result[id] = snaps[i].exists()
+          ? (snaps[i].data() as { availableSlots?: Record<string, string[]> })
+          : null;
+      });
+      return result;
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: shopIds.length > 0,
+  });
+
+  const isLoading = listLoading || (shopIds.length > 0 && schedLoading);
+
+  const shops: ShopCard[] = liveShops.map(s => ({
+    id: s.id,
+    shop: s.data,
+    schedule: scheduleData?.[s.id] ?? null,
+  }));
+
   const countries = Country.getAllCountries();
   const cities = selectedCountryCode ? (City.getCitiesOfCountry(selectedCountryCode) ?? []) : [];
-
-  const { data: shops = [], isLoading } = useQuery({
-    queryKey: ['shopsPage', activeFilter?.city ?? null],
-    queryFn: () => fetchShops(activeFilter?.city),
-    staleTime: 5 * 60 * 1000,
-  });
 
   const handleSearch = () => {
     if (selectedCountryName && selectedCity) {
