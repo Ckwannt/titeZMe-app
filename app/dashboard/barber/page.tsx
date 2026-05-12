@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿'use client';
+'use client';
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -354,6 +354,7 @@ export default function BarberDashboard() {
                 <button className="bg-brand-orange text-white px-7 py-3 rounded-full font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px">
                   + Block time off
                 </button>
+              </div>
             </div>
 
             {/* Stats */}
