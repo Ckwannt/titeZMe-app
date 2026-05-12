@@ -316,18 +316,6 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
     );
   }
 
-  if (!profile.isLive || !profile.isOnboarded) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-6">
-        <div className="text-center max-w-[400px]">
-          <div className="text-5xl mb-4">✂️</div>
-          <h1 className="text-xl font-black mb-2">This barber is not currently accepting bookings</h1>
-          <p className="text-[#888] text-sm mb-6">Check back later or find another barber.</p>
-          <Link href="/barbers" className="bg-brand-yellow text-black font-black px-6 py-3 rounded-full">Find other barbers →</Link>
-        </div>
-      </div>
-    );
-  }
 
   // ─── render ───────────────────────────────────────────────────────────────────
 
@@ -581,7 +569,7 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="font-black text-brand-yellow">{currency}{profile.titeZMeCut.price}</div>
-                      <button onClick={() => handleBooking()} className="bg-brand-yellow text-[#0a0a0a] px-4 py-2 rounded-xl text-xs font-black hover:opacity-90 transition-opacity">Book</button>
+                      <button onClick={() => handleBooking()} disabled={!profile.isLive} title={!profile.isLive ? 'Not accepting bookings right now' : undefined} className={`px-4 py-2 rounded-xl text-xs font-black transition-opacity ${!profile.isLive ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed' : 'bg-brand-yellow text-[#0a0a0a] hover:opacity-90'}`}>Book</button>
                     </div>
                   </div>
                 )}
@@ -598,8 +586,8 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="font-black text-brand-yellow">{currency}{s.price}</div>
-                      <button onClick={() => handleBooking(s.id)}
-                        className="bg-[#1a1a1a] text-white border border-[#333] group-hover:bg-brand-yellow group-hover:text-[#0a0a0a] group-hover:border-brand-yellow px-4 py-2 rounded-xl text-xs font-bold transition-colors"
+                      <button onClick={() => handleBooking(s.id)} disabled={!profile.isLive} title={!profile.isLive ? 'Not accepting bookings right now' : undefined}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${!profile.isLive ? 'bg-[#1a1a1a] text-[#555] border border-[#2a2a2a] cursor-not-allowed' : 'bg-[#1a1a1a] text-white border border-[#333] group-hover:bg-brand-yellow group-hover:text-[#0a0a0a] group-hover:border-brand-yellow'}`}
                       >
                         Book
                       </button>
@@ -620,8 +608,8 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
               <div className="text-3xl font-black text-brand-yellow mb-4">
                 {minPrice !== null ? `${currency}${minPrice}` : 'Prices on request'}
               </div>
-              <button onClick={() => handleBooking()}
-                className="w-full bg-brand-yellow text-[#0a0a0a] font-black py-3 rounded-full mb-2 hover:opacity-90 transition-opacity text-sm"
+              <button onClick={() => handleBooking()} disabled={!profile.isLive} title={!profile.isLive ? 'Not accepting bookings right now' : undefined}
+                className={`w-full font-black py-3 rounded-full mb-2 text-sm transition-opacity ${!profile.isLive ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed' : 'bg-brand-yellow text-[#0a0a0a] hover:opacity-90'}`}
               >
                 Book Now →
               </button>
@@ -667,8 +655,8 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
                   <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Today&apos;s slots</div>
                   <div className="flex flex-wrap gap-1.5">
                     {todaySlots.map((slot: string) => (
-                      <button key={slot} onClick={() => handleBooking()}
-                        className="bg-[#0f2010] border border-[#22c55e]/30 text-[#22c55e] px-2.5 py-1 rounded-lg text-[11px] font-bold hover:bg-[#22c55e]/20 transition-colors"
+                      <button key={slot} onClick={() => handleBooking()} disabled={!profile.isLive}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${!profile.isLive ? 'bg-[#1a1a1a] border border-[#333] text-[#555] cursor-not-allowed' : 'bg-[#0f2010] border border-[#22c55e]/30 text-[#22c55e] hover:bg-[#22c55e]/20'}`}
                       >
                         {slot}
                       </button>
