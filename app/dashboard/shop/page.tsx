@@ -206,11 +206,20 @@ export default function ShopDashboard() {
                 <h1 className="text-2xl font-black">{activeTab} {activeTab === "Overview" ? "🏪" : ""}</h1>
                 {activeTab === "Overview" && <p className="text-brand-text-secondary text-sm mt-1">April 2026 · 4 active barbers</p>}
               </div>
-              <button 
-                onClick={() => setActiveTab('Team')}
-                className="bg-brand-yellow text-[#0a0a0a] px-7 py-3 rounded-full font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px">
-                + Invite Barber
-              </button>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`/shop/${user?.uid}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="border border-[#2a2a2a] text-[#888] hover:border-[#F5C518] hover:text-[#F5C518] rounded-full text-[13px] font-extrabold px-5 py-2.5 transition-colors inline-flex items-center"
+                >
+                  👁 View shop profile
+                </a>
+                <button 
+                  onClick={() => setActiveTab('Team')}
+                  className="bg-brand-yellow text-[#0a0a0a] px-7 py-3 rounded-full font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px">
+                  + Invite Barber
+                </button>
+              </div>
             </div>
 
             {/* Shop stats */}
