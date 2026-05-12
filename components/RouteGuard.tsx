@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -16,7 +16,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
           router.replace('/login');
         }
       } else if (appUser) {
-        if (!appUser.isOnboarded && !pathname.startsWith('/onboarding') && pathname !== '/login' && pathname !== '/signup') {
+        if ((!appUser.isOnboarded && !pathname.startsWith('/onboarding') && pathname !== '/' && pathname !== '/login' && pathname !== '/signup')) {
           if (appUser.role === 'client') {
             router.replace('/onboarding/client');
           } else if (appUser.role === 'barber') {
