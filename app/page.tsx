@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -7,6 +7,7 @@ import { collection, query, where, getDocs, limit, orderBy } from 'firebase/fire
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { BarberCardSkeleton } from '@/components/skeletons';
+import { Footer } from '@/components/Footer';
 import type { Barber, Barbershop } from '@/lib/schemas';
 
 type BarberDocument = Barber & { id: string, photoUrl?: string, firstName?: string, lastName?: string, name?: string, isOpenToday?: boolean, topSpecialties?: string[], lowestPrice?: number, currency?: string };
@@ -523,6 +524,7 @@ export default function LandingPage() {
             </div>
          </div>
       </section>
+      <Footer />
     </div>
   );
 }
