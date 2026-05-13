@@ -232,72 +232,70 @@ export default function LandingPage() {
                 const { sym, label } = getCurrencySymbol(mainBarber.currency);
                 const hasRating = typeof mainBarber.rating === 'number' && mainBarber.rating > 0;
                 return (
-                  <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-5 mb-3 relative">
-                    {/* Label */}
+                  <div className="bg-[#111] border border-[#1e1e1e] rounded-[16px] p-5 mb-[10px] relative">
+                    {/* FEATURED label */}
                     <div className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-brand-orange">
                       {mainBarber.isOpenNow ? 'FEATURED | OPEN NOW' : 'FEATURED'}
                     </div>
-                    {/* Avatar + info */}
-                    <div className="flex gap-3 mb-4 pr-28">
+                    {/* Top row: avatar + name/city/rating */}
+                    <div className="flex gap-3 items-start mb-4 pr-24">
                       {mainBarber.photoUrl ? (
-                        <Image
-                          src={mainBarber.photoUrl} alt={name}
-                          width={48} height={48}
-                          className="rounded-xl object-cover border border-[#2a2a2a] shrink-0"
-                          referrerPolicy="no-referrer"
-                        />
+                        <Image src={mainBarber.photoUrl} alt={name} width={52} height={52}
+                          className="rounded-[12px] object-cover shrink-0" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-lg text-black shrink-0">
+                        <div className="w-[52px] h-[52px] rounded-[12px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-xl text-[#0a0a0a] shrink-0">
                           {name[0]}
                         </div>
                       )}
-                      <div>
-                        <h3 className="text-[15px] font-black text-white leading-tight">{name}</h3>
-                        <div className="text-xs font-bold text-gray-400 mt-0.5">{mainBarber.userCity}</div>
-                        <div className="text-xs font-bold text-brand-yellow mt-0.5">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-[15px] font-extrabold text-white leading-tight truncate">{name}</h3>
+                        <div className="text-[12px] text-[#666] mt-0.5">{mainBarber.userCity}</div>
+                        <div className="text-[12px] font-bold text-brand-yellow mt-0.5">
                           ★ {hasRating ? mainBarber.rating.toFixed(2) : 'New ✨'}
                           {(mainBarber.reviewCount || 0) > 0 && (
-                            <span className="text-gray-500 font-normal ml-1">({mainBarber.reviewCount} reviews)</span>
+                            <span className="text-[#555] font-normal text-[10px] ml-1">({mainBarber.reviewCount} reviews)</span>
                           )}
                         </div>
                       </div>
                     </div>
-                    {/* Specialties + vibes */}
+                    {/* Specialty + vibe tags */}
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       {specialties.slice(0, 2).map((s: string) => (
-                        <span key={s} className="bg-brand-yellow/10 text-brand-yellow px-2 py-0.5 rounded text-[10px] font-black uppercase">{s}</span>
+                        <span key={s} className="bg-[#1a1500] text-brand-yellow border border-brand-yellow/20 rounded-[4px] px-2 py-0.5 text-[10px] font-black uppercase">{s}</span>
                       ))}
                       {vibes.slice(0, 1).map((v: string) => (
-                        <span key={v} className="bg-[#1a1a1a] text-gray-400 px-2 py-0.5 rounded text-[10px] font-bold">{v}</span>
+                        <span key={v} className="bg-[#141414] text-[#888] border border-[#1a1a1a] rounded-[4px] px-2 py-0.5 text-[10px] font-bold">{v}</span>
                       ))}
                     </div>
                     {/* Languages */}
                     {languages.length > 0 && (
-                      <div className="text-xs font-bold text-gray-500 mb-3">
+                      <div className="text-[12px] text-[#888] font-bold mb-3">
                         🗣 {languages.slice(0, 3).join(' · ')}
                       </div>
                     )}
-                    {/* Next slots */}
-                    {mainBarber.nextSlots && mainBarber.nextSlots.length > 0 && (
-                      <div className="bg-[#0a0a0a] rounded-xl p-3 mb-4">
-                        <div className="text-[10px] font-black uppercase text-gray-500 mb-2">NEXT AVAILABLE SLOTS</div>
-                        <div className="flex gap-2 flex-wrap">
-                          {mainBarber.nextSlots.map((s: string) => (
-                            <span key={s} className="border border-brand-yellow text-brand-yellow px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-yellow/10">
+                    {/* Next slots inset box */}
+                    <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-[10px] px-[14px] py-[12px] mb-3">
+                      <div className="text-[9px] font-black uppercase text-[#444] tracking-[0.08em] mb-2">NEXT AVAILABLE SLOTS</div>
+                      <div className="flex gap-2 flex-wrap">
+                        {mainBarber.nextSlots && mainBarber.nextSlots.length > 0 ? (
+                          mainBarber.nextSlots.map((s: string) => (
+                            <span key={s} className="bg-brand-yellow text-[#0a0a0a] rounded-full px-[14px] py-[6px] text-[11px] font-extrabold">
                               Today {s}
                             </span>
-                          ))}
-                        </div>
+                          ))
+                        ) : (
+                          <span className="text-[11px] text-[#555] font-bold">No slots today</span>
+                        )}
                       </div>
-                    )}
-                    {/* Price + Book */}
+                    </div>
+                    {/* Price + Book Now */}
                     <div className="flex justify-between items-center">
                       <div className="text-[18px] font-black text-white">
                         {mainBarber.minPrice !== null
                           ? `${sym}${mainBarber.minPrice}${mainBarber.maxPrice && mainBarber.maxPrice !== mainBarber.minPrice ? `-${sym}${mainBarber.maxPrice}` : ''}${label}`
                           : 'Prices on request'}
                       </div>
-                      <Link href="/barbers" className="bg-brand-yellow text-black font-black px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity">
+                      <Link href="/barbers" className="bg-brand-yellow text-[#0a0a0a] rounded-full font-black text-[13px] px-5 py-[10px] hover:opacity-90 transition-opacity">
                         Book Now →
                       </Link>
                     </div>
@@ -314,34 +312,30 @@ export default function LandingPage() {
                     const hasRating = typeof b.rating === 'number' && b.rating > 0;
                     return (
                       <Link href="/barbers" key={b.id}
-                        className="bg-[#111] border border-[#1e1e1e] rounded-xl p-3 flex gap-2.5 items-center hover:border-[#2a2a2a] transition-colors">
+                        className={`border border-[#1e1e1e] rounded-[12px] p-3 flex gap-2.5 items-center hover:border-[#2a2a2a] transition-colors ${b.isOpenNow ? 'bg-[#111]' : 'bg-[#0d0d0d]'}`}>
                         {b.photoUrl ? (
-                          <Image
-                            src={b.photoUrl} alt={name}
-                            width={36} height={36}
-                            className="rounded-lg object-cover border border-[#2a2a2a] shrink-0"
-                            referrerPolicy="no-referrer"
-                          />
+                          <Image src={b.photoUrl} alt={name} width={36} height={36}
+                            className="rounded-[9px] object-cover shrink-0" referrerPolicy="no-referrer" />
                         ) : (
-                          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-sm text-black shrink-0">
+                          <div className="w-9 h-9 rounded-[9px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-sm text-[#0a0a0a] shrink-0">
                             {name[0]}
                           </div>
                         )}
                         <div className="min-w-0">
-                          <div className="text-[12px] font-black text-white truncate">{name}</div>
-                          <div className="text-[10px] font-bold text-gray-500 mt-0.5">
-                            ★ {hasRating ? b.rating.toFixed(1) : 'New'}
-                            {b.minPrice !== null && (
-                              <span> · {sym}{b.minPrice}{label}</span>
-                            )}
+                          <div className="text-[12px] font-extrabold text-white truncate">{name}</div>
+                          <div className="text-[10px] text-[#555] mt-0.5">
+                            ★ {hasRating ? b.rating.toFixed(1) : 'New'}{b.minPrice !== null ? ` · ${sym}${b.minPrice}${label}` : ''}
                           </div>
-                          <div className={`text-[10px] font-bold mt-0.5 ${b.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>● {b.isOpenNow ? 'Open Now' : 'Closed'}</div>
+                          <div className={`text-[9px] font-extrabold mt-0.5 ${b.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
+                            ● {b.isOpenNow ? 'Open Now' : 'Closed'}
+                          </div>
                         </div>
                       </Link>
                     );
                   })}
                 </div>
               )}
+
             </div>
           )}
         </div>
