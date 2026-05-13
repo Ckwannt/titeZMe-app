@@ -34,6 +34,15 @@ function normalizeCity(raw: string): string {
   return raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 }
 
+function getCurrencySymbol(currency?: string): { sym: string; label: string } {
+  switch ((currency ?? '').toUpperCase()) {
+    case 'MAD': return { sym: '', label: ' MAD' };
+    case 'GBP': return { sym: '£', label: '' };
+    case 'USD': return { sym: '$', label: '' };
+    default:    return { sym: '€', label: '' };
+  }
+}
+
 // ─── data fetchers ────────────────────────────────────────────────────────────
 
 async function fetchFeaturedBarbers() {
@@ -142,7 +151,6 @@ export default function LandingPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fill cities to 8 slots with coming soon placeholders
   const citySlots = [...citiesData];
   for (const cs of COMING_SOON) {
     if (citySlots.length >= 8) break;
@@ -150,6 +158,10 @@ export default function LandingPage() {
       citySlots.push({ city: cs, barbers: 0, shops: 0 });
     }
   }
+
+  // Helpers for featured barber cards
+  const mainBarber = featuredBarbers[0] as any;
+  const smallBarbers = featuredBarbers.slice(1, 3) as any[];
 
   return (
     <div className="bg-[#0A0A0A] text-white pt-24 min-h-screen font-sans">
@@ -207,81 +219,128 @@ export default function LandingPage() {
           </div>
 
           {/* Right column — real open barbers */}
-          {featuredBarbers.length > 0 && (
-            <div className="flex-1 lg:max-w-[440px] animate-fadeUp flex flex-col gap-4 mt-10 lg:mt-0">
-              <div className="bg-[#1a1a1a] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-brand-orange border border-[#2a2a2a] self-end">
-                FEATURED · Open Now
-              </div>
-              {featuredBarbers.map((b: any) => {
-                const name = `${b.firstName} ${b.lastName}`.trim() || 'Barber';
-                const vibes: string[] = b.vibes || b.vibe || [];
-                const specialties: string[] = b.specialties || [];
-                const languages: string[] = b.languages || [];
-                const currency = b.currency === 'MAD' ? 'MAD ' : b.currency === 'GBP' ? '£' : b.currency === 'USD' ? '$' : '€';
+          {featuredBarbers.length > 0 && mainBarber && (
+            <div className="flex-1 lg:max-w-[440px] animate-fadeUp mt-10 lg:mt-0">
+
+              {/* Main featured card */}
+              {(() => {
+                const name = `${mainBarber.firstName} ${mainBarber.lastName}`.trim() || 'Barber';
+                const vibes: string[] = mainBarber.vibes || mainBarber.vibe || [];
+                const specialties: string[] = mainBarber.specialties || [];
+                const languages: string[] = mainBarber.languages || [];
+                const { sym, label } = getCurrencySymbol(mainBarber.currency);
+                const hasRating = typeof mainBarber.rating === 'number' && mainBarber.rating > 0;
                 return (
-                  <div key={b.id} className="bg-[#141414] border border-[#2a2a2a] rounded-3xl p-5">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex gap-3">
-                        {b.photoUrl ? (
-                          <Image src={b.photoUrl} alt={name} width={56} height={56} className="rounded-xl object-cover border border-[#2a2a2a]" referrerPolicy="no-referrer" />
-                        ) : (
-                          <div className="w-14 h-14 rounded-xl bg-brand-yellow flex items-center justify-center font-black text-xl text-black">{name[0]}</div>
-                        )}
-                        <div>
-                          <h3 className="text-base font-black text-white">{name}</h3>
-                          <div className="text-xs font-bold text-gray-400">{b.userCity}</div>
-                          <div className="flex items-center gap-1 text-brand-yellow text-xs font-bold mt-0.5">
-                            ★ {typeof b.rating === 'number' ? b.rating.toFixed(1) : 'New'}
-                            <span className="text-gray-500 font-normal">({b.reviewCount || 0})</span>
-                          </div>
+                  <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-5 mb-3 relative">
+                    {/* Label */}
+                    <div className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-brand-orange">
+                      FEATURED | OPEN NOW
+                    </div>
+                    {/* Avatar + info */}
+                    <div className="flex gap-3 mb-4 pr-28">
+                      {mainBarber.photoUrl ? (
+                        <Image
+                          src={mainBarber.photoUrl} alt={name}
+                          width={48} height={48}
+                          className="rounded-xl object-cover border border-[#2a2a2a] shrink-0"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-lg text-black shrink-0">
+                          {name[0]}
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="text-[15px] font-black text-white leading-tight">{name}</h3>
+                        <div className="text-xs font-bold text-gray-400 mt-0.5">{mainBarber.userCity}</div>
+                        <div className="text-xs font-bold text-brand-yellow mt-0.5">
+                          ★ {hasRating ? mainBarber.rating.toFixed(2) : 'New ✨'}
+                          {(mainBarber.reviewCount || 0) > 0 && (
+                            <span className="text-gray-500 font-normal ml-1">({mainBarber.reviewCount} reviews)</span>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 bg-[#0f2010] border border-[#22c55e]/30 text-[#22c55e] text-[10px] font-bold px-2 py-1 rounded-full">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" /> Open now
-                      </div>
                     </div>
-
+                    {/* Specialties + vibes */}
                     <div className="flex flex-wrap gap-1.5 mb-3">
-                      {specialties.slice(0, 2).map(s => (
+                      {specialties.slice(0, 2).map((s: string) => (
                         <span key={s} className="bg-brand-yellow/10 text-brand-yellow px-2 py-0.5 rounded text-[10px] font-black uppercase">{s}</span>
                       ))}
-                      {vibes.slice(0, 1).map(v => (
+                      {vibes.slice(0, 1).map((v: string) => (
                         <span key={v} className="bg-[#1a1a1a] text-gray-400 px-2 py-0.5 rounded text-[10px] font-bold">{v}</span>
                       ))}
                     </div>
-
+                    {/* Languages */}
                     {languages.length > 0 && (
                       <div className="text-xs font-bold text-gray-500 mb-3">
-                        🗣 {languages.slice(0, 2).join(' · ')}
+                        🗣 {languages.slice(0, 3).join(' · ')}
                       </div>
                     )}
-
-                    {b.nextSlots && b.nextSlots.length > 0 && (
-                      <div className="bg-[#0A0A0A] rounded-xl p-3 mb-4">
-                        <div className="text-[10px] font-black uppercase text-gray-500 mb-2">Next slots</div>
-                        <div className="flex gap-2">
-                          {b.nextSlots.map((s: string) => (
-                            <span key={s} className="border border-brand-yellow text-brand-yellow px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-yellow/10">
+                    {/* Next slots */}
+                    {mainBarber.nextSlots && mainBarber.nextSlots.length > 0 && (
+                      <div className="bg-[#0a0a0a] rounded-xl p-3 mb-4">
+                        <div className="text-[10px] font-black uppercase text-gray-500 mb-2">NEXT AVAILABLE SLOTS</div>
+                        <div className="flex gap-2 flex-wrap">
+                          {mainBarber.nextSlots.map((s: string) => (
+                            <span key={s} className="border border-brand-yellow text-brand-yellow px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-yellow/10">
                               Today {s}
                             </span>
                           ))}
                         </div>
                       </div>
                     )}
-
+                    {/* Price + Book */}
                     <div className="flex justify-between items-center">
-                      <div className="text-sm font-black text-white">
-                        {b.minPrice !== null
-                          ? `${currency}${b.minPrice}${b.maxPrice && b.maxPrice !== b.minPrice ? `–${b.maxPrice}` : ''}`
+                      <div className="text-[18px] font-black text-white">
+                        {mainBarber.minPrice !== null
+                          ? `${sym}${mainBarber.minPrice}${mainBarber.maxPrice && mainBarber.maxPrice !== mainBarber.minPrice ? `-${sym}${mainBarber.maxPrice}` : ''}${label}`
                           : 'Prices on request'}
                       </div>
-                      <Link href="/barbers" className="bg-brand-yellow text-black font-black px-5 py-2 rounded-xl text-sm hover:opacity-90 transition-opacity">
+                      <Link href="/barbers" className="bg-brand-yellow text-black font-black px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity">
                         Book Now →
                       </Link>
                     </div>
                   </div>
                 );
-              })}
+              })()}
+
+              {/* Two small cards */}
+              {smallBarbers.length > 0 && (
+                <div className="grid grid-cols-2 gap-[10px]">
+                  {smallBarbers.map((b: any) => {
+                    const name = `${b.firstName} ${b.lastName}`.trim() || 'Barber';
+                    const { sym, label } = getCurrencySymbol(b.currency);
+                    const hasRating = typeof b.rating === 'number' && b.rating > 0;
+                    return (
+                      <Link href="/barbers" key={b.id}
+                        className="bg-[#111] border border-[#1e1e1e] rounded-xl p-3 flex gap-2.5 items-center hover:border-[#2a2a2a] transition-colors">
+                        {b.photoUrl ? (
+                          <Image
+                            src={b.photoUrl} alt={name}
+                            width={36} height={36}
+                            className="rounded-lg object-cover border border-[#2a2a2a] shrink-0"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-sm text-black shrink-0">
+                            {name[0]}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="text-[12px] font-black text-white truncate">{name}</div>
+                          <div className="text-[10px] font-bold text-gray-500 mt-0.5">
+                            ★ {hasRating ? b.rating.toFixed(1) : 'New'}
+                            {b.minPrice !== null && (
+                              <span> · {sym}{b.minPrice}{label}</span>
+                            )}
+                          </div>
+                          <div className="text-[10px] font-bold text-[#22c55e] mt-0.5">● Open Now</div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -300,7 +359,6 @@ export default function LandingPage() {
                 <div className="text-xs font-bold text-gray-500 uppercase tracking-wide">Overall Rating</div>
               </div>
             </div>
-
             <div className="grid sm:grid-cols-3 gap-4">
               {[
                 { n: 'Sarah K.', r: "Booked in 30 seconds. Best fade I've had in years. No one showed up late. This is how it should work.", i: 'SK' },
@@ -320,7 +378,6 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
-
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 bg-[#111] border border-[#2a2a2a] p-6 rounded-3xl">
             <div className="flex flex-col items-center justify-center border-r border-[#2a2a2a]/50">
               <div className="text-3xl font-black text-brand-yellow mb-1">4.9</div>
