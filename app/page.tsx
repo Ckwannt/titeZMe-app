@@ -62,22 +62,23 @@ async function fetchFeaturedBarbers() {
       profiles.map((p: any) => getDoc(doc(db, 'schedules', `${p.id}_shard_0`)))
     );
 
-    const openBarbers = profiles
-      .map((p: any, i: number) => {
-        const sched = schedSnaps[i].exists() ? (schedSnaps[i].data() as any) : null;
-        const slots: string[] = sched?.availableSlots?.[todayDate] ?? [];
-        const nextSlots = slots.filter((s: string) => s >= nowStr).slice(0, 2);
-        return { ...p, isOpenNow: slots.includes(nowStr), nextSlots };
-      })
-      .filter((b: any) => b.isOpenNow);
-
-    for (let i = openBarbers.length - 1; i > 0; i--) {
+    const withStatus = profiles.map((p: any, i: number) => {
+      const sched = schedSnaps[i].exists() ? (schedSnaps[i].data() as any) : null;
+      const slots: string[] = sched?.availableSlots?.[todayDate] ?? [];
+      const nextSlots = slots.filter((s: string) => s >= nowStr).slice(0, 2);
+      return { ...p, isOpenNow: slots.includes(nowStr), nextSlots };
+    });
+    const groupA = withStatus.filter((b: any) => b.isOpenNow);
+    const groupB = withStatus.filter((b: any) => !b.isOpenNow);
+    for (let i = groupA.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [openBarbers[i], openBarbers[j]] = [openBarbers[j], openBarbers[i]];
+      [groupA[i], groupA[j]] = [groupA[j], groupA[i]];
     }
-
-    const selected = openBarbers.slice(0, 3);
-    if (selected.length === 0) return [];
+    for (let i = groupB.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [groupB[i], groupB[j]] = [groupB[j], groupB[i]];
+    }
+    const selected = [...groupA.slice(0, 3), ...groupB.slice(0, Math.max(0, 3 - groupA.length))];
 
     const [userSnaps, serviceSnaps] = await Promise.all([
       Promise.all(selected.map((p: any) => getDoc(doc(db, 'users', p.id)))),
@@ -234,7 +235,7 @@ export default function LandingPage() {
                   <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-5 mb-3 relative">
                     {/* Label */}
                     <div className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-brand-orange">
-                      FEATURED | OPEN NOW
+                      {mainBarber.isOpenNow ? 'FEATURED | OPEN NOW' : 'FEATURED'}
                     </div>
                     {/* Avatar + info */}
                     <div className="flex gap-3 mb-4 pr-28">
@@ -334,7 +335,7 @@ export default function LandingPage() {
                               <span> · {sym}{b.minPrice}{label}</span>
                             )}
                           </div>
-                          <div className="text-[10px] font-bold text-[#22c55e] mt-0.5">● Open Now</div>
+                          <div className={`text-[10px] font-bold mt-0.5 ${b.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>● {b.isOpenNow ? 'Open Now' : 'Closed'}</div>
                         </div>
                       </Link>
                     );
