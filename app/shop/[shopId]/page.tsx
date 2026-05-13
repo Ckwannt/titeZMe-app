@@ -470,8 +470,15 @@ export default function ShopProfilePage() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-black text-sm group-hover:text-brand-yellow transition-colors truncate">
-                              {name}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-black text-sm group-hover:text-brand-yellow transition-colors truncate">
+                                {name}
+                              </span>
+                              {b.id === shop.ownerId && (
+                                <span style={{ background: '#1a1500', color: '#F5C518', border: '1px solid rgba(245,197,24,0.27)', fontSize: '9px', fontWeight: 800, padding: '2px 8px', borderRadius: '99px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                  👑 Owner
+                                </span>
+                              )}
                             </div>
                             <div className="text-xs font-bold mt-0.5">
                               {(b.reviewCount ?? 0) > 0 ? (
