@@ -42,7 +42,7 @@ export default function LoginPage() {
         }
         else if (udata.role === 'barber') {
           if (udata.isOnboarded) {
-            router.push(udata.ownsShop ? '/dashboard/shop' : '/dashboard/barber');
+            router.push('/dashboard/barber');
           } else {
             router.push('/onboarding/barber');
           }
