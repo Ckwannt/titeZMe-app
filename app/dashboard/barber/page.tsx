@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, getDocs, writeBatch, increment } from "firebase/firestore";
+import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, getDocs, writeBatch, increment, onSnapshot, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -82,19 +82,23 @@ export default function BarberDashboard() {
     enabled: !!user
   });
 
-  const { data: bookings = [] } = useQuery({
-    queryKey: ['bookings', user?.uid],
-    queryFn: async () => {
-      const q = query(collection(db, 'bookings'), where("barberId", "==", user!.uid));
-      const snap = await getDocs(q);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-    },
-    enabled: !!user
-  });
+  const [bookings, setBookings] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(
+      collection(db, 'bookings'),
+      where('barberId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setBookings(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsubscribe();
+  }, [user?.uid]);
 
   const mutateProfile = () => queryClient.invalidateQueries({ queryKey: ['profile', user?.uid] });
   const mutateServices = () => queryClient.invalidateQueries({ queryKey: ['services', user?.uid] });
-  const mutateBookings = () => queryClient.invalidateQueries({ queryKey: ['bookings', user?.uid] });
 
   const updateBookingStatus = async (id: string, status: string) => {
     try { 
@@ -130,8 +134,7 @@ export default function BarberDashboard() {
       }
       
       await batch.commit();
-      
-      queryClient.invalidateQueries({ queryKey: ['bookings', user?.uid] });
+      // onSnapshot listener updates bookings state automatically
     }
     catch (e: any) { console.error('Error updating status', e); }
   };

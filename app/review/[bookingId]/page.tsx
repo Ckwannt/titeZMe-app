@@ -87,7 +87,7 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
          
          const updateData: any = {
            rating: newRating,
-           totalReviews: increment(1)
+           reviewCount: increment(1)
          };
          
          await updateDoc(pRef, updateData);
