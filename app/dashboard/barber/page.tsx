@@ -69,6 +69,8 @@ export default function BarberDashboard() {
   const [recurringDays, setRecurringDays] = useState<string[]>([]);
   const [blockLoading, setBlockLoading] = useState(false);
   const [rangeError, setRangeError] = useState('');
+  const [bookingsStatusFilter, setBookingsStatusFilter] = useState('all');
+  const [bookingsSearch, setBookingsSearch] = useState('');
   const [now, setNow] = useState(new Date());
   const [recentNotifs, setRecentNotifs] = useState<any[]>([]);
 
@@ -381,12 +383,54 @@ export default function BarberDashboard() {
     return null;
   };
 
-  const displayBookings = bookings.filter(b => {
+  // Dashboard tab: today's schedule timeline
+  const todaySchedule = bookings
+    .filter(b => b.date === todayStr && !['cancelled_by_client', 'cancelled_by_barber'].includes(b.status))
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  // Bookings tab: filtered list with time + status + search
+  const bookingsFilteredList = bookings.filter(b => {
     const range = getDateRange(bookingsTab);
-    if (!range) return true;
-    const bookingDate = new Date(`${b.date}T${b.startTime}`);
-    return bookingDate >= range.start && bookingDate <= range.end;
-  }).sort((a, b) => a.startTime.localeCompare(b.startTime));
+    if (range) {
+      const bd = new Date(`${b.date}T${b.startTime}`);
+      if (!(bd >= range.start && bd <= range.end)) return false;
+    }
+    if (bookingsStatusFilter !== 'all') {
+      if (bookingsStatusFilter === 'cancelled') {
+        if (!['cancelled_by_client', 'cancelled_by_barber', 'cancelled'].includes(b.status)) return false;
+      } else if (b.status !== bookingsStatusFilter) return false;
+    }
+    if (bookingsSearch.trim()) {
+      const q = bookingsSearch.trim().toLowerCase();
+      const name = (b.clientName || '').toLowerCase();
+      const svc = (b.serviceNames?.[0] || b.serviceName || '').toLowerCase();
+      if (!name.includes(q) && !svc.includes(q) && !(b.date || '').includes(q)) return false;
+    }
+    return true;
+  }).sort((a, b) => new Date(`${b.date}T${b.startTime}`).getTime() - new Date(`${a.date}T${a.startTime}`).getTime());
+
+  // Bookings tab stat counts
+  const booksThisMonth = bookings.filter(b => b.date?.startsWith(monthStr)).length;
+  const booksPending = bookings.filter(b => b.status === 'pending').length;
+  const booksCompleted = bookings.filter(b => b.status === 'completed').length;
+  const booksCancelled = bookings.filter(b => ['cancelled_by_client', 'cancelled_by_barber', 'cancelled'].includes(b.status)).length;
+
+  // CSV export (currently filtered bookings)
+  const exportCSV = () => {
+    const headers = ['Date', 'Time', 'Client Name', 'Service', 'Duration', 'Price', 'Currency', 'Status'];
+    const rows = bookingsFilteredList.map(b => [
+      b.date || '', b.startTime || '', b.clientName || '',
+      b.serviceNames?.join(', ') || b.serviceName || '',
+      b.totalDuration || '', b.price ?? 0,
+      profile?.currency || 'EUR', b.status || '',
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `bookings-${todayStr}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const saveTitzCut = async () => {
     if (!user) return;
@@ -649,7 +693,7 @@ export default function BarberDashboard() {
           <BarberPortfolioTab profile={profile} mutateProfile={mutateProfile} />
         ) : activeTab === "Settings" ? (
           <BarberSettingsTab profile={profile} mutateProfile={mutateProfile} />
-        ) : activeTab === "Dashboard" || activeTab === "Bookings" ? (
+        ) : activeTab === "Dashboard" ? (
           <div className="animate-fadeUp">
 
             {/* Availability warning */}
@@ -778,94 +822,195 @@ export default function BarberDashboard() {
               );
             })()}
 
-            {/* Bookings List */}
-            <div className="flex gap-1 border-b border-brand-border mb-5">
-              {["today", "this week", "this month"].map(t => (
-                <button 
-                  key={t} onClick={() => setBookingsTab(t)} 
-                  className={`px-4.5 py-2.5 text-[13px] font-extrabold capitalize transition-all border-b-2 -mb-[1px] ${bookingsTab === t ? "text-brand-yellow border-brand-yellow" : "text-brand-text-secondary border-transparent hover:text-white"}`}
-                >
+            {/* Today's schedule timeline */}
+            <div className="mb-8">
+              <div className="text-[13px] font-extrabold text-white mb-4">Today&apos;s schedule</div>
+              {todaySchedule.length === 0 ? (
+                <div className="bg-brand-surface border border-brand-border rounded-2xl p-8 text-center">
+                  <div className="text-3xl mb-3">💈</div>
+                  <div className="font-extrabold text-white mb-1">No cuts scheduled for today.</div>
+                  <div className="text-[#555] text-sm mb-4">Your schedule is open! Share your profile to get bookings.</div>
+                  <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/barber/${user?.uid}`); setToastMessage('Profile link copied!'); setTimeout(() => setToastMessage(''), 2000); }}
+                    className="text-brand-orange text-sm font-bold hover:underline">
+                    Share profile →
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden">
+                  {todaySchedule.map((b, i) => {
+                    const dotColor = b.status === 'pending' ? '#F5C518' : b.status === 'confirmed' ? '#22C55E' : '#555';
+                    return (
+                      <div key={b.id} className={`flex items-center gap-4 px-5 py-3.5 ${i < todaySchedule.length - 1 ? 'border-b border-[#141414]' : ''}`}>
+                        {/* Time */}
+                        <div className="w-12 shrink-0 text-right">
+                          <div className="text-[12px] font-bold text-white">{b.startTime}</div>
+                          {b.endTime && <div className="text-[11px] text-[#555]">{b.endTime}</div>}
+                        </div>
+                        {/* Dot */}
+                        <div className="w-2 h-2 rounded-full shrink-0" style={{ background: dotColor }} />
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-extrabold text-[14px] text-white truncate">{b.clientName || 'Client'}</div>
+                          <div className="text-[12px] text-[#666] truncate">{b.serviceNames?.join(', ') || b.serviceName || 'Service'}</div>
+                        </div>
+                        {/* Status + price + actions */}
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                          {b.status === 'pending' && <span className="text-[10px] font-extrabold text-brand-yellow bg-[#1a1500] border border-brand-yellow/30 px-2 py-0.5 rounded-full">Pending</span>}
+                          {b.status === 'confirmed' && <span className="text-[10px] font-extrabold text-[#22C55E] bg-[#0f2010] border border-[#22C55E]/30 px-2 py-0.5 rounded-full">Confirmed</span>}
+                          {b.status === 'completed' && <span className="text-[10px] font-extrabold text-[#555] bg-[#141414] border border-[#222] px-2 py-0.5 rounded-full">Done</span>}
+                          <span className="font-black text-brand-yellow text-[13px]">{currSym}{b.price}</span>
+                          {b.status === 'pending' && (
+                            <>
+                              <button onClick={() => updateBookingStatus(b.id, 'confirmed')} className="bg-[#0f2010] border border-brand-green/30 text-brand-green rounded-lg px-2.5 py-1.5 text-xs font-extrabold hover:bg-brand-green/20">✓</button>
+                              <button onClick={() => updateBookingStatus(b.id, 'cancelled_by_barber')} className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-lg px-2.5 py-1.5 text-xs font-extrabold hover:bg-brand-red/20">✕</button>
+                            </>
+                          )}
+                          {b.status === 'confirmed' && (
+                            <button onClick={() => updateBookingStatus(b.id, 'completed')} className="bg-brand-surface border border-brand-border text-white rounded-lg px-2.5 py-1.5 text-xs font-extrabold hover:border-[#444]">Done</button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Recent activity feed */}
+            <div className="mt-4">
+              <div className="text-[13px] font-extrabold mb-3">Recent activity</div>
+              {recentActivity.length === 0 ? (
+                <div className="text-[#555] text-sm text-center py-6">No recent activity yet.<br/>Share your profile to get your first booking!</div>
+              ) : (
+                <div>
+                  {recentActivity.map((a, i) => (
+                    <div key={i} className="flex items-center gap-[10px] py-[10px] border-b border-[#141414] last:border-0">
+                      <span className="text-base shrink-0">{a.icon}</span>
+                      <span className="flex-1 text-[13px] text-[#aaa] leading-snug">{a.text}</span>
+                      <span className="text-[11px] text-[#555] shrink-0">{a.ts ? timeAgo(a.ts) : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Weekly earnings chart */}
+            <div className="mt-8 bg-[#111] border border-[#1e1e1e] rounded-[12px] p-4">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[13px] font-extrabold">This week&apos;s earnings</span>
+                <span className="text-[13px] font-black text-brand-yellow">{currSym}{weeklyTotal}</span>
+              </div>
+              <ResponsiveContainer width="100%" height={130}>
+                <BarChart data={weeklyChartData} barCategoryGap="20%">
+                  <XAxis dataKey="name" tick={{ fill: '#555', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Bar dataKey="earnings" radius={[4, 4, 0, 0]}>
+                    {weeklyChartData.map((entry, index) => (
+                      <Cell key={index} fill={entry.isToday ? '#F5C518' : '#2a2a2a'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+        ) : activeTab === "Bookings" ? (
+          <div className="animate-fadeUp">
+
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-black">All Bookings</h2>
+              <button onClick={exportCSV}
+                className="border border-[#2a2a2a] text-[#888] font-bold text-[11px] px-[14px] py-[6px] rounded-full hover:border-[#444] hover:text-white transition-colors">
+                Export CSV ↓
+              </button>
+            </div>
+
+            {/* Stat cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+              {[
+                { label: 'This month', val: booksThisMonth, color: 'text-brand-yellow' },
+                { label: 'Pending', val: booksPending, color: 'text-brand-orange' },
+                { label: 'Completed', val: booksCompleted, color: 'text-brand-green' },
+                { label: 'Cancelled', val: booksCancelled, color: 'text-[#555]' },
+              ].map((s, i) => (
+                <div key={i} className="bg-[#111] border border-[#1e1e1e] rounded-[12px] px-4 py-[14px] text-center">
+                  <div className={`text-2xl font-black leading-none mb-1 ${s.color}`}>{s.val}</div>
+                  <div className="text-[11px] text-[#555] font-bold">{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Time tabs */}
+            <div className="flex gap-1 border-b border-[#1e1e1e] mb-3">
+              {['today', 'this week', 'this month'].map(t => (
+                <button key={t} onClick={() => setBookingsTab(t)}
+                  className={`px-4 py-2 text-[12px] font-extrabold capitalize border-b-2 -mb-px transition-colors ${bookingsTab === t ? 'text-brand-yellow border-brand-yellow' : 'text-[#555] border-transparent hover:text-white'}`}>
                   {t}
                 </button>
               ))}
             </div>
 
-            <div className="flex flex-col gap-2.5" id="bookings-list">
-              {displayBookings.length === 0 ? (
-                <div className="text-center py-10 bg-brand-surface border border-brand-border rounded-2xl text-brand-text-secondary text-sm">No bookings found for {bookingsTab}.</div>
-              ) : displayBookings.map((b) => (
-                <div key={b.id} className={`flex flex-wrap sm:flex-nowrap items-center gap-3.5 bg-brand-surface border border-brand-border rounded-[14px] p-3.5 px-4.5 border-l-[4px] ${borderColorMap[b.status]}`}>
-                  <div className="text-center shrink-0 w-11">
-                    <div className="text-base font-black">{b.startTime}</div>
+            {/* Status filter */}
+            <div className="flex gap-1 flex-wrap mb-4">
+              {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map(s => (
+                <button key={s} onClick={() => setBookingsStatusFilter(s)}
+                  className={`px-4 py-2 text-[12px] font-extrabold capitalize border-b-2 -mb-px transition-colors ${bookingsStatusFilter === s ? 'text-brand-yellow border-brand-yellow' : 'text-[#555] border-transparent hover:text-white'}`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+
+            {/* Search bar */}
+            <input
+              value={bookingsSearch}
+              onChange={e => setBookingsSearch(e.target.value)}
+              placeholder="Search by client name or date..."
+              className="w-full bg-[#141414] border border-[#2a2a2a] rounded-full px-4 py-2 text-[12px] text-white outline-none focus:border-brand-yellow transition-colors placeholder:text-[#444] mb-4"
+            />
+
+            {/* Booking list */}
+            <div className="flex flex-col gap-2">
+              {bookingsFilteredList.length === 0 ? (
+                <div className="text-center py-10 text-[#555] text-sm">No bookings found.</div>
+              ) : bookingsFilteredList.map(b => (
+                <div key={b.id} className={`flex flex-wrap sm:flex-nowrap items-center gap-3 bg-brand-surface border border-brand-border rounded-[14px] p-3.5 border-l-[4px] ${borderColorMap[b.status] || 'border-l-[#2a2a2a]'}`}>
+                  {/* Avatar */}
+                  <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center text-[11px] font-black text-white shrink-0">
+                    {(b.clientName?.[0] || 'C').toUpperCase()}
                   </div>
-                  <div className="w-px h-9 bg-brand-border hidden sm:block" />
-                  <div className="flex-1 min-w-[150px]">
-                    <div className="font-extrabold text-sm">Client {b.clientId.substring(0,4)}...</div>
-                    <div className="text-xs text-brand-text-secondary">Service ID: {b.serviceId.substring(0,4)}...</div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-[120px]">
+                    <div className="font-extrabold text-sm">{b.clientName || 'Client'}</div>
+                    <div className="text-xs text-brand-text-secondary">{b.serviceNames?.join(', ') || b.serviceName || 'Service'}</div>
                   </div>
+                  {/* Date/time */}
+                  <div className="text-[12px] text-[#666] shrink-0 hidden sm:block">
+                    <div>{b.date}</div>
+                    <div>{b.startTime}{b.totalDuration ? ` · ${b.totalDuration}min` : ''}</div>
+                  </div>
+                  {/* Status */}
                   <div className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${statusMap[b.status]?.bg} ${statusMap[b.status]?.text} ${statusMap[b.status]?.border}`}>
                     {b.status}
                   </div>
-                  <div className="font-black text-[15px] text-brand-yellow min-w-[32px] sm:ml-2 text-right">
-                    €{b.price}
-                  </div>
-                  {b.status === "pending" && (
-                    <div className="flex gap-1.5 w-full sm:w-auto mt-2 sm:mt-0 justify-end">
+                  {/* Price */}
+                  <div className="font-black text-[14px] text-brand-yellow shrink-0">{currSym}{b.price}</div>
+                  {/* Actions */}
+                  {b.status === 'pending' && (
+                    <div className="flex gap-1.5 w-full sm:w-auto mt-1 sm:mt-0 justify-end">
                       <button onClick={() => updateBookingStatus(b.id, 'confirmed')} className="bg-[#0f2010] border border-brand-green/30 text-brand-green rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-green/20">✓ Accept</button>
                       <button onClick={() => updateBookingStatus(b.id, 'cancelled_by_barber')} className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-red/20">✕ Decline</button>
                     </div>
                   )}
-                  {b.status === "confirmed" && (
-                    <div className="flex gap-1.5 w-full sm:w-auto mt-2 sm:mt-0 justify-end">
+                  {b.status === 'confirmed' && (
+                    <div className="flex gap-1.5 w-full sm:w-auto mt-1 sm:mt-0 justify-end">
                       <button onClick={() => updateBookingStatus(b.id, 'completed')} className="bg-brand-surface border border-brand-border text-white rounded-lg px-3 py-1.5 text-xs font-extrabold hover:border-[#444]">Mark Complete</button>
                     </div>
                   )}
                 </div>
               ))}
             </div>
-
-            {/* Recent activity feed */}
-            {activeTab === "Dashboard" && (
-              <div className="mt-8">
-                <div className="text-[13px] font-extrabold mb-3">Recent activity</div>
-                {recentActivity.length === 0 ? (
-                  <div className="text-[#555] text-sm text-center py-6">
-                    No recent activity yet.<br/>Share your profile to get your first booking!
-                  </div>
-                ) : (
-                  <div>
-                    {recentActivity.map((a, i) => (
-                      <div key={i} className="flex items-center gap-[10px] py-[10px] border-b border-[#141414] last:border-0">
-                        <span className="text-base shrink-0">{a.icon}</span>
-                        <span className="flex-1 text-[13px] text-[#aaa] leading-snug">{a.text}</span>
-                        <span className="text-[11px] text-[#555] shrink-0">{a.ts ? timeAgo(a.ts) : ''}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Weekly earnings chart */}
-            {activeTab === "Dashboard" && (
-              <div className="mt-8 bg-[#111] border border-[#1e1e1e] rounded-[12px] p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-[13px] font-extrabold">This week&apos;s earnings</span>
-                  <span className="text-[13px] font-black text-brand-yellow">{currSym}{weeklyTotal}</span>
-                </div>
-                <ResponsiveContainer width="100%" height={130}>
-                  <BarChart data={weeklyChartData} barCategoryGap="20%">
-                    <XAxis dataKey="name" tick={{ fill: '#555', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <Bar dataKey="earnings" radius={[4, 4, 0, 0]}>
-                      {weeklyChartData.map((entry, index) => (
-                        <Cell key={index} fill={entry.isToday ? '#F5C518' : '#2a2a2a'} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
           </div>
+
         ) : activeTab === "Services" ? (
           <div className="animate-fadeUp max-w-[600px]">
             <h2 className="text-2xl font-black mb-6">Manage Services</h2>
