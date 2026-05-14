@@ -35,6 +35,8 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
   const [dragAction, setDragAction] = useState<'add' | 'remove' | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [bufferMinutes, setBufferMinutes] = useState(10);
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [recurringBlocked, setRecurringBlocked] = useState<string[]>([]);
   
@@ -53,6 +55,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
       if (docSnap.exists()) {
         const data = docSnap.data();
         setAvailableSlots(data.availableSlots || {});
+        setBufferMinutes(data.cleanupBufferMinutes ?? 10);
         // Parse blocked dates — handles both string[] (old) and {date,reason}[] (new)
         const rawBlocked: any[] = data.blockedDates || [];
         setBlockedDates(rawBlocked.map(item => typeof item === 'string' ? item : item.date));
@@ -148,11 +151,63 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
     if (!uid) return;
     setSaving(true);
     try {
-      await setDoc(doc(db, 'schedules', `${uid}_shard_0`), scheduleUpdateSchema.parse({ availableSlots }), { merge: true });
+      await setDoc(
+        doc(db, 'schedules', `${uid}_shard_0`),
+        { ...scheduleUpdateSchema.parse({ availableSlots }), cleanupBufferMinutes: bufferMinutes },
+        { merge: true }
+      );
+      setLastSaved(new Date());
     } catch (e) {
       console.error(e);
     }
     setSaving(false);
+  };
+
+  // Standard day slots (09:00–18:00, lunch break at 13:00)
+  const STANDARD_SLOTS = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'];
+
+  const fillDay = (dateStr: string) => {
+    setAvailableSlots(prev => ({
+      ...prev,
+      [dateStr]: [...new Set([...(prev[dateStr] || []), ...STANDARD_SLOTS])].sort()
+    }));
+    toast.success(`Today filled with 9:00–18:00 (lunch break at 13:00)`);
+  };
+
+  const fillWeekdays = () => {
+    const weekdayDates = weekDays.slice(0, 5).map(d => format(d, 'yyyy-MM-dd'));
+    setAvailableSlots(prev => {
+      const updated = { ...prev };
+      weekdayDates.forEach(dateStr => {
+        updated[dateStr] = [...new Set([...(prev[dateStr] || []), ...STANDARD_SLOTS])].sort();
+      });
+      return updated;
+    });
+    toast.success('Mon–Fri filled with 9:00–18:00');
+  };
+
+  const clearWeek = () => {
+    if (!confirm('Clear all slots for this week?')) return;
+    const weekDateStrs = weekDays.map(d => format(d, 'yyyy-MM-dd'));
+    setAvailableSlots(prev => {
+      const updated = { ...prev };
+      weekDateStrs.forEach(dateStr => { updated[dateStr] = []; });
+      return updated;
+    });
+    toast.success('Week cleared');
+  };
+
+  const copyToNextWeek = () => {
+    setAvailableSlots(prev => {
+      const updated = { ...prev };
+      weekDays.forEach(d => {
+        const thisDateStr = format(d, 'yyyy-MM-dd');
+        const nextDateStr = format(addDays(d, 7), 'yyyy-MM-dd');
+        updated[nextDateStr] = [...(prev[thisDateStr] || [])];
+      });
+      return updated;
+    });
+    toast.success("This week copied to next week. Don't forget to save!");
   };
 
   const getClientSlotStatus = (date: Date, hourStr: string) => {
@@ -236,8 +291,85 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
     return <div className="text-brand-text-secondary animate-pulse text-sm">Loading calendar...</div>;
   }
 
+  // ── Summary strip computed values ─────────────────────────────────────────
+  const currentWeekSlots = weekDays.reduce((acc, d) =>
+    acc + (availableSlots[format(d, 'yyyy-MM-dd')]?.length || 0), 0);
+
+  const workingDaysThisWeek = weekDays.filter(d =>
+    (availableSlots[format(d, 'yyyy-MM-dd')]?.length || 0) > 0).length;
+
+  const nextOpenSlot = (() => {
+    const now = new Date();
+    const nowHour = String(now.getHours()).padStart(2, '0') + ':00';
+    const todayStr = format(now, 'yyyy-MM-dd');
+    const allSlots: { date: string; time: string }[] = [];
+    Object.entries(availableSlots).forEach(([date, slots]) => {
+      if (date >= todayStr) {
+        (slots as string[]).forEach(time => {
+          if (date > todayStr || time > nowHour) allSlots.push({ date, time });
+        });
+      }
+    });
+    allSlots.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+    return allSlots[0] || null;
+  })();
+
+  const nextOpenLabel = nextOpenSlot
+    ? `🟢 Next: ${format(parseISO(nextOpenSlot.date), 'EEE')} ${nextOpenSlot.time}`
+    : '🔴 No upcoming slots';
+
+  const lastSavedLabel = lastSaved
+    ? `Last saved: today at ${lastSaved.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+    : 'Not saved yet';
+
   return (
     <div className="flex flex-col select-none">
+
+      {/* Addition 1 — Summary strip */}
+      {mode === 'barber' && (
+        <div className="flex gap-2 flex-wrap mb-3">
+          {[
+            currentWeekSlots > 0 ? `⏱ ${currentWeekSlots}h available this week` : '⏱ No hours set this week',
+            `📅 ${workingDaysThisWeek} day${workingDaysThisWeek !== 1 ? 's' : ''}`,
+            nextOpenLabel,
+          ].map((label, i) => (
+            <span key={i} className="inline-flex items-center gap-[5px] bg-[#111] border border-[#1e1e1e] rounded-full px-3 py-[5px] text-[11px] text-[#888] font-bold">
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Addition 2 — Quick fill buttons */}
+      {mode === 'barber' && (
+        <div className="flex gap-2 flex-wrap mb-[14px]">
+          <button
+            onClick={() => fillDay(format(new Date(), 'yyyy-MM-dd'))}
+            className="bg-[#141414] border border-[#2a2a2a] text-[#888] rounded-full px-[14px] py-[6px] text-[11px] font-bold hover:border-brand-yellow hover:text-brand-yellow transition-colors"
+          >
+            Fill today
+          </button>
+          <button
+            onClick={fillWeekdays}
+            className="bg-[#141414] border border-[#2a2a2a] text-[#888] rounded-full px-[14px] py-[6px] text-[11px] font-bold hover:border-brand-yellow hover:text-brand-yellow transition-colors"
+          >
+            Fill weekdays
+          </button>
+          <button
+            onClick={copyToNextWeek}
+            className="bg-[#141414] border border-[#2a2a2a] text-[#888] rounded-full px-[14px] py-[6px] text-[11px] font-bold hover:border-brand-yellow hover:text-brand-yellow transition-colors"
+          >
+            Copy to next week →
+          </button>
+          <button
+            onClick={clearWeek}
+            className="bg-[#141414] border border-[#EF444433] text-[#666] rounded-full px-[14px] py-[6px] text-[11px] font-bold hover:border-[#EF4444] hover:text-[#EF4444] transition-colors"
+          >
+            Clear week
+          </button>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-black">{format(currentWeekStart, "MMM d")} – {format(addDays(currentWeekStart, 6), "MMM d, yyyy")}</h3>
         <div className="flex gap-2">
@@ -267,6 +399,11 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
                   <div className={`text-sm sm:text-base font-black mt-0.5 ${isDayBlocked ? 'text-[#EF4444]/60' : ''}`}>
                     {format(d, 'M/d')}
                   </div>
+                  {mode === 'barber' && (
+                    <div className={`text-[9px] font-bold mt-0.5 ${(availableSlots[dStr]?.length || 0) > 0 ? 'text-[#22C55E]' : 'text-[#444]'}`}>
+                      {(availableSlots[dStr]?.length || 0) > 0 ? `${availableSlots[dStr].length} slots` : 'no slots'}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -358,15 +495,40 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
       </div>
 
       {mode === 'barber' && (
-         <div className="mt-5 flex justify-end">
-            <button 
-               onClick={saveSchedule} 
-               disabled={saving}
-               className="bg-brand-yellow text-[#0a0a0a] px-8 py-3.5 rounded-full font-black text-sm transition-all hover:opacity-90 disabled:opacity-50"
+        <div className="mt-5">
+          {/* Addition 6 — Buffer time selector */}
+          <div className="mb-4">
+            <div className="text-[11px] text-[#888] font-bold mb-2">⏱ Cleanup buffer between cuts</div>
+            <div className="flex gap-2 flex-wrap">
+              {[0, 5, 10, 15, 20].map(m => (
+                <button key={m} onClick={() => setBufferMinutes(m)}
+                  className={`px-3 py-[5px] text-[11px] font-extrabold rounded-lg border transition-colors ${
+                    bufferMinutes === m
+                      ? 'bg-[#1a1500] border-brand-yellow text-brand-yellow'
+                      : 'bg-[#141414] border-[#2a2a2a] text-[#666] hover:border-[#444] hover:text-[#888]'
+                  }`}>
+                  {m} min
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Save button */}
+          <div className="flex justify-end">
+            <button
+              onClick={saveSchedule}
+              disabled={saving}
+              className="bg-brand-yellow text-[#0a0a0a] px-8 py-3.5 rounded-full font-black text-sm transition-all hover:opacity-90 disabled:opacity-50"
             >
-               {saving ? "Saving..." : "Save Schedule"}
+              {saving ? "Saving..." : "Save Schedule"}
             </button>
-         </div>
+          </div>
+
+          {/* Addition 3 — Last saved timestamp */}
+          <div className="text-[10px] text-[#444] italic text-center mt-2">
+            {lastSavedLabel}
+          </div>
+        </div>
       )}
     </div>
   );
