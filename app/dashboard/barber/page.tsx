@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, getDocs, writeBatch, increment, onSnapshot, orderBy, addDoc, arrayUnion } from "firebase/firestore";
+import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, getDocs, writeBatch, increment, onSnapshot, orderBy, addDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -188,6 +188,12 @@ export default function BarberDashboard() {
 
   const handleBlockDay = async () => {
     if (!blockDate || !user) return;
+    const currentBlocked: string[] = (schedule as any)?.blockedDates || [];
+    if (currentBlocked.includes(blockDate)) {
+      setToastMessage('You already blocked this day.');
+      setTimeout(() => setToastMessage(''), 3000);
+      return;
+    }
     setBlockLoading(true);
     try {
       await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), {
@@ -202,6 +208,20 @@ export default function BarberDashboard() {
       setTimeout(() => setToastMessage(''), 3000);
     } finally {
       setBlockLoading(false);
+    }
+  };
+
+  const handleUnblockDay = async (date: string) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), {
+        blockedDates: arrayRemove(date)
+      });
+      setToastMessage('Day unblocked successfully.');
+      setTimeout(() => setToastMessage(''), 3000);
+    } catch (e) {
+      setToastMessage('Failed to unblock date.');
+      setTimeout(() => setToastMessage(''), 3000);
     }
   };
 
@@ -587,32 +607,69 @@ export default function BarberDashboard() {
         {blockModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
             <div className="bg-[#111] border border-[#2a2a2a] rounded-[16px] p-6 w-full max-w-sm animate-fadeUp">
+
+              {/* Title */}
               <h3 className="text-lg font-black mb-1">Block a day off</h3>
               <p className="text-xs text-[#888] font-bold mb-5">Clients won&apos;t be able to book you on this day.</p>
+
+              {/* Date input */}
               <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-2">Select date</label>
               <input
                 type="date"
                 min={new Date().toISOString().split('T')[0]}
                 value={blockDate}
                 onChange={e => setBlockDate(e.target.value)}
-                className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-yellow transition-colors mb-5"
+                className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-yellow transition-colors mb-4"
               />
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { setBlockModalOpen(false); setBlockDate(''); }}
-                  disabled={blockLoading}
-                  className="flex-1 border border-[#2a2a2a] text-[#888] font-bold py-3 rounded-full text-sm hover:border-[#444] hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleBlockDay}
-                  disabled={!blockDate || blockLoading}
-                  className="flex-1 bg-brand-yellow text-[#0a0a0a] font-black py-3 rounded-full text-sm hover:opacity-90 transition-opacity disabled:opacity-40"
-                >
-                  {blockLoading ? '...' : 'Block this day'}
-                </button>
-              </div>
+
+              {/* Block button */}
+              <button
+                onClick={handleBlockDay}
+                disabled={!blockDate || blockLoading}
+                className="w-full bg-brand-yellow text-[#0a0a0a] font-black py-3 rounded-full text-sm hover:opacity-90 transition-opacity disabled:opacity-40 mb-5"
+              >
+                {blockLoading ? '...' : 'Block this day'}
+              </button>
+
+              {/* Divider */}
+              <div className="h-px bg-[#1e1e1e] mb-4" />
+
+              {/* Currently blocked dates */}
+              {(() => {
+                const blocked: string[] = (schedule as any)?.blockedDates || [];
+                if (blocked.length === 0) return null;
+                return (
+                  <div className="mb-5">
+                    <div className="text-[11px] font-bold text-[#555] mb-2">Currently blocked days:</div>
+                    <div className="flex flex-wrap gap-2">
+                      {blocked.map((d: string) => {
+                        const [y, m, day] = d.split('-');
+                        return (
+                          <span key={d} className="inline-flex items-center gap-1.5 bg-[#1a0808] border border-[#EF444433] rounded-full px-[10px] py-1 text-[11px] text-[#EF4444]">
+                            {day}/{m}/{y}
+                            <button
+                              onClick={() => handleUnblockDay(d)}
+                              className="text-[#EF4444] hover:text-white transition-colors leading-none"
+                              title="Unblock this day"
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Cancel */}
+              <button
+                onClick={() => { setBlockModalOpen(false); setBlockDate(''); }}
+                disabled={blockLoading}
+                className="w-full border border-[#2a2a2a] text-[#888] font-bold py-3 rounded-full text-sm hover:border-[#444] hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}
