@@ -14,6 +14,26 @@ import { BarberPortfolioTab } from '@/components/BarberPortfolioTab';
 import { BarberSettingsTab } from '@/components/BarberSettingsTab';
 import { BookingRowSkeleton, StatCardSkeleton } from '@/components/skeletons';
 import { barberUpdateSchema, bookingUpdateSchema, notificationSchema } from "@/lib/schemas";
+import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from 'recharts';
+
+function getCurrencySymbol(currency?: string): string {
+  const s: Record<string, string> = {
+    'EUR': '€', 'GBP': '£', 'USD': '$', 'MAD': 'MAD ', 'DZD': 'DA ',
+    'TND': 'DT ', 'SAR': 'SAR ', 'AED': 'AED ', 'SEK': 'kr ', 'NOK': 'kr ', 'DKK': 'kr ', 'CHF': 'CHF ',
+  };
+  return s[(currency || 'EUR').toUpperCase()] ?? ((currency || 'EUR') + ' ');
+}
+
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 2) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  if (hours < 48) return 'Yesterday';
+  return `${Math.floor(hours / 24)}d ago`;
+}
 
 function generateDateRange(from: string, to: string): string[] {
   const dates: string[] = [];
@@ -49,6 +69,8 @@ export default function BarberDashboard() {
   const [recurringDays, setRecurringDays] = useState<string[]>([]);
   const [blockLoading, setBlockLoading] = useState(false);
   const [rangeError, setRangeError] = useState('');
+  const [now, setNow] = useState(new Date());
+  const [recentNotifs, setRecentNotifs] = useState<any[]>([]);
 
   const handleCopyCode = () => {
     if (profile?.barberCode) {
@@ -114,6 +136,26 @@ export default function BarberDashboard() {
       setBookings(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     });
     return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Countdown: tick every minute
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Recent notifications (for activity feed)
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+    const unsub = onSnapshot(q, snap => {
+      setRecentNotifs(snap.docs.slice(0, 10).map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsub();
   }, [user?.uid]);
 
   const mutateProfile = () => queryClient.invalidateQueries({ queryKey: ['profile', user?.uid] });
@@ -364,17 +406,98 @@ export default function BarberDashboard() {
     setIsSavingTitz(false);
   };
 
-  // Availability check
-  const hasAvailability = schedule &&
-    schedule.availableSlots &&
-    Object.keys(schedule.availableSlots).length > 0 &&
-    Object.values(schedule.availableSlots).some(
-      (slots: any) => Array.isArray(slots) && slots.length > 0
-    );
+  // Availability check — only future dates count
+  const todayStr = new Date().toISOString().split('T')[0];
+  const hasAvailability = !!(schedule?.availableSlots &&
+    Object.keys(schedule.availableSlots as Record<string, any>).some(date => {
+      const d = new Date(date); const t = new Date(); t.setHours(0, 0, 0, 0);
+      return d >= t && ((schedule.availableSlots as any)[date]?.length || 0) > 0;
+    }));
 
-  // Stats calc
-  const todayEarnings = displayBookings.filter(b => b.status === "completed").reduce((sum, b) => sum + (b.price || 0), 0);
-  const totalCompleted = bookings.filter(b => b.status === "completed").length;
+  // Currency
+  const currSym = getCurrencySymbol(profile?.currency);
+
+  // Today's stats
+  const todayCompletedBookings = bookings.filter(b => b.date === todayStr && b.status === 'completed');
+  const todayEarnings = todayCompletedBookings.reduce((s, b) => s + (b.price || 0), 0);
+  const totalCompleted = bookings.filter(b => b.status === 'completed').length;
+
+  // Monthly cuts
+  const nowDate = new Date();
+  const monthStr = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}`;
+  const thisMonthCompleted = bookings.filter(b => b.status === 'completed' && b.date?.startsWith(monthStr)).length;
+
+  // Show rate
+  const totalFinished = bookings.filter(b => ['completed', 'cancelled_by_barber', 'cancelled_by_client'].includes(b.status)).length;
+  const showRate = totalFinished > 0 ? Math.round((totalCompleted / totalFinished) * 100) : 100;
+
+  // Motivating text
+  const todayActiveBookings = bookings.filter(b =>
+    b.date === todayStr && b.status !== 'cancelled_by_client' && b.status !== 'cancelled_by_barber'
+  );
+  const motivatingText = todayActiveBookings.length === 0
+    ? "Your schedule is open today — share your profile! 💈"
+    : todayActiveBookings.length === 1 ? "1 cut today. Let's go! 💈"
+    : `${todayActiveBookings.length} cuts today. Let's go! 💈`;
+
+  // Next confirmed booking
+  const nextBooking = [...bookings]
+    .filter(b => b.status === 'confirmed' && new Date(`${b.date}T${b.startTime}`) > now)
+    .sort((a, b) => new Date(`${a.date}T${a.startTime}`).getTime() - new Date(`${b.date}T${b.startTime}`).getTime())[0];
+
+  const getCountdownLabel = (bk: any) => {
+    const bt = new Date(`${bk.date}T${bk.startTime}`);
+    const diff = bt.getTime() - now.getTime();
+    const diffDays = Math.floor(diff / 86400000);
+    const hrs = Math.floor((diff % 86400000) / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    const day = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : bt.toLocaleDateString(undefined, { weekday: 'long' });
+    const countdown = diffDays === 0 ? (hrs > 0 ? `in ${hrs}h ${mins}min` : `in ${mins}min`) : '';
+    return { day, countdown };
+  };
+
+  // Weekly earnings chart data
+  const weekStart = (() => {
+    const d = new Date(); const wd = d.getDay();
+    d.setDate(d.getDate() - wd + (wd === 0 ? -6 : 1)); d.setHours(0, 0, 0, 0); return d;
+  })();
+  const weeklyChartData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((name, i) => {
+    const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
+    const ds = d.toISOString().split('T')[0];
+    const earnings = bookings.filter(b => b.date === ds && b.status === 'completed').reduce((s, b) => s + (b.price || 0), 0);
+    return { name, earnings, isToday: ds === todayStr };
+  });
+  const weeklyTotal = weeklyChartData.reduce((s, d) => s + d.earnings, 0);
+
+  // Profile completion
+  const profileItems = [
+    { label: '📸 Add a profile photo', tab: 'Settings', done: !!(profile?.profilePhotoUrl || appUser?.photoUrl), pct: 10 },
+    { label: '📝 Fill your bio', tab: 'Settings', done: (profile?.bio?.length || 0) > 20, pct: 10 },
+    { label: '✂️ Add your services', tab: 'Services', done: services.length > 0, pct: 10 },
+    { label: '⚡ Set titeZMe Cut price', tab: 'Services', done: !!(profile?.titeZMeCut?.price), pct: 10 },
+    { label: '⏰ Set your availability', tab: 'Availability', done: hasAvailability, pct: 15 },
+    { label: '🖼️ Add portfolio photos', tab: 'Portfolio', done: (profile?.photos?.length || 0) > 0, pct: 10 },
+    { label: '🗣 Add your languages', tab: 'Settings', done: (profile?.languages?.length || 0) > 0, pct: 10 },
+    { label: '✂️ Add specialties', tab: 'Settings', done: (profile?.specialties?.length || 0) > 0, pct: 10 },
+    { label: '😎 Set your vibe', tab: 'Settings', done: (profile?.vibes?.length || 0) > 0, pct: 10 },
+    { label: '🔑 Barber code generated', tab: 'Settings', done: !!(profile?.barberCode), pct: 5 },
+  ];
+  const profilePct = profileItems.filter(item => item.done).reduce((s, item) => s + item.pct, 0);
+  const missingItems = profileItems.filter(item => !item.done).slice(0, 3);
+
+  // Recent activity (mix bookings + notifications)
+  const recentActivity = [
+    ...bookings.slice(0, 5).map(b => ({
+      icon: '💈',
+      text: `${b.clientName || 'A client'} booked${b.serviceNames?.[0] ? ` a ${b.serviceNames[0]}` : ''} for ${b.date}`,
+      ts: b.createdAt || 0,
+    })),
+    ...recentNotifs.slice(0, 5).map(n => ({
+      icon: n.type === 'review_request' ? '⭐' : n.message?.includes('invite') ? '🏪' : '📅',
+      text: n.message || '',
+      ts: n.createdAt || 0,
+    })),
+  ].sort((a, b) => b.ts - a.ts).slice(0, 5);
   
   const statusMap: Record<string, {text:string, bg:string, border:string}> = {
     completed: { text: "text-brand-green", bg: "bg-[#0f2010]", border: "border-brand-green/30" },
@@ -431,6 +554,16 @@ export default function BarberDashboard() {
               </button>
             </div>
             <div className="text-[9px] text-[#555] font-bold mt-1.5 leading-tight">Share this with shops to receive invites</div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/barber/${user?.uid}`);
+                setToastMessage('Profile link copied! 🔗 Share it with your clients.');
+                setTimeout(() => setToastMessage(''), 3000);
+              }}
+              className="mt-2 w-full border border-[#2a2a2a] text-[#888] font-bold text-[11px] px-3 py-[7px] rounded-lg hover:border-[#444] hover:text-white transition-colors"
+            >
+              Share my profile 🔗
+            </button>
           </div>
         )}
         
@@ -472,6 +605,27 @@ export default function BarberDashboard() {
             >
               <span>🏪</span> Create Shop Profile
             </Link>
+          )}
+        </div>
+
+        {/* Profile completion — desktop only */}
+        <div className="hidden md:block mt-4 px-2">
+          <div className="text-[10px] font-extrabold text-[#555] uppercase tracking-wider mb-2">Profile completion</div>
+          <div className="h-1.5 bg-[#1e1e1e] rounded-full overflow-hidden mb-1">
+            <div className={`h-full rounded-full transition-all ${profilePct === 100 ? 'bg-[#22C55E]' : 'bg-brand-yellow'}`} style={{ width: `${profilePct}%` }} />
+          </div>
+          <div className={`text-[11px] font-extrabold mb-2 ${profilePct === 100 ? 'text-[#22C55E]' : 'text-brand-yellow'}`}>
+            {profilePct === 100 ? 'Profile complete! ✓' : `${profilePct}% complete`}
+          </div>
+          {missingItems.length > 0 && (
+            <div className="flex flex-col gap-1">
+              {missingItems.map((item, i) => (
+                <button key={i} onClick={() => setActiveTab(item.tab)}
+                  className="text-[10px] text-[#555] hover:text-white text-left transition-colors truncate">
+                  {item.label} → {item.tab}
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
@@ -517,7 +671,7 @@ export default function BarberDashboard() {
             <div className="flex flex-col md:flex-row justify-between items-start mb-7 gap-4">
               <div>
                 <h1 className="text-2xl font-black">Good morning, {appUser?.firstName} ✂️</h1>
-                <p className="text-brand-text-secondary text-sm mt-1">{new Date().toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'})} · {displayBookings.length} appointments today</p>
+                <p className="text-brand-text-secondary text-sm mt-1">{new Date().toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'})} · {motivatingText}</p>
               </div>
               <div className="flex items-center gap-2">
                 <a
@@ -573,21 +727,56 @@ export default function BarberDashboard() {
 
             {/* Stats */}
             {activeTab === "Dashboard" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-8">
-                {[
-                  { val: `€${todayEarnings}`, label: "Today's earnings", delta: `${displayBookings.filter(b=>b.status==='completed').length} cuts`, color: "text-brand-yellow" },
-                  { val: `${profile?.totalCuts + totalCompleted}`, label: "Total cuts", delta: `This month: ${totalCompleted}`, color: "text-brand-orange" },
-                  { val: `${profile?.rating || 'New'}`, label: "Rating", delta: "★ 0 reviews", color: "text-brand-green" },
-                  { val: "100%", label: "Show rate", delta: "0 no-shows", color: "text-brand-green" },
-                ].map((s, i) => (
-                  <div key={i} className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
-                    <div className={`text-[28px] font-black leading-none ${s.color}`}>{s.val}</div>
-                    <div className="text-xs text-brand-text-secondary font-bold">{s.label}</div>
-                    <div className="text-[11px] font-extrabold text-[#444] mt-1">{s.delta}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
+                {/* Today's earnings */}
+                <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
+                  <div className="text-[28px] font-black leading-none text-brand-yellow">{currSym}{todayEarnings}</div>
+                  <div className="text-xs text-brand-text-secondary font-bold">Today&apos;s earnings</div>
+                  <div className="text-[11px] font-extrabold text-[#444] mt-1">{todayCompletedBookings.length} cuts today</div>
+                </div>
+                {/* Total cuts */}
+                <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
+                  <div className="text-[28px] font-black leading-none text-brand-orange">{profile?.totalCuts ?? 0}</div>
+                  <div className="text-xs text-brand-text-secondary font-bold">Total cuts</div>
+                  <div className="text-[11px] font-extrabold text-[#444] mt-1">This month: {thisMonthCompleted}</div>
+                </div>
+                {/* Rating */}
+                <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
+                  <div className={`text-[28px] font-black leading-none ${(profile?.rating || 0) > 0 ? 'text-brand-yellow' : 'text-brand-green'}`}>
+                    {(profile?.rating || 0) > 0 ? `★ ${(profile!.rating as number).toFixed(1)}` : 'New ✨'}
                   </div>
-                ))}
+                  <div className="text-xs text-brand-text-secondary font-bold">Rating</div>
+                  <div className="text-[11px] font-extrabold text-[#444] mt-1">
+                    {(profile?.reviewCount || 0) > 0 ? `${profile!.reviewCount} reviews` : 'No reviews yet'}
+                  </div>
+                </div>
+                {/* Show rate */}
+                <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
+                  <div className="text-[28px] font-black leading-none text-brand-green">{showRate}%</div>
+                  <div className="text-xs text-brand-text-secondary font-bold">Show rate</div>
+                  <div className="text-[11px] font-extrabold text-[#444] mt-1">
+                    {totalFinished > 0 ? `${totalFinished} bookings total` : '0 no-shows'}
+                  </div>
+                </div>
               </div>
             )}
+
+            {/* Next appointment countdown */}
+            {activeTab === "Dashboard" && nextBooking && (() => {
+              const { day, countdown } = getCountdownLabel(nextBooking);
+              return (
+                <div className="flex items-center justify-between bg-[#111] border border-[#1e1e1e] rounded-[12px] px-5 py-[14px] mb-5">
+                  <div>
+                    <div className="text-[11px] font-bold text-[#555] mb-0.5">⏱ Next cut</div>
+                    <div className="font-extrabold text-[14px]">{nextBooking.clientName || 'Client'}{nextBooking.serviceNames?.[0] ? ` — ${nextBooking.serviceNames[0]}` : ''}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[13px] font-bold text-white">{day} at {nextBooking.startTime}</div>
+                    {countdown && <div className="text-[12px] font-extrabold text-brand-yellow">{countdown}</div>}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Bookings List */}
             <div className="flex gap-1 border-b border-brand-border mb-5">
@@ -601,7 +790,7 @@ export default function BarberDashboard() {
               ))}
             </div>
 
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2.5" id="bookings-list">
               {displayBookings.length === 0 ? (
                 <div className="text-center py-10 bg-brand-surface border border-brand-border rounded-2xl text-brand-text-secondary text-sm">No bookings found for {bookingsTab}.</div>
               ) : displayBookings.map((b) => (
@@ -634,6 +823,48 @@ export default function BarberDashboard() {
                 </div>
               ))}
             </div>
+
+            {/* Recent activity feed */}
+            {activeTab === "Dashboard" && (
+              <div className="mt-8">
+                <div className="text-[13px] font-extrabold mb-3">Recent activity</div>
+                {recentActivity.length === 0 ? (
+                  <div className="text-[#555] text-sm text-center py-6">
+                    No recent activity yet.<br/>Share your profile to get your first booking!
+                  </div>
+                ) : (
+                  <div>
+                    {recentActivity.map((a, i) => (
+                      <div key={i} className="flex items-center gap-[10px] py-[10px] border-b border-[#141414] last:border-0">
+                        <span className="text-base shrink-0">{a.icon}</span>
+                        <span className="flex-1 text-[13px] text-[#aaa] leading-snug">{a.text}</span>
+                        <span className="text-[11px] text-[#555] shrink-0">{a.ts ? timeAgo(a.ts) : ''}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Weekly earnings chart */}
+            {activeTab === "Dashboard" && (
+              <div className="mt-8 bg-[#111] border border-[#1e1e1e] rounded-[12px] p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[13px] font-extrabold">This week&apos;s earnings</span>
+                  <span className="text-[13px] font-black text-brand-yellow">{currSym}{weeklyTotal}</span>
+                </div>
+                <ResponsiveContainer width="100%" height={130}>
+                  <BarChart data={weeklyChartData} barCategoryGap="20%">
+                    <XAxis dataKey="name" tick={{ fill: '#555', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <Bar dataKey="earnings" radius={[4, 4, 0, 0]}>
+                      {weeklyChartData.map((entry, index) => (
+                        <Cell key={index} fill={entry.isToday ? '#F5C518' : '#2a2a2a'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
         ) : activeTab === "Services" ? (
           <div className="animate-fadeUp max-w-[600px]">
