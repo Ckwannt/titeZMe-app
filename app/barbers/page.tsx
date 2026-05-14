@@ -302,12 +302,13 @@ export default function BarbersPage() {
             </button>
           </div>
         )}
-        <div className="border-t border-[#1a1a1a] mt-4" />
       </div>
 
       <div className="max-w-[1400px] mx-auto px-6 pb-16">
+        {/* Divider between search and grid */}
+        <div className="h-px bg-[#1e1e1e] mb-5" />
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full items-stretch">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="bg-[#141414] border border-[#222] rounded-[12px] h-[160px] animate-pulse" />
             ))}
@@ -333,7 +334,7 @@ export default function BarbersPage() {
             <div className="text-xs font-bold text-[#555] mb-4">
               {filtered.length} barber{filtered.length !== 1 ? 's' : ''} found
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full items-stretch">
               {paged.map(b => {
                 const name = `${b.firstName} ${b.lastName}`.trim() || 'Barber';
                 const photo = b.profilePhotoUrl || b.photoUrl;
