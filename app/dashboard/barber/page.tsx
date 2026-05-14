@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, getDocs, writeBatch, increment, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, getDocs, writeBatch, increment, onSnapshot, orderBy, addDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -13,7 +13,7 @@ import { BarberInvitesTab } from '@/components/BarberInvitesTab';
 import { BarberPortfolioTab } from '@/components/BarberPortfolioTab';
 import { BarberSettingsTab } from '@/components/BarberSettingsTab';
 import { BookingRowSkeleton, StatCardSkeleton } from '@/components/skeletons';
-import { barberUpdateSchema, bookingUpdateSchema } from "@/lib/schemas";
+import { barberUpdateSchema, bookingUpdateSchema, notificationSchema } from "@/lib/schemas";
 
 export default function BarberDashboard() {
   const { user, appUser, loading } = useAuth();
@@ -30,6 +30,9 @@ export default function BarberDashboard() {
   const [isSavingTitz, setIsSavingTitz] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [blockModalOpen, setBlockModalOpen] = useState(false);
+  const [blockDate, setBlockDate] = useState('');
+  const [blockLoading, setBlockLoading] = useState(false);
 
   const handleCopyCode = () => {
     if (profile?.barberCode) {
@@ -135,6 +138,20 @@ export default function BarberDashboard() {
       
       await batch.commit();
       // onSnapshot listener updates bookings state automatically
+
+      // Notify client on accept or decline
+      if (booking?.clientId && (status === 'confirmed' || status === 'cancelled_by_barber')) {
+        const message = status === 'confirmed'
+          ? `Your booking on ${booking.date} at ${booking.startTime} has been confirmed by your barber. See you there!`
+          : `Your booking on ${booking.date} at ${booking.startTime} was cancelled by your barber.`;
+        await addDoc(collection(db, 'notifications'), notificationSchema.parse({
+          userId: booking.clientId,
+          message,
+          read: false,
+          linkTo: '/dashboard/client',
+          createdAt: Date.now()
+        }));
+      }
     }
     catch (e: any) { console.error('Error updating status', e); }
   };
@@ -169,6 +186,25 @@ export default function BarberDashboard() {
     catch(e) { console.error(e); }
   }
 
+  const handleBlockDay = async () => {
+    if (!blockDate || !user) return;
+    setBlockLoading(true);
+    try {
+      await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), {
+        blockedDates: arrayUnion(blockDate)
+      });
+      setToastMessage(`${blockDate} blocked. No bookings will be accepted that day.`);
+      setTimeout(() => setToastMessage(''), 4000);
+      setBlockModalOpen(false);
+      setBlockDate('');
+    } catch (e) {
+      setToastMessage('Failed to block date.');
+      setTimeout(() => setToastMessage(''), 3000);
+    } finally {
+      setBlockLoading(false);
+    }
+  };
+
   if (!profile && !loading && user) {
     return (
       <div className="flex min-h-[calc(100vh-53px)] flex-col md:flex-row">
@@ -195,8 +231,37 @@ export default function BarberDashboard() {
     );
   }
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const displayBookings = bookings.filter(b => bookingsTab === "today" ? b.date === todayStr : true).sort((a,b) => a.startTime.localeCompare(b.startTime));
+  const getDateRange = (tab: string) => {
+    const now = new Date();
+    if (tab === 'today') {
+      const start = new Date(now); start.setHours(0, 0, 0, 0);
+      const end = new Date(now); end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+    if (tab === 'this week') {
+      const start = new Date(now);
+      const day = start.getDay();
+      start.setDate(start.getDate() - day + (day === 0 ? -6 : 1));
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+    if (tab === 'this month') {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+    return null;
+  };
+
+  const displayBookings = bookings.filter(b => {
+    const range = getDateRange(bookingsTab);
+    if (!range) return true;
+    const bookingDate = new Date(`${b.date}T${b.startTime}`);
+    return bookingDate >= range.start && bookingDate <= range.end;
+  }).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   const saveTitzCut = async () => {
     if (!user) return;
@@ -215,6 +280,14 @@ export default function BarberDashboard() {
     }
     setIsSavingTitz(false);
   };
+
+  // Availability check
+  const hasAvailability = schedule &&
+    schedule.availableSlots &&
+    Object.keys(schedule.availableSlots).length > 0 &&
+    Object.values(schedule.availableSlots).some(
+      (slots: any) => Array.isArray(slots) && slots.length > 0
+    );
 
   // Stats calc
   const todayEarnings = displayBookings.filter(b => b.status === "completed").reduce((sum, b) => sum + (b.price || 0), 0);
@@ -341,6 +414,23 @@ export default function BarberDashboard() {
           <BarberSettingsTab profile={profile} mutateProfile={mutateProfile} />
         ) : activeTab === "Dashboard" || activeTab === "Bookings" ? (
           <div className="animate-fadeUp">
+
+            {/* Availability warning */}
+            {!hasAvailability && (
+              <div className="flex items-center justify-between bg-[#1a1500] border border-[#F5C51844] rounded-[12px] px-[18px] py-[14px] mb-5">
+                <div>
+                  <div className="text-[13px] font-extrabold text-brand-yellow">⚠️ You haven&apos;t set your availability yet.</div>
+                  <div className="text-[11px] text-[#888] font-bold mt-0.5">Clients cannot book you until you add your working hours.</div>
+                </div>
+                <button
+                  onClick={() => setActiveTab('Availability')}
+                  className="shrink-0 ml-4 bg-brand-yellow text-[#0a0a0a] font-extrabold text-[12px] px-4 py-2 rounded-full hover:opacity-90 transition-opacity"
+                >
+                  Set availability →
+                </button>
+              </div>
+            )}
+
             <div className="flex flex-col md:flex-row justify-between items-start mb-7 gap-4">
               <div>
                 <h1 className="text-2xl font-black">Good morning, {appUser?.firstName} ✂️</h1>
@@ -354,7 +444,7 @@ export default function BarberDashboard() {
                 >
                   👁 View public profile
                 </a>
-                <button className="bg-brand-orange text-white px-7 py-3 rounded-full font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px">
+                <button onClick={() => setBlockModalOpen(true)} className="bg-brand-orange text-white px-7 py-3 rounded-full font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px">
                   + Block time off
                 </button>
               </div>
@@ -493,6 +583,40 @@ export default function BarberDashboard() {
           </div>
         )}
         
+        {/* Block time off modal */}
+        {blockModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
+            <div className="bg-[#111] border border-[#2a2a2a] rounded-[16px] p-6 w-full max-w-sm animate-fadeUp">
+              <h3 className="text-lg font-black mb-1">Block a day off</h3>
+              <p className="text-xs text-[#888] font-bold mb-5">Clients won&apos;t be able to book you on this day.</p>
+              <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-2">Select date</label>
+              <input
+                type="date"
+                min={new Date().toISOString().split('T')[0]}
+                value={blockDate}
+                onChange={e => setBlockDate(e.target.value)}
+                className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-yellow transition-colors mb-5"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setBlockModalOpen(false); setBlockDate(''); }}
+                  disabled={blockLoading}
+                  className="flex-1 border border-[#2a2a2a] text-[#888] font-bold py-3 rounded-full text-sm hover:border-[#444] hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBlockDay}
+                  disabled={!blockDate || blockLoading}
+                  className="flex-1 bg-brand-yellow text-[#0a0a0a] font-black py-3 rounded-full text-sm hover:opacity-90 transition-opacity disabled:opacity-40"
+                >
+                  {blockLoading ? '...' : 'Block this day'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {toastMessage && (
           <div className="fixed bottom-6 right-6 bg-[#1a0808] border border-brand-yellow/30 text-brand-yellow px-6 py-3 rounded-full font-bold text-sm shadow-xl animate-fadeUp z-50">
             {toastMessage}
