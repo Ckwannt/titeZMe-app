@@ -271,14 +271,16 @@ export default function ShopsPage() {
             </button>
           </div>
         )}
-        <div className="border-t border-[#1a1a1a] mt-4" />
       </div>
 
       <div className="max-w-[1400px] mx-auto px-6 pb-16">
+        {/* Divider between search and grid */}
+        <div className="h-px bg-[#1e1e1e] mb-5" />
+
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-[#111] border border-[#1e1e1e] rounded-[14px] h-[260px] animate-pulse" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-[#141414] border border-[#222] rounded-[12px] h-[230px] animate-pulse" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -300,63 +302,64 @@ export default function ShopsPage() {
             <div className="text-xs font-bold text-[#555] mb-4">
               {filtered.length} shop{filtered.length !== 1 ? 's' : ''} found
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full items-stretch">
               {paged.map(s => {
-                const location = fmtLocation(s.country, s.city, s.street);
-                const sym = currencySymbol(s.currency);
-                const initials = s.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
-                const langLine = s.languages.slice(0, 3).join(' · ');
+                const initials = s.name.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
 
                 return (
                   <Link key={s.id} href={`/shop/${s.id}`}
-                    className="group bg-[#111] border border-[#1e1e1e] rounded-[14px] p-4 hover:border-[#F5C51855] transition-all flex flex-col items-center text-center">
+                    className="bg-[#141414] border border-[#222] rounded-[12px] overflow-hidden cursor-pointer flex flex-col">
 
-                    {/* 1. Avatar */}
-                    <div className="relative w-[52px] h-[52px] rounded-full overflow-hidden border border-[#2a2a2a] bg-[#1a1a1a] mb-3 shrink-0">
+                    {/* TOP — Cover / gradient area */}
+                    <div className="relative h-[140px] flex items-center justify-center shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #E8491D, #F5C518)' }}>
                       {s.coverPhotoUrl ? (
                         <Image src={s.coverPhotoUrl} alt={s.name} fill className="object-cover" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center font-black text-lg text-white bg-[#E8491D]">
+                        <span className="text-[40px] font-black" style={{ color: 'rgba(0,0,0,0.3)' }}>
                           {initials}
-                        </div>
+                        </span>
+                      )}
+
+                      {/* Status badge */}
+                      {s.hasSchedule && (
+                        <span className={`absolute top-[10px] left-[10px] text-[10px] font-extrabold px-[10px] py-[3px] rounded-full ${
+                          s.isOpenNow
+                            ? 'bg-[#0f2010] text-[#22C55E]'
+                            : 'bg-[#1a0808] text-[#EF4444]'
+                        }`}>
+                          ● {s.isOpenNow ? 'Open now' : 'Closed today'}
+                        </span>
                       )}
                     </div>
 
-                    {/* 2. Name */}
-                    <div className="font-extrabold text-[13px] text-white group-hover:text-brand-yellow transition-colors mb-1 w-full truncate">
-                      {s.name}
-                    </div>
-
-                    {/* 3. Location */}
-                    {location && (
-                      <div className="text-[11px] text-[#555] font-bold mb-1.5 w-full truncate">
-                        {location}
+                    {/* BOTTOM — Info area */}
+                    <div className="flex flex-col flex-1 px-[14px] py-[12px]">
+                      {/* Shop name */}
+                      <div className="text-[13px] font-extrabold text-white mb-1 truncate">
+                        {s.name}
                       </div>
-                    )}
 
-                    {/* 4. Open/Closed */}
-                    {s.hasSchedule && (
-                      <div className={`flex items-center justify-center gap-1.5 text-[11px] font-bold mb-1.5 ${s.isOpenNow ? 'text-[#22C55E]' : 'text-[#666]'}`}>
-                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.isOpenNow ? 'bg-[#22C55E]' : 'bg-[#444]'}`} />
-                        {s.isOpenNow ? 'Open now' : 'Closed'}
+                      {/* Street address */}
+                      {s.street && (
+                        <div className="text-[11px] text-[#666] mb-0.5 truncate">
+                          📍 {s.street}
+                        </div>
+                      )}
+
+                      {/* City, Country */}
+                      {(s.city || s.country) && (
+                        <div className="text-[11px] text-[#555] mb-[10px] truncate">
+                          {[s.city, s.country].filter(Boolean).join(', ')}
+                        </div>
+                      )}
+
+                      {/* Bottom row */}
+                      <div className="flex justify-between items-center mt-auto">
+                        <span className="text-[11px] text-[#555]">New shop ✨</span>
+                        <span className="text-[12px] font-bold text-[#E8491D]">View shop →</span>
                       </div>
-                    )}
-
-                    {/* 5. Barbers + Languages */}
-                    <div className="text-[11px] text-[#555] font-bold mb-1.5 w-full truncate">
-                      {s.barberCount > 0 ? `${s.barberCount} barber${s.barberCount !== 1 ? 's' : ''}` : 'New shop'}
-                      {langLine ? ` · ${langLine}` : ''}
                     </div>
-
-                    {/* 6. Price */}
-                    <div className="text-[12px] font-black text-brand-yellow mb-3 mt-auto">
-                      {s.minPrice !== null ? `from ${sym}${s.minPrice}` : 'Prices on request'}
-                    </div>
-
-                    {/* 7. CTA */}
-                    <span className="block w-full bg-brand-yellow text-[#0a0a0a] font-black text-[12px] py-2 rounded-full text-center">
-                      View shop →
-                    </span>
                   </Link>
                 );
               })}
