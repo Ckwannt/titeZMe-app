@@ -75,7 +75,6 @@ async function fetchBarbers(): Promise<BarberCard[]> {
   const snap = await getDocs(query(
     collection(db, 'barberProfiles'),
     where('isLive', '==', true),
-    where('isOnboarded', '==', true),
     where('isSolo', '==', true),
   ));
   const profiles = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
