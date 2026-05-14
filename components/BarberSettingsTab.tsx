@@ -3,7 +3,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
+import { db, storage, auth } from '@/lib/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import Select from "react-select";
@@ -158,6 +159,27 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     tiktok: profile?.tiktok || ''
   });
 
+  // Section C — Barber profile chips
+  const [specialties, setSpecialties] = useState<string[]>(profile?.specialties || []);
+  const [vibe, setVibe] = useState<string[]>(profile?.vibes || []);
+  const [clientele, setClientele] = useState<string[]>(profile?.clientele || []);
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  // Sections E, F — Preferences & privacy
+  const [notifyEmail, setNotifyEmail] = useState(profile?.notifyEmail !== false);
+  const [notifyCancel, setNotifyCancel] = useState(profile?.notifyCancel !== false);
+  const [showPhone, setShowPhone] = useState(profile?.showPhone === true);
+  const [pwResetSent, setPwResetSent] = useState(false);
+
+  useEffect(() => {
+    setSpecialties(profile?.specialties || []);
+    setVibe(profile?.vibes || []);
+    setClientele(profile?.clientele || []);
+    setNotifyEmail(profile?.notifyEmail !== false);
+    setNotifyCancel(profile?.notifyCancel !== false);
+    setShowPhone(profile?.showPhone === true);
+  }, [profile]);
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -266,6 +288,45 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       setErrorMsg('Failed to save social links.');
     }
     setSavingSocial(false);
+  };
+
+  // Section C — save barber profile chips
+  const handleSaveBarberProfile = async () => {
+    if (!user) return;
+    setSavingProfile(true);
+    try {
+      await updateDoc(doc(db, 'barberProfiles', user.uid), { specialties, vibes: vibe, clientele });
+      mutateProfile();
+      setSuccessMsg('Barber profile updated ✓');
+    } catch (e) { console.error(e); setErrorMsg('Failed to save barber profile.'); }
+    setSavingProfile(false);
+  };
+
+  // Sections E, F — toggle handlers (auto-save)
+  const handleToggleNotifEmail = async (val: boolean) => {
+    if (!user) return;
+    setNotifyEmail(val);
+    try { await updateDoc(doc(db, 'users', user.uid), { notifyEmail: val }); } catch (e) { console.error(e); }
+  };
+  const handleToggleNotifCancel = async (val: boolean) => {
+    if (!user) return;
+    setNotifyCancel(val);
+    try { await updateDoc(doc(db, 'users', user.uid), { notifyCancel: val }); } catch (e) { console.error(e); }
+  };
+  const handleToggleShowPhone = async (val: boolean) => {
+    if (!user) return;
+    setShowPhone(val);
+    try { await updateDoc(doc(db, 'barberProfiles', user.uid), { showPhone: val }); } catch (e) { console.error(e); }
+  };
+
+  // Section G — password reset
+  const handlePasswordReset = async () => {
+    if (!user?.email) return;
+    try {
+      await sendPasswordResetEmail(auth, user.email);
+      setPwResetSent(true);
+      setSuccessMsg('Password reset email sent ✓ Check your inbox.');
+    } catch (e) { console.error(e); setErrorMsg('Failed to send reset email.'); }
   };
 
   const currentPhoto = localPhotoUrl || profile?.profilePhotoUrl || appUser?.photoUrl;
@@ -431,6 +492,55 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         </button>
       </section>
 
+      {/* SECTION C: BARBER PROFILE */}
+      <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
+        <h2 className="text-lg font-black mb-4">Barber Profile</h2>
+
+        {/* Specialties */}
+        <div className="mb-5">
+          <label className="text-xs font-bold text-[#888] block mb-2 uppercase">Specialties</label>
+          <div className="flex flex-wrap gap-2">
+            {['Skin Fade / Bald Fade','Low Fade','Mid Fade','High Fade','Taper','Classic Cut / Scissor Cut','Textured Crop','Buzz Cut','Line Up / Edge Up','Beard Trim & Shape','Hot Towel Shave / Straight Razor','Locs / Dreadlocks','Curly Hair / Afro','Kids Cut','Design / Pattern Cut','Colour & Bleach','Hair & Beard Combo'].map(s => (
+              <button key={s} onClick={() => setSpecialties(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])}
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold border transition-colors ${specialties.includes(s) ? 'border-brand-yellow bg-[#1a1500] text-brand-yellow' : 'border-[#2a2a2a] bg-[#141414] text-[#888] hover:border-[#444] hover:text-white'}`}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Vibe */}
+        <div className="mb-5">
+          <label className="text-xs font-bold text-[#888] block mb-2 uppercase">Vibe</label>
+          <div className="flex flex-wrap gap-2">
+            {['😶 Silent','💬 Chatty','😎 Cool & chill','⚡ Hype','🎯 Professional','🤝 Friendly'].map(v => (
+              <button key={v} onClick={() => setVibe(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])}
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold border transition-colors ${vibe.includes(v) ? 'border-brand-yellow bg-[#1a1500] text-brand-yellow' : 'border-[#2a2a2a] bg-[#141414] text-[#888] hover:border-[#444] hover:text-white'}`}>
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Clientele */}
+        <div className="mb-6">
+          <label className="text-xs font-bold text-[#888] block mb-2 uppercase">Who do you work with?</label>
+          <div className="flex flex-wrap gap-2">
+            {['👶 Babies (0–2 years)','🧒 Kids (3–12 years)','🧑 Teenagers','🧔 Adults','🧓 Elderly','♿ People with disabilities','😰 Anxious clients (extra patience)','🧠 Autism-friendly','🧏 Deaf / Hard of hearing','💺 Wheelchair accessible cuts','🏠 Home visits available'].map(c => (
+              <button key={c} onClick={() => setClientele(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])}
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold border transition-colors ${clientele.includes(c) ? 'border-brand-yellow bg-[#1a1500] text-brand-yellow' : 'border-[#2a2a2a] bg-[#141414] text-[#888] hover:border-[#444] hover:text-white'}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button onClick={handleSaveBarberProfile} disabled={savingProfile}
+          className="bg-brand-yellow text-black px-6 py-3 rounded-xl font-bold text-sm hover:bg-yellow-500 disabled:opacity-50">
+          {savingProfile ? 'Saving...' : 'Save Barber Profile'}
+        </button>
+      </section>
+
       {/* SECTION C: SOCIAL MEDIA */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
         <h2 className="text-lg font-black mb-4">Social Media</h2>
@@ -566,6 +676,54 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
             <div className="w-11 h-6 bg-[#333] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-yellow"></div>
           </label>
         </div>
+      </section>
+
+      {/* SECTION E: NOTIFICATION PREFERENCES */}
+      <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
+        <h2 className="text-lg font-black mb-4">Notification Preferences</h2>
+        {[
+          { label: 'Email me when I get a new booking', val: notifyEmail, fn: handleToggleNotifEmail },
+          { label: 'Email me when a booking is cancelled', val: notifyCancel, fn: handleToggleNotifCancel },
+        ].map((item, i) => (
+          <div key={i} className="flex items-center justify-between py-3 border-b border-[#1e1e1e] last:border-0">
+            <span className="text-sm font-bold text-white">{item.label}</span>
+            <label className="relative w-11 h-6 cursor-pointer shrink-0">
+              <input type="checkbox" checked={item.val} onChange={e => item.fn(e.target.checked)} className="peer sr-only" />
+              <span className="absolute inset-0 bg-[#2a2a2a] rounded-full transition-colors peer-checked:bg-brand-yellow" />
+              <span className="absolute w-[18px] h-[18px] left-[3px] top-[3px] bg-white rounded-full transition-transform peer-checked:translate-x-5 peer-checked:bg-[#0a0a0a]" />
+            </label>
+          </div>
+        ))}
+      </section>
+
+      {/* SECTION F: PRIVACY */}
+      <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
+        <h2 className="text-lg font-black mb-4">Privacy</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-sm font-bold text-white">Show my phone number on my public profile</div>
+            <div className="text-xs text-[#555] mt-0.5">When off, clients won&apos;t see your phone on your profile page.</div>
+          </div>
+          <label className="relative w-11 h-6 cursor-pointer shrink-0 ml-4">
+            <input type="checkbox" checked={showPhone} onChange={e => handleToggleShowPhone(e.target.checked)} className="peer sr-only" />
+            <span className="absolute inset-0 bg-[#2a2a2a] rounded-full transition-colors peer-checked:bg-brand-yellow" />
+            <span className="absolute w-[18px] h-[18px] left-[3px] top-[3px] bg-white rounded-full transition-transform peer-checked:translate-x-5 peer-checked:bg-[#0a0a0a]" />
+          </label>
+        </div>
+      </section>
+
+      {/* SECTION G: ACCOUNT */}
+      <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
+        <h2 className="text-lg font-black mb-4">Account</h2>
+        <div className="mb-5">
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Your login email</label>
+          <input value={user?.email || ''} readOnly className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl px-4 py-3 text-[#555] text-sm cursor-not-allowed" />
+          <p className="text-[11px] text-[#444] mt-1.5">To change your email, contact support.</p>
+        </div>
+        <button onClick={handlePasswordReset} disabled={pwResetSent}
+          className="text-sm font-bold text-[#888] hover:text-white transition-colors underline disabled:text-[#555] disabled:cursor-default disabled:no-underline">
+          {pwResetSent ? '✓ Reset email sent — check your inbox' : 'Change password →'}
+        </button>
       </section>
 
       {/* SECTION E: DANGER ZONE */}
