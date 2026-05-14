@@ -148,7 +148,7 @@ export default function ClientDashboard() {
              <div className="flex flex-col gap-3.5 mb-10">
                {upcomingBookings.length === 0 ? (
                  <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 text-center text-sm font-bold text-brand-text-secondary">
-                   No upcoming bookings. <Link href="/" className="text-brand-yellow underline">Find a barber</Link>
+                   No upcoming bookings. <Link href="/barbers" className="text-brand-yellow font-bold no-underline">Find a barber</Link> · <Link href="/shops" className="text-brand-yellow font-bold no-underline">Find a barbershop</Link>
                  </div>
                ) : (
                  upcomingBookings.map(b => (
