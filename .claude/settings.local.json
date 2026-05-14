@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "PowerShell(cd \"C:\\\\Windows\\\\System32\\\\titeZMe-app\"; $env:PATH = \"C:\\\\Windows\\\\System32\\\\titeZMe-app\\\\node_modules\\\\.bin;\" + $env:PATH; npm run build 2>&1 | Select-Object -Last 30)",
+      "Bash(export PATH=\"$PWD/node_modules/.bin:$PATH\")"
+    ]
+  }
+}
