@@ -13,6 +13,7 @@ import Image from 'next/image';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BarberProfileSkeleton } from '@/components/skeletons';
 import toast from 'react-hot-toast';
+import { getOpenStatus, getLocalDateString, getTimezoneFromLocation } from '@/lib/schedule-utils';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -117,20 +118,7 @@ function HighlightedText({ text }: { text: string }) {
   );
 }
 
-function getOpenStatus(slots: Record<string, string[]> | null, todayDate: string) {
-  if (!slots) return { label: 'Schedule not set', color: 'text-[#666]' };
-  const todaySlots = slots[todayDate] || [];
-  if (todaySlots.length === 0) return { label: '🔴 Closed today', color: 'text-[#ef4444]' };
-  const nowHour = new Date().getHours();
-  const nowStr = `${String(nowHour).padStart(2, '0')}:00`;
-  if (todaySlots.includes(nowStr)) {
-    const lastH = parseInt(todaySlots[todaySlots.length - 1]) + 1;
-    return { label: `🟢 Open now · Closes ${String(lastH).padStart(2, '0')}:00`, color: 'text-[#22c55e]' };
-  }
-  const firstHour = parseInt(todaySlots[0]);
-  if (nowHour < firstHour) return { label: `🔴 Closed · Opens at ${todaySlots[0]}`, color: 'text-[#ef4444]' };
-  return { label: '🔴 Closed for today', color: 'text-[#ef4444]' };
-}
+// getOpenStatus imported from @/lib/schedule-utils
 
 // ─── component ────────────────────────────────────────────────────────────────
 
@@ -235,8 +223,15 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
   const profile = data?.profile;
   const userProfile = data?.userProfile;
   const shop = data?.shop;
-  const todayDate = new Date().toISOString().split('T')[0];
-  const openStatus = getOpenStatus(schedule?.availableSlots || null, todayDate);
+  const openStatus = getOpenStatus(
+    schedule?.availableSlots,
+    userProfile?.city,
+    userProfile?.country,
+    barberId
+  );
+  const todayDate = getLocalDateString(
+    getTimezoneFromLocation(userProfile?.city, userProfile?.country)
+  );
   const minPrice = services.length > 0 ? Math.min(...services.map(s => s.price || 0)) : null;
   const currency = profile?.currency || '€';
   const isFav = appUser?.favoriteBarbers?.includes(barberId);

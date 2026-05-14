@@ -8,6 +8,7 @@ import {
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { Footer } from '@/components/Footer';
+import { getOpenStatus, getLocalDateString, getLocalHourString, getTimezoneFromLocation } from '@/lib/schedule-utils';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -55,18 +56,20 @@ async function fetchFeaturedBarbers() {
     const profiles = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
     if (profiles.length === 0) return [];
 
-    const todayDate = new Date().toISOString().split('T')[0];
-    const nowStr = `${String(new Date().getHours()).padStart(2, '0')}:00`;
-
     const schedSnaps = await Promise.all(
       profiles.map((p: any) => getDoc(doc(db, 'schedules', `${p.id}_shard_0`)))
     );
 
     const withStatus = profiles.map((p: any, i: number) => {
       const sched = schedSnaps[i].exists() ? (schedSnaps[i].data() as any) : null;
+      const status = getOpenStatus(sched?.availableSlots, p.city, p.country, p.id);
+      // Also compute nextSlots for the featured card display
+      const tz = getTimezoneFromLocation(p.city, p.country);
+      const todayDate = getLocalDateString(tz);
+      const nowStr = getLocalHourString(tz);
       const slots: string[] = sched?.availableSlots?.[todayDate] ?? [];
       const nextSlots = slots.filter((s: string) => s >= nowStr).slice(0, 2);
-      return { ...p, isOpenNow: slots.includes(nowStr), nextSlots };
+      return { ...p, isOpenNow: status.isOpen, nextSlots };
     });
     const groupA = withStatus.filter((b: any) => b.isOpenNow);
     const groupB = withStatus.filter((b: any) => !b.isOpenNow);

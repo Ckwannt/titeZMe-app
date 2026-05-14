@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { bookingUpdateSchema, notificationSchema, barberUpdateSchema } from "@/lib/schemas";
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from 'recharts';
+import { getLocalDateString, getTimezoneFromLocation } from '@/lib/schedule-utils';
 
 function getCurrencySymbol(currency?: string): string {
   const s: Record<string, string> = {
@@ -34,7 +35,10 @@ function generateDateRange(from: string, to: string): string[] {
   const current = new Date(from + 'T00:00:00');
   const end = new Date(to + 'T00:00:00');
   while (current <= end) {
-    dates.push(current.toISOString().split('T')[0]);
+    const y = current.getFullYear();
+    const m = String(current.getMonth() + 1).padStart(2, '0');
+    const d = String(current.getDate()).padStart(2, '0');
+    dates.push(`${y}-${m}-${d}`);
     current.setDate(current.getDate() + 1);
   }
   return dates;
@@ -255,7 +259,7 @@ export default function BarberDashboardPage() {
     }
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateString(getTimezoneFromLocation(appUser?.city, appUser?.country));
   const hasAvailability = !!(schedule?.availableSlots &&
     Object.keys(schedule.availableSlots as Record<string, any>).some(date => {
       const d = new Date(date); const t = new Date(); t.setHours(0, 0, 0, 0);
@@ -304,7 +308,7 @@ export default function BarberDashboardPage() {
   })();
   const weeklyChartData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((name, i) => {
     const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
-    const ds = d.toISOString().split('T')[0];
+    const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const earnings = bookings.filter(b => b.date === ds && b.status === 'completed').reduce((s, b) => s + (b.price || 0), 0);
     return { name, earnings, isToday: ds === todayStr };
   });
@@ -386,7 +390,7 @@ export default function BarberDashboardPage() {
         </div>
         {/* Upcoming blocked days preview */}
         {(() => {
-          const today = new Date().toISOString().split('T')[0];
+          const today = getLocalDateString(getTimezoneFromLocation(appUser?.city, appUser?.country));
           const rawBlocked: any[] = (schedule as any)?.blockedDates || [];
           const upcoming = rawBlocked
             .filter((item: any) => (typeof item === 'string' ? item : item.date) >= today)
@@ -567,13 +571,13 @@ export default function BarberDashboardPage() {
             <div className="grid grid-cols-2 gap-3 mb-2">
               <div>
                 <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-1.5">From</label>
-                <input type="date" min={new Date().toISOString().split('T')[0]} value={blockFrom}
+                <input type="date" min={getLocalDateString(getTimezoneFromLocation(appUser?.city, appUser?.country))} value={blockFrom}
                   onChange={e => { setBlockFrom(e.target.value); setRangeError(''); }}
                   className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-brand-yellow transition-colors" />
               </div>
               <div>
                 <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-1.5">To (optional)</label>
-                <input type="date" min={blockFrom || new Date().toISOString().split('T')[0]} value={blockTo}
+                <input type="date" min={blockFrom || getLocalDateString(getTimezoneFromLocation(appUser?.city, appUser?.country))} value={blockTo}
                   onChange={e => { setBlockTo(e.target.value); setRangeError(''); }}
                   className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-brand-yellow transition-colors" />
               </div>

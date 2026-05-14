@@ -7,6 +7,7 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { Country, City } from 'country-state-city';
+import { getOpenStatus } from '@/lib/schedule-utils';
 
 const PER_PAGE = 12;
 
@@ -41,14 +42,6 @@ function fmtLangVibe(langs?: string[], vibes?: string[]): string {
   return l || v;
 }
 
-function getOpenStatus(availableSlots: Record<string, string[]> | null, todayDate: string) {
-  if (!availableSlots) return null;
-  const slots = availableSlots[todayDate] ?? [];
-  if (slots.length === 0) return { open: false };
-  const nowStr = `${String(new Date().getHours()).padStart(2, '0')}:00`;
-  return { open: slots.includes(nowStr) };
-}
-
 // ─── types ───────────────────────────────────────────────────────────────────
 
 type BarberCard = {
@@ -65,6 +58,8 @@ type BarberCard = {
   currency?: string;
   barberCode: string;
   isOpenNow: boolean;
+  openLabel: string;
+  openColor: string;
   hasSchedule: boolean;
   minPrice: number | null;
 };
@@ -101,17 +96,17 @@ async function fetchBarbers(): Promise<BarberCard[]> {
     shopSnaps.forEach((s, i) => { if (s.exists()) shopMap[shopIds[i]] = s.data(); });
   }
 
-  const todayDate = new Date().toISOString().split('T')[0];
-  const nowStr = `${String(new Date().getHours()).padStart(2, '0')}:00`;
-
   return profiles.map((p: any, i: number) => {
     const user = userSnaps[i].exists() ? (userSnaps[i].data() as any) : {};
     const sched = scheduleSnaps[i].exists() ? (scheduleSnaps[i].data() as any) : null;
-    const todaySlots: string[] = sched?.availableSlots?.[todayDate] ?? [];
     const prices = serviceSnaps[i].docs
       .map(s => Number((s.data() as any).price) || 0)
       .filter(n => n > 0);
     const shop = p.shopId ? shopMap[p.shopId] : null;
+    const city = p.city || user.city || '';
+    const country = user.country || '';
+
+    const status = getOpenStatus(sched?.availableSlots, city, country, p.id);
 
     return {
       id: p.id,
@@ -119,14 +114,16 @@ async function fetchBarbers(): Promise<BarberCard[]> {
       photoUrl: user.photoUrl,
       firstName: user.firstName || '',
       lastName: user.lastName || '',
-      country: user.country || '',
-      city: p.city || user.city || '',
+      country,
+      city,
       street: shop?.address?.street || p.address?.street || '',
       languages: p.languages || [],
       vibes: p.vibes || p.vibe || [],
       currency: p.currency,
       barberCode: p.barberCode || '',
-      isOpenNow: todaySlots.includes(nowStr),
+      isOpenNow: status.isOpen,
+      openLabel: status.label,
+      openColor: status.color,
       hasSchedule: sched !== null,
       minPrice: prices.length > 0 ? Math.min(...prices) : null,
     };
@@ -374,6 +371,13 @@ export default function BarbersPage() {
 
                     {/* Divider */}
                     <div className="h-px bg-[#1e1e1e] my-[10px]" />
+
+                    {/* Open/Closed status */}
+                    {b.hasSchedule && b.openLabel && (
+                      <div className={`text-[10px] font-bold mb-[8px] ${b.openColor}`}>
+                        {b.openLabel}
+                      </div>
+                    )}
 
                     {/* Languages */}
                     {b.languages.length > 0 && (

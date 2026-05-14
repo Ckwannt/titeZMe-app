@@ -7,6 +7,7 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { Country, City } from 'country-state-city';
+import { getOpenStatus, getTimezoneFromLocation, getLocalDateString } from '@/lib/schedule-utils';
 
 const PER_PAGE = 12;
 
@@ -46,6 +47,8 @@ type ShopCard = {
   barberCount: number;
   languages: string[];
   isOpenNow: boolean;
+  openLabel: string;
+  openColor: string;
   hasSchedule: boolean;
   minPrice: number | null;
   currency?: string;
@@ -81,12 +84,11 @@ async function fetchShops(): Promise<ShopCard[]> {
     bSnaps.forEach((s, i) => { if (s.exists()) barberMap[allBarberIds[i]] = s.data(); });
   }
 
-  const todayDate = new Date().toISOString().split('T')[0];
-  const nowStr = `${String(new Date().getHours()).padStart(2, '0')}:00`;
-
   return shops.map((s: any, i: number) => {
     const sched = scheduleSnaps[i].exists() ? (scheduleSnaps[i].data() as any) : null;
-    const todaySlots: string[] = sched?.availableSlots?.[todayDate] ?? [];
+    const shopCity = s.address?.city || '';
+    const shopCountry = s.address?.country || '';
+    const status = getOpenStatus(sched?.availableSlots, shopCity, shopCountry, s.id);
     const prices = serviceSnaps[i].docs
       .map(d => Number((d.data() as any).price) || 0)
       .filter(n => n > 0);
@@ -99,12 +101,14 @@ async function fetchShops(): Promise<ShopCard[]> {
       id: s.id,
       name: s.name || 'Barbershop',
       coverPhotoUrl: s.coverPhotoUrl,
-      country: s.address?.country || '',
-      city: s.address?.city || '',
+      country: shopCountry,
+      city: shopCity,
       street: s.address?.street || '',
       barberCount: barberIds.length,
       languages,
-      isOpenNow: todaySlots.includes(nowStr),
+      isOpenNow: status.isOpen,
+      openLabel: status.label,
+      openColor: status.color,
       hasSchedule: sched !== null,
       minPrice: prices.length > 0 ? Math.min(...prices) : null,
       currency: 'EUR',
