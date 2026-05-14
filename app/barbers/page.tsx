@@ -307,9 +307,9 @@ export default function BarbersPage() {
 
       <div className="max-w-[1400px] mx-auto px-6 pb-16">
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-[14px] h-[200px] animate-pulse" />
+              <div key={i} className="bg-[#141414] border border-[#222] rounded-[12px] h-[160px] animate-pulse" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -333,7 +333,7 @@ export default function BarbersPage() {
             <div className="text-xs font-bold text-[#555] mb-4">
               {filtered.length} barber{filtered.length !== 1 ? 's' : ''} found
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {paged.map(b => {
                 const name = `${b.firstName} ${b.lastName}`.trim() || 'Barber';
                 const photo = b.profilePhotoUrl || b.photoUrl;
@@ -343,37 +343,44 @@ export default function BarbersPage() {
 
                 return (
                   <Link key={b.id} href={`/barber/${b.id}`}
-                    className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-[14px] p-4 cursor-pointer flex flex-col items-center text-center">
+                    className="bg-[#141414] border border-[#222] rounded-[12px] p-[14px] cursor-pointer flex flex-col">
 
-                    {/* 1. Avatar */}
-                    <div className="relative w-12 h-12 rounded-full overflow-hidden bg-[#E8491D] mb-3 shrink-0 flex items-center justify-center">
-                      {photo ? (
-                        <Image src={photo} alt={name} fill className="object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <span className="font-black text-xl text-white">{name[0]?.toUpperCase()}</span>
-                      )}
-                    </div>
+                    {/* ROW 1: Avatar + Name/Location */}
+                    <div className="flex items-start gap-[10px]">
 
-                    {/* 2. Name + Rating badge */}
-                    <div className="flex items-center justify-center gap-1.5 mb-1 w-full">
-                      <span className="font-extrabold text-[13px] text-white truncate max-w-[130px]">{name}</span>
-                      <span className="text-[11px] text-[#666] font-bold whitespace-nowrap shrink-0">New ✨</span>
-                    </div>
-
-                    {/* 3. City only */}
-                    {b.city && (
-                      <div className="text-[12px] text-[#666] mb-2">
-                        📍 {b.city}
+                      {/* Avatar — square with rounded corners */}
+                      <div className="relative w-11 h-11 rounded-[10px] overflow-hidden bg-[#E8491D] shrink-0 flex items-center justify-center">
+                        {photo ? (
+                          <Image src={photo} alt={name} fill className="object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          <span className="text-[20px] font-black text-white leading-none">{name[0]?.toUpperCase()}</span>
+                        )}
                       </div>
-                    )}
 
-                    {/* 4. Languages — dots, max 2 + overflow count */}
+                      {/* Name + badge + location */}
+                      <div className="flex-1 min-w-0">
+                        {/* Name row */}
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-extrabold text-[13px] text-white truncate">{name}</span>
+                          <span className="text-[10px] text-[#555] font-semibold whitespace-nowrap shrink-0">New ✨</span>
+                        </div>
+                        {/* Location */}
+                        {b.city && (
+                          <div className="text-[11px] text-[#666] mt-[3px]">📍 {b.city}</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="h-px bg-[#1e1e1e] my-[10px]" />
+
+                    {/* Languages */}
                     {b.languages.length > 0 && (
-                      <div className="flex items-center justify-center gap-1.5 mb-3 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-wrap mb-[10px]">
                         {displayLangs.map((lang, i) => (
                           <span key={lang} className="flex items-center gap-1 text-[11px] text-[#888]">
-                            {i > 0 && <span className="text-[#444] mx-0.5">·</span>}
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] inline-block shrink-0" />
+                            {i > 0 && <span className="text-[#444]">·</span>}
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#60a5fa] inline-block shrink-0" />
                             {lang}
                           </span>
                         ))}
@@ -383,9 +390,9 @@ export default function BarbersPage() {
                       </div>
                     )}
 
-                    {/* 5+6. Price + View profile — same row */}
-                    <div className="flex justify-between items-center w-full mt-auto pt-2">
-                      <span className="text-[13px] font-bold text-[#E8491D]">
+                    {/* Bottom row: Price + View profile */}
+                    <div className="flex justify-between items-center mt-auto">
+                      <span className="text-[13px] font-bold text-white">
                         {b.minPrice !== null ? `from ${sym}${b.minPrice}` : 'On request'}
                       </span>
                       <span className="text-[12px] font-bold text-[#E8491D]">
