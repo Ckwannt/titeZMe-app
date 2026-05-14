@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, deleteObject } from 'firebase/storage';
 import Image from 'next/image';
-import imageCompression from 'browser-image-compression';
 import { barberUpdateSchema } from "@/lib/schemas";
+import { toast } from 'react-hot-toast';
 
 interface BarberPortfolioTabProps {
   profile: any;
@@ -16,146 +16,52 @@ interface BarberPortfolioTabProps {
 
 export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTabProps) {
   const { user } = useAuth();
-  const [photoLoading, setPhotoLoading] = useState(false);
-  const [videoLoading, setVideoLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [notifyPhotoDone, setNotifyPhotoDone] = useState(false);
+  const [notifyVideoDone, setNotifyVideoDone] = useState(false);
 
   const photos = profile?.photos || [];
   const videos = profile?.videos || [];
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setErrorMsg('Only jpg, png, and webp images are allowed.');
-      return;
-    }
-    if (photos.length >= 20) {
-      setErrorMsg('Maximum 20 photos allowed.');
-      return;
-    }
-
-    setPhotoLoading(true);
-    setErrorMsg('');
-
-    try {
-      const options = {
-        maxSizeMB: 1, // Max 1MB
-        maxWidthOrHeight: 1200, // Max 1200px
-        useWebWorker: true,
-      };
-
-      const compressedFile = await imageCompression(file, options);
-
-      const storageRef = ref(storage, `portfolios/${user.uid}/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, compressedFile, { cacheControl: 'public, max-age=31536000' });
-
-      uploadTask.on('state_changed', 
-        null, 
-        (error) => {
-          setPhotoLoading(false);
-          setErrorMsg('Upload failed. Please try again.');
-          console.error(error);
-        }, 
-        async () => {
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            const newPhotos = [...photos, downloadURL];
-            await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ photos: newPhotos }));
-            mutateProfile();
-          } catch (err) {
-            console.error(err);
-          }
-          setPhotoLoading(false);
-        }
-      );
-    } catch (error) {
-      console.error(error);
-      setErrorMsg('Image compression failed.');
-      setPhotoLoading(false);
-    }
-    e.target.value = ""; // Reset input
-  };
-
   const handlePhotoDelete = async (photoUrl: string) => {
     if (!user) return;
-    
-    // Optimistic UI update can be complex with strings if duplicates exist, but we assume exact string match
     const newPhotos = photos.filter((url: string) => url !== photoUrl);
-    
     try {
-      // Create a reference from the URL and delete it
       const fileRef = ref(storage, photoUrl);
-      await deleteObject(fileRef).catch(console.error); // We don't await/fail if the file is already deleted or not found
-      
+      await deleteObject(fileRef).catch(console.error);
       await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ photos: newPhotos }));
       mutateProfile();
     } catch (e) {
       console.error(e);
-      setErrorMsg('Failed to delete photo.');
     }
-  };
-
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    
-    if (!['video/mp4', 'video/quicktime', 'video/webm'].includes(file.type)) {
-      setErrorMsg('Only mp4, mov, and webm videos are allowed.');
-      return;
-    }
-    if (file.size > 50 * 1024 * 1024) {
-      setErrorMsg('Video file size must be less than 50MB.');
-      return;
-    }
-    if (videos.length >= 5) {
-      setErrorMsg('Maximum 5 videos allowed.');
-      return;
-    }
-
-    setVideoLoading(true);
-    setErrorMsg('');
-
-    const storageRef = ref(storage, `portfolios/${user.uid}/videos/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file, { cacheControl: 'public, max-age=31536000' });
-
-    uploadTask.on('state_changed', 
-      null, 
-      (error) => {
-        setVideoLoading(false);
-        setErrorMsg('Upload failed. Please try again.');
-        console.error(error);
-      }, 
-      async () => {
-        try {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          const newVideos = [...videos, downloadURL];
-          await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ videos: newVideos }));
-          mutateProfile();
-        } catch (err) {
-          console.error(err);
-        }
-        setVideoLoading(false);
-      }
-    );
-    e.target.value = ""; // Reset input
   };
 
   const handleVideoDelete = async (videoUrl: string) => {
     if (!user) return;
-    
     const newVideos = videos.filter((url: string) => url !== videoUrl);
-    
     try {
       const fileRef = ref(storage, videoUrl);
       await deleteObject(fileRef).catch(console.error);
-      
       await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ videos: newVideos }));
       mutateProfile();
     } catch (e) {
       console.error(e);
-      setErrorMsg('Failed to delete video.');
+    }
+  };
+
+  const handleNotify = async (feature: 'photos' | 'videos') => {
+    if (!user) return;
+    try {
+      await addDoc(collection(db, 'featureRequests'), {
+        userId: user.uid,
+        feature: 'portfolio',
+        subFeature: feature,
+        requestedAt: Date.now(),
+      });
+      if (feature === 'photos') setNotifyPhotoDone(true);
+      else setNotifyVideoDone(true);
+      toast.success("We'll notify you when portfolio is ready! 📸");
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -164,43 +70,39 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
       <h1 className="text-2xl font-black mb-2">Portfolio 📸</h1>
       <p className="text-brand-text-secondary text-sm mb-8">Showcase your best haircuts to attract more clients.</p>
 
-      {errorMsg && (
-        <div className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-xl px-4 py-3 text-sm font-bold mb-6">
-          {errorMsg}
-        </div>
-      )}
-
       {/* SECTION A: PHOTOS */}
       <section className="mb-12">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-lg font-black">Photos</h2>
-            <p className="text-xs text-[#888]">Max 20 photos. Up to 10MB each.</p>
+            <p className="text-xs text-[#888]">Max 20 photos.</p>
           </div>
-          <label className={`bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full font-bold text-sm cursor-pointer hover:bg-[#2a2a2a] transition-colors ${photoLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-            {photoLoading ? 'Uploading...' : '+ Add Photo'}
-            <input 
-              type="file" 
-              accept="image/jpeg,image/png,image/webp" 
-              onChange={handlePhotoUpload} 
-              className="hidden" 
-              disabled={photoLoading}
-            />
-          </label>
+          {/* Change 1 — Coming soon badge (replaces + Add Photo button) */}
+          <span className="bg-[#141414] border border-[#2a2a2a] text-[#555] rounded-full px-4 py-[6px] text-[11px] font-extrabold cursor-default select-none">
+            Coming soon
+          </span>
         </div>
 
         {photos.length === 0 ? (
-          <div className="border border-dashed border-[#333] rounded-3xl p-8 text-center text-[#888] bg-[#0a0a0a]">
-            No photos yet. Add some to show off your skills!
+          <div className="border border-dashed border-[#333] rounded-3xl p-8 text-center bg-[#0a0a0a]">
+            <div className="text-[#888] mb-3">No photos yet. Add some to show off your skills!</div>
+            <p className="text-[11px] text-[#444] italic mb-3">
+              We&apos;re working on the best way to host your portfolio. This feature will be available very soon.
+            </p>
+            <button
+              onClick={() => handleNotify('photos')}
+              disabled={notifyPhotoDone}
+              className="text-brand-yellow text-[11px] font-bold hover:underline disabled:cursor-default disabled:text-[#555]"
+            >
+              {notifyPhotoDone ? '✓ You\'re on the list' : 'Notify me when ready'}
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {photos.map((url: string, i: number) => (
               <div key={i} className="aspect-square bg-[#141414] rounded-2xl overflow-hidden relative group border border-[#2a2a2a]">
-                <>
-                  <Image src={url} alt={`Portfolio ${i}`} fill className="object-cover" referrerPolicy="no-referrer" />
-                </>
-                <button 
+                <Image src={url} alt={`Portfolio ${i}`} fill className="object-cover" referrerPolicy="no-referrer" />
+                <button
                   onClick={() => handlePhotoDelete(url)}
                   className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 backdrop-blur-sm transition-all hover:bg-brand-red hover:text-white pointer-events-auto"
                 >
@@ -217,30 +119,34 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-lg font-black">Videos</h2>
-            <p className="text-xs text-[#888]">Max 5 videos. Up to 50MB each.</p>
+            <p className="text-xs text-[#888]">Max 5 videos.</p>
           </div>
-          <label className={`bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full font-bold text-sm cursor-pointer hover:bg-[#2a2a2a] transition-colors ${videoLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-            {videoLoading ? 'Uploading...' : '+ Add Video'}
-            <input 
-              type="file" 
-              accept="video/mp4,video/quicktime,video/webm" 
-              onChange={handleVideoUpload} 
-              className="hidden"
-              disabled={videoLoading}
-            />
-          </label>
+          {/* Change 1 — Coming soon badge (replaces + Add Video button) */}
+          <span className="bg-[#141414] border border-[#2a2a2a] text-[#555] rounded-full px-4 py-[6px] text-[11px] font-extrabold cursor-default select-none">
+            Coming soon
+          </span>
         </div>
 
         {videos.length === 0 ? (
-          <div className="border border-dashed border-[#333] rounded-3xl p-8 text-center text-[#888] bg-[#0a0a0a]">
-            No videos yet. Action shots are great for engagement!
+          <div className="border border-dashed border-[#333] rounded-3xl p-8 text-center bg-[#0a0a0a]">
+            <div className="text-[#888] mb-3">No videos yet. Action shots are great for engagement!</div>
+            <p className="text-[11px] text-[#444] italic mb-3">
+              We&apos;re working on the best way to host your portfolio. This feature will be available very soon.
+            </p>
+            <button
+              onClick={() => handleNotify('videos')}
+              disabled={notifyVideoDone}
+              className="text-brand-yellow text-[11px] font-bold hover:underline disabled:cursor-default disabled:text-[#555]"
+            >
+              {notifyVideoDone ? '✓ You\'re on the list' : 'Notify me when ready'}
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {videos.map((url: string, i: number) => (
               <div key={i} className="aspect-[4/5] bg-[#141414] rounded-2xl overflow-hidden relative group border border-[#2a2a2a]">
                 <video src={url} className="w-full h-full object-cover" controls preload="metadata" />
-                <button 
+                <button
                   onClick={() => handleVideoDelete(url)}
                   className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 text-white flex z-10 items-center justify-center opacity-0 group-hover:opacity-100 backdrop-blur-sm transition-all hover:bg-brand-red hover:text-white"
                 >
