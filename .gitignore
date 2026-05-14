@@ -5,3 +5,6 @@ coverage/
 *.log
 .env*
 !.env.example
+package-lock.json
+next-env.d.ts
+.claude/
