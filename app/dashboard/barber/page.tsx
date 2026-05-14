@@ -15,6 +15,17 @@ import { BarberSettingsTab } from '@/components/BarberSettingsTab';
 import { BookingRowSkeleton, StatCardSkeleton } from '@/components/skeletons';
 import { barberUpdateSchema, bookingUpdateSchema, notificationSchema } from "@/lib/schemas";
 
+function generateDateRange(from: string, to: string): string[] {
+  const dates: string[] = [];
+  const current = new Date(from + 'T00:00:00');
+  const end = new Date(to + 'T00:00:00');
+  while (current <= end) {
+    dates.push(current.toISOString().split('T')[0]);
+    current.setDate(current.getDate() + 1);
+  }
+  return dates;
+}
+
 export default function BarberDashboard() {
   const { user, appUser, loading } = useAuth();
   const router = useRouter();
@@ -31,8 +42,13 @@ export default function BarberDashboard() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [blockModalOpen, setBlockModalOpen] = useState(false);
-  const [blockDate, setBlockDate] = useState('');
+  const [blockFrom, setBlockFrom] = useState('');
+  const [blockTo, setBlockTo] = useState('');
+  const [blockReason, setBlockReason] = useState<string | null>(null);
+  const [blockRecurring, setBlockRecurring] = useState(false);
+  const [recurringDays, setRecurringDays] = useState<string[]>([]);
   const [blockLoading, setBlockLoading] = useState(false);
+  const [rangeError, setRangeError] = useState('');
 
   const handleCopyCode = () => {
     if (profile?.barberCode) {
@@ -102,6 +118,7 @@ export default function BarberDashboard() {
 
   const mutateProfile = () => queryClient.invalidateQueries({ queryKey: ['profile', user?.uid] });
   const mutateServices = () => queryClient.invalidateQueries({ queryKey: ['services', user?.uid] });
+  const mutateSchedule = () => queryClient.invalidateQueries({ queryKey: ['schedule', user?.uid] });
 
   const updateBookingStatus = async (id: string, status: string) => {
     try { 
@@ -186,41 +203,87 @@ export default function BarberDashboard() {
     catch(e) { console.error(e); }
   }
 
+  const closeBlockModal = () => {
+    setBlockModalOpen(false);
+    setBlockFrom(''); setBlockTo('');
+    setBlockReason(null); setBlockRecurring(false);
+    setRecurringDays([]); setRangeError('');
+  };
+
   const handleBlockDay = async () => {
-    if (!blockDate || !user) return;
-    const currentBlocked: string[] = (schedule as any)?.blockedDates || [];
-    if (currentBlocked.includes(blockDate)) {
-      setToastMessage('You already blocked this day.');
+    if (!blockFrom || !user) return;
+
+    // Build date list (single or range)
+    let datesToBlock: string[] = [blockFrom];
+    if (blockTo && blockTo !== blockFrom) {
+      if (blockTo < blockFrom) { setRangeError('End date must be after start date.'); return; }
+      datesToBlock = generateDateRange(blockFrom, blockTo);
+      if (datesToBlock.length > 30) { setRangeError('Maximum block period is 30 days.'); return; }
+    }
+    setRangeError('');
+
+    // Duplicate check
+    const rawBlocked: any[] = (schedule as any)?.blockedDates || [];
+    const existingDates = rawBlocked.map((item: any) => typeof item === 'string' ? item : item.date);
+    const dupes = datesToBlock.filter(d => existingDates.includes(d));
+    if (dupes.length > 0) {
+      setToastMessage(`Already blocked: ${dupes.join(', ')}`);
       setTimeout(() => setToastMessage(''), 3000);
       return;
     }
+
+    // Booking conflict check — uses already-loaded bookings, no extra Firestore read
+    const conflicts = bookings.filter(b =>
+      datesToBlock.includes(b.date) && ['pending', 'confirmed'].includes(b.status)
+    );
+    if (conflicts.length > 0) {
+      const times = conflicts.map(b => `${b.date} ${b.startTime}`).join(', ');
+      setToastMessage(`Active bookings on ${times}. Cancel or complete them first.`);
+      setTimeout(() => setToastMessage(''), 5000);
+      return;
+    }
+
     setBlockLoading(true);
     try {
-      await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), {
-        blockedDates: arrayUnion(blockDate)
-      });
-      setToastMessage(`${blockDate} blocked. No bookings will be accepted that day.`);
+      const items = datesToBlock.map(d => ({ date: d, reason: blockReason || null }));
+      await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), { blockedDates: arrayUnion(...items) });
+      if (blockRecurring && recurringDays.length > 0) {
+        await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), { recurringBlocked: arrayUnion(...recurringDays) });
+      }
+      setToastMessage(datesToBlock.length === 1 ? `${blockFrom} blocked.` : `${datesToBlock.length} days blocked.`);
       setTimeout(() => setToastMessage(''), 4000);
-      setBlockModalOpen(false);
-      setBlockDate('');
+      closeBlockModal();
+      mutateSchedule();
     } catch (e) {
-      setToastMessage('Failed to block date.');
+      setToastMessage('Failed to block date(s).');
       setTimeout(() => setToastMessage(''), 3000);
     } finally {
       setBlockLoading(false);
     }
   };
 
-  const handleUnblockDay = async (date: string) => {
+  const handleUnblockDay = async (rawItem: any) => {
     if (!user) return;
     try {
-      await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), {
-        blockedDates: arrayRemove(date)
-      });
-      setToastMessage('Day unblocked successfully.');
+      await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), { blockedDates: arrayRemove(rawItem) });
+      setToastMessage('Day unblocked.');
       setTimeout(() => setToastMessage(''), 3000);
+      mutateSchedule();
     } catch (e) {
       setToastMessage('Failed to unblock date.');
+      setTimeout(() => setToastMessage(''), 3000);
+    }
+  };
+
+  const handleUnblockRecurring = async (day: string) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), { recurringBlocked: arrayRemove(day) });
+      setToastMessage(`${day} unblocked.`);
+      setTimeout(() => setToastMessage(''), 3000);
+      mutateSchedule();
+    } catch (e) {
+      setToastMessage('Failed to unblock.');
       setTimeout(() => setToastMessage(''), 3000);
     }
   };
@@ -468,6 +531,44 @@ export default function BarberDashboard() {
                   + Block time off
                 </button>
               </div>
+              {/* Upcoming blocked days preview */}
+              {(() => {
+                const today = new Date().toISOString().split('T')[0];
+                const rawBlocked: any[] = (schedule as any)?.blockedDates || [];
+                const upcoming = rawBlocked
+                  .filter((item: any) => (typeof item === 'string' ? item : item.date) >= today)
+                  .sort((a: any, b: any) => {
+                    const da = typeof a === 'string' ? a : a.date;
+                    const db2 = typeof b === 'string' ? b : b.date;
+                    return da.localeCompare(db2);
+                  });
+                if (upcoming.length === 0) return null;
+                const shown = upcoming.slice(0, 3);
+                const extra = upcoming.length - 3;
+                return (
+                  <div className="mt-3">
+                    <div className="text-[11px] font-extrabold text-[#555] uppercase tracking-wide mb-1.5">Upcoming days off</div>
+                    <div className="flex flex-col gap-1">
+                      {shown.map((item: any, i: number) => {
+                        const d = typeof item === 'string' ? item : item.date;
+                        const reason = typeof item === 'string' ? null : item.reason;
+                        const [y, m, day] = d.split('-');
+                        return (
+                          <div key={i} className="flex items-center justify-between text-[11px]">
+                            <span className="text-[#888]">📅 {day}/{m}/{y}{reason ? ` · ${reason}` : ''}</span>
+                            <button onClick={() => handleUnblockDay(item)} className="text-brand-orange hover:underline font-bold text-[11px] ml-3">Remove</button>
+                          </div>
+                        );
+                      })}
+                      {extra > 0 && (
+                        <button onClick={() => setBlockModalOpen(true)} className="text-[11px] text-[#555] hover:text-white transition-colors text-left mt-0.5">
+                          + {extra} more
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Stats */}
@@ -606,68 +707,113 @@ export default function BarberDashboard() {
         {/* Block time off modal */}
         {blockModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
-            <div className="bg-[#111] border border-[#2a2a2a] rounded-[16px] p-6 w-full max-w-sm animate-fadeUp">
+            <div className="bg-[#111] border border-[#2a2a2a] rounded-[16px] p-6 w-full max-w-md animate-fadeUp overflow-y-auto max-h-[90vh]">
 
-              {/* Title */}
-              <h3 className="text-lg font-black mb-1">Block a day off</h3>
-              <p className="text-xs text-[#888] font-bold mb-5">Clients won&apos;t be able to book you on this day.</p>
+              {/* 1. Title */}
+              <h3 className="text-lg font-black mb-1">Block time off</h3>
+              <p className="text-xs text-[#888] font-bold mb-5">Clients cannot book you on blocked days.</p>
 
-              {/* Date input */}
-              <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-2">Select date</label>
-              <input
-                type="date"
-                min={new Date().toISOString().split('T')[0]}
-                value={blockDate}
-                onChange={e => setBlockDate(e.target.value)}
-                className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-yellow transition-colors mb-4"
-              />
+              {/* 2. Date range inputs */}
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <div>
+                  <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-1.5">From</label>
+                  <input type="date" min={new Date().toISOString().split('T')[0]} value={blockFrom}
+                    onChange={e => { setBlockFrom(e.target.value); setRangeError(''); }}
+                    className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-brand-yellow transition-colors" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-1.5">To (optional)</label>
+                  <input type="date" min={blockFrom || new Date().toISOString().split('T')[0]} value={blockTo}
+                    onChange={e => { setBlockTo(e.target.value); setRangeError(''); }}
+                    className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-brand-yellow transition-colors" />
+                </div>
+              </div>
+              {rangeError && <div className="text-[11px] text-brand-red font-bold mb-3">{rangeError}</div>}
 
-              {/* Block button */}
-              <button
-                onClick={handleBlockDay}
-                disabled={!blockDate || blockLoading}
-                className="w-full bg-brand-yellow text-[#0a0a0a] font-black py-3 rounded-full text-sm hover:opacity-90 transition-opacity disabled:opacity-40 mb-5"
-              >
-                {blockLoading ? '...' : 'Block this day'}
-              </button>
+              {/* 3. Reason chips */}
+              <div className="mb-4 mt-3">
+                <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-2">Reason (optional)</label>
+                <div className="flex flex-wrap gap-2">
+                  {['🏖️ Vacation', '🤒 Sick day', '👤 Personal', '🎉 Holiday', '📋 Other'].map(r => (
+                    <button key={r} onClick={() => setBlockReason(prev => prev === r ? null : r)}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-colors ${blockReason === r ? 'bg-[#1a1500] border-brand-yellow text-brand-yellow' : 'border-[#2a2a2a] text-[#888] hover:border-[#444] hover:text-white'}`}>
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              {/* Divider */}
+              {/* 4. Recurring toggle */}
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-extrabold text-brand-text-secondary uppercase tracking-wider">🔄 Recurring block</span>
+                  <label className="relative w-10 h-5 cursor-pointer shrink-0">
+                    <input type="checkbox" checked={blockRecurring} onChange={e => setBlockRecurring(e.target.checked)} className="peer sr-only" />
+                    <span className="absolute inset-0 bg-[#2a2a2a] rounded-full transition-colors peer-checked:bg-brand-yellow" />
+                    <span className="absolute w-4 h-4 left-0.5 top-0.5 bg-white rounded-full transition-transform peer-checked:translate-x-5 peer-checked:bg-[#0a0a0a]" />
+                  </label>
+                </div>
+                {blockRecurring && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                      <button key={day} onClick={() => setRecurringDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])}
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-colors ${recurringDays.includes(day) ? 'bg-[#1a1500] border-brand-yellow text-brand-yellow' : 'border-[#2a2a2a] text-[#888] hover:border-[#444] hover:text-white'}`}>
+                        {day}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 5. Block button */}
+              {(() => {
+                const count = !blockFrom ? 0 : (!blockTo || blockTo === blockFrom) ? 1 : generateDateRange(blockFrom, blockTo).length;
+                const label = blockLoading ? '...' : count > 1 ? `Block ${count} days` : 'Block this day';
+                return (
+                  <button onClick={handleBlockDay} disabled={!blockFrom || blockLoading}
+                    className="w-full bg-brand-yellow text-[#0a0a0a] font-black py-3 rounded-full text-sm hover:opacity-90 transition-opacity disabled:opacity-40 mb-5">
+                    {label}
+                  </button>
+                );
+              })()}
+
+              {/* 6. Divider */}
               <div className="h-px bg-[#1e1e1e] mb-4" />
 
-              {/* Currently blocked dates */}
+              {/* 7+8. Blocked dates + recurring chips */}
               {(() => {
-                const blocked: string[] = (schedule as any)?.blockedDates || [];
-                if (blocked.length === 0) return null;
+                const rawBlocked: any[] = (schedule as any)?.blockedDates || [];
+                const rawRecurring: string[] = (schedule as any)?.recurringBlocked || [];
+                if (rawBlocked.length === 0 && rawRecurring.length === 0) return null;
                 return (
                   <div className="mb-5">
                     <div className="text-[11px] font-bold text-[#555] mb-2">Currently blocked days:</div>
                     <div className="flex flex-wrap gap-2">
-                      {blocked.map((d: string) => {
+                      {rawBlocked.map((item: any, i: number) => {
+                        const d = typeof item === 'string' ? item : item.date;
+                        const reason = typeof item === 'string' ? null : item.reason;
                         const [y, m, day] = d.split('-');
                         return (
-                          <span key={d} className="inline-flex items-center gap-1.5 bg-[#1a0808] border border-[#EF444433] rounded-full px-[10px] py-1 text-[11px] text-[#EF4444]">
-                            {day}/{m}/{y}
-                            <button
-                              onClick={() => handleUnblockDay(d)}
-                              className="text-[#EF4444] hover:text-white transition-colors leading-none"
-                              title="Unblock this day"
-                            >
-                              ✕
-                            </button>
+                          <span key={i} className="inline-flex items-center gap-1.5 bg-[#1a0808] border border-[#EF444433] rounded-full px-[10px] py-1 text-[11px] text-[#EF4444]">
+                            {day}/{m}/{y}{reason ? ` ${reason}` : ''}
+                            <button onClick={() => handleUnblockDay(item)} className="text-[#EF4444] hover:text-white transition-colors leading-none">✕</button>
                           </span>
                         );
                       })}
+                      {rawRecurring.map((day: string) => (
+                        <span key={day} className="inline-flex items-center gap-1.5 bg-[#1a0808] border border-[#EF444433] rounded-full px-[10px] py-1 text-[11px] text-[#EF4444]">
+                          🔄 Every {day}
+                          <button onClick={() => handleUnblockRecurring(day)} className="text-[#EF4444] hover:text-white transition-colors leading-none">✕</button>
+                        </span>
+                      ))}
                     </div>
                   </div>
                 );
               })()}
 
-              {/* Cancel */}
-              <button
-                onClick={() => { setBlockModalOpen(false); setBlockDate(''); }}
-                disabled={blockLoading}
-                className="w-full border border-[#2a2a2a] text-[#888] font-bold py-3 rounded-full text-sm hover:border-[#444] hover:text-white transition-colors"
-              >
+              {/* 9. Cancel */}
+              <button onClick={closeBlockModal} disabled={blockLoading}
+                className="w-full border border-[#2a2a2a] text-[#888] font-bold py-3 rounded-full text-sm hover:border-[#444] hover:text-white transition-colors">
                 Cancel
               </button>
             </div>

@@ -35,6 +35,8 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
   const [dragAction, setDragAction] = useState<'add' | 'remove' | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [recurringBlocked, setRecurringBlocked] = useState<string[]>([]);
   
   const { user } = useAuth();
   const uid = mode === 'barber' && user ? user.uid : barberId;
@@ -48,10 +50,17 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
     
     // Subscribe to Schedule
     const unsubSchedule = onSnapshot(doc(db, 'schedules', `${uid}_shard_0`), (docSnap) => {
-      if (docSnap.exists() && docSnap.data().availableSlots) {
-        setAvailableSlots(docSnap.data().availableSlots);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setAvailableSlots(data.availableSlots || {});
+        // Parse blocked dates — handles both string[] (old) and {date,reason}[] (new)
+        const rawBlocked: any[] = data.blockedDates || [];
+        setBlockedDates(rawBlocked.map(item => typeof item === 'string' ? item : item.date));
+        setRecurringBlocked(data.recurringBlocked || []);
       } else {
         setAvailableSlots({});
+        setBlockedDates([]);
+        setRecurringBlocked([]);
       }
       if (mode === 'barber') setLoading(false);
     }, (err) => {
@@ -244,12 +253,23 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
          {/* Header Row */}
          <div className="grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] border-b-[1.5px] border-[#2a2a2a] bg-[#0a0a0a]">
             <div className="p-3 border-r-[1.5px] border-[#2a2a2a]" /> {/* Empty Corner */}
-            {weekDays.map((d, i) => (
-              <div key={i} className="p-2 sm:p-3 text-center border-r-[1.5px] border-[#2a2a2a] last:border-r-0">
-                 <div className="text-[11px] font-extrabold text-brand-text-secondary uppercase">{format(d, 'EEE')}</div>
-                 <div className="text-sm sm:text-base font-black mt-0.5">{format(d, 'M/d')}</div>
-              </div>
-            ))}
+            {weekDays.map((d, i) => {
+              const dStr = format(d, 'yyyy-MM-dd');
+              const dayName = format(d, 'EEE');
+              const isDayBlocked = mode === 'barber' && (
+                blockedDates.includes(dStr) || recurringBlocked.includes(dayName)
+              );
+              return (
+                <div key={i} className={`p-2 sm:p-3 text-center border-r-[1.5px] border-[#2a2a2a] last:border-r-0 ${isDayBlocked ? 'bg-[#1a0808]/40' : ''}`}>
+                  <div className={`text-[11px] font-extrabold uppercase ${isDayBlocked ? 'text-[#EF4444]/80' : 'text-brand-text-secondary'}`}>
+                    {isDayBlocked ? '🚫' : dayName}
+                  </div>
+                  <div className={`text-sm sm:text-base font-black mt-0.5 ${isDayBlocked ? 'text-[#EF4444]/60' : ''}`}>
+                    {format(d, 'M/d')}
+                  </div>
+                </div>
+              );
+            })}
          </div>
 
          {/* Grid Body */}
@@ -271,7 +291,17 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
                      let content = null;
 
                      if (mode === 'barber') {
-                        if (isPastCell) {
+                        const isDayBlocked = blockedDates.includes(dateStr) || recurringBlocked.includes(format(date, 'EEE'));
+                        if (isDayBlocked) {
+                           cellClasses += "bg-[#1a0808] cursor-not-allowed opacity-60";
+                           return (
+                             <div
+                               key={dayIdx}
+                               className={cellClasses}
+                               onMouseDown={() => toast.error("This day is blocked. Remove the day off first to set availability.")}
+                             />
+                           );
+                        } else if (isPastCell) {
                            cellClasses += "bg-[#0d0d0d] opacity-50 cursor-not-allowed";
                         } else {
                            const isAvailable = availableSlots[dateStr]?.includes(hourStr);
@@ -281,10 +311,10 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
                               cellClasses += "hover:bg-[#1a1a1a]";
                            }
                         }
-                        
+
                         return (
-                           <div 
-                             key={dayIdx} 
+                           <div
+                             key={dayIdx}
                              className={cellClasses}
                              onMouseDown={() => !isPastCell && onMouseDown(dateStr, hourStr)}
                              onMouseEnter={() => !isPastCell && onMouseEnter(dateStr, hourStr)}
