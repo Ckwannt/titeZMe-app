@@ -173,8 +173,9 @@ export default function BarberOnboarding() {
                   totalCuts: 0,
                   reviewCount: 0,
                   photos: [],
-                  isLive: true,
-                  isOnboarded: true
+                  isLive: false,
+                  isOnboarded: true,
+                  approvalStatus: 'pending'
                 }));
       } catch (e: any) { throw new Error("Step 1: Profile creation failed - " + e.message); }
 

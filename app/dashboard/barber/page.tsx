@@ -367,6 +367,68 @@ export default function BarberDashboardPage() {
     .filter(b => b.date === todayStr && !['cancelled_by_client', 'cancelled_by_barber'].includes(b.status))
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
+  // ── Approval gate ────────────────────────────────────────────────────────────
+  const approvalStatus = (profile as any)?.approvalStatus;
+
+  if (approvalStatus === 'pending') {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-120px)] p-6">
+        <div className="max-w-[500px] w-full bg-[#111] border border-[#F5C51833] rounded-[16px] p-8 text-center">
+          <div className="text-[40px] mb-4">⏳</div>
+          <h2 className="text-[18px] font-black mb-3">Your profile is under review</h2>
+          <p className="text-[13px] text-[#666] leading-[1.7] mb-6">
+            We&apos;re reviewing your profile. This usually takes less than 24 hours. You&apos;ll get a notification when it&apos;s approved.
+          </p>
+          <div className="h-px bg-[#1e1e1e] mb-5" />
+          <p className="text-[11px] text-[#555] font-extrabold uppercase tracking-wider mb-4">While you wait, complete your profile:</p>
+          <div className="flex flex-col gap-2 items-center">
+            {[
+              { label: '→ Add your services', href: '/dashboard/barber/services' },
+              { label: '→ Set your availability', href: '/dashboard/barber/availability' },
+              { label: '→ Write your bio', href: '/dashboard/barber/settings' },
+              { label: '→ Add your social links', href: '/dashboard/barber/settings' },
+            ].map(l => (
+              <Link key={l.href} href={l.href} className="text-[13px] font-bold text-brand-yellow hover:underline">{l.label}</Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (approvalStatus === 'rejected') {
+    const rejectionReason = (profile as any)?.rejectionReason;
+    const handleResubmit = async () => {
+      if (!user) return;
+      try {
+        await updateDoc(doc(db, 'barberProfiles', user.uid), {
+          approvalStatus: 'pending',
+          rejectionReason: null,
+        });
+        queryClient.invalidateQueries({ queryKey: ['profile', user.uid] });
+        setToastMessage('Profile resubmitted for review. We\'ll notify you soon.');
+        setTimeout(() => setToastMessage(''), 4000);
+      } catch (e) { console.error(e); }
+    };
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-120px)] p-6">
+        <div className="max-w-[500px] w-full bg-[#111] border border-[#EF444433] rounded-[16px] p-8 text-center">
+          <div className="text-[40px] mb-4">❌</div>
+          <h2 className="text-[18px] font-black text-brand-red mb-3">Profile not approved</h2>
+          {rejectionReason && (
+            <p className="text-[13px] text-[#888] bg-[#1a0808] border border-[#3b1a1a] rounded-xl px-4 py-3 mb-5 text-left">
+              <span className="font-extrabold text-[#aaa]">Reason: </span>{rejectionReason}
+            </p>
+          )}
+          <p className="text-[13px] text-[#666] mb-6">Update your profile based on the feedback above, then resubmit for review.</p>
+          <button onClick={handleResubmit} className="bg-brand-yellow text-black font-black px-6 py-3 rounded-full text-sm hover:opacity-90 transition-opacity">
+            Fix and resubmit ✓
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fadeUp p-6 md:p-8 md:px-10 pb-20 md:pb-8">
       {/* Availability warning */}

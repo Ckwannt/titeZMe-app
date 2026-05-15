@@ -37,8 +37,11 @@ async function fetchFeaturedBarbers() {
       return { ...p, isOpenNow: status.isOpen, nextSlots };
     });
 
-    const groupA = withStatus.filter((b: any) => b.isOpenNow);
-    const groupB = withStatus.filter((b: any) => !b.isOpenNow);
+    // Featured barbers always show first; then open, then closed
+    const featuredOpen = withStatus.filter((b: any) => b.isFeatured && b.isOpenNow);
+    const featuredClosed = withStatus.filter((b: any) => b.isFeatured && !b.isOpenNow);
+    const groupA = withStatus.filter((b: any) => !b.isFeatured && b.isOpenNow);
+    const groupB = withStatus.filter((b: any) => !b.isFeatured && !b.isOpenNow);
     for (let i = groupA.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [groupA[i], groupA[j]] = [groupA[j], groupA[i]];
@@ -47,7 +50,8 @@ async function fetchFeaturedBarbers() {
       const j = Math.floor(Math.random() * (i + 1));
       [groupB[i], groupB[j]] = [groupB[j], groupB[i]];
     }
-    const selected = [...groupA.slice(0, 3), ...groupB.slice(0, Math.max(0, 3 - groupA.length))];
+    const prioritized = [...featuredOpen, ...featuredClosed, ...groupA, ...groupB];
+    const selected = prioritized.slice(0, 3);
 
     const selectedIds = selected.map((p: any) => p.id);
     const [userSnaps, servicesSnap] = await Promise.all([
