@@ -4,8 +4,13 @@ import { useState, useEffect, use } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { collection, query, where, getDocs, doc, getDoc, runTransaction, setDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { AvailabilityGrid } from '@/components/AvailabilityGrid';
+import dynamic from 'next/dynamic';
 import { BarberProfileSkeleton } from '@/components/skeletons';
+
+const AvailabilityGrid = dynamic(
+  () => import('@/components/AvailabilityGrid').then(m => ({ default: m.AvailabilityGrid })),
+  { ssr: false, loading: () => <div className="h-64 bg-[#111] rounded-2xl animate-pulse" /> }
+);
 import { toast } from '@/lib/toast';
 import { useQuery } from '@tanstack/react-query';
 
