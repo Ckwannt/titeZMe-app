@@ -16,7 +16,7 @@
     "@radix-ui/react-slot": "1.1.0",
     "@sentry/nextjs": "^10.53.1",
     "@tanstack/query-sync-storage-persister": "^5.100.10",
-    "@tanstack/react-query": "5.62.2",
+    "@tanstack/react-query": "^5.100.10",
     "@tanstack/react-query-persist-client": "^5.100.10",
     "@vercel/speed-insights": "1.1.0",
     "autoprefixer": "10.4.20",
