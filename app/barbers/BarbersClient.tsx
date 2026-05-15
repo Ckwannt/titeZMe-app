@@ -4,9 +4,87 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useQuery } from '@tanstack/react-query';
 import { Country, City } from 'country-state-city';
+import { getOpenStatus } from '@/lib/schedule-utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { BarberCard } from './page';
+
+// ─── client-side data fetcher ─────────────────────────────────────────────────
+
+async function fetchBarbers(): Promise<BarberCard[]> {
+  const snap = await getDocs(query(
+    collection(db, 'barberProfiles'),
+    where('isLive', '==', true),
+    where('isSolo', '==', true),
+  ));
+  const profiles = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+  if (profiles.length === 0) return [];
+
+  const ids: string[] = profiles.filter((p: any) => !p.isDeleted).map((p: any) => p.id);
+  const filteredProfiles = profiles.filter((p: any) => !p.isDeleted);
+  if (ids.length === 0) return [];
+
+  const [userSnaps, scheduleSnaps] = await Promise.all([
+    Promise.all(ids.map(id => getDoc(doc(db, 'users', id)))),
+    Promise.all(ids.map(id => getDoc(doc(db, 'schedules', `${id}_shard_0`)))),
+  ]);
+
+  const serviceChunkPromises: Promise<any>[] = [];
+  for (let i = 0; i < ids.length; i += 10) {
+    const chunk = ids.slice(i, i + 10);
+    serviceChunkPromises.push(getDocs(query(
+      collection(db, 'services'),
+      where('providerId', 'in', chunk),
+      where('providerType', '==', 'barber'),
+      where('isActive', '==', true),
+    )));
+  }
+  const serviceChunkResults = await Promise.all(serviceChunkPromises);
+  const servicesPriceMap = new Map<string, number[]>();
+  serviceChunkResults.forEach(snap => {
+    snap.docs.forEach((d: any) => {
+      const data = d.data();
+      const price = Number(data.price) || 0;
+      if (price > 0) {
+        const arr = servicesPriceMap.get(data.providerId) || [];
+        arr.push(price);
+        servicesPriceMap.set(data.providerId, arr);
+      }
+    });
+  });
+
+  return filteredProfiles.map((p: any, i: number) => {
+    const user = userSnaps[i].exists() ? (userSnaps[i].data() as any) : {};
+    const sched = scheduleSnaps[i].exists() ? (scheduleSnaps[i].data() as any) : null;
+    const prices = servicesPriceMap.get(p.id) || [];
+    const city = p.city || user.city || '';
+    const country = user.country || '';
+    const status = getOpenStatus(sched?.availableSlots, city, country, p.id);
+
+    return {
+      id: p.id,
+      profilePhotoUrl: p.profilePhotoUrl,
+      photoUrl: user.photoUrl,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      country,
+      city,
+      street: '',
+      languages: p.languages || [],
+      vibes: p.vibes || p.vibe || [],
+      currency: p.currency,
+      barberCode: p.barberCode || '',
+      isOpenNow: status.isOpen,
+      openLabel: status.label,
+      openColor: status.color,
+      hasSchedule: sched !== null,
+      minPrice: prices.length > 0 ? Math.min(...prices) : null,
+    };
+  });
+}
 
 const PER_PAGE = 12;
 
@@ -67,15 +145,25 @@ function Pagination({ page, total, onChange }: {
 }
 
 interface BarbersClientProps {
-  initialBarbers: BarberCard[];
+  initialBarbers?: BarberCard[];
 }
 
-export default function BarbersClient({ initialBarbers }: BarbersClientProps) {
+export default function BarbersClient({ initialBarbers }: BarbersClientProps = {}) {
   const router = useRouter();
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [activeFilter, setActiveFilter] = useState<{ city: string; country: string } | null>(null);
+
+  // Use server-provided initialBarbers if available, otherwise fetch client-side.
+  const { data: allBarbers = [], isLoading } = useQuery({
+    queryKey: ['barbersListV2'],
+    queryFn: fetchBarbers,
+    // If server already supplied barbers, use them as initial data (no fetch on load).
+    // If server returned empty (e.g. Admin SDK not configured), fetch client-side.
+    initialData: initialBarbers && initialBarbers.length > 0 ? initialBarbers : undefined,
+    staleTime: 5 * 60 * 1000,
+  });
   const [nameSearch, setNameSearch] = useState('');
   const debouncedNameSearch = useDebounce(nameSearch, 300);
   const [page, setPage] = useState(1);
@@ -85,7 +173,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps) {
   const cities = countryCode ? (City.getCitiesOfCountry(countryCode) ?? []) : [];
 
   const filtered = useMemo(() => {
-    let list = [...initialBarbers];
+    let list = [...allBarbers];
 
     if (activeFilter) {
       list = list.filter(b =>
@@ -106,7 +194,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps) {
       ...fisherYates(list.filter(b => b.isOpenNow)),
       ...fisherYates(list.filter(b => !b.isOpenNow)),
     ];
-  }, [initialBarbers, activeFilter, debouncedNameSearch]);
+  }, [allBarbers, activeFilter, debouncedNameSearch]);
 
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
@@ -196,7 +284,13 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps) {
 
       <div className="max-w-[1400px] mx-auto px-6 pb-16">
         <div className="h-px bg-[#1e1e1e] mb-5" />
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full items-stretch">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-[#141414] border border-[#222] rounded-[12px] h-[160px] animate-pulse" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-24">
             <div className="text-5xl mb-4">💈</div>
             <h3 className="text-xl font-black mb-2">
@@ -260,7 +354,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps) {
 
                     {b.languages.length > 0 && (
                       <div className="flex items-center gap-1.5 flex-wrap mb-[10px]">
-                        {displayLangs.map((lang, i) => (
+                        {displayLangs.map((lang: string, i: number) => (
                           <span key={lang} className="flex items-center gap-1 text-[11px] text-[#888]">
                             {i > 0 && <span className="text-[#444]">·</span>}
                             <span className="w-1.5 h-1.5 rounded-full bg-[#60a5fa] inline-block shrink-0" />
