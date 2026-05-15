@@ -36,6 +36,14 @@ export default function LoginPage() {
       
       if (docSnap.exists()) {
         const udata = docSnap.data();
+        // Admin accounts must use /admin/login — block them here
+        if (udata.role === 'admin' || udata.isAdmin === true) {
+          const { signOut } = await import('firebase/auth');
+          await signOut(auth);
+          setErrorStatus('This is an admin account. Please use /admin/login instead.');
+          setIsSubmitting(false);
+          return;
+        }
         if (udata.role === 'client') {
           if (udata.isOnboarded) router.push('/dashboard/client');
           else router.push('/onboarding/client');
@@ -46,7 +54,7 @@ export default function LoginPage() {
           } else {
             router.push('/onboarding/barber');
           }
-        } 
+        }
         else router.push('/');
       } else {
         router.push('/');
