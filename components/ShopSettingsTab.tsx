@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import { barbershopUpdateSchema } from "@/lib/schemas";
+import { sanitizeText, sanitizeHandle, sanitizeUrl } from '@/lib/sanitize';
 
 interface ShopSettingsTabProps {
   shop: any;
@@ -220,7 +221,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
                 postalCode: formData.postalCode,
                 floorSuite: formData.floorSuite
               },
-              description: formData.description,
+              description: sanitizeText(formData.description, 300),
             }));
       mutateShop();
       setSuccessMsg('Shop info saved!');
@@ -238,9 +239,9 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     setSuccessMsg('');
     try {
       await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({
-              instagram: socialData.instagram,
-              facebook: socialData.facebook,
-              tiktok: socialData.tiktok
+              instagram: sanitizeHandle(socialData.instagram),
+              facebook: sanitizeHandle(socialData.facebook),
+              tiktok: sanitizeHandle(socialData.tiktok),
             }));
       mutateShop();
       setSuccessMsg('Social links saved!');
@@ -256,7 +257,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     setSavingMaps(true);
     setErrorMsg(''); setSuccessMsg('');
     try {
-      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ googleMapsUrl }));
+      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ googleMapsUrl: sanitizeUrl(googleMapsUrl) }));
       mutateShop();
       setSuccessMsg('Maps link saved!');
     } catch (e) {

@@ -52,6 +52,7 @@ async function fetchFeaturedBarbers() {
       collection(db, 'barberProfiles'),
       where('isLive', '==', true),
       where('isSolo', '==', true),
+      where('isDeleted', '!=', true),
     ));
     const profiles = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
     if (profiles.length === 0) return [];

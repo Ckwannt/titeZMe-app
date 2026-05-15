@@ -1,4 +1,5 @@
 import type {NextConfig} from 'next';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -48,4 +49,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: 'titezme',
+  project: 'titezme-nextjs',
+  silent: true,
+  disableLogger: true,
+  automaticVercelMonitors: false,
+});

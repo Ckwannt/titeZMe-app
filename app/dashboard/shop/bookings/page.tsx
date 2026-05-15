@@ -62,6 +62,8 @@ export default function ShopBookingsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [shopCurrency, setShopCurrency] = useState('EUR');
+  const [currentPage, setCurrentPage] = useState(1);
+  const BOOKINGS_PER_PAGE = 20;
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login');
@@ -171,6 +173,12 @@ export default function ShopBookingsPage() {
   const monthCancelled = monthBookings.filter(b => b.status?.startsWith('cancelled'));
   const currSym = getCurrencySymbol(shopCurrency);
 
+  const paginatedFiltered = filtered.slice(
+    (currentPage - 1) * BOOKINGS_PER_PAGE,
+    currentPage * BOOKINGS_PER_PAGE
+  );
+  const totalPages = Math.ceil(filtered.length / BOOKINGS_PER_PAGE);
+
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     const loadingToast = toast.loading('Updating...');
     try {
@@ -259,7 +267,7 @@ export default function ShopBookingsPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {filtered.map(b => (
+          {paginatedFiltered.map(b => (
             <div key={b.id} className="bg-brand-surface border border-brand-border rounded-2xl p-4 hover:border-[#444] transition-colors">
               <div className="flex flex-wrap items-center gap-3 justify-between">
                 <div className="flex items-center gap-3 min-w-0">
@@ -302,6 +310,34 @@ export default function ShopBookingsPage() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-5">
+          <div className="text-[11px] text-[#555] text-center mb-3">
+            Showing {(currentPage - 1) * BOOKINGS_PER_PAGE + 1}–{Math.min(currentPage * BOOKINGS_PER_PAGE, filtered.length)} of {filtered.length} bookings
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+              className="px-3 py-1.5 text-[12px] font-bold text-[#888] hover:text-white disabled:opacity-40">
+              ← Previous
+            </button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              const pageNum = Math.max(1, Math.min(currentPage - 2, totalPages - 4)) + i;
+              return (
+                <button key={pageNum} onClick={() => setCurrentPage(pageNum)}
+                  className={`w-8 h-8 rounded-lg text-[12px] font-bold transition-colors ${currentPage === pageNum ? 'bg-brand-yellow text-black' : 'text-[#888] hover:text-white hover:bg-[#1a1a1a]'}`}>
+                  {pageNum}
+                </button>
+              );
+            })}
+            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-[12px] font-bold text-[#888] hover:text-white disabled:opacity-40">
+              Next →
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -13,6 +13,7 @@ import ISO6391 from "iso-639-1";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import { userUpdateSchema, barberUpdateSchema } from "@/lib/schemas";
+import { sanitizeText, sanitizeHandle } from '@/lib/sanitize';
 
 interface BarberSettingsTabProps {
   profile: any;
@@ -258,7 +259,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
               phone: phoneStr,
               city: cityStr,
               country: countryStr,
-              bio: formData.bio,
+              bio: sanitizeText(formData.bio, 500),
               languages: langArr,
             }));
       mutateProfile();
@@ -277,9 +278,9 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     setSuccessMsg('');
     try {
       await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({
-              instagram: socialData.instagram,
-              facebook: socialData.facebook,
-              tiktok: socialData.tiktok
+              instagram: sanitizeHandle(socialData.instagram),
+              facebook: sanitizeHandle(socialData.facebook),
+              tiktok: sanitizeHandle(socialData.tiktok),
             }));
       mutateProfile();
       setSuccessMsg('Social links saved!');

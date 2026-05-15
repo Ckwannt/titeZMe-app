@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { auth } from '@/lib/firebase';
 
@@ -27,6 +27,13 @@ export function DeleteAccountButton({ role = 'client' }: DeleteAccountButtonProp
       const uid = user.uid;
 
       if (role === 'client') {
+        // Soft delete — mark user as deleted with 30-day recovery window
+        await updateDoc(doc(db, 'users', uid), {
+          isDeleted: true,
+          deletedAt: Date.now(),
+          scheduledPermanentDeleteAt: Date.now() + (30 * 24 * 60 * 60 * 1000),
+        });
+
         const batch = writeBatch(db);
 
         // 1. All bookings where clientId == uid -> update to 'cancelled_by_client'
@@ -56,7 +63,19 @@ export function DeleteAccountButton({ role = 'client' }: DeleteAccountButtonProp
         await batch.commit();
       } 
       else if (role === 'barber') {
-        // Barbers might have too many operations for a single 500-limit batch, but we'll try writeBatch first.
+        // Soft delete — mark barberProfile as deleted with 30-day recovery window
+        await updateDoc(doc(db, 'barberProfiles', uid), {
+          isDeleted: true,
+          deletedAt: Date.now(),
+          isLive: false,
+          isSolo: false,
+          scheduledPermanentDeleteAt: Date.now() + (30 * 24 * 60 * 60 * 1000),
+        });
+        await updateDoc(doc(db, 'users', uid), {
+          isDeleted: true,
+          deletedAt: Date.now(),
+        });
+
         const batch = writeBatch(db);
 
         // 1. All bookings where barberId == uid AND status in ['pending','confirmed'] -> 'cancelled_by_barber'
@@ -196,7 +215,7 @@ export function DeleteAccountButton({ role = 'client' }: DeleteAccountButtonProp
           <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 max-w-sm w-full relative overflow-hidden shadow-2xl">
             <h2 className="text-xl font-black text-white mb-2">Delete your account?</h2>
             <p className="text-[#888] text-sm mb-6 leading-relaxed">
-              This will permanently delete your profile, all your data, bookings, reviews and cannot be undone.
+              Your account will be deactivated immediately. You have 30 days to recover it before all data is permanently deleted. Active bookings will be cancelled.
             </p>
 
             {errorMsg && (

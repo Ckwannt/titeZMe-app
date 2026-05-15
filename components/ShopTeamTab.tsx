@@ -16,6 +16,8 @@ export function ShopTeamTab() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [foundBarber, setFoundBarber] = useState<any>(null);
+  const [searchAttempts, setSearchAttempts] = useState(0);
+  const [searchBlockedUntil, setSearchBlockedUntil] = useState<number | null>(null);
   const [pendingInvites, setPendingInvites] = useState<any[]>([]);
   const [activeBarbers, setActiveBarbers] = useState<any[]>([]);
   const [barberUsers, setBarberUsers] = useState<Record<string, any>>({});
@@ -84,11 +86,37 @@ export function ShopTeamTab() {
   // ── Search barber by code ──────────────────────────────────────────────────
   const handleSearch = async () => {
     if (!inviteCode) return;
+
+    // Rate limit check
+    if (searchBlockedUntil && Date.now() < searchBlockedUntil) {
+      const secondsLeft = Math.ceil((searchBlockedUntil - Date.now()) / 1000);
+      toast.error(`Too many searches. Wait ${secondsLeft} seconds.`);
+      return;
+    }
+
+    // Input format validation
+    const codePattern = /^TZB-[A-Z0-9]{6}$/;
+    const normalised = inviteCode.trim().toUpperCase();
+    if (!codePattern.test(normalised)) {
+      setErrorMsg('Barber codes start with TZB- followed by 6 characters (e.g. TZB-ABC123)');
+      return;
+    }
+
+    // Increment attempt counter
+    const newAttempts = searchAttempts + 1;
+    setSearchAttempts(newAttempts);
+    if (newAttempts >= 10) {
+      setSearchBlockedUntil(Date.now() + (5 * 60 * 1000));
+      setSearchAttempts(0);
+      toast.error('Too many search attempts. Blocked for 5 minutes.');
+      return;
+    }
+
     setLoading(true);
     setErrorMsg('');
     setFoundBarber(null);
 
-    const q = query(collection(db, 'barberProfiles'), where('barberCode', '==', inviteCode.trim().toUpperCase()));
+    const q = query(collection(db, 'barberProfiles'), where('barberCode', '==', normalised));
     const snap = await getDocs(q);
 
     if (snap.empty) {

@@ -250,7 +250,7 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     return {
       dateStr,
       label: d.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -685,12 +685,26 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   <div className="text-xl font-black text-white">
                     {profile.avgResponseMinutes
-                      ? profile.avgResponseMinutes >= 60
+                      ? profile.avgResponseMinutes >= 1440
+                        ? `~${Math.round(profile.avgResponseMinutes / 1440)}d`
+                        : profile.avgResponseMinutes >= 120
                         ? `~${Math.round(profile.avgResponseMinutes / 60)}h`
+                        : profile.avgResponseMinutes >= 60
+                        ? `~1h`
                         : `~${profile.avgResponseMinutes}min`
                       : 'New'}
                   </div>
-                  <div className="text-[10px] text-[#555] font-bold mt-0.5">Avg response</div>
+                  <div className="text-[10px] text-[#555] font-bold mt-0.5">
+                    {profile.avgResponseMinutes
+                      ? `⚡ Usually responds in ${
+                          profile.avgResponseMinutes >= 1440
+                            ? `~${Math.round(profile.avgResponseMinutes / 1440)} days`
+                            : profile.avgResponseMinutes >= 60
+                            ? `~${Math.round(profile.avgResponseMinutes / 60)}h`
+                            : `~${profile.avgResponseMinutes}min`
+                        }`
+                      : 'Avg response'}
+                  </div>
                 </div>
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   <div className="text-sm font-black text-white leading-tight">

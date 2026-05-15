@@ -94,9 +94,47 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
 
   const handleConfirm = async () => {
     if (!user || !selectedDate || !selectedTime || selectedServices.length === 0) return;
+    if (isSubmitting) return;
     setIsSubmitting(true);
-    
+
     try {
+      // ── Rate limiting: max 5 bookings per hour ──────────────────────────────
+      const oneHourAgo = Date.now() - (60 * 60 * 1000);
+      const recentBookingsQuery = query(
+        collection(db, 'bookings'),
+        where('clientId', '==', user.uid),
+        where('createdAt', '>', oneHourAgo)
+      );
+      const recentBookings = await getDocs(recentBookingsQuery);
+      if (recentBookings.size >= 5) {
+        toast.error('Too many booking attempts. Please wait before trying again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // ── Offline check ────────────────────────────────────────────────────────
+      if (!navigator.onLine) {
+        toast.error('No internet connection. Please reconnect before booking.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // ── Duplicate booking check ──────────────────────────────────────────────
+      const existingQuery = query(
+        collection(db, 'bookings'),
+        where('clientId', '==', user.uid),
+        where('barberId', '==', barberId),
+        where('date', '==', selectedDate),
+        where('startTime', '==', selectedTime),
+        where('status', 'in', ['pending', 'confirmed'])
+      );
+      const existing = await getDocs(existingQuery);
+      if (!existing.empty) {
+        toast.error('You already have a booking at this time with this barber.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const lockDocRef = doc(db, 'bookingLocks', `${barberId}_${selectedDate}`);
       const newBookingId = doc(collection(db, 'bookings')).id; 
 

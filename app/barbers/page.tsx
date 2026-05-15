@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -8,6 +9,7 @@ import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { Country, City } from 'country-state-city';
 import { getOpenStatus } from '@/lib/schedule-utils';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const PER_PAGE = 12;
 
@@ -71,6 +73,7 @@ async function fetchBarbers(): Promise<BarberCard[]> {
     collection(db, 'barberProfiles'),
     where('isLive', '==', true),
     where('isSolo', '==', true),
+    where('isDeleted', '!=', true),
   ));
   const profiles = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
   if (profiles.length === 0) return [];
@@ -191,11 +194,13 @@ function Pagination({ page, total, onChange }: {
 // ─── component ───────────────────────────────────────────────────────────────
 
 export default function BarbersPage() {
+  const router = useRouter();
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [activeFilter, setActiveFilter] = useState<{ city: string; country: string } | null>(null);
   const [nameSearch, setNameSearch] = useState('');
+  const debouncedNameSearch = useDebounce(nameSearch, 300);
   const [page, setPage] = useState(1);
   const [copied, setCopied] = useState(false);
 
@@ -218,8 +223,8 @@ export default function BarbersPage() {
       );
     }
 
-    if (nameSearch.trim()) {
-      const q = nameSearch.trim().toLowerCase();
+    if (debouncedNameSearch.trim()) {
+      const q = debouncedNameSearch.trim().toLowerCase();
       list = list.filter(b =>
         `${b.firstName} ${b.lastName}`.toLowerCase().includes(q) ||
         b.barberCode.toLowerCase().includes(q)
@@ -230,7 +235,7 @@ export default function BarbersPage() {
       ...fisherYates(list.filter(b => b.isOpenNow)),
       ...fisherYates(list.filter(b => !b.isOpenNow)),
     ];
-  }, [allBarbers, activeFilter, nameSearch]);
+  }, [allBarbers, activeFilter, debouncedNameSearch]);
 
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
@@ -359,6 +364,7 @@ export default function BarbersPage() {
 
                 return (
                   <Link key={b.id} href={`/barber/${b.id}`}
+                    onMouseEnter={() => router.prefetch(`/barber/${b.id}`)}
                     className="bg-[#141414] border border-[#222] rounded-[12px] p-[14px] cursor-pointer flex flex-col">
 
                     {/* ROW 1: Avatar + Name/Location */}

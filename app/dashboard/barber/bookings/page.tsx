@@ -7,6 +7,8 @@ import { db } from "@/lib/firebase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { bookingUpdateSchema, notificationSchema } from "@/lib/schemas";
 import { cleanupBookingLock } from '@/lib/booking-lock-utils';
+import { safeFirestore } from '@/lib/firebase-helpers';
+import { toast } from '@/lib/toast';
 
 function getCurrencySymbol(c?: string) {
   const s: Record<string, string> = { 'EUR': '€', 'GBP': '£', 'USD': '$', 'MAD': 'MAD ', 'DZD': 'DA ', 'SAR': 'SAR ', 'AED': 'AED ', 'SEK': 'kr ', 'CHF': 'CHF ' };
@@ -55,6 +57,8 @@ export default function BookingsPage() {
   const [bookingsTab, setBookingsTab] = useState('today');
   const [bookingsStatusFilter, setBookingsStatusFilter] = useState('all');
   const [bookingsSearch, setBookingsSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const BOOKINGS_PER_PAGE = 20;
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.uid],
@@ -65,7 +69,38 @@ export default function BookingsPage() {
   useEffect(() => {
     if (!user?.uid) return;
     const q = query(collection(db, 'bookings'), where('barberId', '==', user.uid), orderBy('createdAt', 'desc'));
-    return onSnapshot(q, snap => setBookings(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+    return onSnapshot(q, async snap => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      setBookings(all);
+
+      // Auto-cancel expired pending bookings (> 2 hours old)
+      const TWO_HOURS = 2 * 60 * 60 * 1000;
+      const expiredPending = all.filter(
+        (b: any) => b.status === 'pending' && b.createdAt < Date.now() - TWO_HOURS
+      );
+      if (expiredPending.length > 0) {
+        for (const booking of expiredPending) {
+          await safeFirestore(() =>
+            updateDoc(doc(db, 'bookings', booking.id), {
+              status: 'cancelled',
+              updatedAt: Date.now(),
+              cancelReason: 'auto_expired',
+            })
+          );
+          await safeFirestore(() =>
+            addDoc(collection(db, 'notifications'), {
+              userId: booking.clientId,
+              message: `Your booking request on ${booking.date} at ${booking.startTime} expired because the barber didn't respond in time. Please book again.`,
+              read: false,
+              linkTo: '/dashboard/client',
+              createdAt: Date.now(),
+            })
+          );
+          await cleanupBookingLock(booking);
+        }
+        toast.info(`${expiredPending.length} expired booking request${expiredPending.length > 1 ? 's' : ''} were automatically cancelled.`);
+      }
+    });
   }, [user?.uid]);
 
   const nowDate = new Date();
@@ -97,6 +132,14 @@ export default function BookingsPage() {
     return true;
   }).sort((a, b) => new Date(`${b.date}T${b.startTime}`).getTime() - new Date(`${a.date}T${a.startTime}`).getTime());
 
+  const paginatedBookings = filteredBookings.slice(
+    (currentPage - 1) * BOOKINGS_PER_PAGE,
+    currentPage * BOOKINGS_PER_PAGE
+  );
+  const totalPages = Math.ceil(filteredBookings.length / BOOKINGS_PER_PAGE);
+
+  const resetPage = () => setCurrentPage(1);
+
   const updateBookingStatus = async (id: string, status: string) => {
     try {
       const timeNow = Date.now();
@@ -111,6 +154,18 @@ export default function BookingsPage() {
         batch.set(doc(db, 'aggregations', `${user.uid}_${yyyy}_${mm}`), { totalCuts: increment(1), totalRevenue: increment(Number(booking.price) || 0), totalHours: increment((Number(booking.duration) || 30) / 60) }, { merge: true });
       }
       await batch.commit();
+
+      // Track response time when barber accepts or declines
+      if ((status === 'confirmed' || status === 'cancelled_by_barber') && booking && user) {
+        const responseTimeMinutes = Math.round((Date.now() - (booking.createdAt || Date.now())) / 60000);
+        const avgResponseMinutes = Math.round(
+          ((profile?.avgResponseMinutes ?? responseTimeMinutes) * 0.7) + (responseTimeMinutes * 0.3)
+        );
+        updateDoc(doc(db, 'barberProfiles', user.uid), {
+          lastResponseTimeMinutes: responseTimeMinutes,
+          avgResponseMinutes,
+        }).catch(e => console.error('Response time update failed:', e));
+      }
 
       // Clean up booking lock so the slot becomes bookable again
       if (status.startsWith('cancelled') && booking) {
@@ -163,13 +218,13 @@ export default function BookingsPage() {
 
       <div className="flex gap-1 border-b border-[#1e1e1e] mb-3">
         {['today', 'this week', 'this month'].map(t => (
-          <button key={t} onClick={() => setBookingsTab(t)} className={`px-4 py-2 text-[12px] font-extrabold capitalize border-b-2 -mb-px transition-colors ${bookingsTab === t ? 'text-brand-yellow border-brand-yellow' : 'text-[#555] border-transparent hover:text-white'}`}>{t}</button>
+          <button key={t} onClick={() => { setBookingsTab(t); resetPage(); }} className={`px-4 py-2 text-[12px] font-extrabold capitalize border-b-2 -mb-px transition-colors ${bookingsTab === t ? 'text-brand-yellow border-brand-yellow' : 'text-[#555] border-transparent hover:text-white'}`}>{t}</button>
         ))}
       </div>
 
       <div className="flex gap-1 flex-wrap mb-4">
         {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map(s => (
-          <button key={s} onClick={() => setBookingsStatusFilter(s)} className={`px-4 py-2 text-[12px] font-extrabold capitalize border-b-2 -mb-px transition-colors ${bookingsStatusFilter === s ? 'text-brand-yellow border-brand-yellow' : 'text-[#555] border-transparent hover:text-white'}`}>{s}</button>
+          <button key={s} onClick={() => { setBookingsStatusFilter(s); resetPage(); }} className={`px-4 py-2 text-[12px] font-extrabold capitalize border-b-2 -mb-px transition-colors ${bookingsStatusFilter === s ? 'text-brand-yellow border-brand-yellow' : 'text-[#555] border-transparent hover:text-white'}`}>{s}</button>
         ))}
       </div>
 
@@ -178,7 +233,7 @@ export default function BookingsPage() {
       <div className="flex flex-col gap-2">
         {filteredBookings.length === 0 ? (
           <div className="text-center py-10 text-[#555] text-sm">No bookings found.</div>
-        ) : filteredBookings.map(b => (
+        ) : paginatedBookings.map(b => (
           <div key={b.id} className={`flex flex-wrap sm:flex-nowrap items-center gap-3 bg-brand-surface border border-brand-border rounded-[14px] p-3.5 border-l-[4px] ${borderColorMap[b.status] || 'border-l-[#2a2a2a]'}`}>
             <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center text-[11px] font-black text-white shrink-0">{(b.clientName?.[0] || 'C').toUpperCase()}</div>
             <div className="flex-1 min-w-[120px]">
@@ -202,6 +257,43 @@ export default function BookingsPage() {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-5">
+          <div className="text-[11px] text-[#555] text-center mb-3">
+            Showing {(currentPage - 1) * BOOKINGS_PER_PAGE + 1}–{Math.min(currentPage * BOOKINGS_PER_PAGE, filteredBookings.length)} of {filteredBookings.length} bookings
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-[12px] font-bold text-[#888] hover:text-white disabled:opacity-40 transition-colors"
+            >
+              ← Previous
+            </button>
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              const pageNum = Math.max(1, Math.min(currentPage - 2, totalPages - 4)) + i;
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-8 h-8 rounded-lg text-[12px] font-bold transition-colors ${currentPage === pageNum ? 'bg-brand-yellow text-black' : 'text-[#888] hover:text-white hover:bg-[#1a1a1a]'}`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-[12px] font-bold text-[#888] hover:text-white disabled:opacity-40 transition-colors"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
