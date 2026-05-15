@@ -17,6 +17,13 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid != null;
     }
 
+    // Admin check — reads isAdmin field from the caller's user document
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
+    }
+
     function isValidId(id) {
       return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
@@ -138,7 +145,7 @@ service cloud.firestore {
     // Users
     match /users/{userId} {
       allow get: if isValidId(userId);
-      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow list: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
 
       allow create: if isSignedIn()
         && request.auth.uid == userId
@@ -160,13 +167,16 @@ service cloud.firestore {
         && request.auth.uid == incoming().userId
         && isValidBarberProfile(incoming());
 
-      allow update: if isSignedIn()
-        && (existing().get('barberCode', '') == '' || incoming().get('barberCode', '') == existing().get('barberCode', ''))
-        && (
-          (request.auth.uid == existing().userId && isValidBarberProfile(incoming()) && incoming().userId == existing().userId)
-          ||
-          (incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalCuts']) && isValidBarberProfile(incoming()))
-        );
+      allow update: if isAdmin()
+        || (isSignedIn()
+          && (existing().get('barberCode', '') == '' || incoming().get('barberCode', '') == existing().get('barberCode', ''))
+          && (
+            (request.auth.uid == existing().userId && isValidBarberProfile(incoming()) && incoming().userId == existing().userId)
+            ||
+            (incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalCuts']) && isValidBarberProfile(incoming()))
+          ));
+
+      allow delete: if isAdmin();
     }
 
     // Schedules
@@ -191,12 +201,13 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.auth.uid == incoming().ownerId;
 
-      allow update: if isSignedIn()
-        && request.auth.uid == existing().ownerId
-        && incoming().ownerId == existing().ownerId;
+      allow update: if isAdmin()
+        || (isSignedIn()
+          && request.auth.uid == existing().ownerId
+          && incoming().ownerId == existing().ownerId);
 
-      allow delete: if isSignedIn()
-        && request.auth.uid == existing().ownerId;
+      allow delete: if isAdmin()
+        || (isSignedIn() && request.auth.uid == existing().ownerId);
     }
 
     // Services
@@ -218,11 +229,13 @@ service cloud.firestore {
 
     // Bookings
     match /bookings/{bookingId} {
-      allow get: if isSignedIn() && isValidId(bookingId)
-        && (resource.data.clientId == request.auth.uid || resource.data.barberId == request.auth.uid);
+      allow get: if isAdmin()
+        || (isSignedIn() && isValidId(bookingId)
+          && (resource.data.clientId == request.auth.uid || resource.data.barberId == request.auth.uid));
 
-      allow list: if isSignedIn()
-        && (resource.data.clientId == request.auth.uid || resource.data.barberId == request.auth.uid);
+      allow list: if isAdmin()
+        || (isSignedIn()
+          && (resource.data.clientId == request.auth.uid || resource.data.barberId == request.auth.uid));
 
       allow create: if isSignedIn()
         && request.auth.uid == incoming().clientId
@@ -253,11 +266,24 @@ service cloud.firestore {
         && request.auth.uid == incoming().clientId
         && isValidReview(incoming())
         && exists(/databases/$(database)/documents/barberProfiles/$(incoming().providerId));
-      allow update: if isSignedIn()
-        && request.auth.uid == existing().clientId
-        && isValidReview(incoming())
-        && incoming().clientId == existing().clientId
-        && incoming().providerId == existing().providerId;
+      allow update: if isAdmin()
+        || (isSignedIn()
+          && request.auth.uid == existing().clientId
+          && isValidReview(incoming())
+          && incoming().clientId == existing().clientId
+          && incoming().providerId == existing().providerId);
+      allow delete: if isAdmin();
+    }
+
+    // Admin audit logs
+    match /adminLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Feature requests (shop photos notify)
+    match /featureRequests/{reqId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
     }
 
     // Locks for double booking checks
