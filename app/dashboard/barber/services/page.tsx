@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { barberUpdateSchema } from "@/lib/schemas";
 import { safeFirestore } from '@/lib/firebase-helpers';
+import { sanitizeText } from '@/lib/sanitize';
 
 function getCurrencySymbol(c?: string) {
   const s: Record<string, string> = { 'EUR': '€', 'GBP': '£', 'USD': '$', 'MAD': 'MAD ', 'DZD': 'DA ', 'SAR': 'SAR ', 'AED': 'AED ', 'SEK': 'kr ', 'CHF': 'CHF ' };
@@ -69,14 +70,14 @@ export default function ServicesPage() {
     if (!newServiceName || !newServicePrice || !user) return;
     if ((services as any[]).some((s: any) => s.name.toLowerCase().trim() === newServiceName.toLowerCase().trim())) { toast(`You already have '${newServiceName}'. Edit the existing one instead.`); return; }
     const result = await safeFirestore(
-      () => setDoc(doc(collection(db, 'services')), { providerId: user.uid, providerType: 'barber', name: newServiceName, duration: parseInt(newServiceDuration) || 30, price: parseFloat(newServicePrice), description: newServiceDescription.trim(), isActive: true, sortOrder: (services as any[]).length }),
+      () => setDoc(doc(collection(db, 'services')), { providerId: user.uid, providerType: 'barber', name: sanitizeText(newServiceName, 100), duration: parseInt(newServiceDuration) || 30, price: parseFloat(newServicePrice), description: sanitizeText(newServiceDescription, 150), isActive: true, sortOrder: (services as any[]).length }),
       { successMessage: 'Service added!', errorMessage: 'Failed to add service.' }
     );
     if (result !== null) { setNewServiceName(''); setNewServicePrice(''); setNewServiceDuration(''); setNewServiceDescription(''); mutateServices(); }
   };
 
   const saveEditService = async (svcId: string) => {
-    try { await updateDoc(doc(db, 'services', svcId), { name: editSvcData.name, duration: parseInt(editSvcData.duration) || 30, price: parseFloat(editSvcData.price) || 0, description: editSvcData.description, updatedAt: Date.now() }); setEditingServiceId(null); toast('Service updated ✓'); mutateServices(); } catch (e) { console.error(e); }
+    try { await updateDoc(doc(db, 'services', svcId), { name: sanitizeText(editSvcData.name, 100), duration: parseInt(editSvcData.duration) || 30, price: parseFloat(editSvcData.price) || 0, description: sanitizeText(editSvcData.description, 150), updatedAt: Date.now() }); setEditingServiceId(null); toast('Service updated ✓'); mutateServices(); } catch (e) { console.error(e); }
   };
 
   const toggleServiceActive = async (svcId: string, currentIsActive: boolean) => {

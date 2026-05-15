@@ -40,6 +40,9 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
   const [bufferMinutes, setBufferMinutes] = useState(10);
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [recurringBlocked, setRecurringBlocked] = useState<string[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [autoSavedMsg, setAutoSavedMsg] = useState('');
+  const autoSaveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   
   const { user } = useAuth();
   const uid = mode === 'barber' && user ? user.uid : barberId;
@@ -96,14 +99,35 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
   const handlePrevWeek = () => setCurrentWeekStart(prev => subWeeks(prev, 1));
   const handleToday = () => setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
 
+  const scheduleAutoSave = React.useCallback(() => {
+    if (mode !== 'barber') return;
+    setHasUnsavedChanges(true);
+    setAutoSavedMsg('');
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      await saveSchedule();
+      setHasUnsavedChanges(false);
+      setAutoSavedMsg('✓ Saved automatically');
+      setTimeout(() => setAutoSavedMsg(''), 2000);
+    }, 2000);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  // Cleanup auto-save timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, []);
+
   const toggleSlot = (dateStr: string, hourStr: string, forceAction?: 'add' | 'remove') => {
     if (mode !== 'barber') return;
-    
+
     setAvailableSlots(prev => {
       const dateSlots = prev[dateStr] ? [...prev[dateStr]] : [];
       let nextSlots = [];
       const hasSlot = dateSlots.includes(hourStr);
-      
+
       let action = forceAction;
       if (!action) action = hasSlot ? 'remove' : 'add';
 
@@ -122,6 +146,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
         [dateStr]: nextSlots
       };
     });
+    scheduleAutoSave();
   };
 
   const onMouseDown = (dateStr: string, hourStr: string) => {
@@ -513,8 +538,16 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
             </div>
           </div>
 
-          {/* Save button */}
-          <div className="flex justify-end">
+          {/* Save button + auto-save indicator */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[11px] font-bold">
+              {hasUnsavedChanges && !saving && (
+                <span className="text-brand-yellow">● Unsaved changes — saving in 2s...</span>
+              )}
+              {autoSavedMsg && (
+                <span className="text-brand-green">{autoSavedMsg}</span>
+              )}
+            </div>
             <button
               onClick={saveSchedule}
               disabled={saving}

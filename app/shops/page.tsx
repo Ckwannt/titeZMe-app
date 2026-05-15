@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -8,6 +9,7 @@ import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { Country, City } from 'country-state-city';
 import { getOpenStatus, getTimezoneFromLocation, getLocalDateString } from '@/lib/schedule-utils';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const PER_PAGE = 12;
 
@@ -159,11 +161,13 @@ function Pagination({ page, total, onChange }: {
 // ─── component ───────────────────────────────────────────────────────────────
 
 export default function ShopsPage() {
+  const router = useRouter();
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [activeFilter, setActiveFilter] = useState<{ city: string; country: string } | null>(null);
   const [nameSearch, setNameSearch] = useState('');
+  const debouncedNameSearch = useDebounce(nameSearch, 300);
   const [page, setPage] = useState(1);
 
   const countries = Country.getAllCountries();
@@ -185,8 +189,8 @@ export default function ShopsPage() {
       );
     }
 
-    if (nameSearch.trim()) {
-      const q = nameSearch.trim().toLowerCase();
+    if (debouncedNameSearch.trim()) {
+      const q = debouncedNameSearch.trim().toLowerCase();
       list = list.filter(s => s.name.toLowerCase().includes(q));
     }
 
@@ -194,7 +198,7 @@ export default function ShopsPage() {
       ...fisherYates(list.filter(s => s.isOpenNow)),
       ...fisherYates(list.filter(s => !s.isOpenNow)),
     ];
-  }, [allShops, activeFilter, nameSearch]);
+  }, [allShops, activeFilter, debouncedNameSearch]);
 
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
@@ -312,6 +316,7 @@ export default function ShopsPage() {
 
                 return (
                   <Link key={s.id} href={`/shop/${s.id}`}
+                    onMouseEnter={() => router.prefetch(`/shop/${s.id}`)}
                     className="bg-[#141414] border border-[#222] rounded-[12px] overflow-hidden cursor-pointer flex flex-col">
 
                     {/* TOP — Cover / gradient area */}

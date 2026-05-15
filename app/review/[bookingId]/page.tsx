@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/lib/toast';
 import { notificationSchema, barberUpdateSchema } from "@/lib/schemas";
+import { sanitizeText } from '@/lib/sanitize';
 
 export default function ReviewPage({ params }: { params: Promise<{ bookingId: string }> }) {
   const resolvedParams = use(params);
@@ -71,7 +72,7 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
          providerType: booking.bookingContext === 'shop' ? 'shop' : 'barber',
          clientId: user.uid,
          rating,
-         comment,
+         comment: sanitizeText(comment, 1000),
          createdAt: Date.now()
       });
 

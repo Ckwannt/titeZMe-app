@@ -21,6 +21,41 @@ function getFirestoreErrorMessage(error: any): string {
   }
 }
 
+const RETRYABLE_CODES = ['unavailable', 'network-request-failed', 'deadline-exceeded', 'resource-exhausted'];
+
+export async function safeFirestoreWithRetry<T>(
+  operation: () => Promise<T>,
+  options?: {
+    maxRetries?: number;
+    successMessage?: string;
+    errorMessage?: string;
+  }
+): Promise<T | null> {
+  const maxRetries = options?.maxRetries ?? 3;
+  const delays = [1000, 2000, 4000];
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await operation();
+      if (options?.successMessage) toast.success(options.successMessage);
+      return result;
+    } catch (error: any) {
+      const isRetryable = RETRYABLE_CODES.includes(error?.code);
+      const isLastAttempt = attempt === maxRetries;
+
+      if (!isRetryable || isLastAttempt) {
+        const message = options?.errorMessage ?? getFirestoreErrorMessage(error);
+        toast.error(message);
+        console.error('Firestore write failed after retries:', error);
+        return null;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, delays[attempt] ?? 4000));
+    }
+  }
+  return null;
+}
+
 export async function safeFirestore<T>(
   operation: () => Promise<T>,
   options?: {

@@ -30,7 +30,7 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
   let shopStatus = { text: 'Closed today', color: 'text-brand-red' };
   if (schedule) {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     const dayName = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     if ((schedule as any).blockedDates?.includes(todayStr)) {
       shopStatus = { text: 'On leave', color: 'text-brand-red' };

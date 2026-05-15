@@ -7,6 +7,7 @@ import Providers from '@/lib/query-provider';
 import { AuthProvider } from '@/lib/auth-context';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Toaster } from 'react-hot-toast';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import './globals.css';
 
 const nunito = Nunito({ subsets: ['latin'], variable: '--font-nunito' });
@@ -22,6 +23,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
       <body className="font-sans antialiased text-[#F0EDE8] bg-[#0A0A0A] selection:bg-[#FFD600] selection:text-[#0A0A0A] flex flex-col min-h-screen" suppressHydrationWarning>
         <Providers>
           <AuthProvider>
+            <OfflineBanner />
             <TopNav />
             <main className="flex-1 overflow-x-hidden min-h-screen">
               <RouteGuard>
