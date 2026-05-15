@@ -135,6 +135,11 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     tiktok: shop?.tiktok || ''
   });
 
+  const [googleMapsUrl, setGoogleMapsUrl] = useState(shop?.googleMapsUrl || '');
+  const [savingMaps, setSavingMaps] = useState(false);
+  const [notifyInviteResponse, setNotifyInviteResponse] = useState(shop?.notifyInviteResponse !== false);
+  const [notifyNewBooking, setNotifyNewBooking] = useState(shop?.notifyNewBooking !== false);
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -246,6 +251,32 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     setSavingSocial(false);
   };
 
+  const handleSaveMaps = async () => {
+    if (!user) return;
+    setSavingMaps(true);
+    setErrorMsg(''); setSuccessMsg('');
+    try {
+      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ googleMapsUrl }));
+      mutateShop();
+      setSuccessMsg('Maps link saved!');
+    } catch (e) {
+      console.error(e);
+      setErrorMsg('Failed to save maps link.');
+    }
+    setSavingMaps(false);
+  };
+
+  const handleToggleNotif = async (field: 'notifyInviteResponse' | 'notifyNewBooking', value: boolean) => {
+    if (!user) return;
+    if (field === 'notifyInviteResponse') setNotifyInviteResponse(value);
+    else setNotifyNewBooking(value);
+    try {
+      await updateDoc(doc(db, 'users', user.uid), { [field]: value });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleDeleteShop = async () => {
     if(!confirm("Are you sure you want to permanently delete your shop profile? All your team members will be removed from the shop.")) return;
     setDeleting(true);
@@ -261,7 +292,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       
       // 1. Update all barbers
       const barbersSnap = await getDocs(query(collection(db, 'barberProfiles'), where('shopId', '==', user?.uid)));
-      barbersSnap.docs.forEach(d => batch.update(d.ref, { shopId: null }));
+      barbersSnap.docs.forEach(d => batch.update(d.ref, { shopId: null, isSolo: true }));
 
       // 2. Delete services
       const servicesSnap = await getDocs(query(collection(db, 'services'), where('providerId', '==', user?.uid), where('providerType', '==', 'shop')));
@@ -521,7 +552,73 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
         </button>
       </section>
 
-      {/* SECTION D: DANGER ZONE */}
+      {/* SECTION D: GOOGLE MAPS */}
+      <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
+        <h2 className="text-lg font-black mb-1">Google Maps link</h2>
+        <p className="text-[#888] text-xs mb-5">Help clients find your exact location.</p>
+
+        {/* Auto-generated link from address */}
+        {shop?.address?.street && (
+          <div className="mb-4">
+            <div className="text-[10px] font-bold text-[#555] uppercase mb-1.5">Auto-generated from your address</div>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([shop.address.street, shop.address.buildingNumber, shop.address.city, shop.address.country].filter(Boolean).join(' '))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[12px] text-brand-yellow hover:underline break-all"
+            >
+              🗺️ Preview auto-generated map link →
+            </a>
+          </div>
+        )}
+
+        <div className="mb-4">
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Or paste your own Google Maps URL</label>
+          <input
+            type="url"
+            value={googleMapsUrl}
+            onChange={e => setGoogleMapsUrl(e.target.value)}
+            className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm focus:border-brand-yellow outline-none"
+            placeholder="https://maps.google.com/..."
+          />
+        </div>
+        <button
+          onClick={handleSaveMaps}
+          disabled={savingMaps}
+          className="bg-brand-yellow text-black px-6 py-3 rounded-xl font-bold text-sm hover:bg-yellow-400 disabled:opacity-50"
+        >
+          {savingMaps ? 'Saving...' : 'Save Maps link'}
+        </button>
+      </section>
+
+      {/* SECTION E: NOTIFICATIONS */}
+      <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
+        <h2 className="text-lg font-black mb-5">Notification preferences</h2>
+        {[
+          {
+            field: 'notifyInviteResponse' as const,
+            label: 'Email me when a barber accepts or declines an invite',
+            value: notifyInviteResponse,
+          },
+          {
+            field: 'notifyNewBooking' as const,
+            label: 'Email me when a new booking is made at my shop',
+            value: notifyNewBooking,
+          },
+        ].map(({ field, label, value }) => (
+          <div key={field} className="flex items-center justify-between gap-4 mb-4">
+            <span className="text-sm font-bold text-[#aaa] flex-1">{label}</span>
+            <button
+              onClick={() => handleToggleNotif(field, !value)}
+              className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${value ? 'bg-brand-yellow' : 'bg-[#2a2a2a]'}`}
+            >
+              <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${value ? 'left-6' : 'left-1'}`} />
+            </button>
+          </div>
+        ))}
+      </section>
+
+      {/* SECTION F: DANGER ZONE */}
       <section className="bg-[#1a0808] border border-brand-red/30 rounded-3xl p-6">
         <h2 className="text-lg font-black text-brand-red mb-2">Delete Shop Profile</h2>
         <p className="text-[#888] text-sm mb-6">This permanently deletes your shop profile, removes all barbers from your team, and deletes all shop data. Your personal barber account will NOT be deleted.</p>
