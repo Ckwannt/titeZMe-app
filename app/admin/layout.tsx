@@ -105,6 +105,18 @@ function AdminSidebar() {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/admin/login';
+
+  // Login page: no AdminGuard, no sidebar — just the raw page on dark bg.
+  if (isLoginPage) {
+    return (
+      <div style={{ background: '#0A0A0A', minHeight: '100vh', fontFamily: 'Nunito, sans-serif', color: '#fff' }}>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <AdminGuard>
       <AdminSidebar />

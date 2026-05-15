@@ -1,11 +1,10 @@
 import type {Metadata} from 'next';
 import { Nunito } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { TopNav } from '@/components/TopNav';
 import { CookieBanner } from '@/components/CookieBanner';
 import Providers from '@/lib/query-provider';
 import { AuthProvider } from '@/lib/auth-context';
-import { RouteGuard } from '@/components/RouteGuard';
+import { ConditionalNav } from '@/components/ConditionalNav';
 import { Toaster } from 'react-hot-toast';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import './globals.css';
@@ -34,12 +33,9 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <Providers>
           <AuthProvider>
             <OfflineBanner />
-            <TopNav />
-            <main className="flex-1 overflow-x-hidden min-h-screen">
-              <RouteGuard>
-                {children}
-              </RouteGuard>
-            </main>
+            <ConditionalNav>
+              {children}
+            </ConditionalNav>
             <CookieBanner />
             <Toaster
               position="bottom-right"
