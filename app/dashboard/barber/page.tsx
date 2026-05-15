@@ -10,6 +10,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { bookingUpdateSchema, notificationSchema, barberUpdateSchema } from "@/lib/schemas";
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from 'recharts';
 import { getLocalDateString, getTimezoneFromLocation } from '@/lib/schedule-utils';
+import { cleanupBookingLock } from '@/lib/booking-lock-utils';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import type { Booking, Notification } from '@/lib/types';
 
 function getCurrencySymbol(currency?: string): string {
   const s: Record<string, string> = {
@@ -50,8 +53,8 @@ export default function BarberDashboardPage() {
   const queryClient = useQueryClient();
 
   const [now, setNow] = useState(new Date());
-  const [recentNotifs, setRecentNotifs] = useState<any[]>([]);
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [recentNotifs, setRecentNotifs] = useState<(Notification & { id: string })[]>([]);
+  const [bookings, setBookings] = useState<(Booking & { id: string })[]>([]);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [blockFrom, setBlockFrom] = useState('');
   const [blockTo, setBlockTo] = useState('');
@@ -104,7 +107,7 @@ export default function BarberDashboardPage() {
       orderBy('createdAt', 'desc')
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setBookings(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      setBookings(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Booking & { id: string })));
     });
     return () => unsubscribe();
   }, [user?.uid]);
@@ -122,7 +125,7 @@ export default function BarberDashboardPage() {
       orderBy('createdAt', 'desc')
     );
     const unsub = onSnapshot(q, snap => {
-      setRecentNotifs(snap.docs.slice(0, 10).map(d => ({ id: d.id, ...d.data() })));
+      setRecentNotifs(snap.docs.slice(0, 10).map(d => ({ id: d.id, ...d.data() } as Notification & { id: string })));
     });
     return () => unsub();
   }, [user?.uid]);
@@ -161,6 +164,17 @@ export default function BarberDashboardPage() {
       }
 
       await batch.commit();
+
+      // Clean up the booking lock slot so the time becomes bookable again
+      if (status.startsWith('cancelled') && booking) {
+        await cleanupBookingLock({
+          barberId: booking.barberId || user!.uid,
+          date: booking.date,
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+          id,
+        });
+      }
 
       if (booking?.clientId && (status === 'confirmed' || status === 'cancelled_by_barber')) {
         const message = status === 'confirmed'
@@ -476,6 +490,7 @@ export default function BarberDashboardPage() {
       })()}
 
       {/* Today's schedule timeline */}
+      <ErrorBoundary section="today's schedule">
       <div className="mb-8">
         <div className="text-[13px] font-extrabold text-white mb-4">Today&apos;s schedule</div>
         {todaySchedule.length === 0 ? (
@@ -524,8 +539,10 @@ export default function BarberDashboardPage() {
           </div>
         )}
       </div>
+      </ErrorBoundary>
 
       {/* Recent activity feed */}
+      <ErrorBoundary section="recent activity">
       <div className="mt-4">
         <div className="text-[13px] font-extrabold mb-3">Recent activity</div>
         {recentActivity.length === 0 ? (
@@ -542,8 +559,10 @@ export default function BarberDashboardPage() {
           </div>
         )}
       </div>
+      </ErrorBoundary>
 
       {/* Weekly earnings chart */}
+      <ErrorBoundary section="earnings chart">
       <div className="mt-8 bg-[#111] border border-[#1e1e1e] rounded-[12px] p-4">
         <div className="flex items-center justify-between mb-4">
           <span className="text-[13px] font-extrabold">This week&apos;s earnings</span>
@@ -560,6 +579,7 @@ export default function BarberDashboardPage() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      </ErrorBoundary>
 
       {/* Block time off modal */}
       {blockModalOpen && (

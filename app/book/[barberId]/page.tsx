@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, doc, getDoc, runTransaction, setDoc,
 import { db } from '@/lib/firebase';
 import { AvailabilityGrid } from '@/components/AvailabilityGrid';
 import { BarberProfileSkeleton } from '@/components/skeletons';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import { useQuery } from '@tanstack/react-query';
 
 import { useRouter } from 'next/navigation';

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import { getLocalDateString, getTimezoneFromLocation } from '@/lib/schedule-utils';
 
 // ─── Types ─────────────────────────────────────────────────────────────────

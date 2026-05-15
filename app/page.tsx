@@ -83,20 +83,34 @@ async function fetchFeaturedBarbers() {
     }
     const selected = [...groupA.slice(0, 3), ...groupB.slice(0, Math.max(0, 3 - groupA.length))];
 
-    const [userSnaps, serviceSnaps] = await Promise.all([
-      Promise.all(selected.map((p: any) => getDoc(doc(db, 'users', p.id)))),
-      Promise.all(selected.map((p: any) => getDocs(query(
-        collection(db, 'services'),
-        where('providerId', '==', p.id),
-        where('providerType', '==', 'barber'),
-        where('isActive', '==', true),
-      )))),
+    const selectedIds = selected.map((p: any) => p.id);
+    // Batch: users + services in parallel (services use single 'in' query, max 10)
+    const [userSnaps, servicesSnap] = await Promise.all([
+      Promise.all(selectedIds.map(id => getDoc(doc(db, 'users', id)))),
+      selectedIds.length > 0
+        ? getDocs(query(
+            collection(db, 'services'),
+            where('providerId', 'in', selectedIds.slice(0, 10)),
+            where('providerType', '==', 'barber'),
+            where('isActive', '==', true),
+          ))
+        : Promise.resolve({ docs: [] as any[] }),
     ]);
+
+    const servicesPriceMap = new Map<string, number[]>();
+    servicesSnap.docs.forEach((d: any) => {
+      const data = d.data();
+      const price = Number(data.price) || 0;
+      if (price > 0) {
+        const arr = servicesPriceMap.get(data.providerId) || [];
+        arr.push(price);
+        servicesPriceMap.set(data.providerId, arr);
+      }
+    });
 
     return selected.map((p: any, i: number) => {
       const user = userSnaps[i].exists() ? (userSnaps[i].data() as any) : {};
-      const prices = serviceSnaps[i].docs
-        .map(d => Number((d.data() as any).price) || 0).filter(n => n > 0);
+      const prices = servicesPriceMap.get(p.id) || [];
       return {
         ...p,
         firstName: user.firstName || '',

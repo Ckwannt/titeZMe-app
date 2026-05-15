@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 
 interface ShopPhotosTabProps {
   shop: any;

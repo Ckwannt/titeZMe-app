@@ -6,6 +6,7 @@ import { collection, doc, query, where, updateDoc, writeBatch, increment, onSnap
 import { db } from "@/lib/firebase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { bookingUpdateSchema, notificationSchema } from "@/lib/schemas";
+import { cleanupBookingLock } from '@/lib/booking-lock-utils';
 
 function getCurrencySymbol(c?: string) {
   const s: Record<string, string> = { 'EUR': '€', 'GBP': '£', 'USD': '$', 'MAD': 'MAD ', 'DZD': 'DA ', 'SAR': 'SAR ', 'AED': 'AED ', 'SEK': 'kr ', 'CHF': 'CHF ' };
@@ -110,6 +111,18 @@ export default function BookingsPage() {
         batch.set(doc(db, 'aggregations', `${user.uid}_${yyyy}_${mm}`), { totalCuts: increment(1), totalRevenue: increment(Number(booking.price) || 0), totalHours: increment((Number(booking.duration) || 30) / 60) }, { merge: true });
       }
       await batch.commit();
+
+      // Clean up booking lock so the slot becomes bookable again
+      if (status.startsWith('cancelled') && booking) {
+        await cleanupBookingLock({
+          barberId: booking.barberId || user!.uid,
+          date: booking.date,
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+          id,
+        });
+      }
+
       if (booking?.clientId && (status === 'confirmed' || status === 'cancelled_by_barber')) {
         const message = status === 'confirmed'
           ? `Your booking on ${booking.date} at ${booking.startTime} has been confirmed by your barber. See you there!`

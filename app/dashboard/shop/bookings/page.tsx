@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { collection, query, where, onSnapshot, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { bookingUpdateSchema } from '@/lib/schemas';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import { getLocalDateString, getTimezoneFromLocation } from '@/lib/schedule-utils';
 
 function getCurrencySymbol(c?: string): string {

@@ -5,7 +5,7 @@ import { collection, query, where, getDocs, setDoc, doc, addDoc, onSnapshot, upd
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { inviteUpdateSchema, notificationSchema, inviteSchema } from "@/lib/schemas";
-import { toast } from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getLocalDateString } from '@/lib/schedule-utils';
