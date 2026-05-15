@@ -1,9 +1,95 @@
-// Server Component — revalidates every 5 minutes
-import { adminDb } from '@/lib/firebase-admin';
+'use client';
+
+import {
+  collection, query, where, getDocs, doc, getDoc,
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useQuery } from '@tanstack/react-query';
 import { getOpenStatus, getLocalDateString, getLocalHourString, getTimezoneFromLocation } from '@/lib/schedule-utils';
 import LandingPageClient from './LandingPageClient';
 
-export const revalidate = 300;
+// ─── data fetchers (client-side) ─────────────────────────────────────────────
+
+async function fetchFeaturedBarbers() {
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'barberProfiles'),
+      where('isLive', '==', true),
+      where('isSolo', '==', true),
+    ));
+    const profiles = snap.docs
+      .map(d => ({ id: d.id, ...d.data() } as any))
+      .filter((p: any) => !p.isDeleted);
+    if (profiles.length === 0) return [];
+
+    const schedSnaps = await Promise.all(
+      profiles.map((p: any) => getDoc(doc(db, 'schedules', `${p.id}_shard_0`)))
+    );
+
+    const withStatus = profiles.map((p: any, i: number) => {
+      const sched = schedSnaps[i].exists() ? (schedSnaps[i].data() as any) : null;
+      const status = getOpenStatus(sched?.availableSlots, p.city, p.country, p.id);
+      const tz = getTimezoneFromLocation(p.city, p.country);
+      const todayDate = getLocalDateString(tz);
+      const nowStr = getLocalHourString(tz);
+      const slots: string[] = sched?.availableSlots?.[todayDate] ?? [];
+      const nextSlots = slots.filter((s: string) => s >= nowStr).slice(0, 2);
+      return { ...p, isOpenNow: status.isOpen, nextSlots };
+    });
+
+    const groupA = withStatus.filter((b: any) => b.isOpenNow);
+    const groupB = withStatus.filter((b: any) => !b.isOpenNow);
+    for (let i = groupA.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [groupA[i], groupA[j]] = [groupA[j], groupA[i]];
+    }
+    for (let i = groupB.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [groupB[i], groupB[j]] = [groupB[j], groupB[i]];
+    }
+    const selected = [...groupA.slice(0, 3), ...groupB.slice(0, Math.max(0, 3 - groupA.length))];
+
+    const selectedIds = selected.map((p: any) => p.id);
+    const [userSnaps, servicesSnap] = await Promise.all([
+      Promise.all(selectedIds.map(id => getDoc(doc(db, 'users', id)))),
+      selectedIds.length > 0
+        ? getDocs(query(
+            collection(db, 'services'),
+            where('providerId', 'in', selectedIds.slice(0, 10)),
+            where('providerType', '==', 'barber'),
+            where('isActive', '==', true),
+          ))
+        : Promise.resolve({ docs: [] as any[] }),
+    ]);
+
+    const servicesPriceMap = new Map<string, number[]>();
+    servicesSnap.docs.forEach((d: any) => {
+      const data = d.data();
+      const price = Number(data.price) || 0;
+      if (price > 0) {
+        const arr = servicesPriceMap.get(data.providerId) || [];
+        arr.push(price);
+        servicesPriceMap.set(data.providerId, arr);
+      }
+    });
+
+    return selected.map((p: any, i: number) => {
+      const user = userSnaps[i].exists() ? (userSnaps[i].data() as any) : {};
+      const prices = servicesPriceMap.get(p.id) || [];
+      return {
+        ...p,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        userCity: user.city || p.city || '',
+        photoUrl: p.profilePhotoUrl || user.photoUrl,
+        minPrice: prices.length > 0 ? Math.min(...prices) : null,
+        maxPrice: prices.length > 0 ? Math.max(...prices) : null,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
 
 function normalizeCity(raw: string): string {
   const c = (raw || '').toLowerCase().trim();
@@ -28,23 +114,12 @@ function normalizeCity(raw: string): string {
   return raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 }
 
-export default async function LandingPage() {
-  let featuredBarbers: any[] = [];
-  let citiesData: { city: string; barbers: number; shops: number }[] = [];
-
+async function fetchCitiesData(): Promise<{ city: string; barbers: number; shops: number }[]> {
   try {
-    // Fetch all live barbers + active shops in parallel
-    const [barbersSnap, shopsSnap] = await Promise.all([
-      adminDb.collection('barberProfiles')
-        .where('isLive', '==', true)
-        .where('isSolo', '==', true)
-        .get(),
-      adminDb.collection('barbershops')
-        .where('status', '==', 'active')
-        .get(),
+    const [shopsSnap, barbersSnap] = await Promise.all([
+      getDocs(query(collection(db, 'barbershops'), where('status', '==', 'active'))),
+      getDocs(query(collection(db, 'barberProfiles'), where('isLive', '==', true))),
     ]);
-
-    // Build cities data
     const bc: Record<string, number> = {};
     const sc: Record<string, number> = {};
     barbersSnap.docs.forEach(d => {
@@ -55,93 +130,30 @@ export default async function LandingPage() {
       const city = normalizeCity((d.data() as any).address?.city || '');
       if (city) sc[city] = (sc[city] || 0) + 1;
     });
-    const allCities = new Set([...Object.keys(bc), ...Object.keys(sc)]);
-    citiesData = Array.from(allCities)
+    const all = new Set([...Object.keys(bc), ...Object.keys(sc)]);
+    return Array.from(all)
       .map(city => ({ city, barbers: bc[city] || 0, shops: sc[city] || 0 }))
       .sort((a, b) => (b.barbers + b.shops) - (a.barbers + a.shops))
       .slice(0, 8);
-
-    // Pick featured barbers: prefer open ones
-    const allDocs = barbersSnap.docs.filter(d => !d.data().isDeleted);
-    if (allDocs.length > 0) {
-      // Shuffle and pick candidates
-      const shuffled = [...allDocs].sort(() => Math.random() - 0.5).slice(0, 12);
-      const candidateIds = shuffled.map(d => d.id);
-
-      // Batch fetch schedules + users + services
-      const [scheduleDocs, userDocs] = await Promise.all([
-        Promise.all(candidateIds.map(id => adminDb.collection('schedules').doc(`${id}_shard_0`).get())),
-        Promise.all(candidateIds.map(id => adminDb.collection('users').doc(id).get())),
-      ]);
-
-      // Build candidates with open status
-      const candidates = shuffled.map((doc, i) => {
-        const p = doc.data() as any;
-        const u = (userDocs[i].exists ? userDocs[i].data() : {}) as any;
-        const sched = scheduleDocs[i].exists ? scheduleDocs[i].data() as any : null;
-        const tz = getTimezoneFromLocation(p.city || u.city, u.country);
-        const todayDate = getLocalDateString(tz);
-        const nowStr = getLocalHourString(tz);
-        const status = getOpenStatus(sched?.availableSlots, p.city || u.city, u.country, doc.id);
-        const slots: string[] = sched?.availableSlots?.[todayDate] ?? [];
-        const nextSlots = slots.filter((s: string) => s >= nowStr).slice(0, 2);
-
-        return {
-          id: doc.id,
-          ...p,
-          firstName: u.firstName || '',
-          lastName: u.lastName || '',
-          userCity: u.city || p.city || '',
-          photoUrl: p.profilePhotoUrl || u.photoUrl || null,
-          isOpenNow: status.isOpen,
-          nextSlots,
-          minPrice: null as number | null,
-          maxPrice: null as number | null,
-        };
-      });
-
-      // Sort open first
-      const openCandidates = candidates.filter(c => c.isOpenNow);
-      const closedCandidates = candidates.filter(c => !c.isOpenNow);
-      const selected = [
-        ...openCandidates.slice(0, 3),
-        ...closedCandidates.slice(0, Math.max(0, 3 - openCandidates.length)),
-      ];
-
-      // Fetch services for selected
-      const selectedIds = selected.map(c => c.id);
-      if (selectedIds.length > 0) {
-        try {
-          const servicesSnap = await adminDb.collection('services')
-            .where('providerId', 'in', selectedIds.slice(0, 10))
-            .where('isActive', '==', true)
-            .get();
-          const priceMap = new Map<string, number[]>();
-          servicesSnap.docs.forEach(d => {
-            const data = d.data() as any;
-            const price = Number(data.price) || 0;
-            if (price > 0) {
-              const arr = priceMap.get(data.providerId) || [];
-              arr.push(price);
-              priceMap.set(data.providerId, arr);
-            }
-          });
-          selected.forEach(c => {
-            const prices = priceMap.get(c.id) || [];
-            c.minPrice = prices.length > 0 ? Math.min(...prices) : null;
-            c.maxPrice = prices.length > 0 ? Math.max(...prices) : null;
-          });
-        } catch {
-          // Non-critical — services just won't show prices
-        }
-      }
-
-      featuredBarbers = selected;
-    }
-  } catch (err) {
-    console.error('LandingPage server error:', err);
-    // Falls through with empty arrays — client will show static content
+  } catch {
+    return [];
   }
+}
+
+// ─── page component ───────────────────────────────────────────────────────────
+
+export default function LandingPage() {
+  const { data: featuredBarbers = [] } = useQuery({
+    queryKey: ['landing_featured'],
+    queryFn: fetchFeaturedBarbers,
+    staleTime: 0,
+  });
+
+  const { data: citiesData = [] } = useQuery({
+    queryKey: ['landing_cities_v2'],
+    queryFn: fetchCitiesData,
+    staleTime: 5 * 60 * 1000,
+  });
 
   return (
     <LandingPageClient
