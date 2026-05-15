@@ -77,16 +77,36 @@ async function fetchBarbers(): Promise<BarberCard[]> {
 
   const ids: string[] = profiles.map((p: any) => p.id);
 
-  const [userSnaps, scheduleSnaps, serviceSnaps] = await Promise.all([
+  // Batch fetch users + schedules in parallel
+  const [userSnaps, scheduleSnaps] = await Promise.all([
     Promise.all(ids.map(id => getDoc(doc(db, 'users', id)))),
     Promise.all(ids.map(id => getDoc(doc(db, 'schedules', `${id}_shard_0`)))),
-    Promise.all(ids.map(id => getDocs(query(
+  ]);
+
+  // Batch fetch services with chunked 'in' queries (Firestore limit: 10 per 'in')
+  const serviceChunkPromises: Promise<any>[] = [];
+  for (let i = 0; i < ids.length; i += 10) {
+    const chunk = ids.slice(i, i + 10);
+    serviceChunkPromises.push(getDocs(query(
       collection(db, 'services'),
-      where('providerId', '==', id),
+      where('providerId', 'in', chunk),
       where('providerType', '==', 'barber'),
       where('isActive', '==', true),
-    )))),
-  ]);
+    )));
+  }
+  const serviceChunkResults = await Promise.all(serviceChunkPromises);
+  const servicesPriceMap = new Map<string, number[]>();
+  serviceChunkResults.forEach(snap => {
+    snap.docs.forEach((d: any) => {
+      const data = d.data();
+      const price = Number(data.price) || 0;
+      if (price > 0) {
+        const arr = servicesPriceMap.get(data.providerId) || [];
+        arr.push(price);
+        servicesPriceMap.set(data.providerId, arr);
+      }
+    });
+  });
 
   // Unique shop addresses
   const shopIds = [...new Set(profiles.filter((p: any) => p.shopId).map((p: any) => p.shopId as string))];
@@ -99,9 +119,7 @@ async function fetchBarbers(): Promise<BarberCard[]> {
   return profiles.map((p: any, i: number) => {
     const user = userSnaps[i].exists() ? (userSnaps[i].data() as any) : {};
     const sched = scheduleSnaps[i].exists() ? (scheduleSnaps[i].data() as any) : null;
-    const prices = serviceSnaps[i].docs
-      .map(s => Number((s.data() as any).price) || 0)
-      .filter(n => n > 0);
+    const prices = servicesPriceMap.get(p.id) || [];
     const shop = p.shopId ? shopMap[p.shopId] : null;
     const city = p.city || user.city || '';
     const country = user.country || '';

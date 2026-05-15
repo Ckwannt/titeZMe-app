@@ -8,10 +8,11 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import { BookingRowSkeleton } from '@/components/skeletons';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { collection } from 'firebase/firestore';
 import { userUpdateSchema, bookingUpdateSchema } from "@/lib/schemas";
+import { cleanupBookingLock } from '@/lib/booking-lock-utils';
 import Image from 'next/image';
 
 export default function ClientDashboard() {
@@ -73,7 +74,18 @@ export default function ClientDashboard() {
     const loadingToast = toast.loading("Cancelling appointment...");
     try {
       const timeNow = Date.now();
+      const bookingDoc = bookings.find(b => b.id === bId);
       await updateDoc(doc(db, 'bookings', bId), bookingUpdateSchema.parse({ status: 'cancelled_by_client', updatedAt: timeNow }));
+      // Clean up the booking lock so the slot becomes bookable again
+      if (bookingDoc) {
+        await cleanupBookingLock({
+          barberId: bookingDoc.barberId,
+          date: bookingDoc.date,
+          startTime: bookingDoc.startTime,
+          endTime: bookingDoc.endTime,
+          id: bId,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['clientData', user?.uid] });
       toast.success("Appointment cancelled.", { id: loadingToast });
     } catch(e) {

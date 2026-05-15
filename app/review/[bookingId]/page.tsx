@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc, addDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import { notificationSchema, barberUpdateSchema } from "@/lib/schemas";
 
 export default function ReviewPage({ params }: { params: Promise<{ bookingId: string }> }) {

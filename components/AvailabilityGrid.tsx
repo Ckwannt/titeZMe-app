@@ -5,8 +5,9 @@ import { startOfWeek, addDays, format, isBefore, isPast, parseISO, addWeeks, sub
 import { collection, query, where, getDocs, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import { scheduleUpdateSchema } from "@/lib/schemas";
+import { safeFirestore } from '@/lib/firebase-helpers';
 
 export interface AvailabilityGridProps {
   mode?: 'barber' | 'shop' | 'client';
@@ -150,16 +151,15 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
   const saveSchedule = async () => {
     if (!uid) return;
     setSaving(true);
-    try {
-      await setDoc(
+    const result = await safeFirestore(
+      () => setDoc(
         doc(db, 'schedules', `${uid}_shard_0`),
         { ...scheduleUpdateSchema.parse({ availableSlots }), cleanupBufferMinutes: bufferMinutes },
         { merge: true }
-      );
-      setLastSaved(new Date());
-    } catch (e) {
-      console.error(e);
-    }
+      ),
+      { successMessage: 'Schedule saved!', errorMessage: 'Failed to save schedule.' }
+    );
+    if (result !== null) setLastSaved(new Date());
     setSaving(false);
   };
 

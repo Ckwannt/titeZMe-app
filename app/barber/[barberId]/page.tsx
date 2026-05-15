@@ -12,7 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BarberProfileSkeleton } from '@/components/skeletons';
-import toast from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import { getOpenStatus, getLocalDateString, getTimezoneFromLocation } from '@/lib/schedule-utils';
 
 // ─── types ────────────────────────────────────────────────────────────────────
@@ -135,6 +135,7 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
   const [schedule, setSchedule] = useState<{ availableSlots?: Record<string, string[]> } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [optimisticFav, setOptimisticFav] = useState<boolean | null>(null);
 
   // ─── queries ─────────────────────────────────────────────────────────────────
 
@@ -234,7 +235,7 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
   );
   const minPrice = services.length > 0 ? Math.min(...services.map(s => s.price || 0)) : null;
   const currency = profile?.currency || '€';
-  const isFav = appUser?.favoriteBarbers?.includes(barberId);
+  const isFav = optimisticFav !== null ? optimisticFav : !!(appUser?.favoriteBarbers?.includes(barberId));
   const firstName = userProfile?.firstName || 'Barber';
   const lastName = userProfile?.lastName || '';
   const todaySlots: string[] = schedule?.availableSlots?.[todayDate] || [];
@@ -273,9 +274,12 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
   const handleToggleFav = async () => {
     if (!user) { router.push('/login'); return; }
     if (appUser?.role !== 'client') { toast.error('Only clients can save barbers'); return; }
+    // Optimistic update — flip immediately
+    const wasAlreadyFav = isFav;
+    setOptimisticFav(!wasAlreadyFav);
     setIsSaving(true);
     try {
-      if (isFav) {
+      if (wasAlreadyFav) {
         await updateDoc(doc(db, 'users', user.uid), { favoriteBarbers: arrayRemove(barberId) });
         toast.success('Removed from saved');
       } else {
@@ -283,7 +287,12 @@ export default function BarberProfilePage({ params }: { params: Promise<{ barber
         toast.success('Saved ✓');
       }
       queryClient.invalidateQueries({ queryKey: ['clientData', user.uid] });
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      // Revert on failure
+      setOptimisticFav(wasAlreadyFav);
+      toast.error('Failed to update. Try again.');
+      console.error(e);
+    }
     setIsSaving(false);
   };
 

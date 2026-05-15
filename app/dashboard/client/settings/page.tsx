@@ -6,7 +6,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import Select from 'react-select';
 import { Country, City } from 'country-state-city';

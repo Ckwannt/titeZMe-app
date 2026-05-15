@@ -7,7 +7,7 @@ import { db, storage } from '@/lib/firebase';
 import { ref, deleteObject } from 'firebase/storage';
 import Image from 'next/image';
 import { barberUpdateSchema } from "@/lib/schemas";
-import { toast } from 'react-hot-toast';
+import { toast } from '@/lib/toast';
 
 interface BarberPortfolioTabProps {
   profile: any;

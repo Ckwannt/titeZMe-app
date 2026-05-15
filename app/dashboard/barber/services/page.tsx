@@ -6,6 +6,7 @@ import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, ge
 import { db } from "@/lib/firebase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { barberUpdateSchema } from "@/lib/schemas";
+import { safeFirestore } from '@/lib/firebase-helpers';
 
 function getCurrencySymbol(c?: string) {
   const s: Record<string, string> = { 'EUR': '€', 'GBP': '£', 'USD': '$', 'MAD': 'MAD ', 'DZD': 'DA ', 'SAR': 'SAR ', 'AED': 'AED ', 'SEK': 'kr ', 'CHF': 'CHF ' };
@@ -67,11 +68,11 @@ export default function ServicesPage() {
   const addService = async () => {
     if (!newServiceName || !newServicePrice || !user) return;
     if ((services as any[]).some((s: any) => s.name.toLowerCase().trim() === newServiceName.toLowerCase().trim())) { toast(`You already have '${newServiceName}'. Edit the existing one instead.`); return; }
-    try {
-      await setDoc(doc(collection(db, 'services')), { providerId: user.uid, providerType: 'barber', name: newServiceName, duration: parseInt(newServiceDuration) || 30, price: parseFloat(newServicePrice), description: newServiceDescription.trim(), isActive: true, sortOrder: (services as any[]).length });
-      setNewServiceName(''); setNewServicePrice(''); setNewServiceDuration(''); setNewServiceDescription('');
-      mutateServices();
-    } catch (e) { console.error(e); }
+    const result = await safeFirestore(
+      () => setDoc(doc(collection(db, 'services')), { providerId: user.uid, providerType: 'barber', name: newServiceName, duration: parseInt(newServiceDuration) || 30, price: parseFloat(newServicePrice), description: newServiceDescription.trim(), isActive: true, sortOrder: (services as any[]).length }),
+      { successMessage: 'Service added!', errorMessage: 'Failed to add service.' }
+    );
+    if (result !== null) { setNewServiceName(''); setNewServicePrice(''); setNewServiceDuration(''); setNewServiceDescription(''); mutateServices(); }
   };
 
   const saveEditService = async (svcId: string) => {
@@ -79,7 +80,20 @@ export default function ServicesPage() {
   };
 
   const toggleServiceActive = async (svcId: string, currentIsActive: boolean) => {
-    try { await updateDoc(doc(db, 'services', svcId), { isActive: !currentIsActive }); mutateServices(); } catch (e) { console.error(e); }
+    // Optimistic update — flip immediately, revert on failure
+    queryClient.setQueryData(['services', user?.uid], (prev: any[]) =>
+      (prev || []).map((s: any) => s.id === svcId ? { ...s, isActive: !currentIsActive } : s)
+    );
+    try {
+      await updateDoc(doc(db, 'services', svcId), { isActive: !currentIsActive });
+    } catch (e) {
+      // Revert on failure
+      queryClient.setQueryData(['services', user?.uid], (prev: any[]) =>
+        (prev || []).map((s: any) => s.id === svcId ? { ...s, isActive: currentIsActive } : s)
+      );
+      toast('Failed to update service');
+      console.error(e);
+    }
   };
 
   const moveService = async (svcId: string, direction: 'up' | 'down') => {
@@ -170,7 +184,7 @@ export default function ServicesPage() {
               <div className="flex items-center gap-2 shrink-0">
                 <div className="font-black text-brand-yellow">{svcSym}{svc.price}</div>
                 <button onClick={() => { setEditingServiceId(svc.id); setEditSvcData({ name: svc.name, duration: String(svc.duration || ''), price: String(svc.price || ''), description: svc.description || '' }); }} className="text-[#444] hover:text-[#888] font-bold text-xs p-1.5">✏️</button>
-                <button onClick={async () => { await deleteDoc(doc(db, 'services', svc.id)); mutateServices(); }} className="text-[#555] hover:text-brand-red font-bold text-xs p-1.5">✕</button>
+                <button onClick={async () => { await safeFirestore(() => deleteDoc(doc(db, 'services', svc.id)), { successMessage: 'Service deleted.', errorMessage: 'Failed to delete service.' }); mutateServices(); }} className="text-[#555] hover:text-brand-red font-bold text-xs p-1.5">✕</button>
               </div>
             </div>
           )

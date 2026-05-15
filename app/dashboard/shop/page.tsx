@@ -15,6 +15,7 @@ import {
 import { db } from "@/lib/firebase";
 import Link from "next/link";
 import { getLocalDateString, getTimezoneFromLocation } from "@/lib/schedule-utils";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -379,6 +380,7 @@ export default function ShopOverviewPage() {
       </div>
 
       {/* Stat Cards */}
+      <ErrorBoundary section="stat cards">
       <div className="animate-fadeUp grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
         {/* Revenue */}
         <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-5 flex flex-col gap-1.5">
@@ -418,6 +420,7 @@ export default function ShopOverviewPage() {
           </div>
         </div>
       </div>
+      </ErrorBoundary>
 
       {/* Quick Actions */}
       <div className="animate-fadeUp flex flex-wrap gap-2 mb-6">
@@ -548,6 +551,7 @@ export default function ShopOverviewPage() {
       </div>
 
       {/* Barber Roster */}
+      <ErrorBoundary section="barber roster">
       <div className="animate-fadeUp">
         <div className="font-extrabold text-base mb-4">Your Barbers — {getMonthLabel()}</div>
         {barbers.length === 0 ? (
@@ -648,6 +652,7 @@ export default function ShopOverviewPage() {
           </div>
         )}
       </div>
+      </ErrorBoundary>
     </div>
   );
 }

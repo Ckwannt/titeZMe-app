@@ -30,13 +30,16 @@ export function NotificationBell() {
   }, [user]);
 
   const handleNotifClick = async (n: any) => {
-    try {
-      await updateDoc(doc(db, 'notifications', n.id), notificationUpdateSchema.parse({ read: true }));
-      setShowDropdown(false);
-      if (n.linkTo) router.push(n.linkTo);
-    } catch (e) {
+    // Optimistic: mark read in local state immediately before Firestore responds
+    setNotifications(prev => prev.map(notif => notif.id === n.id ? { ...notif, read: true } : notif));
+    setShowDropdown(false);
+    if (n.linkTo) router.push(n.linkTo);
+    // Sync to Firestore in background
+    updateDoc(doc(db, 'notifications', n.id), notificationUpdateSchema.parse({ read: true })).catch(e => {
       console.error(e);
-    }
+      // Revert on failure
+      setNotifications(prev => prev.map(notif => notif.id === n.id ? { ...notif, read: false } : notif));
+    });
   };
 
   if (!user) return null;

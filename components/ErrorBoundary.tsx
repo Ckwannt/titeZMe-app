@@ -1,43 +1,68 @@
 'use client';
 
-import React, { Component, ReactNode } from 'react';
+import React from 'react';
 
-export interface ErrorBoundaryProps {
-  children: ReactNode;
+interface Props {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  section?: string;
 }
 
-export interface ErrorBoundaryState {
+interface State {
   hasError: boolean;
+  error?: Error;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+export class ErrorBoundary extends React.Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error(`Error in ${this.props.section || 'component'}:`, error, info);
   }
 
   render() {
     if (this.state.hasError) {
+      if (this.props.fallback) return this.props.fallback;
+
       return (
-        <div className="min-h-screen bg-[#1A1A1B] flex flex-col items-center justify-center p-6 text-center">
-          <div className="mb-8 p-4 bg-[#2A2A2B] rounded-2xl border border-[#3A3A3B] shadow-2xl">
-            <h1 className="text-3xl font-black text-[#FFD700] uppercase tracking-tighter mb-2">titeZMe</h1>
+        <div style={{
+          background: '#111',
+          border: '1px solid #1e1e1e',
+          borderRadius: '12px',
+          padding: '24px',
+          textAlign: 'center',
+          color: '#555',
+        }}>
+          <div style={{ fontSize: '24px', marginBottom: '8px' }}>⚠️</div>
+          <div style={{ fontSize: '13px', fontWeight: 800, color: '#888', marginBottom: '4px' }}>
+            Something went wrong here
           </div>
-          <h2 className="text-2xl font-bold text-[#F0F0F0] mb-4">Something went wrong.</h2>
-          <p className="text-[#a0a0a0] mb-8 text-lg">Try refreshing the page.</p>
+          <div style={{ fontSize: '11px' }}>
+            {this.props.section
+              ? `The ${this.props.section} section failed to load.`
+              : 'This section failed to load.'}
+          </div>
           <button
-            onClick={() => window.location.reload()}
-            className="bg-[#FFD700] text-[#1A1A1B] font-bold py-4 px-8 rounded-full text-lg shadow-lg hover:bg-[#ffe55c] active:scale-95 transition-all"
+            onClick={() => this.setState({ hasError: false })}
+            style={{
+              marginTop: '12px',
+              background: 'transparent',
+              border: '1px solid #2a2a2a',
+              color: '#888',
+              borderRadius: '99px',
+              padding: '6px 16px',
+              fontSize: '11px',
+              cursor: 'pointer',
+            }}
           >
-            Refresh
+            Try again
           </button>
         </div>
       );
