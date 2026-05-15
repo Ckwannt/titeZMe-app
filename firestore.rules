@@ -17,11 +17,20 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid != null;
     }
 
-    // Admin check — reads isAdmin field from the caller's user document
+    // Admin check — accepts both isAdmin:true flag and role:'admin'
     function isAdmin() {
       return request.auth != null
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
+        && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true
+          ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin'
+        );
+    }
+
+    function isSuperAdmin() {
+      return isAdmin()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isSuperAdmin', false) == true;
     }
 
     function isValidId(id) {
@@ -36,7 +45,7 @@ service cloud.firestore {
       return data.keys().hasAll(['uid', 'email', 'role', 'firstName', 'lastName', 'createdAt', 'isOnboarded'])
         && data.uid is string && data.uid.size() <= 128
         && data.email is string && data.email.size() <= 256
-        && data.role in ['client', 'barber', 'shop_owner']
+        && data.role in ['client', 'barber', 'shop_owner', 'admin']
         && data.firstName is string && data.firstName.size() <= 100
         && data.lastName is string && data.lastName.size() <= 100
         && data.createdAt is number
@@ -284,6 +293,14 @@ service cloud.firestore {
     match /featureRequests/{reqId} {
       allow read: if isAdmin();
       allow create: if isSignedIn();
+    }
+
+    // Admin user registry — super-admin only for write
+    match /adminUsers/{adminId} {
+      allow read: if isAdmin();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
     }
 
     // Locks for double booking checks

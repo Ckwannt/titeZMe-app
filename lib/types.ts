@@ -33,7 +33,7 @@ export interface BarberProfile {
 export interface UserDocument {
   uid: string;
   email: string;
-  role: 'client' | 'barber';
+  role: 'client' | 'barber' | 'admin';
   firstName: string;
   lastName: string;
   city: string;
@@ -183,4 +183,26 @@ export interface Invite {
   status: 'pending' | 'accepted' | 'declined' | 'cancelled';
   createdAt: number;
   respondedAt?: number;
+}
+
+export interface AdminPermissions {
+  canApproveBarbers: boolean;
+  canApproveShops: boolean;
+  canManageReviews: boolean;
+  canManageBookings: boolean;
+  canManageUsers: boolean;
+  canManageFeatured: boolean;
+  canCreateAdmins: boolean;
+}
+
+export interface AdminUser {
+  uid: string;
+  email: string;
+  role: 'admin';
+  isAdmin: true;
+  isSuperAdmin: boolean;
+  firstName: string;
+  lastName: string;
+  createdAt: number;
+  permissions: AdminPermissions;
 }
