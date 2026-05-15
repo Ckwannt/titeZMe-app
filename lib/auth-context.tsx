@@ -46,6 +46,8 @@ interface AuthContextType {
   user: FirebaseUser | null;
   appUser: AppUser | null;
   loading: boolean;
+  /** Alias for loading — true until Firebase Auth confirms identity */
+  authLoading: boolean;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -54,6 +56,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   appUser: null,
   loading: true,
+  authLoading: true,
   logout: async () => {},
   refreshUser: async () => {},
 });
@@ -146,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, appUser, loading, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, appUser, loading, authLoading: loading, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

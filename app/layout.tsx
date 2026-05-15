@@ -13,8 +13,18 @@ import './globals.css';
 const nunito = Nunito({ subsets: ['latin'], variable: '--font-nunito' });
 
 export const metadata: Metadata = {
-  title: 'titeZMe',
-  description: 'Barber shop booking platform',
+  metadataBase: new URL('https://tite-z-me-app.vercel.app'),
+  title: {
+    default: 'titeZMe — Find Your Perfect Barber',
+    template: '%s — titeZMe',
+  },
+  description: 'Find top-rated barbers near you. Real availability. Book in 30 seconds. Cash only.',
+  keywords: ['barber', 'barbershop', 'haircut', 'fade', 'booking', 'hair'],
+  openGraph: {
+    type: 'website',
+    siteName: 'titeZMe',
+    images: ['/wordmark.png'],
+  },
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
