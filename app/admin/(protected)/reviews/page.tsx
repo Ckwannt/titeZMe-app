@@ -4,12 +4,14 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   collection,
   query,
+  where,
   orderBy,
   limit,
   getDocs,
   doc,
   getDoc,
   deleteDoc,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from '@/lib/toast';
@@ -25,6 +27,7 @@ interface ReviewRow {
   comment?: string;
   createdAt?: number;
   barberName?: string;
+  isFlagged?: boolean;
 }
 
 function StarRating({ rating }: { rating?: number }) {
@@ -51,8 +54,7 @@ export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [ratingFilter, setRatingFilter] = useState<0 | 1 | 2 | 3 | 4 | 5>(0);
-  const [flagged, setFlagged] = useState(false);
-  const [flaggedIds, setFlaggedIds] = useState<string[]>([]);
+  const [showFlagged, setShowFlagged] = useState(false);
   const [page, setPage] = useState(1);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -65,10 +67,18 @@ export default function AdminReviewsPage() {
           query(collection(db, 'reviews'), orderBy('createdAt', 'desc'), limit(FETCH_LIMIT))
         );
 
-        const rawReviews: ReviewRow[] = snap.docs.map((d) => ({
-          id: d.id,
-          ...(d.data() as Omit<ReviewRow, 'id'>),
-        }));
+        const rawReviews: ReviewRow[] = snap.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
+          return {
+            id: d.id,
+            clientId: data.clientId as string | undefined,
+            providerId: data.providerId as string | undefined,
+            rating: data.rating as number | undefined,
+            comment: data.comment as string | undefined,
+            createdAt: data.createdAt as number | undefined,
+            isFlagged: Boolean(data.isFlagged),
+          };
+        });
 
         // Collect unique providerIds to fetch barber names
         const providerIds = new Set<string>();
@@ -117,8 +127,8 @@ export default function AdminReviewsPage() {
   const filtered = useMemo(() => {
     let list = reviews;
 
-    if (flagged) {
-      list = list.filter((r) => flaggedIds.includes(r.id));
+    if (showFlagged) {
+      list = list.filter((r) => r.isFlagged);
     }
 
     if (ratingFilter !== 0) {
@@ -126,16 +136,43 @@ export default function AdminReviewsPage() {
     }
 
     return list;
-  }, [reviews, flagged, flaggedIds, ratingFilter]);
+  }, [reviews, showFlagged, ratingFilter]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
+  async function recalculateBarberRating(barberId: string) {
+    try {
+      const remainingSnap = await getDocs(
+        query(collection(db, 'reviews'), where('providerId', '==', barberId))
+      );
+      const ratings = remainingSnap.docs
+        .map((d) => d.data().rating as number)
+        .filter((r) => typeof r === 'number');
+      const newCount = ratings.length;
+      const newRating =
+        newCount > 0
+          ? Number((ratings.reduce((a, b) => a + b, 0) / newCount).toFixed(1))
+          : 0;
+      await updateDoc(doc(db, 'barberProfiles', barberId), {
+        rating: newRating,
+        reviewCount: newCount,
+      });
+    } catch (err) {
+      console.error('Rating recalc error:', err);
+    }
+  }
+
   async function handleDelete(reviewId: string) {
     setDeleting(true);
     try {
+      const review = reviews.find((r) => r.id === reviewId);
       await deleteDoc(doc(db, 'reviews', reviewId));
       setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+      // Recalculate the barber's aggregate rating after removal
+      if (review?.providerId) {
+        await recalculateBarberRating(review.providerId);
+      }
       toast.success('Review deleted');
     } catch (err) {
       console.error('Delete review error:', err);
@@ -146,10 +183,20 @@ export default function AdminReviewsPage() {
     }
   }
 
-  function handleFlag(reviewId: string) {
-    setFlaggedIds((prev) =>
-      prev.includes(reviewId) ? prev.filter((id) => id !== reviewId) : [...prev, reviewId]
-    );
+  async function handleFlag(reviewId: string) {
+    const review = reviews.find((r) => r.id === reviewId);
+    if (!review) return;
+    const newFlagged = !review.isFlagged;
+    try {
+      await updateDoc(doc(db, 'reviews', reviewId), { isFlagged: newFlagged });
+      // Optimistic update in local state
+      setReviews((prev) =>
+        prev.map((r) => (r.id === reviewId ? { ...r, isFlagged: newFlagged } : r))
+      );
+    } catch (err) {
+      console.error('Flag error:', err);
+      toast.error('Failed to update flag');
+    }
   }
 
   const ratingOptions: Array<0 | 1 | 2 | 3 | 4 | 5> = [0, 1, 2, 3, 4, 5];
@@ -189,19 +236,19 @@ export default function AdminReviewsPage() {
 
         {/* Flagged toggle */}
         <button
-          onClick={() => { setFlagged((v) => !v); setPage(1); }}
+          onClick={() => { setShowFlagged((v) => !v); setPage(1); }}
           style={{
-            background: flagged ? '#1a0f00' : '#111',
-            border: `1px solid ${flagged ? '#E8491D' : '#1e1e1e'}`,
+            background: showFlagged ? '#1a0f00' : '#111',
+            border: `1px solid ${showFlagged ? '#E8491D' : '#1e1e1e'}`,
             borderRadius: 8,
             padding: '6px 14px',
             fontSize: 12,
             fontWeight: 700,
-            color: flagged ? '#E8491D' : '#555',
+            color: showFlagged ? '#E8491D' : '#555',
             cursor: 'pointer',
           }}
         >
-          🚩 Flagged ({flaggedIds.length})
+          🚩 Flagged ({reviews.filter((r) => r.isFlagged).length})
         </button>
       </div>
 
@@ -213,7 +260,7 @@ export default function AdminReviewsPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {paginated.map((review) => {
-            const isFlaggedReview = flaggedIds.includes(review.id);
+            const isFlaggedReview = Boolean(review.isFlagged);
             return (
               <div
                 key={review.id}

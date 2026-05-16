@@ -10,6 +10,7 @@ import {
   limit,
   writeBatch,
   doc,
+  onSnapshot,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -121,48 +122,42 @@ export default function AdminOverviewPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchStats() {
-      // Run migration first (no-op if already done)
-      await migrateApprovalStatus();
-      try {
-        const todayStr = getLocalDateString();
-        const monthStr = todayStr.slice(0, 7); // YYYY-MM
+    // Run migration first (no-op if already done or localStorage flag set)
+    migrateApprovalStatus();
 
+    const todayStr = getLocalDateString();
+    const monthStr = todayStr.slice(0, 7); // YYYY-MM
+
+    // ── onSnapshot listeners for the 4 stats that change most often ──────────
+    const unsubPending = onSnapshot(
+      query(collection(db, 'barberProfiles'), where('approvalStatus', '==', 'pending')),
+      (snap) => setStats((prev) => ({ ...prev, pendingBarbers: snap.size }))
+    );
+    const unsubLive = onSnapshot(
+      query(collection(db, 'barberProfiles'), where('isLive', '==', true)),
+      (snap) => setStats((prev) => ({ ...prev, liveBarbers: snap.size }))
+    );
+    const unsubShops = onSnapshot(
+      query(collection(db, 'barbershops'), where('status', '==', 'active')),
+      (snap) => setStats((prev) => ({ ...prev, activeShops: snap.size }))
+    );
+    const unsubSuspended = onSnapshot(
+      query(collection(db, 'barberProfiles'), where('approvalStatus', '==', 'suspended')),
+      (snap) => setStats((prev) => ({ ...prev, suspendedAccounts: snap.size }))
+    );
+
+    // ── One-time getDocs for the rest (change infrequently) ──────────────────
+    async function fetchStatic() {
+      try {
         const [
-          pendingSnap,
-          liveSnap,
-          shopsSnap,
           clientsSnap,
           todaySnap,
           monthSnap,
-          suspendedSnap,
           totalSnap,
           activitySnap,
         ] = await Promise.all([
-          getDocs(
-            query(
-              collection(db, 'barberProfiles'),
-              where('approvalStatus', '==', 'pending')
-            )
-          ),
-          getDocs(
-            query(
-              collection(db, 'barberProfiles'),
-              where('isLive', '==', true)
-            )
-          ),
-          getDocs(
-            query(
-              collection(db, 'barbershops'),
-              where('status', '==', 'active')
-            )
-          ),
-          getDocs(
-            query(collection(db, 'users'), where('role', '==', 'client'))
-          ),
-          getDocs(
-            query(collection(db, 'bookings'), where('date', '==', todayStr))
-          ),
+          getDocs(query(collection(db, 'users'), where('role', '==', 'client'))),
+          getDocs(query(collection(db, 'bookings'), where('date', '==', todayStr))),
           getDocs(
             query(
               collection(db, 'bookings'),
@@ -170,32 +165,19 @@ export default function AdminOverviewPage() {
               where('date', '<', monthStr + '-99')
             )
           ),
-          getDocs(
-            query(
-              collection(db, 'barberProfiles'),
-              where('approvalStatus', '==', 'suspended')
-            )
-          ),
           getDocs(collection(db, 'bookings')),
           getDocs(
-            query(
-              collection(db, 'bookings'),
-              orderBy('createdAt', 'desc'),
-              limit(8)
-            )
+            query(collection(db, 'bookings'), orderBy('createdAt', 'desc'), limit(8))
           ),
         ]);
 
-        setStats({
-          pendingBarbers: pendingSnap.size,
-          liveBarbers: liveSnap.size,
-          activeShops: shopsSnap.size,
+        setStats((prev) => ({
+          ...prev,
           totalClients: clientsSnap.size,
           bookingsToday: todaySnap.size,
           bookingsMonth: monthSnap.size,
           bookingsTotal: totalSnap.size,
-          suspendedAccounts: suspendedSnap.size,
-        });
+        }));
 
         const activity: ActivityItem[] = activitySnap.docs.map((d) => ({
           id: d.id,
@@ -209,7 +191,15 @@ export default function AdminOverviewPage() {
       }
     }
 
-    fetchStats();
+    fetchStatic();
+
+    // Cleanup listeners on unmount
+    return () => {
+      unsubPending();
+      unsubLive();
+      unsubShops();
+      unsubSuspended();
+    };
   }, []);
 
   const todayStr = getLocalDateString();

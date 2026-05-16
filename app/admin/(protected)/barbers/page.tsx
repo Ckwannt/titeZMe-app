@@ -10,7 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useDebounce } from '@/hooks/useDebounce';
 import Image from 'next/image';
 
@@ -97,9 +97,15 @@ function StatusBadge({ status, isLive }: { status: string; isLive: boolean }) {
 
 export default function AdminBarbersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [barbers, setBarbers] = useState<EnrichedBarber[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>('pending');
+  // Initialise tab from URL query param so links like /admin/barbers?tab=suspended work
+  const [tab, setTab] = useState<Tab>(() => {
+    const urlTab = searchParams.get('tab');
+    const valid: Tab[] = ['pending', 'live', 'rejected', 'suspended', 'all'];
+    return valid.includes(urlTab as Tab) ? (urlTab as Tab) : 'pending';
+  });
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [counts, setCounts] = useState<Counts>({
@@ -209,6 +215,7 @@ export default function AdminBarbersPage() {
   function handleTabClick(t: Tab) {
     setTab(t);
     setPage(1);
+    router.replace(`/admin/barbers?tab=${t}`, { scroll: false });
   }
 
   return (

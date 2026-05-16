@@ -88,6 +88,11 @@ export default function AdminTeamPage() {
     }
 
     setCreating(true);
+
+    // Save current admin credentials before creating new account.
+    // createUserWithEmailAndPassword hijacks the active Firebase session.
+    const currentAdminEmail = auth.currentUser?.email || '';
+
     try {
       const credential = await createUserWithEmailAndPassword(auth, email, tempPassword);
       const uid = credential.user.uid;
@@ -110,6 +115,23 @@ export default function AdminTeamPage() {
         setDoc(doc(db, 'users', uid), adminDoc),
         setDoc(doc(db, 'adminUsers', uid), adminDoc),
       ]);
+
+      // CRITICAL: Re-authenticate as the original super admin.
+      // After createUserWithEmailAndPassword the session belongs to the new
+      // account. We must sign back in so the creator stays logged in.
+      const adminPassword = prompt(
+        'Admin created! To stay logged in, confirm your admin password:'
+      );
+
+      if (adminPassword && currentAdminEmail) {
+        try {
+          await signInWithEmailAndPassword(auth, currentAdminEmail, adminPassword);
+        } catch {
+          // Wrong password or network error — AdminGuard will catch the
+          // unauthenticated state and redirect to login.
+          toast.error('Could not re-authenticate. Please log in again.');
+        }
+      }
 
       setCreatedCreds({ email, password: tempPassword });
       setFirstName(''); setLastName(''); setEmail(''); setTempPassword('');
