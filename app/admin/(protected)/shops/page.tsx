@@ -15,7 +15,7 @@ interface EnrichedShop {
   id: string;
   name?: string;
   status: string;
-  address?: string;
+  address?: Record<string, string>;
   city?: string;
   ownerId?: string;
   ownerName?: string;
@@ -108,8 +108,8 @@ export default function AdminShopsPage() {
               id: shopDoc.id,
               name: data.name as string | undefined,
               status: (data.status as string) || 'pending',
-              address: data.address as string | undefined,
-              city: data.city as string | undefined,
+              address: data.address as Record<string, string> | undefined,
+              city: (data.address as Record<string, string> | undefined)?.city || (data.city as string | undefined),
               ownerId,
               ownerName,
               barbers: data.barbers as string[] | undefined,
@@ -272,7 +272,7 @@ export default function AdminShopsPage() {
                   {shop.name || '—'}
                 </div>
                 <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
-                  {shop.city || shop.address || 'No location'}
+                  {shop.city || shop.address?.city || shop.address?.country || 'No location'}
                 </div>
               </div>
 
