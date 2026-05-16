@@ -178,11 +178,18 @@ export default function BookingsPage() {
         });
       }
 
-      if (booking?.clientId && (status === 'confirmed' || status === 'cancelled_by_barber')) {
-        const message = status === 'confirmed'
-          ? `Your booking on ${booking.date} at ${booking.startTime} has been confirmed by your barber. See you there!`
-          : `Your booking on ${booking.date} at ${booking.startTime} was cancelled by your barber.`;
-        await addDoc(collection(db, 'notifications'), notificationSchema.parse({ userId: booking.clientId, message, read: false, linkTo: '/dashboard/client', createdAt: Date.now() }));
+      if (booking?.clientId && (status === 'confirmed' || status === 'cancelled_by_barber' || status === 'completed')) {
+        let message = '';
+        let linkTo = '/dashboard/client';
+        if (status === 'confirmed') {
+          message = `Your booking on ${booking.date} at ${booking.startTime} has been confirmed by your barber. See you there!`;
+        } else if (status === 'cancelled_by_barber') {
+          message = `Your booking on ${booking.date} at ${booking.startTime} was cancelled by your barber.`;
+        } else if (status === 'completed') {
+          message = `Your cut is complete! How was it? Leave a review for your barber.`;
+          linkTo = `/review/${booking.id}`;
+        }
+        await addDoc(collection(db, 'notifications'), notificationSchema.parse({ userId: booking.clientId, message, read: false, linkTo, createdAt: Date.now() }));
       }
     } catch (e) { console.error(e); }
   };

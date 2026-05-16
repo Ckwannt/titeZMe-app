@@ -113,12 +113,17 @@ export default async function BarberProfilePage({
       })
     );
 
+    const scheduleData = scheduleDoc.exists
+      ? (scheduleDoc.data() as { availableSlots?: Record<string, string[]> })
+      : null;
+
     const initialData: BarberProfileInitialData = {
       profile: { id: barberId, ...profileData } as any,
       userProfile: userData as any,
       shop: shopData,
       services: services as any[],
       reviews: reviews as any[],
+      schedule: scheduleData,
     };
 
     return <BarberProfileClient barberId={barberId} initialData={initialData} />;

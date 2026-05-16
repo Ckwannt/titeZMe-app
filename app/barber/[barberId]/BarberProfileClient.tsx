@@ -128,6 +128,7 @@ export interface BarberProfileInitialData {
   shop: ShopDoc | null;
   services: ServiceDoc[];
   reviews: ReviewDoc[];
+  schedule?: { availableSlots?: Record<string, string[]> } | null;
 }
 
 interface BarberProfileClientProps {
@@ -143,7 +144,10 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [bookingContext, setBookingContext] = useState<'solo' | 'shop'>('solo');
   const [visibleReviews, setVisibleReviews] = useState(5);
-  const [schedule, setSchedule] = useState<{ availableSlots?: Record<string, string[]> } | null>(null);
+  // Pre-populate schedule from SSR initialData so the sidebar shows availability immediately
+  const [schedule, setSchedule] = useState<{ availableSlots?: Record<string, string[]> } | null>(
+    initialData?.schedule ?? null
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [optimisticFav, setOptimisticFav] = useState<boolean | null>(null);

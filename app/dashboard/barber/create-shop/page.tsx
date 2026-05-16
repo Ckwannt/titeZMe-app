@@ -131,7 +131,7 @@ export default function CreateShopPage() {
               googleMapsUrl: googleMapsUrl,
               description: description,
               photos: [],
-              status: 'active',
+              status: 'pending',
               barbers: [],
               createdAt: Date.now()
             }));
