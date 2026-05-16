@@ -4,7 +4,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import type { AdminPermissions } from '@/lib/types';
 
 export interface AdminData {
@@ -41,26 +41,31 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
 
-    if (!user) {
-      // Delay before redirecting to give Firebase Auth time to propagate a
-      // fresh session after signInWithEmailAndPassword completes on the login
-      // page. Without this, the AdminGuard would see user=null and redirect
-      // back to /admin/login before the auth state update arrives.
+    // Check auth.currentUser directly (synchronous) in addition to useAuth().
+    // After signInWithEmailAndPassword, auth.currentUser is set immediately
+    // but useAuth()/onAuthStateChanged can take another render cycle to update.
+    // Without this check the guard sees user=null and bounces back to login.
+    if (!auth.currentUser && !user) {
       const timer = setTimeout(() => {
         router.replace('/admin/login');
         setChecking(false);
-      }, 1000);
+      }, 1500);
       return () => clearTimeout(timer);
+    }
+
+    const uid = user?.uid || auth.currentUser?.uid;
+
+    if (!uid) {
+      setChecking(false);
+      return;
     }
 
     const checkAdmin = async () => {
       try {
-        const snap = await getDoc(doc(db, 'users', user.uid));
+        const snap = await getDoc(doc(db, 'users', uid));
 
         if (!snap.exists()) {
-          setTimeout(() => {
-            router.replace('/admin/login');
-          }, 500);
+          router.replace('/admin/login');
           setChecking(false);
           return;
         }
@@ -79,7 +84,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
           isSuperAdmin: data?.isSuperAdmin === true,
           firstName: data?.firstName || 'Admin',
           lastName: data?.lastName || '',
-          email: data?.email || user.email || '',
+          email: data?.email || auth.currentUser?.email || '',
           permissions: {
             ...DEFAULT_PERMISSIONS,
             ...(data?.permissions || {}),
@@ -87,9 +92,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         });
       } catch (err) {
         console.error('Admin check failed:', err);
-        setTimeout(() => {
-          router.replace('/admin/login');
-        }, 500);
+        router.replace('/admin/login');
       } finally {
         setChecking(false);
       }
