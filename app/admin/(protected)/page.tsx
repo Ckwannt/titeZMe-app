@@ -8,8 +8,36 @@ import {
   getDocs,
   orderBy,
   limit,
+  writeBatch,
+  doc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+
+// ─── One-time migration: backfill approvalStatus on existing barberProfiles ──
+// Runs once per browser session (localStorage flag). Safe to re-run.
+async function migrateApprovalStatus() {
+  const FLAG = 'tzm_migrated_approval_status_v1';
+  if (typeof window !== 'undefined' && localStorage.getItem(FLAG)) return;
+  try {
+    const snap = await getDocs(collection(db, 'barberProfiles'));
+    const batch = writeBatch(db);
+    let count = 0;
+    snap.docs.forEach((d) => {
+      const data = d.data();
+      if (!data.approvalStatus) {
+        // Live barbers are already approved; offline ones need review
+        const status = data.isLive ? 'approved' : 'pending';
+        batch.update(doc(db, 'barberProfiles', d.id), { approvalStatus: status });
+        count++;
+      }
+    });
+    if (count > 0) await batch.commit();
+    if (typeof window !== 'undefined') localStorage.setItem(FLAG, 'true');
+  } catch (err) {
+    console.error('Migration migrateApprovalStatus failed:', err);
+    // Non-critical — don't block dashboard load
+  }
+}
 import Link from 'next/link';
 import { getLocalDateString } from '@/lib/schedule-utils';
 
@@ -94,6 +122,8 @@ export default function AdminOverviewPage() {
 
   useEffect(() => {
     async function fetchStats() {
+      // Run migration first (no-op if already done)
+      await migrateApprovalStatus();
       try {
         const todayStr = getLocalDateString();
         const monthStr = todayStr.slice(0, 7); // YYYY-MM

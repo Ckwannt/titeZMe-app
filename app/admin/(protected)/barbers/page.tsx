@@ -136,7 +136,8 @@ export default function AdminBarbersPage() {
             }
             return {
               id: profileDoc.id,
-              approvalStatus: (data.approvalStatus as string) || 'pending',
+              // Fall back based on isLive for barbers created before approvalStatus was added
+              approvalStatus: (data.approvalStatus as string) || (data.isLive ? 'approved' : 'pending'),
               isLive: Boolean(data.isLive),
               city: data.city as string | undefined,
               barberCode: data.barberCode as string | undefined,

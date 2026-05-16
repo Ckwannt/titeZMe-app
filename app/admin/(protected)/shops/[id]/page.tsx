@@ -26,7 +26,7 @@ interface ShopDetailPageProps {
 interface ShopData {
   name?: string;
   status?: string;
-  address?: string;
+  address?: Record<string, string>;
   city?: string;
   country?: string;
   phone?: string;
@@ -312,7 +312,7 @@ export default function AdminShopDetailPage({ params }: ShopDetailPageProps) {
                 {shop.name || 'Unnamed Shop'}
               </h2>
               <p style={{ fontSize: 13, color: '#888', marginTop: 4 }}>
-                {[shop.address, shop.city, shop.country].filter(Boolean).join(', ') || 'No location'}
+                {[shop.address?.street, shop.address?.city || shop.city, shop.address?.country || shop.country].filter(Boolean).join(', ') || 'No location'}
               </p>
             </div>
             <StatusBadge status={status} />
@@ -535,9 +535,9 @@ export default function AdminShopDetailPage({ params }: ShopDetailPageProps) {
                 { label: 'Owner', value: ownerFullName },
                 { label: 'Email', value: owner?.email },
                 { label: 'Phone', value: shop.phone || owner?.phone },
-                { label: 'Address', value: shop.address },
-                { label: 'City', value: shop.city },
-                { label: 'Country', value: shop.country },
+                { label: 'Address', value: shop.address?.street || undefined },
+                { label: 'City', value: shop.address?.city || shop.city },
+                { label: 'Country', value: shop.address?.country || shop.country },
                 { label: 'Barbers', value: String(shop.barbers?.length ?? 0) },
                 { label: 'Created', value: formatDate(shop.createdAt) },
                 { label: 'Approved', value: shop.approvedAt ? formatDate(shop.approvedAt) : undefined },
