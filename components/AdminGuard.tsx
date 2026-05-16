@@ -42,9 +42,15 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     if (loading) return;
 
     if (!user) {
-      router.replace('/admin/login');
-      setChecking(false);
-      return;
+      // Delay before redirecting to give Firebase Auth time to propagate a
+      // fresh session after signInWithEmailAndPassword completes on the login
+      // page. Without this, the AdminGuard would see user=null and redirect
+      // back to /admin/login before the auth state update arrives.
+      const timer = setTimeout(() => {
+        router.replace('/admin/login');
+        setChecking(false);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
 
     const checkAdmin = async () => {
@@ -52,7 +58,9 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         const snap = await getDoc(doc(db, 'users', user.uid));
 
         if (!snap.exists()) {
-          router.replace('/admin/login');
+          setTimeout(() => {
+            router.replace('/admin/login');
+          }, 500);
           setChecking(false);
           return;
         }
@@ -79,7 +87,9 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         });
       } catch (err) {
         console.error('Admin check failed:', err);
-        router.replace('/admin/login');
+        setTimeout(() => {
+          router.replace('/admin/login');
+        }, 500);
       } finally {
         setChecking(false);
       }

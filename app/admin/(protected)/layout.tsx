@@ -14,7 +14,6 @@ function AdminSidebar() {
   const adminData = useAdminData();
   const p = adminData?.permissions;
 
-  // Build nav links filtered by permissions
   const allLinks = [
     { label: '⚡ Overview', href: '/admin', always: true },
     { label: '✂️ Barbers', href: '/admin/barbers', perm: p?.canApproveBarbers },
@@ -64,7 +63,6 @@ function AdminSidebar() {
       flexDirection: 'column',
       zIndex: 100,
     }}>
-      {/* Logo */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #141414' }}>
         <div style={{ color: '#F5C518', fontWeight: 900, fontSize: 20 }}>
           tite<span style={{ color: '#E8491D' }}>Z</span>Me
@@ -74,13 +72,11 @@ function AdminSidebar() {
         </span>
       </div>
 
-      {/* Nav */}
       <nav style={{ flex: 1, paddingTop: 8, overflowY: 'auto' }}>
         {visibleLinks.map(link => {
           const isActive = link.href === '/admin'
             ? pathname === '/admin'
             : pathname.startsWith(link.href);
-
           return (
             <Link
               key={link.href}
@@ -95,7 +91,6 @@ function AdminSidebar() {
         })}
       </nav>
 
-      {/* Footer — logged-in user + sign out */}
       <div style={{ padding: '14px 20px', borderTop: '1px solid #141414' }}>
         {adminData && (
           <div style={{ marginBottom: 10 }}>
@@ -118,18 +113,7 @@ function AdminSidebar() {
   );
 }
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const isLoginPage = pathname === '/admin/login';
-
-  if (isLoginPage) {
-    return (
-      <div style={{ background: '#0A0A0A', minHeight: '100vh', fontFamily: 'Nunito, sans-serif', color: '#fff' }}>
-        {children}
-      </div>
-    );
-  }
-
+export default function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <AdminGuard>
       <AdminSidebar />
