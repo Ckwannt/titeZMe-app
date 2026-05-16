@@ -24,29 +24,55 @@ export default function AdminLoginPage() {
     setError('');
 
     try {
+      // ── Step 1: Firebase Auth ─────────────────────────────────────────────
+      console.log('[AdminLogin] Step 1: signing in with email/password...');
       const credential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('[AdminLogin] Step 2: auth success, uid =', credential.user.uid);
 
-      const snap = await getDoc(doc(db, 'users', credential.user.uid));
+      // ── Step 2: Firestore read ────────────────────────────────────────────
+      const uid = credential.user.uid;
+      const ref = doc(db, 'users', uid);
+      console.log('[AdminLogin] Step 3: reading Firestore doc users/' + uid);
+
+      const snap = await getDoc(ref);
+      console.log('[AdminLogin] Step 4: doc exists =', snap.exists(), '| data =', snap.data());
 
       if (!snap.exists()) {
+        console.error('[AdminLogin] ERROR: users/' + uid + ' document does not exist in Firestore');
         await signOut(auth);
-        setError('Account not found.');
+        setError(
+          'User document not found. Make sure a Firestore document exists at users/' +
+          uid + ' with isAdmin:true'
+        );
         setLoading(false);
         return;
       }
 
       const userData = snap.data();
       const isAdminUser = userData?.isAdmin === true || userData?.role === 'admin';
+      console.log('[AdminLogin] Step 5: isAdmin =', userData?.isAdmin, '| role =', userData?.role, '| isAdminUser =', isAdminUser);
 
       if (!isAdminUser) {
+        console.warn('[AdminLogin] Step 6: access denied — not an admin account');
         await signOut(auth);
-        setError('Access denied. This is not an admin account. Use your personal account to log in at /login');
+        setError(
+          'Access denied. isAdmin: ' + userData?.isAdmin +
+          ', role: ' + userData?.role +
+          '. This is not an admin account.'
+        );
         setLoading(false);
         return;
       }
 
+      // ── Step 3: Navigate to admin ─────────────────────────────────────────
+      // FIX: always clear loading before navigating so if AdminGuard briefly
+      // bounces back the button is not stuck in "Signing in..." state.
+      console.log('[AdminLogin] Step 7: admin confirmed — navigating to /admin');
+      setLoading(false);
       router.replace('/admin');
+
     } catch (err: any) {
+      console.error('[AdminLogin] CAUGHT ERROR — code:', err?.code, '| message:', err?.message, '| full:', err);
       setLoading(false);
       const code = err?.code || '';
       if (
@@ -58,8 +84,13 @@ export default function AdminLoginPage() {
         setError('Invalid email or password.');
       } else if (code === 'auth/too-many-requests') {
         setError('Too many attempts. Try again in a few minutes.');
+      } else if (code === 'permission-denied') {
+        setError(
+          'Firestore permission denied. Check that firestore.rules allows ' +
+          'reading users/{uid} for authenticated users, then redeploy rules.'
+        );
       } else {
-        setError(err?.message || 'An error occurred. Please try again.');
+        setError('Error [' + (code || 'unknown') + ']: ' + (err?.message || 'An unexpected error occurred.'));
       }
     }
   };
