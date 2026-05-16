@@ -7,6 +7,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -91,12 +92,12 @@ export default function LoginPage() {
             <label className="text-[11px] font-extrabold text-brand-text-secondary block">PASSWORD</label>
             <a href="#" className="text-[10px] font-extrabold text-[#777] hover:text-white transition-colors">Forgot?</a>
           </div>
-          <input 
+          <PasswordInput
             required
-            type="password"
-            value={password} onChange={e => setPassword(e.target.value)}
-            className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3.5 text-white text-[15px] outline-none transition-colors focus:border-brand-yellow" 
-            placeholder="••••••••" 
+            value={password}
+            onChange={setPassword}
+            placeholder="••••••••"
+            className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3.5 text-white text-[15px] outline-none transition-colors focus:border-brand-yellow"
           />
         </div>
 

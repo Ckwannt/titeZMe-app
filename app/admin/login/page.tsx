@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -128,11 +129,10 @@ export default function AdminLoginPage() {
             autoComplete="email"
           />
 
-          <input
-            type="password"
+          <PasswordInput
             placeholder="Password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={setPassword}
             onKeyDown={e => e.key === 'Enter' && handleLogin()}
             style={inputStyle}
             autoComplete="current-password"
