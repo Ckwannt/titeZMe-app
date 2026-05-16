@@ -94,15 +94,19 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
          await updateDoc(pRef, updateData);
       }
 
-      // 3. Notify Barber
+      // 3. Mark booking as reviewed so the dashboard shows "Reviewed ✓"
+      await updateDoc(doc(db, 'bookings', bookingId), { hasReview: true });
+
+      // 4. Notify Barber
       await addDoc(collection(db, 'notifications'), notificationSchema.parse({
               userId: booking.barberId,
-              message: `Client left you a ${rating}-star review for your service.`,
+              message: `⭐ ${booking.clientName || 'A client'} left you a ${rating}-star review!`,
               read: false,
               linkTo: `/barber/${booking.barberId}`,
               createdAt: Date.now()
             }));
 
+      toast.success('Review submitted ✓');
       router.push('/dashboard/client');
 
     } catch (e: any) {

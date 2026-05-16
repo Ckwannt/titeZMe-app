@@ -20,7 +20,7 @@ import { notificationSchema } from "@/lib/schemas";
 export default function BookingPage({ params }: { params: Promise<{ barberId: string }> }) {
   const resolvedParams = use(params);
   const barberId = resolvedParams.barberId;
-  const { user } = useAuth();
+  const { user, appUser } = useAuth();
   const router = useRouter();
 
   const [step, setStep] = useState(1);
@@ -170,9 +170,16 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
 
         // Create the booking document
         const bookingRef = doc(db, 'bookings', newBookingId);
+        const clientFirst = appUser?.firstName || '';
+        const clientLast = appUser?.lastName || '';
+        const clientName = clientLast
+          ? `${clientFirst} ${clientLast.charAt(0)}.`
+          : clientFirst || 'Client';
         t.set(bookingRef, {
           clientId: user.uid,
+          clientName,
           barberId: barberId,
+          barberName: `${profile?.user?.firstName || ''} ${profile?.user?.lastName || ''}`.trim() || null,
           shopId: profile.shopId || null,
           bookingContext,
           serviceIds: selectedServices.map(s => s.id),
@@ -261,7 +268,7 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
              {services.map((svc: any) => {
                const isSelected = selectedServices.some(s => s.id === svc.id);
                return (
-                 <label key={svc.id} className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer ${isSelected ? 'border-brand-yellow bg-[#1a1500]' : 'border-[#2a2a2a] bg-[#141414] hover:border-[#444]'} ${svc.isTitz ? '!border-l-4 !border-l-brand-yellow' : ''}`}>
+                 <label key={svc.id} onClick={() => toggleService(svc)} className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer ${isSelected ? 'border-brand-yellow bg-[#1a1500]' : 'border-[#2a2a2a] bg-[#141414] hover:border-[#444]'} ${svc.isTitz ? '!border-l-4 !border-l-brand-yellow' : ''}`}>
                     <div className="flex items-center gap-4">
                        <div className={`w-6 h-6 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-brand-yellow bg-brand-yellow' : 'border-[#444]'}`}>
                          {isSelected && <span className="text-[#0a0a0a] text-xs font-black">✓</span>}

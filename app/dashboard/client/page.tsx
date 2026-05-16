@@ -178,7 +178,9 @@ export default function ClientDashboard() {
                       <div className="flex justify-between items-center mt-4 pt-4 border-t border-[#2a2a2a]">
                         <span className="text-[11px] font-extrabold text-[#555] uppercase tracking-wide">Status: {b.status}</span>
                         {b.status === 'completed' && (
-                           <button onClick={() => router.push(`/review/${b.id}`)} className="text-[11px] font-black text-brand-yellow border border-brand-yellow hover:bg-[#1a1500] px-3 py-1.5 rounded-lg transition-colors">Leave Review</button>
+                          b.hasReview
+                            ? <span className="text-[11px] font-black text-[#22C55E]">✓ Reviewed</span>
+                            : <button onClick={() => router.push(`/review/${b.id}`)} className="text-[11px] font-black text-brand-yellow border border-brand-yellow hover:bg-[#1a1500] px-3 py-1.5 rounded-lg transition-colors">Leave Review</button>
                         )}
                         {b.status === 'pending' || b.status === 'confirmed' ? (
                           <button onClick={() => cancelBooking(b.id, b.date, b.startTime)} className="text-[11px] font-black text-brand-red hover:bg-[#1a0808] px-3 py-1.5 rounded-lg transition-colors">Cancel Booking</button>
@@ -204,7 +206,9 @@ export default function ClientDashboard() {
                         <div className="font-extrabold text-white text-sm mb-0.5">€{b.price}</div>
                         <div className="text-[10px] font-black uppercase text-[#666] mb-1">{b.status}</div>
                         {b.status === 'completed' && (
-                           <button onClick={() => router.push(`/review/${b.id}`)} className="text-[10px] font-extrabold text-brand-yellow hover:underline">Review</button>
+                          b.hasReview
+                            ? <span className="text-[10px] font-extrabold text-[#22C55E]">✓ Reviewed</span>
+                            : <button onClick={() => router.push(`/review/${b.id}`)} className="text-[10px] font-extrabold text-brand-yellow hover:underline">Review</button>
                         )}
                       </div>
                    </div>
