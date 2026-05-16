@@ -1,9 +1,22 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  writeBatch,
+} from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useDebounce } from '@/hooks/useDebounce';
+import { toast } from '@/lib/toast';
 
 const PER_PAGE = 20;
 
@@ -16,6 +29,17 @@ interface ClientRow {
   country?: string;
   createdAt?: number;
   bookingCount: number;
+  isSuspended?: boolean;
+}
+
+interface ClientBooking {
+  id: string;
+  date?: string;
+  startTime?: string;
+  barberName?: string;
+  serviceNames?: string[];
+  totalPrice?: number;
+  status?: string;
 }
 
 function getInitials(first?: string, last?: string): string {
@@ -33,6 +57,11 @@ export default function AdminClientsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedBookings, setExpandedBookings] = useState<Record<string, ClientBooking[]>>({});
+  const [loadingBookings, setLoadingBookings] = useState<Record<string, boolean>>({});
+  const [suspendingId, setSuspendingId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -66,6 +95,7 @@ export default function AdminClientsPage() {
             country: data.country as string | undefined,
             createdAt: data.createdAt as number | undefined,
             bookingCount: bookingCountMap[d.id] || 0,
+            isSuspended: Boolean(data.isSuspended),
           };
         });
 
@@ -93,8 +123,111 @@ export default function AdminClientsPage() {
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  function toggleExpand(clientId: string) {
-    setExpandedId((prev) => (prev === clientId ? null : clientId));
+  async function toggleExpand(clientId: string) {
+    const newId = expandedId === clientId ? null : clientId;
+    setExpandedId(newId);
+    // Lazy-load bookings when first expanding
+    if (newId && !expandedBookings[newId]) {
+      setLoadingBookings((prev) => ({ ...prev, [newId]: true }));
+      try {
+        const snap = await getDocs(
+          query(
+            collection(db, 'bookings'),
+            where('clientId', '==', newId),
+            orderBy('createdAt', 'desc'),
+            limit(5)
+          )
+        );
+        // Enrich with barber names
+        const barberIds = [
+          ...new Set(
+            snap.docs
+              .map((d) => d.data().barberId as string | undefined)
+              .filter(Boolean) as string[]
+          ),
+        ];
+        const barberMap: Record<string, string> = {};
+        await Promise.all(
+          barberIds.map(async (bid) => {
+            try {
+              const userSnap = await getDoc(doc(db, 'users', bid));
+              if (userSnap.exists()) {
+                const u = userSnap.data() as Record<string, unknown>;
+                barberMap[bid] = `${u.firstName || ''} ${u.lastName || ''}`.trim() || bid;
+              }
+            } catch {
+              // skip
+            }
+          })
+        );
+        const bookings: ClientBooking[] = snap.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
+          const bid = data.barberId as string | undefined;
+          return {
+            id: d.id,
+            date: data.date as string | undefined,
+            startTime: data.startTime as string | undefined,
+            barberName: bid ? (barberMap[bid] || bid) : '—',
+            serviceNames: data.serviceNames as string[] | undefined,
+            totalPrice: data.totalPrice as number | undefined,
+            status: data.status as string | undefined,
+          };
+        });
+        setExpandedBookings((prev) => ({ ...prev, [newId]: bookings }));
+      } catch (err) {
+        console.error('Client bookings fetch error:', err);
+      } finally {
+        setLoadingBookings((prev) => ({ ...prev, [newId]: false }));
+      }
+    }
+  }
+
+  async function handleSuspend(clientId: string, isSuspended: boolean) {
+    setSuspendingId(clientId);
+    try {
+      await updateDoc(doc(db, 'users', clientId), {
+        isSuspended: !isSuspended,
+        suspendedAt: !isSuspended ? Date.now() : null,
+      });
+      setClients((prev) =>
+        prev.map((c) => (c.id === clientId ? { ...c, isSuspended: !isSuspended } : c))
+      );
+      toast.success(!isSuspended ? 'Client suspended' : 'Client unsuspended');
+    } catch (err) {
+      console.error('Suspend error:', err);
+      toast.error('Failed to update client');
+    } finally {
+      setSuspendingId(null);
+    }
+  }
+
+  async function handleDelete(clientId: string, name: string) {
+    setDeletingId(clientId);
+    try {
+      // Cancel all active bookings first
+      const bookingsSnap = await getDocs(
+        query(collection(db, 'bookings'), where('clientId', '==', clientId))
+      );
+      const batch = writeBatch(db);
+      bookingsSnap.docs.forEach((d) => {
+        const s = d.data().status as string | undefined;
+        if (s === 'pending' || s === 'confirmed') {
+          batch.update(d.ref, { status: 'cancelled', updatedAt: Date.now() });
+        }
+      });
+      // Delete the user document
+      batch.delete(doc(db, 'users', clientId));
+      await batch.commit();
+
+      setClients((prev) => prev.filter((c) => c.id !== clientId));
+      setDeleteConfirmId(null);
+      toast.success(`${name} deleted`);
+    } catch (err) {
+      console.error('Delete error:', err);
+      toast.error('Failed to delete client');
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -247,35 +380,167 @@ export default function AdminClientsPage() {
                     borderTop: 'none',
                     borderRadius: '0 0 12px 12px',
                     padding: '14px 16px',
-                    display: 'flex',
-                    gap: 32,
-                    flexWrap: 'wrap',
                   }}
                 >
-                  <div>
-                    <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Email</div>
-                    <div style={{ fontSize: 13, color: '#ccc' }}>{client.email || '—'}</div>
+                  {/* Basic info row */}
+                  <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', marginBottom: 16 }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Email</div>
+                      <div style={{ fontSize: 13, color: '#ccc' }}>{client.email || '—'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>City</div>
+                      <div style={{ fontSize: 13, color: '#ccc' }}>{client.city || '—'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Country</div>
+                      <div style={{ fontSize: 13, color: '#ccc' }}>{client.country || '—'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Member Since</div>
+                      <div style={{ fontSize: 13, color: '#ccc' }}>{formatDate(client.createdAt)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Bookings</div>
+                      <div style={{ fontSize: 13, color: '#F5C518', fontWeight: 800 }}>{client.bookingCount}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>UID</div>
+                      <div style={{ fontSize: 11, color: '#555', fontFamily: 'monospace' }}>{client.id}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>City</div>
-                    <div style={{ fontSize: 13, color: '#ccc' }}>{client.city || '—'}</div>
+
+                  {/* Recent bookings */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, color: '#444', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Recent Bookings</div>
+                    {loadingBookings[client.id] ? (
+                      <div style={{ fontSize: 12, color: '#555' }}>Loading…</div>
+                    ) : (expandedBookings[client.id] || []).length === 0 ? (
+                      <div style={{ fontSize: 12, color: '#555' }}>No bookings yet.</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {(expandedBookings[client.id] || []).map((b) => (
+                          <div
+                            key={b.id}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '100px 1fr 1fr 70px 80px',
+                              gap: 10,
+                              padding: '8px 10px',
+                              background: '#111',
+                              borderRadius: 8,
+                              border: '1px solid #1a1a1a',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <div style={{ fontSize: 12, color: '#888' }}>
+                              {b.date || '—'}
+                              {b.startTime && <span style={{ color: '#555', marginLeft: 4 }}>{b.startTime}</span>}
+                            </div>
+                            <div style={{ fontSize: 12, color: '#ccc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.barberName || '—'}</div>
+                            <div style={{ fontSize: 12, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.serviceNames?.[0] || '—'}</div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: '#F5C518' }}>{b.totalPrice !== undefined ? `€${b.totalPrice}` : '—'}</div>
+                            <div>
+                              {(() => {
+                                const s = (b.status || '').toLowerCase();
+                                if (s === 'confirmed' || s === 'completed')
+                                  return <span className="bg-[#0f2010] text-[#22C55E] px-2 py-0.5 rounded-full text-[10px] font-black">{b.status}</span>;
+                                if (s === 'pending')
+                                  return <span className="bg-[#1a1500] text-[#F5C518] px-2 py-0.5 rounded-full text-[10px] font-black">{b.status}</span>;
+                                if (s === 'cancelled')
+                                  return <span className="bg-[#1a0808] text-[#EF4444] px-2 py-0.5 rounded-full text-[10px] font-black">{b.status}</span>;
+                                return <span className="bg-[#1a1a1a] text-[#888] px-2 py-0.5 rounded-full text-[10px] font-black">{b.status || '—'}</span>;
+                              })()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Country</div>
-                    <div style={{ fontSize: 13, color: '#ccc' }}>{client.country || '—'}</div>
+
+                  {/* Actions row */}
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => handleSuspend(client.id, Boolean(client.isSuspended))}
+                      disabled={suspendingId === client.id}
+                      style={{
+                        background: 'none',
+                        border: `1px solid ${client.isSuspended ? '#22C55E' : '#F5C518'}`,
+                        borderRadius: 8,
+                        padding: '6px 14px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: client.isSuspended ? '#22C55E' : '#F5C518',
+                        cursor: suspendingId === client.id ? 'not-allowed' : 'pointer',
+                        opacity: suspendingId === client.id ? 0.5 : 1,
+                      }}
+                    >
+                      {client.isSuspended ? '✓ Unsuspend' : 'Suspend'}
+                    </button>
+                    {client.isSuspended && (
+                      <span style={{ fontSize: 11, color: '#EF4444', fontWeight: 700 }}>🚫 Suspended</span>
+                    )}
+                    <button
+                      onClick={() => setDeleteConfirmId(deleteConfirmId === client.id ? null : client.id)}
+                      style={{
+                        background: 'none',
+                        border: '1px solid #EF444440',
+                        borderRadius: 8,
+                        padding: '6px 14px',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: '#EF4444',
+                        cursor: 'pointer',
+                        marginLeft: 'auto',
+                      }}
+                    >
+                      Delete account
+                    </button>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Member Since</div>
-                    <div style={{ fontSize: 13, color: '#ccc' }}>{formatDate(client.createdAt)}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Bookings</div>
-                    <div style={{ fontSize: 13, color: '#F5C518', fontWeight: 800 }}>{client.bookingCount}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#444', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>UID</div>
-                    <div style={{ fontSize: 11, color: '#555', fontFamily: 'monospace' }}>{client.id}</div>
-                  </div>
+
+                  {/* Delete confirm */}
+                  {deleteConfirmId === client.id && (
+                    <div
+                      style={{
+                        marginTop: 10,
+                        background: '#1a0808',
+                        border: '1px solid #EF444430',
+                        borderRadius: 10,
+                        padding: '12px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <span style={{ fontSize: 13, color: '#aaa', flex: 1 }}>
+                        Delete {client.firstName || 'this client'}? This will cancel all their pending bookings.
+                      </span>
+                      <button
+                        onClick={() => setDeleteConfirmId(null)}
+                        style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#555', cursor: 'pointer' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleDelete(client.id, `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Client')}
+                        disabled={deletingId === client.id}
+                        style={{
+                          background: '#EF4444',
+                          border: 'none',
+                          borderRadius: 8,
+                          padding: '6px 14px',
+                          fontSize: 12,
+                          fontWeight: 800,
+                          color: '#fff',
+                          cursor: deletingId === client.id ? 'not-allowed' : 'pointer',
+                          opacity: deletingId === client.id ? 0.6 : 1,
+                        }}
+                      >
+                        {deletingId === client.id ? 'Deleting…' : 'Confirm Delete'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

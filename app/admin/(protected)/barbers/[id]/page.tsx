@@ -301,13 +301,21 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
         isLive: false,
         suspendedAt: Date.now(),
       });
-      await addDoc(collection(db, 'notifications'), {
-        userId: id,
-        message: 'Your account has been suspended. Contact support.',
-        read: false,
-        linkTo: '/dashboard/barber',
-        createdAt: Date.now(),
-      });
+      await Promise.all([
+        addDoc(collection(db, 'notifications'), {
+          userId: id,
+          message: 'Your account has been suspended. Contact support.',
+          read: false,
+          linkTo: '/dashboard/barber',
+          createdAt: Date.now(),
+        }),
+        addDoc(collection(db, 'adminLogs'), {
+          action: 'suspended_barber',
+          targetId: id,
+          adminId: user.uid,
+          timestamp: Date.now(),
+        }),
+      ]);
       toast.success('Account suspended');
       await loadData();
     } catch (err) {
@@ -319,12 +327,28 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
   }
 
   async function handleReactivate() {
+    if (!user) return;
     setSaving(true);
     try {
       await updateDoc(doc(db, 'barberProfiles', id), {
         approvalStatus: 'approved',
         isLive: true,
       });
+      await Promise.all([
+        addDoc(collection(db, 'notifications'), {
+          userId: id,
+          message: '🎉 Your titeZMe account has been reactivated. You are now live again!',
+          read: false,
+          linkTo: '/dashboard/barber',
+          createdAt: Date.now(),
+        }),
+        addDoc(collection(db, 'adminLogs'), {
+          action: 'reactivated_barber',
+          targetId: id,
+          adminId: user.uid,
+          timestamp: Date.now(),
+        }),
+      ]);
       toast.success('Account reactivated');
       await loadData();
     } catch (err) {
@@ -335,11 +359,37 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
     }
   }
 
+  async function recalculateBarberRating(barberId: string) {
+    try {
+      const remainingSnap = await getDocs(
+        query(collection(db, 'reviews'), where('providerId', '==', barberId))
+      );
+      const ratings = remainingSnap.docs
+        .map((d) => d.data().rating as number)
+        .filter((r) => typeof r === 'number');
+      const newCount = ratings.length;
+      const newRating =
+        newCount > 0
+          ? Number((ratings.reduce((a, b) => a + b, 0) / newCount).toFixed(1))
+          : 0;
+      await updateDoc(doc(db, 'barberProfiles', barberId), {
+        rating: newRating,
+        reviewCount: newCount,
+      });
+      // Update local state so the detail page reflects the new rating
+      setProfile((prev) => prev ? { ...prev, rating: newRating, reviewCount: newCount } : prev);
+    } catch (err) {
+      console.error('Rating recalc error:', err);
+    }
+  }
+
   async function handleDeleteReview(reviewId: string) {
     try {
       await deleteDoc(doc(db, 'reviews', reviewId));
-      toast.success('Review deleted');
       setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+      // Recalculate the barber's aggregate rating after removal
+      await recalculateBarberRating(id);
+      toast.success('Review deleted');
     } catch (err) {
       console.error('Delete review error:', err);
       toast.error('Failed to delete review');

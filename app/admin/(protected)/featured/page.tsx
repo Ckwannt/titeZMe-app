@@ -9,6 +9,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from '@/lib/toast';
@@ -103,6 +104,33 @@ export default function AdminFeaturedPage() {
     });
   }
 
+  async function checkExpiry(currentBarbers: FeaturedBarber[], currentShops: FeaturedShop[]) {
+    const now = Date.now();
+    const expiredBarbers = currentBarbers.filter((b) => b.featuredUntil && b.featuredUntil < now);
+    const expiredShops = currentShops.filter((s) => s.featuredUntil && s.featuredUntil < now);
+    if (expiredBarbers.length === 0 && expiredShops.length === 0) return;
+
+    const batch = writeBatch(db);
+    expiredBarbers.forEach((b) => {
+      batch.update(doc(db, 'barberProfiles', b.id), { isFeatured: false, featuredUntil: null });
+    });
+    expiredShops.forEach((s) => {
+      batch.update(doc(db, 'barbershops', s.id), { isFeatured: false, featuredUntil: null });
+    });
+    await batch.commit();
+
+    const totalExpired = expiredBarbers.length + expiredShops.length;
+    toast.success(`${totalExpired} expired featured spot${totalExpired !== 1 ? 's' : ''} removed`);
+
+    // Refresh lists to remove expired entries
+    const [freshBarbers, freshShops] = await Promise.all([
+      loadFeaturedBarbers(),
+      loadFeaturedShops(),
+    ]);
+    setFeaturedBarbers(freshBarbers);
+    setFeaturedShops(freshShops);
+  }
+
   useEffect(() => {
     async function loadAll() {
       setLoading(true);
@@ -116,6 +144,9 @@ export default function AdminFeaturedPage() {
 
         setFeaturedBarbers(fb);
         setFeaturedShops(fs);
+
+        // Auto-remove any entries whose featuredUntil has passed
+        await checkExpiry(fb, fs);
 
         // Enrich all live barbers with user names
         const allB: FeaturedBarber[] = await Promise.all(

@@ -10,6 +10,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  addDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -41,26 +42,42 @@ function formatDate(ts?: number): string {
   return new Date(ts).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function isToday(ts?: number): boolean {
-  if (!ts) return false;
-  const d = new Date(ts);
-  const now = new Date();
-  return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+// Date helpers — operate on booking.date (YYYY-MM-DD), NOT createdAt.
+// This way "today" means the appointment is today, not when it was created.
+function getTodayStr(): string {
+  return new Date().toISOString().split('T')[0];
 }
 
-function isThisWeek(ts?: number): boolean {
-  if (!ts) return false;
-  const d = new Date(ts);
-  const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 86400000);
-  return d >= weekAgo;
+function getMondayStr(): string {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  return d.toISOString().split('T')[0];
 }
 
-function isThisMonth(ts?: number): boolean {
-  if (!ts) return false;
-  const d = new Date(ts);
-  const now = new Date();
-  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+function getMonthStartStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+}
+
+function isToday(dateStr?: string): boolean {
+  if (!dateStr) return false;
+  return dateStr === getTodayStr();
+}
+
+function isThisWeek(dateStr?: string): boolean {
+  if (!dateStr) return false;
+  const today = getTodayStr();
+  const monday = getMondayStr();
+  return dateStr >= monday && dateStr <= today;
+}
+
+function isThisMonth(dateStr?: string): boolean {
+  if (!dateStr) return false;
+  const today = getTodayStr();
+  const monthStart = getMonthStartStr();
+  return dateStr >= monthStart && dateStr <= today;
 }
 
 function StatusBadge({ status }: { status?: string }) {
@@ -159,9 +176,9 @@ export default function AdminBookingsPage() {
       list = list.filter((b) => (b.status || '').toLowerCase() === statusFilter);
     }
 
-    if (timeFilter === 'today') list = list.filter((b) => isToday(b.createdAt));
-    else if (timeFilter === 'week') list = list.filter((b) => isThisWeek(b.createdAt));
-    else if (timeFilter === 'month') list = list.filter((b) => isThisMonth(b.createdAt));
+    if (timeFilter === 'today') list = list.filter((b) => isToday(b.date));
+    else if (timeFilter === 'week') list = list.filter((b) => isThisWeek(b.date));
+    else if (timeFilter === 'month') list = list.filter((b) => isThisMonth(b.date));
 
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.toLowerCase();
@@ -177,9 +194,9 @@ export default function AdminBookingsPage() {
   }, [bookings, statusFilter, timeFilter, debouncedSearch]);
 
   const stats = useMemo(() => ({
-    today: bookings.filter((b) => isToday(b.createdAt)).length,
-    week: bookings.filter((b) => isThisWeek(b.createdAt)).length,
-    month: bookings.filter((b) => isThisMonth(b.createdAt)).length,
+    today: bookings.filter((b) => isToday(b.date)).length,
+    week: bookings.filter((b) => isThisWeek(b.date)).length,
+    month: bookings.filter((b) => isThisMonth(b.date)).length,
     total: bookings.length,
   }), [bookings]);
 
@@ -189,10 +206,48 @@ export default function AdminBookingsPage() {
   async function handleCancel(bookingId: string) {
     setCancelling(true);
     try {
+      const booking = bookings.find((b) => b.id === bookingId);
+
       await updateDoc(doc(db, 'bookings', bookingId), {
         status: 'cancelled',
         updatedAt: Date.now(),
       });
+
+      // Notify both client and barber
+      const notifTime = booking?.date && booking?.startTime
+        ? `on ${booking.date} at ${booking.startTime}`
+        : booking?.date
+        ? `on ${booking.date}`
+        : '';
+
+      const notifPromises: Promise<unknown>[] = [];
+
+      if (booking?.clientId) {
+        notifPromises.push(
+          addDoc(collection(db, 'notifications'), {
+            userId: booking.clientId,
+            message: `Your booking ${notifTime} was cancelled by admin.`,
+            read: false,
+            linkTo: '/dashboard/client',
+            createdAt: Date.now(),
+          })
+        );
+      }
+
+      if (booking?.barberId) {
+        notifPromises.push(
+          addDoc(collection(db, 'notifications'), {
+            userId: booking.barberId,
+            message: `A booking ${notifTime} was cancelled by admin.`,
+            read: false,
+            linkTo: '/dashboard/barber',
+            createdAt: Date.now(),
+          })
+        );
+      }
+
+      await Promise.all(notifPromises);
+
       setBookings((prev) =>
         prev.map((b) => (b.id === bookingId ? { ...b, status: 'cancelled' } : b))
       );
