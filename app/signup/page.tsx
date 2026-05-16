@@ -8,6 +8,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { userSchema } from '@/lib/schemas';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -139,12 +140,12 @@ export default function SignupPage() {
 
         <div>
           <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">PASSWORD <span className="text-brand-red">*</span></label>
-          <input 
+          <PasswordInput
             required
-            type="password"
-            value={password} onChange={e => setPassword(e.target.value)}
-            className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-            placeholder="••••••••" 
+            value={password}
+            onChange={setPassword}
+            placeholder="••••••••"
+            className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow"
           />
           {submitAttempted && !password && <span className="text-brand-red text-xs mt-1 block">This field is required</span>}
         </div>
