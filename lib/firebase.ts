@@ -4,11 +4,22 @@ validateEnv();
 import { getAuth } from 'firebase/auth';
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const db = !getApps().length 
-  ? initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }, firebaseConfig.firestoreDatabaseId) 
+export const db = !getApps().length
+  ? initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }, firebaseConfig.firestoreDatabaseId)
   : getFirestore(app, firebaseConfig.firestoreDatabaseId); // CRITICAL: Database ID must be explicitly set
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+
+// App Check — browser only (SSR has no window and no reCAPTCHA)
+if (typeof window !== 'undefined') {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(
+      process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!
+    ),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
