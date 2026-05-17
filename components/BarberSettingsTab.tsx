@@ -14,6 +14,7 @@ import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import { userUpdateSchema, barberUpdateSchema } from "@/lib/schemas";
 import { sanitizeText, sanitizeHandle } from '@/lib/sanitize';
+import { invalidateBarber } from '@/lib/invalidate';
 
 interface BarberSettingsTabProps {
   profile: any;
@@ -220,6 +221,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
             await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ profilePhotoUrl: downloadURL }));
             setLocalPhotoUrl(downloadURL);
             mutateProfile();
+            invalidateBarber(user.uid);
             setSuccessMsg('Profile photo updated!');
           } catch (err) {
              console.error("Database Update Error:", err);
@@ -263,6 +265,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
               languages: langArr,
             }));
       mutateProfile();
+      invalidateBarber(user.uid);
       setSuccessMsg('Personal info saved!');
     } catch (e) {
       console.error(e);
@@ -283,6 +286,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
               tiktok: sanitizeHandle(socialData.tiktok),
             }));
       mutateProfile();
+      invalidateBarber(user.uid);
       setSuccessMsg('Social links saved!');
     } catch (e) {
       console.error(e);
@@ -298,6 +302,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     try {
       await updateDoc(doc(db, 'barberProfiles', user.uid), { specialties, vibes: vibe, clientele });
       mutateProfile();
+      invalidateBarber(user.uid);
       setSuccessMsg('Barber profile updated ✓');
     } catch (e) { console.error(e); setErrorMsg('Failed to save barber profile.'); }
     setSavingProfile(false);

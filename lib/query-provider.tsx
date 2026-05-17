@@ -1,21 +1,10 @@
 'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { ReactNode, useState } from 'react';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,   // 5 minutes before refetch
-      gcTime: 10 * 60 * 1000,     // 10 minutes in cache
-      retry: 2,
-      refetchOnWindowFocus: true,  // Refresh when user returns to tab
-      refetchInterval: false,      // No polling by default
-    },
-  },
-});
+import { ReactNode } from 'react';
+import { queryClient } from './query-client';
 
 // Persist to sessionStorage so dashboard data survives tab navigation
 // without re-fetching Firestore on every page visit within a session.

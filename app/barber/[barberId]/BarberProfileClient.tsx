@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import {
-  collection, query, where, getDocs, doc, getDoc,
+  collection, query, where, doc, getDoc,
   orderBy, limit, updateDoc, arrayUnion, arrayRemove, onSnapshot,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -151,6 +151,10 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [optimisticFav, setOptimisticFav] = useState<boolean | null>(null);
+  // Real-time services + reviews — updated via onSnapshot so edits appear instantly
+  const [services, setServices] = useState<ServiceDoc[]>(initialData?.services || []);
+  const [reviews, setReviews] = useState<ReviewDoc[]>(initialData?.reviews || []);
+  const reviewUserCache = useRef<Record<string, ReviewDoc['user']>>({});
 
   // ─── queries ─────────────────────────────────────────────────────────────────
 
@@ -176,53 +180,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
       return { profile, userProfile, shop };
     },
     initialData: serverInitialProfile,
-    staleTime: 60 * 1000,
-  });
-
-  const { data: services = [] } = useQuery<ServiceDoc[]>({
-    queryKey: ['barberPublicServices', barberId, bookingContext],
-    queryFn: async () => {
-      const providerId =
-        bookingContext === 'shop' && data?.profile?.shopId ? data.profile.shopId : barberId;
-      const providerType = bookingContext === 'shop' ? 'shop' : 'barber';
-      const q = query(
-        collection(db, 'services'),
-        where('providerId', '==', providerId),
-        where('providerType', '==', providerType),
-        where('isActive', '==', true),
-        orderBy('price', 'asc'),
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as ServiceDoc));
-    },
-    initialData: initialData?.services,
-    staleTime: 60 * 1000,
-    enabled: !!data,
-  });
-
-  const { data: reviews = [] } = useQuery<ReviewDoc[]>({
-    queryKey: ['barberPublicReviews', barberId],
-    initialData: initialData?.reviews,
-    staleTime: 60 * 1000,
-    queryFn: async () => {
-      const q = query(
-        collection(db, 'reviews'),
-        where('providerId', '==', barberId),
-        orderBy('createdAt', 'desc'),
-        limit(20),
-      );
-      const snap = await getDocs(q);
-      const list: ReviewDoc[] = [];
-      for (const rDoc of snap.docs) {
-        const rev = { id: rDoc.id, ...rDoc.data() } as ReviewDoc;
-        if (rev.clientId) {
-          const uSnap = await getDoc(doc(db, 'users', rev.clientId));
-          if (uSnap.exists()) rev.user = uSnap.data() as ReviewDoc['user'];
-        }
-        list.push(rev);
-      }
-      return list;
-    },
+    // staleTime uses global default (30 s) — explicit value removed
   });
 
   // ─── real-time schedule ──────────────────────────────────────────────────────
@@ -234,6 +192,60 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
         if (snap.exists()) setSchedule(snap.data() as { availableSlots?: Record<string, string[]> });
       },
     );
+    return () => unsub();
+  }, [barberId]);
+
+  // ─── real-time services ───────────────────────────────────────────────────────
+  // Subscribes to the correct provider (solo barber vs shop) based on bookingContext.
+  // When barber adds / edits / removes a service the public profile updates instantly.
+
+  useEffect(() => {
+    const providerId =
+      bookingContext === 'shop' && data?.profile?.shopId ? data.profile.shopId : barberId;
+    const providerType = bookingContext === 'shop' ? 'shop' : 'barber';
+    const q = query(
+      collection(db, 'services'),
+      where('providerId', '==', providerId),
+      where('providerType', '==', providerType),
+      where('isActive', '==', true),
+      orderBy('price', 'asc'),
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setServices(snap.docs.map(d => ({ id: d.id, ...d.data() } as ServiceDoc)));
+    });
+    return () => unsub();
+  }, [barberId, bookingContext, data?.profile?.shopId]);
+
+  // ─── real-time reviews ────────────────────────────────────────────────────────
+  // New reviews appear on the public profile the moment a client submits them.
+  // User names are fetched once per unique clientId and cached in reviewUserCache.
+
+  useEffect(() => {
+    const q = query(
+      collection(db, 'reviews'),
+      where('providerId', '==', barberId),
+      orderBy('createdAt', 'desc'),
+      limit(20),
+    );
+    const unsub = onSnapshot(q, async (snap) => {
+      const raw: ReviewDoc[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as ReviewDoc));
+      // Fetch names only for clientIds not yet in our local cache
+      const missing = raw.filter(r => r.clientId && !reviewUserCache.current[r.clientId]);
+      if (missing.length > 0) {
+        await Promise.all(
+          missing.map(async r => {
+            try {
+              const uSnap = await getDoc(doc(db, 'users', r.clientId!));
+              if (uSnap.exists())
+                reviewUserCache.current[r.clientId!] = uSnap.data() as ReviewDoc['user'];
+            } catch { /* non-critical */ }
+          })
+        );
+      }
+      setReviews(
+        raw.map(r => ({ ...r, user: r.clientId ? reviewUserCache.current[r.clientId] : undefined }))
+      );
+    });
     return () => unsub();
   }, [barberId]);
 

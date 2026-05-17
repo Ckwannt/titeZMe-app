@@ -208,14 +208,22 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   }, []);
 
   // Use server-provided initialBarbers if available, otherwise fetch client-side.
-  const { data: allBarbers = [], isLoading } = useQuery({
+  const { data: allBarbers = [], isLoading, refetch } = useQuery({
     queryKey: ['barbersListV2'],
     queryFn: fetchBarbers,
     // If server already supplied barbers, use them as initial data (no fetch on load).
     // If server returned empty (e.g. Admin SDK not configured), fetch client-side.
     initialData: initialBarbers && initialBarbers.length > 0 ? initialBarbers : undefined,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,               // Always treat as stale — rely on 2-min interval
+    refetchOnWindowFocus: true,  // Refetch when user returns to tab
   });
+
+  // 2-minute background refresh: new barbers appear within 2 minutes of going live.
+  // Avoids onSnapshot (which would open N listeners for N barbers).
+  useEffect(() => {
+    const interval = setInterval(() => { refetch(); }, 2 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [refetch]);
   const [nameSearch, setNameSearch] = useState('');
   const debouncedNameSearch = useDebounce(nameSearch, 300);
   const [page, setPage] = useState(1);
