@@ -277,8 +277,14 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
   const handleClientClick = (date: Date, hourStr: string) => {
     if (mode !== 'client') return;
     const dateStr = format(date, 'yyyy-MM-dd');
+
+    // Click on already-selected slot → deselect
+    if (selectedDate === dateStr && selectedTime === hourStr) {
+      if (onSlotSelect) onSlotSelect('', '');
+      return;
+    }
+
     const status = getClientSlotStatus(date, hourStr);
-    
     if (status !== 'available') return;
     
     // Check if sufficient consecutive time is available
@@ -496,10 +502,11 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
                            content = <div className="w-full h-full flex items-center justify-center text-[10px] text-white font-bold">Booked</div>;
                         } else if (status === 'available') {
                            if (isSelected) {
-                              cellClasses += "bg-brand-yellow text-[#0a0a0a] font-bold";
-                              content = <div className="w-full h-full flex items-center justify-center text-[10px]">Selected</div>;
+                              // Orange = selected by this client
+                              cellClasses += "bg-[#1a0a00] border border-[#E8491D] text-[#E8491D] font-bold";
+                              content = <div className="w-full h-full flex items-center justify-center text-[10px] font-black">✓</div>;
                            } else {
-                              cellClasses += "bg-brand-green hover:opacity-80";
+                              cellClasses += "bg-brand-green hover:opacity-80 cursor-pointer";
                            }
                         }
 

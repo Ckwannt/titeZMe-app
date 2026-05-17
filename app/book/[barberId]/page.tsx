@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { collection, query, where, getDocs, doc, getDoc, runTransaction, setDoc, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, runTransaction, setDoc, addDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import dynamic from 'next/dynamic';
 import { BarberProfileSkeleton } from '@/components/skeletons';
@@ -16,6 +16,23 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useRouter } from 'next/navigation';
 import { notificationSchema } from "@/lib/schemas";
+import { getScheduleDocId } from '@/lib/schedule-utils';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function calcEndTime(startTime: string, durationMins: number): string {
+  const [h, m] = startTime.split(':').map(Number);
+  const total = h * 60 + m + durationMins;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+function formatFullDate(dateStr: string): string {
+  if (!dateStr) return '';
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  return new Date(y, mo - 1, d).toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+}
 
 export default function BookingPage({ params }: { params: Promise<{ barberId: string }> }) {
   const resolvedParams = use(params);
@@ -29,6 +46,11 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Real-time schedule subscription — used to show loading/empty states
+  // before rendering AvailabilityGrid (which also subscribes internally)
+  const [scheduleData, setScheduleData] = useState<any>(null);
+  const [scheduleLoading, setScheduleLoading] = useState(true);
 
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['bookProfile', barberId],
@@ -56,6 +78,25 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
       router.replace('/login');
     }
   }, [user, router]);
+
+  // Subscribe to barber schedule in real-time so we can show loading/empty
+  // states in the book page without depending on AvailabilityGrid internals
+  useEffect(() => {
+    if (!barberId) return;
+    setScheduleLoading(true);
+    const unsub = onSnapshot(
+      doc(db, 'schedules', getScheduleDocId(barberId)),
+      (snap) => {
+        setScheduleData(snap.exists() ? snap.data() : null);
+        setScheduleLoading(false);
+      },
+      (err) => {
+        console.error('Schedule listener error:', err);
+        setScheduleLoading(false);
+      }
+    );
+    return () => unsub();
+  }, [barberId]);
 
   const { data: services = [], isLoading: loadingServices } = useQuery({
     queryKey: ['bookServices', barberId, bookingContext, profile?.shopId],
@@ -302,81 +343,157 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
        )}
 
        {step === 3 && (
-         <div className="animate-fadeUp w-full col-span-1 md:col-span-12 lg:col-span-12 xl:col-span-12">
-           <h1 className="text-3xl font-black mb-6">Choose Date & Time</h1>
-           
-           <AvailabilityGrid 
-             mode="client" 
-             barberId={barberId} 
-             totalDuration={totalDuration} 
-             onSlotSelect={(date, time) => {
-               setSelectedDate(date);
-               setSelectedTime(time);
-             }}
-             selectedDate={selectedDate}
-             selectedTime={selectedTime}
-           />
+         <div className="animate-fadeUp w-full">
+           <h1 className="text-3xl font-black mb-6">Choose Date &amp; Time</h1>
 
-           <div className="flex justify-between mt-10">
-             <button onClick={() => setStep(2)} className="text-[#888] font-bold text-sm hover:text-white">← Back</button>
-             <button 
-               onClick={() => setStep(4)}
-               disabled={!selectedDate || !selectedTime}
-               className="bg-brand-yellow text-[#0a0a0a] px-8 py-3.5 rounded-full font-black text-sm transition-all hover:opacity-90 disabled:opacity-50"
-             >
-               Review Booking →
-             </button>
-           </div>
+           {/* Loading skeleton */}
+           {scheduleLoading && (
+             <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl h-64 animate-pulse flex items-center justify-center">
+               <span style={{ fontSize: 12, color: '#555', fontWeight: 700 }}>Fetching availability…</span>
+             </div>
+           )}
+
+           {/* No schedule set */}
+           {!scheduleLoading && !scheduleData?.availableSlots && (
+             <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-8 text-center">
+               <div className="text-3xl mb-3">⏰</div>
+               <div className="font-black text-lg text-white mb-2">No availability set yet</div>
+               <p className="text-[#555] text-sm font-bold mb-6">This barber hasn&apos;t added their schedule yet. Check back soon or choose another barber.</p>
+               <button
+                 onClick={() => router.push('/barbers')}
+                 className="bg-[#1a1a1a] border border-[#2a2a2a] text-white font-black px-6 py-3 rounded-full text-sm hover:border-brand-yellow transition-colors"
+               >
+                 ← Back to barbers
+               </button>
+             </div>
+           )}
+
+           {/* Calendar */}
+           {!scheduleLoading && scheduleData?.availableSlots && (
+             <>
+               <AvailabilityGrid
+                 mode="client"
+                 barberId={barberId}
+                 totalDuration={totalDuration}
+                 onSlotSelect={(date, time) => {
+                   setSelectedDate(date);
+                   setSelectedTime(time);
+                 }}
+                 selectedDate={selectedDate}
+                 selectedTime={selectedTime}
+               />
+
+               {selectedDate && selectedTime && (
+                 <div className="mt-4 flex items-center gap-3 bg-[#1a0a00] border border-[#E8491D]/40 rounded-xl px-4 py-3">
+                   <span style={{ color: '#E8491D', fontSize: 16 }}>✓</span>
+                   <span style={{ fontSize: 13, fontWeight: 700, color: '#E8491D' }}>
+                     {selectedDate} at {selectedTime} — {calcEndTime(selectedTime, totalDuration)}
+                   </span>
+                   <button
+                     onClick={() => { setSelectedDate(''); setSelectedTime(''); }}
+                     style={{ marginLeft: 'auto', fontSize: 11, color: '#555', fontWeight: 700 }}
+                   >
+                     Clear ✕
+                   </button>
+                 </div>
+               )}
+
+               <div className="flex justify-between mt-8">
+                 <button onClick={() => setStep(2)} className="text-[#888] font-bold text-sm hover:text-white">← Back</button>
+                 <button
+                   onClick={() => setStep(4)}
+                   disabled={!selectedDate || !selectedTime}
+                   className="bg-brand-yellow text-[#0a0a0a] px-8 py-3.5 rounded-full font-black text-sm transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                 >
+                   Review Booking →
+                 </button>
+               </div>
+             </>
+           )}
          </div>
        )}
 
        {step === 4 && (
          <div className="animate-fadeUp">
-            <h1 className="text-3xl font-black mb-6">Confirm Booking</h1>
-            
-            <div className="bg-brand-surface border border-brand-border rounded-3xl p-6 mb-8">
-               <div className="flex items-center gap-4 mb-6 pb-6 border-b border-[#2a2a2a]">
-                 <div className="w-12 h-12 rounded-xl bg-[#2a2a2a] flex items-center justify-center text-xl">✂️</div>
+           <h1 className="text-3xl font-black mb-8">Review your booking</h1>
+
+           <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl overflow-hidden mb-6">
+
+             {/* Section 1 — Barber */}
+             <div className="flex items-center gap-4 p-5 border-b border-[#1e1e1e]">
+               <div className="w-11 h-11 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-xl shrink-0">✂️</div>
+               <div>
+                 <div className="font-black text-white text-[15px]">{profile?.user?.firstName} {profile?.user?.lastName}</div>
+                 <div className="text-xs font-bold text-[#555] mt-0.5">{bookingContext === 'solo' ? '👤 Independent booking' : '🏪 Shop booking'}</div>
+               </div>
+             </div>
+
+             {/* Section 2 — Services */}
+             <div className="p-5 border-b border-[#1e1e1e]">
+               <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">Services</div>
+               <div className="flex flex-col gap-2">
+                 {selectedServices.map(s => (
+                   <div key={s.id} className="flex items-center justify-between">
+                     <div>
+                       <div className="text-sm font-bold text-white">{s.name}</div>
+                       <div className="text-[11px] text-[#555]">⏱ {s.duration} min</div>
+                     </div>
+                     <div className="font-black text-[#F5C518] text-sm">€{s.price}</div>
+                   </div>
+                 ))}
+               </div>
+               {selectedServices.length > 1 && (
+                 <div className="mt-3 pt-3 border-t border-[#1e1e1e] flex justify-between items-center">
+                   <span className="text-xs font-bold text-[#555]">{totalDuration} min total</span>
+                   <span className="font-black text-white">€{totalPrice}</span>
+                 </div>
+               )}
+             </div>
+
+             {/* Section 3 — Date & Time */}
+             <div className="p-5 border-b border-[#1e1e1e]">
+               <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">Date &amp; Time</div>
+               <div className="flex items-center gap-2 mb-1.5">
+                 <span style={{ fontSize: 15 }}>📅</span>
+                 <span className="font-bold text-white text-sm">{formatFullDate(selectedDate)}</span>
+               </div>
+               <div className="flex items-center gap-2">
+                 <span style={{ fontSize: 15 }}>⏰</span>
+                 <span className="font-bold text-white text-sm">
+                   {selectedTime} → {calcEndTime(selectedTime, totalDuration)}
+                 </span>
+                 <span className="text-[11px] text-[#555]">({totalDuration} min)</span>
+               </div>
+             </div>
+
+             {/* Section 4 — Payment */}
+             <div className="p-5">
+               <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">Payment</div>
+               <div className="flex items-start gap-3">
+                 <span style={{ fontSize: 15 }}>💵</span>
                  <div>
-                   <div className="font-black text-lg text-white mb-0.5">{profile?.user?.firstName} {profile?.user?.lastName}</div>
-                   <div className="text-xs font-bold text-brand-text-secondary">{bookingContext === 'solo' ? 'Independent Barber' : 'Shop Booking'}</div>
+                   <div className="font-black text-[#F5C518] text-lg">€{totalPrice}</div>
+                   <div className="text-xs font-bold text-[#555] mt-0.5">Cash only · No fees · No app needed</div>
+                   <div className="text-xs text-[#444] mt-0.5">Pay directly to the barber</div>
                  </div>
                </div>
+             </div>
+           </div>
 
-               <div className="grid grid-cols-2 gap-y-4 gap-x-4 mb-6">
-                 <div>
-                   <div className="text-[10px] font-extrabold text-[#666] tracking-widest uppercase mb-1">Date</div>
-                   <div className="font-bold text-[15px]">{new Date(selectedDate).toLocaleDateString()}</div>
-                 </div>
-                 <div>
-                   <div className="text-[10px] font-extrabold text-[#666] tracking-widest uppercase mb-1">Time</div>
-                   <div className="font-bold text-[15px]">{selectedTime}</div>
-                 </div>
-                 <div className="col-span-2">
-                   <div className="text-[10px] font-extrabold text-[#666] tracking-widest uppercase mb-1">Services</div>
-                   <div className="font-bold text-[15px]">{selectedServices.map(s => s.name).join(', ')}</div>
-                 </div>
-               </div>
-
-               <div className="bg-[#141414] rounded-xl p-4 flex justify-between items-center border border-[#222]">
-                  <div>
-                    <div className="text-[10px] font-extrabold text-[#666] tracking-widest uppercase mb-0.5">Total to pay in cash</div>
-                    <div className="text-2xl font-black text-brand-yellow">€{totalPrice}</div>
-                  </div>
-                  <div className="text-right text-xs font-extrabold text-brand-text-secondary">
-                    {totalDuration} mins total
-                  </div>
-               </div>
-            </div>
-
-            <button 
-               onClick={handleConfirm}
-               disabled={isSubmitting}
-               className="w-full bg-brand-yellow text-[#0a0a0a] py-4 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
-             >
-               {isSubmitting ? "Confirming..." : "Confirm Booking"}
-             </button>
-             <button disabled={isSubmitting} onClick={() => setStep(3)} className="w-full mt-4 text-[#888] font-bold text-sm hover:text-white">← Change Time</button>
+           <button
+             onClick={handleConfirm}
+             disabled={isSubmitting}
+             className="w-full bg-brand-yellow text-[#0a0a0a] py-4 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
+           >
+             {isSubmitting ? 'Confirming…' : 'Confirm Booking →'}
+           </button>
+           <button
+             disabled={isSubmitting}
+             onClick={() => setStep(3)}
+             className="w-full mt-4 text-[#888] font-bold text-sm hover:text-white transition-colors"
+           >
+             ← Change time
+           </button>
          </div>
        )}
 
