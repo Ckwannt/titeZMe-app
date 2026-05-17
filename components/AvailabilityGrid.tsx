@@ -5,6 +5,7 @@ import { startOfWeek, addDays, format, isBefore, isPast, parseISO, addWeeks, sub
 import { collection, query, where, getDocs, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { scheduleUpdateSchema } from "@/lib/schemas";
 import { safeFirestore } from '@/lib/firebase-helpers';
@@ -45,6 +46,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
   const autoSaveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const uid = mode === 'barber' && user ? user.uid : barberId;
 
   // Generate the 7 days of the currently viewed week
@@ -184,7 +186,13 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
       ),
       { successMessage: 'Schedule saved!', errorMessage: 'Failed to save schedule.' }
     );
-    if (result !== null) setLastSaved(new Date());
+    if (result !== null) {
+      setLastSaved(new Date());
+      // Flush React Query caches so the dashboard sidebar's "hasAvailability"
+      // flag and any other schedule consumers update immediately after save.
+      queryClient.invalidateQueries({ queryKey: ['schedule', uid] });
+      queryClient.invalidateQueries({ queryKey: ['barberSchedule', uid] });
+    }
     setSaving(false);
   };
 

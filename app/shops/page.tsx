@@ -220,11 +220,18 @@ export default function ShopsPage() {
   const countries = Country.getAllCountries();
   const cities = countryCode ? (City.getCitiesOfCountry(countryCode) ?? []) : [];
 
-  const { data: allShops = [], isLoading } = useQuery({
+  const { data: allShops = [], isLoading, refetch: refetchShops } = useQuery({
     queryKey: ['shopsListV2'],
     queryFn: fetchShops,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
+
+  // 2-minute background refresh for the shops list (avoids N onSnapshot listeners)
+  useEffect(() => {
+    const interval = setInterval(() => { refetchShops(); }, 2 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [refetchShops]);
 
   const filtered = useMemo(() => {
     let list = [...allShops];
