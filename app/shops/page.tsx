@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,6 +9,7 @@ import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { Country, City } from 'country-state-city';
 import { getOpenStatus, getTimezoneFromLocation, getLocalDateString } from '@/lib/schedule-utils';
+import { locationsMatch } from '@/lib/location-utils';
 import { useDebounce } from '@/hooks/useDebounce';
 
 const PER_PAGE = 12;
@@ -169,6 +170,52 @@ export default function ShopsPage() {
   const [nameSearch, setNameSearch] = useState('');
   const debouncedNameSearch = useDebounce(nameSearch, 300);
   const [page, setPage] = useState(1);
+  const [geoApplied, setGeoApplied] = useState(false);
+  const [geoCity, setGeoCity] = useState('');
+
+  // Geolocation auto-fill — same as /barbers page.
+  // Shops store address.country as the full country name ("Spain"), so we use
+  // found.name (not isoCode) for the activeFilter.country comparison.
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            { headers: { 'Accept-Language': 'en' } }
+          );
+          const data = await res.json();
+          const city =
+            data.address?.city ||
+            data.address?.town ||
+            data.address?.municipality ||
+            data.address?.village ||
+            data.address?.county || '';
+          const country = data.address?.country || '';
+          if (city && country) {
+            const found = Country.getAllCountries().find(
+              c => c.name.toLowerCase() === country.toLowerCase()
+            );
+            if (found) {
+              setCountryCode(found.isoCode);
+              setCountryName(found.name);
+              setSelectedCity(city);
+              // Shops store address.country as full country name → compare by name
+              setActiveFilter({ city, country: found.name });
+              setGeoCity(city);
+              setGeoApplied(true);
+            }
+          }
+        } catch {
+          // Silent fail — geolocation is best-effort
+        }
+      },
+      () => { /* User denied — silent fail */ },
+      { timeout: 5000, maximumAge: 300000 }
+    );
+  }, []);
 
   const countries = Country.getAllCountries();
   const cities = countryCode ? (City.getCitiesOfCountry(countryCode) ?? []) : [];
@@ -183,10 +230,15 @@ export default function ShopsPage() {
     let list = [...allShops];
 
     if (activeFilter) {
-      list = list.filter(s =>
-        s.city.toLowerCase() === activeFilter.city.toLowerCase() &&
-        (!activeFilter.country || s.country.toLowerCase() === activeFilter.country.toLowerCase())
-      );
+      list = list.filter(s => {
+        // City: bi-directional partial match for flexibility
+        const cityMatch = locationsMatch(s.city, activeFilter.city);
+        // Country: flexible match — shops store full country name ("Spain")
+        const countryMatch =
+          !activeFilter.country ||
+          locationsMatch(s.country, activeFilter.country);
+        return cityMatch && countryMatch;
+      });
     }
 
     if (debouncedNameSearch.trim()) {
@@ -215,6 +267,8 @@ export default function ShopsPage() {
     setCountryCode('');
     setCountryName('');
     setNameSearch('');
+    setGeoApplied(false);
+    setGeoCity('');
     setPage(1);
   };
 
@@ -226,6 +280,20 @@ export default function ShopsPage() {
         <p className="text-[#888] font-bold text-lg mb-8">
           Browse barbershops by city. Meet the team. Book your spot.
         </p>
+
+        {/* Geolocation banner */}
+        {geoApplied && geoCity && (
+          <div className="flex items-center gap-2 mb-5 bg-[#111] border border-[#1e1e1e] rounded-full px-4 py-2 w-fit text-sm font-bold text-[#888]">
+            <span>📍</span>
+            <span>Showing shops near <span className="text-white">{geoCity}</span></span>
+            <button
+              onClick={clearAll}
+              className="ml-1 text-[#555] hover:text-white transition-colors text-xs"
+            >
+              Change location ✕
+            </button>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex flex-col sm:flex-row gap-3">

@@ -9,6 +9,7 @@ import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { Country, City } from 'country-state-city';
 import { getOpenStatus, getScheduleDocId } from '@/lib/schedule-utils';
+import { locationsMatch } from '@/lib/location-utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { BarberCard } from './page';
 
@@ -61,7 +62,10 @@ async function fetchBarbers(): Promise<BarberCard[]> {
     const sched = scheduleSnaps[i].exists() ? (scheduleSnaps[i].data() as any) : null;
     const prices = servicesPriceMap.get(p.id) || [];
     const city = p.city || user.city || '';
-    const country = user.country || '';
+    // barberProfiles stores country as ISO code (e.g. "ES") set during onboarding.
+    // users stores the same ISO code only after the barber updates Settings.
+    // Always prefer barberProfiles so newly-onboarded barbers appear in search.
+    const country = p.country || user.country || '';
     const status = getOpenStatus(sched?.availableSlots, city, country, p.id);
 
     return {
@@ -153,7 +157,9 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  const [activeFilter, setActiveFilter] = useState<{ city: string; country: string } | null>(null);
+  // country = ISO code (e.g. "ES") to match barberProfiles storage format.
+  // countryDisplay = full name for the UI badge (e.g. "Spain").
+  const [activeFilter, setActiveFilter] = useState<{ city: string; country: string; countryDisplay?: string } | null>(null);
   const [geoCity, setGeoCity] = useState('');
   const [geoCountry, setGeoCountry] = useState('');
   const [geoApplied, setGeoApplied] = useState(false);
@@ -187,7 +193,8 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
               setCountryCode(found.isoCode);
               setCountryName(found.name);
               setSelectedCity(city);
-              setActiveFilter({ city, country: found.name });
+              // Use ISO code for filter (matches barberProfiles.country format)
+              setActiveFilter({ city, country: found.isoCode, countryDisplay: found.name });
               setGeoApplied(true);
             }
           }
@@ -221,10 +228,15 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
     let list = [...allBarbers];
 
     if (activeFilter) {
-      list = list.filter(b =>
-        b.city.toLowerCase() === activeFilter.city.toLowerCase() &&
-        (!activeFilter.country || b.country.toLowerCase() === activeFilter.country.toLowerCase())
-      );
+      list = list.filter(b => {
+        // City: bi-directional partial match handles "Madrid" vs "Madrid, Comunidad de Madrid"
+        const cityMatch = locationsMatch(b.city, activeFilter.city);
+        // Country: exact ISO-code comparison ("ES" === "ES")
+        const countryMatch =
+          !activeFilter.country ||
+          b.country.toLowerCase() === activeFilter.country.toLowerCase();
+        return cityMatch && countryMatch;
+      });
     }
 
     if (debouncedNameSearch.trim()) {
@@ -244,8 +256,10 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const handleSearch = () => {
-    if (countryName && selectedCity) {
-      setActiveFilter({ city: selectedCity, country: countryName });
+    if (countryCode && selectedCity) {
+      // Store ISO code for comparison with barberProfiles.country ("ES")
+      // Store full name separately for display in the UI badge
+      setActiveFilter({ city: selectedCity, country: countryCode, countryDisplay: countryName });
       setPage(1);
     }
   };
@@ -327,7 +341,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {activeFilter && (
               <span className="bg-[#1a1a1a] border border-[#2a2a2a] text-white text-xs font-bold px-3 py-1 rounded-full">
-                {activeFilter.city}, {activeFilter.country}
+                {activeFilter.city}, {activeFilter.countryDisplay || activeFilter.country}
               </span>
             )}
             {nameSearch && (
