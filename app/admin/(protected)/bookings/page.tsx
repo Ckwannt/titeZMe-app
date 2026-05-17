@@ -6,7 +6,7 @@ import {
   query,
   orderBy,
   limit,
-  getDocs,
+  onSnapshot,
   doc,
   getDoc,
   updateDoc,
@@ -117,26 +117,24 @@ export default function AdminBookingsPage() {
   const debouncedSearch = useDebounce(search, 300);
 
   useEffect(() => {
-    async function fetchBookings() {
-      setLoading(true);
-      try {
-        const snap = await getDocs(
-          query(collection(db, 'bookings'), orderBy('createdAt', 'desc'), limit(FETCH_LIMIT))
-        );
+    setLoading(true);
 
+    // Real-time listener — new bookings appear immediately without refresh
+    const unsub = onSnapshot(
+      query(collection(db, 'bookings'), orderBy('createdAt', 'desc'), limit(FETCH_LIMIT)),
+      async (snap) => {
         const rawBookings: BookingRow[] = snap.docs.map((d) => ({
           id: d.id,
           ...(d.data() as Omit<BookingRow, 'id'>),
         }));
 
-        // Collect unique user IDs
+        // Collect unique user IDs for name enrichment
         const userIds = new Set<string>();
         rawBookings.forEach((b) => {
           if (b.clientId) userIds.add(b.clientId);
           if (b.barberId) userIds.add(b.barberId);
         });
 
-        // Fetch all users in parallel
         const userMap: Record<string, string> = {};
         await Promise.all(
           Array.from(userIds).map(async (uid) => {
@@ -146,27 +144,26 @@ export default function AdminBookingsPage() {
                 const u = userSnap.data() as Record<string, unknown>;
                 userMap[uid] = `${u.firstName || ''} ${u.lastName || ''}`.trim() || uid;
               }
-            } catch {
-              // skip
-            }
+            } catch { /* skip */ }
           })
         );
 
         const enriched = rawBookings.map((b) => ({
           ...b,
-          clientName: b.clientId ? (userMap[b.clientId] || b.clientId) : '—',
-          barberName: b.barberId ? (userMap[b.barberId] || b.barberId) : '—',
+          clientName: b.clientId ? (userMap[b.clientId] || b.clientName || b.clientId) : '—',
+          barberName: b.barberId ? (userMap[b.barberId] || b.barberName || b.barberId) : '—',
         }));
 
         setBookings(enriched);
-      } catch (err) {
-        console.error('Bookings fetch error:', err);
-      } finally {
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Admin bookings listener error:', err);
         setLoading(false);
       }
-    }
+    );
 
-    fetchBookings();
+    return () => unsub();
   }, []);
 
   const filtered = useMemo(() => {

@@ -145,7 +145,16 @@ export default function BookingsPage() {
       const timeNow = Date.now();
       const booking = bookings.find(b => b.id === id);
       const batch = writeBatch(db);
-      batch.update(doc(db, 'bookings', id), bookingUpdateSchema.parse({ status, updatedAt: timeNow }));
+      // For completed bookings, also write completedAt (allowed by Firestore rules)
+      if (status === 'completed') {
+        batch.update(doc(db, 'bookings', id), {
+          status: 'completed',
+          updatedAt: timeNow,
+          completedAt: timeNow,
+        });
+      } else {
+        batch.update(doc(db, 'bookings', id), bookingUpdateSchema.parse({ status, updatedAt: timeNow }));
+      }
       if (status === 'completed' && booking && booking.status !== 'completed' && user) {
         batch.update(doc(db, 'barberProfiles', user.uid), { totalCuts: increment(1) });
         if (profile?.shopId) batch.update(doc(db, 'barbershops', profile.shopId), { totalBookings: increment(1) });
