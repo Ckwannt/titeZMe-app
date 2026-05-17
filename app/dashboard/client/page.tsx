@@ -2,15 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { query, where, orderBy, doc, getDoc, updateDoc, onSnapshot, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
-import { BookingRowSkeleton } from '@/components/skeletons';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import { collection } from 'firebase/firestore';
 import { userUpdateSchema, bookingUpdateSchema } from "@/lib/schemas";
 import { cleanupBookingLock } from '@/lib/booking-lock-utils';
 import Image from 'next/image';
@@ -20,6 +17,8 @@ export default function ClientDashboard() {
   const router = useRouter();
   
   const [activeTab, setActiveTab] = useState("Bookings");
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     if (!loading && (!user || appUser?.role !== 'client')) {
@@ -27,41 +26,55 @@ export default function ClientDashboard() {
     }
   }, [user, appUser, loading, router]);
 
-  const fetchClientData = async () => {
-    // Bookings
-    const bq = query(collection(db, 'bookings'), where('clientId', '==', user!.uid));
-    const bs = await getDocs(bq);
-    const bResults = [];
-    for (const docSnap of bs.docs) {
-      const bData = { id: docSnap.id, ...docSnap.data() } as any;
-      // get barber details
-      const bProfile = await getDoc(doc(db, 'users', bData.barberId));
-      if (bProfile.exists()) {
-         bData.barberName = `${bProfile.data().firstName} ${bProfile.data().lastName}`;
-      }
-      // handle old and new service structures
-      if (bData.serviceNames && Array.isArray(bData.serviceNames)) {
-         bData.serviceName = bData.serviceNames.join(', ');
-      } else if (bData.serviceId) {
-         const bSvc = await getDoc(doc(db, 'services', bData.serviceId));
-         if (bSvc.exists()) {
-            bData.serviceName = bSvc.data().name;
-         }
-      }
-      bResults.push(bData);
-    }
-    bResults.sort((a,b) => new Date(`${b.date}T${b.startTime}`).getTime() - new Date(`${a.date}T${a.startTime}`).getTime());
+  // Real-time bookings listener — updates immediately when booking is created,
+  // accepted, cancelled, or completed without any page refresh needed.
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      collection(db, 'bookings'),
+      where('clientId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
 
-    return { bookings: bResults };
-  };
+    const unsub = onSnapshot(
+      q,
+      async (snap) => {
+        const enriched = await Promise.all(
+          snap.docs.map(async (docSnap) => {
+            const b = { id: docSnap.id, ...docSnap.data() } as any;
+            // Enrich with barber name if not already stored
+            if (b.barberId && !b.barberName) {
+              try {
+                const bProfile = await getDoc(doc(db, 'users', b.barberId));
+                if (bProfile.exists()) {
+                  const u = bProfile.data();
+                  b.barberName = `${u.firstName || ''} ${u.lastName || ''}`.trim();
+                }
+              } catch { /* non-critical */ }
+            }
+            // Handle old (serviceId) and new (serviceNames) structures
+            if (b.serviceNames && Array.isArray(b.serviceNames)) {
+              b.serviceName = b.serviceNames.join(', ');
+            } else if (b.serviceId && !b.serviceName) {
+              try {
+                const svc = await getDoc(doc(db, 'services', b.serviceId));
+                if (svc.exists()) b.serviceName = svc.data().name;
+              } catch { /* non-critical */ }
+            }
+            return b;
+          })
+        );
+        setBookings(enriched);
+        setFetching(false);
+      },
+      (err) => {
+        console.error('Client bookings listener error:', err);
+        setFetching(false);
+      }
+    );
 
-  const queryClient = useQueryClient();
-  const { data, isLoading: fetching } = useQuery({
-    queryKey: ['clientData', user?.uid],
-    queryFn: fetchClientData,
-    enabled: !!user && appUser?.role === 'client'
-  });
-  const bookings = data?.bookings || [];
+    return () => unsub();
+  }, [user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cancelBooking = async (bId: string, dateStr: string, timeStr: string) => {
     // Check if more than 2 hours
@@ -86,7 +99,7 @@ export default function ClientDashboard() {
           id: bId,
         });
       }
-      queryClient.invalidateQueries({ queryKey: ['clientData', user?.uid] });
+      // onSnapshot listener above will auto-refresh the bookings list
       toast.success("Appointment cancelled.", { id: loadingToast });
     } catch(e) {
       console.error(e);

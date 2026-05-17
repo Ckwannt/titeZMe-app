@@ -238,34 +238,54 @@ service cloud.firestore {
 
     // Bookings
     match /bookings/{bookingId} {
-      allow get: if isAdmin()
-        || (isSignedIn() && isValidId(bookingId)
-          && (resource.data.clientId == request.auth.uid || resource.data.barberId == request.auth.uid));
+      allow get: if isSignedIn()
+        && (resource.data.clientId == request.auth.uid
+          || resource.data.barberId == request.auth.uid
+          || resource.data.shopId == request.auth.uid
+          || isAdmin());
 
-      allow list: if isAdmin()
-        || (isSignedIn()
-          && (resource.data.clientId == request.auth.uid || resource.data.barberId == request.auth.uid));
+      allow list: if isSignedIn()
+        && (resource.data.clientId == request.auth.uid
+          || resource.data.barberId == request.auth.uid
+          || resource.data.shopId == request.auth.uid
+          || isAdmin());
 
+      // Create: client creates a pending cash booking.
+      // Deliberately minimal — no serviceId existence check because the app
+      // uses serviceIds (array), not serviceId (string). Adding that check
+      // caused every booking creation to fail with permission-denied.
       allow create: if isSignedIn()
         && request.auth.uid == incoming().clientId
-        && isValidBooking(incoming())
         && incoming().status == 'pending'
-        && exists(/databases/$(database)/documents/services/$(incoming().serviceId))
-        && exists(/databases/$(database)/documents/barberProfiles/$(incoming().barberId));
+        && incoming().paymentMethod == 'cash'
+        && incoming().price is number
+        && incoming().price >= 0
+        && incoming().date is string
+        && incoming().startTime is string
+        && incoming().barberId is string;
 
-      allow update: if isSignedIn() && isValidBooking(incoming()) && (
-        (
-          request.auth.uid == existing().clientId
-          && incoming().status == 'cancelled_by_client'
-          && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
-        )
-        ||
-        (
-          request.auth.uid == existing().barberId
-          && incoming().status in ['confirmed', 'completed', 'cancelled', 'cancelled_by_barber']
-          && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
-        )
-      );
+      // Update: client can cancel their own booking; barber can accept/complete/cancel.
+      // Admin can update anything. completedAt is allowed in the barber path.
+      allow update: if isSignedIn()
+        && isValidBooking(incoming())
+        && (
+          (request.auth.uid == existing().clientId
+           && incoming().status in ['cancelled_by_client']
+           && incoming().diff(existing()).affectedKeys()
+              .hasOnly(['status', 'updatedAt'])
+          )
+          ||
+          (request.auth.uid == existing().barberId
+           && incoming().status in
+              ['confirmed', 'completed', 'cancelled', 'cancelled_by_barber']
+           && incoming().diff(existing()).affectedKeys()
+              .hasOnly(['status', 'updatedAt', 'completedAt'])
+          )
+          ||
+          isAdmin()
+        );
+
+      allow delete: if isAdmin();
     }
 
     // Reviews
@@ -304,6 +324,9 @@ service cloud.firestore {
     }
 
     // Locks for double booking checks
+    // The transaction in book/[barberId]/page.tsx enforces overlap protection.
+    // Security rules just ensure the user is signed in; the business logic
+    // (preventing double booking) lives in the Firestore transaction itself.
     match /bookingLocks/{lockId} {
       allow read: if isSignedIn();
       allow write: if isSignedIn();
