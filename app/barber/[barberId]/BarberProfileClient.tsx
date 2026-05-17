@@ -13,7 +13,7 @@ import Image from 'next/image';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BarberProfileSkeleton } from '@/components/skeletons';
 import { toast } from '@/lib/toast';
-import { getOpenStatus, getLocalDateString, getTimezoneFromLocation } from '@/lib/schedule-utils';
+import { getOpenStatus, getLocalDateString, getTimezoneFromLocation, getScheduleDocId } from '@/lib/schedule-utils';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -229,7 +229,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
   useEffect(() => {
     const unsub = onSnapshot(
-      doc(db, 'schedules', `${barberId}_shard_0`),
+      doc(db, 'schedules', getScheduleDocId(barberId)),
       snap => {
         if (snap.exists()) setSchedule(snap.data() as { availableSlots?: Record<string, string[]> });
       },

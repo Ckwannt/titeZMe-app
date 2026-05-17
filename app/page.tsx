@@ -5,7 +5,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
-import { getOpenStatus, getLocalDateString, getLocalHourString, getTimezoneFromLocation } from '@/lib/schedule-utils';
+import { getOpenStatus, getLocalDateString, getLocalHourString, getTimezoneFromLocation, getScheduleDocId } from '@/lib/schedule-utils';
 import LandingPageClient from './LandingPageClient';
 
 // ─── data fetchers (client-side) ─────────────────────────────────────────────
@@ -23,7 +23,7 @@ async function fetchFeaturedBarbers() {
     if (profiles.length === 0) return [];
 
     const schedSnaps = await Promise.all(
-      profiles.map((p: any) => getDoc(doc(db, 'schedules', `${p.id}_shard_0`)))
+      profiles.map((p: any) => getDoc(doc(db, 'schedules', getScheduleDocId(p.id))))
     );
 
     const withStatus = profiles.map((p: any, i: number) => {

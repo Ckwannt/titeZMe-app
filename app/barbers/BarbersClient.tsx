@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,7 +8,7 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { Country, City } from 'country-state-city';
-import { getOpenStatus } from '@/lib/schedule-utils';
+import { getOpenStatus, getScheduleDocId } from '@/lib/schedule-utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { BarberCard } from './page';
 
@@ -29,7 +29,7 @@ async function fetchBarbers(): Promise<BarberCard[]> {
 
   const [userSnaps, scheduleSnaps] = await Promise.all([
     Promise.all(ids.map(id => getDoc(doc(db, 'users', id)))),
-    Promise.all(ids.map(id => getDoc(doc(db, 'schedules', `${id}_shard_0`)))),
+    Promise.all(ids.map(id => getDoc(doc(db, 'schedules', getScheduleDocId(id))))),
   ]);
 
   const serviceChunkPromises: Promise<any>[] = [];
@@ -154,6 +154,51 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   const [countryName, setCountryName] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [activeFilter, setActiveFilter] = useState<{ city: string; country: string } | null>(null);
+  const [geoCity, setGeoCity] = useState('');
+  const [geoCountry, setGeoCountry] = useState('');
+  const [geoApplied, setGeoApplied] = useState(false);
+
+  // Auto-detect user location and pre-populate filters
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            { headers: { 'Accept-Language': 'en' } }
+          );
+          const data = await res.json();
+          const city =
+            data.address?.city ||
+            data.address?.town ||
+            data.address?.village ||
+            data.address?.county || '';
+          const country = data.address?.country || '';
+          if (city && country) {
+            setGeoCity(city);
+            setGeoCountry(country);
+            // Only auto-apply if user hasn't already set filters manually
+            const found = Country.getAllCountries().find(
+              (c) => c.name.toLowerCase() === country.toLowerCase()
+            );
+            if (found) {
+              setCountryCode(found.isoCode);
+              setCountryName(found.name);
+              setSelectedCity(city);
+              setActiveFilter({ city, country: found.name });
+              setGeoApplied(true);
+            }
+          }
+        } catch {
+          // Silent fail — geolocation reverse-geocode is best-effort
+        }
+      },
+      () => { /* User denied or unavailable — silent fail */ },
+      { timeout: 5000, maximumAge: 300000 }
+    );
+  }, []);
 
   // Use server-provided initialBarbers if available, otherwise fetch client-side.
   const { data: allBarbers = [], isLoading } = useQuery({
@@ -211,6 +256,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
     setCountryCode('');
     setCountryName('');
     setNameSearch('');
+    setGeoApplied(false);
     setPage(1);
   };
 
@@ -225,9 +271,23 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
 
       <div className="max-w-[1400px] mx-auto px-6 pt-12 pb-8">
         <h1 className="text-4xl md:text-5xl font-black mb-2">Find your barber</h1>
-        <p className="text-[#888] font-bold text-lg mb-8">
+        <p className="text-[#888] font-bold text-lg mb-4">
           Browse barbers by city. Real availability. Book in seconds.
         </p>
+
+        {/* Geolocation banner */}
+        {geoApplied && geoCity && (
+          <div className="flex items-center gap-2 mb-5 bg-[#111] border border-[#1e1e1e] rounded-full px-4 py-2 w-fit text-sm font-bold text-[#888]">
+            <span>📍</span>
+            <span>Showing barbers near <span className="text-white">{geoCity}</span></span>
+            <button
+              onClick={clearAll}
+              className="ml-1 text-[#555] hover:text-white transition-colors text-xs"
+            >
+              Change location ✕
+            </button>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex flex-col sm:flex-row gap-3">

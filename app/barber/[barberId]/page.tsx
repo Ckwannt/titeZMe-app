@@ -2,6 +2,7 @@
 import { notFound } from 'next/navigation';
 import { adminDb } from '@/lib/firebase-admin';
 import BarberProfileClient, { type BarberProfileInitialData } from './BarberProfileClient';
+import { getScheduleDocId } from '@/lib/schedule-utils';
 
 export const revalidate = 60;
 
@@ -65,7 +66,7 @@ export default async function BarberProfilePage({
     const [profileDoc, userDoc, scheduleDoc] = await Promise.all([
       adminDb.collection('barberProfiles').doc(barberId).get(),
       adminDb.collection('users').doc(barberId).get(),
-      adminDb.collection('schedules').doc(`${barberId}_shard_0`).get(),
+      adminDb.collection('schedules').doc(getScheduleDocId(barberId)).get(),
     ]);
 
     if (!profileDoc.exists) {
