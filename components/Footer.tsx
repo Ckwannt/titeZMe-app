@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Wordmark } from './Wordmark';
 
 export function Footer() {
   return (
@@ -6,7 +7,7 @@ export function Footer() {
        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6 pb-12 border-b border-[#1E1E1E] mb-8">
           <div className="flex flex-col items-center md:items-start">
              <div className="mb-2">
-               <img src="/wordmark.png" alt="titeZMe" style={{ height: '28px', width: 'auto', objectFit: 'contain' }} />
+               <Wordmark height={20} />
              </div>
              <div className="text-xs font-bold text-[#888580]">Keeping you sharp.</div>
           </div>
