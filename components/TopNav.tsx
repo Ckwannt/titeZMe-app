@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Wordmark } from './Wordmark';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { NotificationBell } from './NotificationBell';
@@ -27,7 +28,7 @@ export function TopNav() {
       <div className="bg-[#0A0A0A] border-b border-[#1E1E1E] px-6 py-4 flex items-center justify-between">
         <div className="flex-1 flex justify-start items-center space-x-8">
           <Link href="/" className="flex items-center mr-4">
-            <img src="/wordmark.png" alt="titeZMe" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+            <Wordmark height={24} />
           </Link>
           <div className="hidden md:flex flex-1 justify-start space-x-6 items-center">
             <Link href="/" className={getLinkClass('/')}>Home</Link>
