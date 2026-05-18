@@ -2,11 +2,11 @@
 
 import { useState, useEffect, use } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc, addDoc, increment } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, addDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/lib/toast';
-import { notificationSchema, barberUpdateSchema } from "@/lib/schemas";
+import { notificationSchema } from "@/lib/schemas";
 import { sanitizeText } from '@/lib/sanitize';
 
 export default function ReviewPage({ params }: { params: Promise<{ bookingId: string }> }) {
@@ -64,47 +64,50 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
     if (!user || rating === 0) return;
     setIsSubmitting(true);
     try {
-      // 1. Create Review
-      const newReviewRef = doc(collection(db, 'reviews'));
-      await setDoc(newReviewRef, {
-         bookingId,
-         providerId: booking.bookingContext === 'shop' && booking.shopId ? booking.shopId : booking.barberId,
-         providerType: booking.bookingContext === 'shop' ? 'shop' : 'barber',
-         clientId: user.uid,
-         rating,
-         comment: sanitizeText(comment, 1000),
-         createdAt: Date.now()
+      // 1. Build clientName
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const userData = userDoc.data();
+      const clientName = userData
+        ? `${userData.firstName || ''} ${(userData.lastName || '').charAt(0)}.`.trim()
+        : (booking.clientName || 'A client');
+
+      // 2. Create Review
+      await addDoc(collection(db, 'reviews'), {
+        bookingId,
+        barberId: booking.barberId,
+        shopId: booking.shopId || null,
+        providerId: booking.bookingContext === 'shop' && booking.shopId ? booking.shopId : booking.barberId,
+        providerType: booking.bookingContext === 'shop' ? 'shop' : 'barber',
+        clientId: user.uid,
+        clientName,
+        rating,
+        comment: sanitizeText(comment, 1000),
+        createdAt: Date.now(),
       });
 
-      // 2. Update BarberProfile (Note: The Rules allow rating/reviewCount updates)
-      const pRef = doc(db, 'barberProfiles', booking.barberId);
-      const pSnap = await getDoc(pRef);
-      if (pSnap.exists()) {
-         const pData = pSnap.data();
-         const currentRating = pData.rating || 0;
-         const currentCount = pData.totalReviews || pData.reviewCount || 0;
-         const newCount = currentCount + 1;
-         const newRating = ((currentRating * currentCount) + rating) / newCount;
-         
-         const updateData: any = {
-           rating: newRating,
-           reviewCount: increment(1)
-         };
-         
-         await updateDoc(pRef, updateData);
-      }
+      // 3. Recalculate barber rating from all reviews
+      const reviewsSnap = await getDocs(
+        query(collection(db, 'reviews'), where('providerId', '==', booking.barberId))
+      );
+      const ratings = reviewsSnap.docs.map(d => d.data().rating as number);
+      const newCount = ratings.length;
+      const newRating = Number((ratings.reduce((a, b) => a + b, 0) / newCount).toFixed(1));
+      await updateDoc(doc(db, 'barberProfiles', booking.barberId), {
+        rating: newRating,
+        reviewCount: newCount,
+      });
 
-      // 3. Mark booking as reviewed so the dashboard shows "Reviewed ✓"
+      // 4. Mark booking as reviewed so the dashboard shows "Reviewed ✓"
       await updateDoc(doc(db, 'bookings', bookingId), { hasReview: true });
 
-      // 4. Notify Barber
+      // 5. Notify Barber
       await addDoc(collection(db, 'notifications'), notificationSchema.parse({
-              userId: booking.barberId,
-              message: `⭐ ${booking.clientName || 'A client'} left you a ${rating}-star review!`,
-              read: false,
-              linkTo: `/barber/${booking.barberId}`,
-              createdAt: Date.now()
-            }));
+        userId: booking.barberId,
+        message: `⭐ ${clientName} left you a ${rating}-star review!`,
+        read: false,
+        linkTo: '/dashboard/barber',
+        createdAt: Date.now(),
+      }));
 
       toast.success('Review submitted ✓');
       router.push('/dashboard/client');

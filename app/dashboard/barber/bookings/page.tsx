@@ -43,11 +43,13 @@ const statusMap: Record<string, { text: string; bg: string; border: string }> = 
   cancelled: { text: "text-brand-red", bg: "bg-[#1a0808]", border: "border-brand-red/30" },
   cancelled_by_client: { text: "text-brand-red", bg: "bg-[#1a0808]", border: "border-brand-red/30" },
   cancelled_by_barber: { text: "text-brand-red", bg: "bg-[#1a0808]", border: "border-brand-red/30" },
+  no_show: { text: "text-[#888]", bg: "bg-[#1a1a1a]", border: "border-[#2a2a2a]" },
 };
 const borderColorMap: Record<string, string> = {
   completed: "border-l-brand-green", confirmed: "border-l-brand-yellow",
   pending: "border-l-brand-orange", cancelled: "border-l-brand-red",
   cancelled_by_client: "border-l-brand-red", cancelled_by_barber: "border-l-brand-red",
+  no_show: "border-l-[#2a2a2a]",
 };
 
 export default function BookingsPage() {
@@ -211,6 +213,62 @@ export default function BookingsPage() {
     const a = document.createElement('a'); a.href = url; a.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`; a.click(); URL.revokeObjectURL(url);
   };
 
+  const appointmentPassed = (booking: any): boolean => {
+    const now = new Date();
+    const bookingDate = new Date(`${booking.date}T${booking.endTime}`);
+    return now > bookingDate;
+  };
+
+  const handleMarkComplete = async (booking: any) => {
+    try {
+      const bookingRef = doc(db, 'bookings', booking.id);
+      await updateDoc(bookingRef, {
+        status: 'completed',
+        completedAt: Date.now(),
+        updatedAt: Date.now(),
+        cutConfirmed: false,
+      });
+
+      const barberDoc = await getDoc(doc(db, 'users', user!.uid));
+      const barberName = barberDoc.exists()
+        ? `${barberDoc.data().firstName} ${barberDoc.data().lastName}`
+        : 'Your barber';
+
+      await addDoc(collection(db, 'notifications'), {
+        userId: booking.clientId,
+        type: 'cut_confirmation',
+        message: `Did you get your cut with ${barberName}? Tap to confirm.`,
+        bookingId: booking.id,
+        barberId: user!.uid,
+        barberName: barberName,
+        read: false,
+        linkTo: '/dashboard/client',
+        createdAt: Date.now(),
+        expiresAt: Date.now() + (2 * 60 * 60 * 1000),
+      });
+
+      toast.success('Booking marked as complete ✓');
+    } catch (error: any) {
+      console.error('Mark complete error:', error);
+      toast.error(`Failed: ${error.message}`);
+    }
+  };
+
+  const handleNoShow = async (booking: any) => {
+    try {
+      await updateDoc(doc(db, 'bookings', booking.id), {
+        status: 'no_show',
+        updatedAt: Date.now(),
+      });
+      await updateDoc(doc(db, 'users', booking.clientId), {
+        noShowCount: increment(1),
+      });
+      toast.success('Marked as no-show');
+    } catch (error: any) {
+      toast.error(`Failed: ${error.message}`);
+    }
+  };
+
   return (
     <div className="animate-fadeUp p-6 md:p-8 md:px-10">
       <div className="flex items-center justify-between mb-6">
@@ -265,9 +323,20 @@ export default function BookingsPage() {
                 <button onClick={() => updateBookingStatus(b.id, 'cancelled_by_barber')} className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-red/20">✕ Decline</button>
               </div>
             )}
-            {b.status === 'confirmed' && (
-              <div className="flex gap-1.5 w-full sm:w-auto mt-1 sm:mt-0 justify-end">
-                <button onClick={() => updateBookingStatus(b.id, 'completed')} className="bg-brand-surface border border-brand-border text-white rounded-lg px-3 py-1.5 text-xs font-extrabold hover:border-[#444]">Mark Complete</button>
+            {b.status === 'confirmed' && appointmentPassed(b) && (
+              <div className="flex gap-1.5 w-full sm:w-auto mt-1 sm:mt-0 justify-end flex-wrap">
+                <button
+                  onClick={() => handleMarkComplete(b)}
+                  style={{ background: '#0f2010', color: '#22C55E', border: '1px solid #22C55E44', borderRadius: '99px', padding: '6px 16px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Mark as complete ✓
+                </button>
+                <button
+                  onClick={() => handleNoShow(b)}
+                  style={{ background: 'transparent', color: '#EF4444', border: '1px solid #EF444433', borderRadius: '99px', padding: '6px 16px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Client didn&apos;t show
+                </button>
               </div>
             )}
           </div>

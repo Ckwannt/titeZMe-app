@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { query, where, orderBy, doc, getDoc, updateDoc, onSnapshot, collection } from 'firebase/firestore';
+import { query, where, orderBy, doc, getDoc, updateDoc, onSnapshot, collection, addDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
@@ -66,6 +66,7 @@ export default function ClientDashboard() {
         );
         setBookings(enriched);
         setFetching(false);
+        autoConfirmCuts(enriched).catch(e => console.error('autoConfirmCuts:', e));
       },
       (err) => {
         console.error('Client bookings listener error:', err);
@@ -75,6 +76,17 @@ export default function ClientDashboard() {
 
     return () => unsub();
   }, [user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const autoConfirmCuts = async (bList: any[]) => {
+    const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
+    const unconfirmed = bList.filter(
+      b => b.status === 'completed' && b.cutConfirmed === false && b.completedAt && b.completedAt < twoHoursAgo
+    );
+    for (const booking of unconfirmed) {
+      await updateDoc(doc(db, 'bookings', booking.id), { cutConfirmed: true });
+      await updateDoc(doc(db, 'barberProfiles', booking.barberId), { totalCuts: increment(1) });
+    }
+  };
 
   const cancelBooking = async (bId: string, dateStr: string, timeStr: string) => {
     // Check if more than 2 hours
@@ -169,6 +181,56 @@ export default function ClientDashboard() {
       <div className="flex-1 p-6 md:p-8 md:px-10 overflow-y-auto max-h-[calc(100vh-53px)]">
         {activeTab === "Bookings" && (
            <div className="animate-fadeUp max-w-[700px]">
+             {bookings.filter(b => b.status === 'completed' && b.cutConfirmed === false).length > 0 && (
+               <div className="mb-8">
+                 <h2 className="text-2xl font-black mb-4">Confirm your cuts</h2>
+                 {bookings
+                   .filter(b => b.status === 'completed' && b.cutConfirmed === false)
+                   .map(booking => (
+                     <div key={booking.id} style={{ background: '#111', border: '1px solid #F5C51833', borderRadius: '14px', padding: '16px', marginBottom: '12px' }}>
+                       <div style={{ fontSize: '14px', fontWeight: 800, color: '#fff', marginBottom: '4px' }}>✂️ Did you get your cut?</div>
+                       <div style={{ fontSize: '12px', color: '#666', marginBottom: '14px' }}>
+                         {booking.barberName} · {booking.date} at {booking.startTime}
+                       </div>
+                       <div style={{ display: 'flex', gap: '8px' }}>
+                         <button
+                           onClick={async () => {
+                             try {
+                               await updateDoc(doc(db, 'bookings', booking.id), { cutConfirmed: true });
+                               await updateDoc(doc(db, 'barberProfiles', booking.barberId), { totalCuts: increment(1) });
+                               await addDoc(collection(db, 'notifications'), {
+                                 userId: user!.uid,
+                                 type: 'review_prompt',
+                                 message: `How was your cut with ${booking.barberName}? Leave a review!`,
+                                 bookingId: booking.id,
+                                 barberId: booking.barberId,
+                                 read: false,
+                                 linkTo: `/review/${booking.id}`,
+                                 createdAt: Date.now(),
+                               });
+                               toast.success('Thanks for confirming! ✓');
+                             } catch (e: any) { toast.error(e.message); }
+                           }}
+                           style={{ flex: 1, background: '#0f2010', color: '#22C55E', border: '1px solid #22C55E44', borderRadius: '99px', padding: '10px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}
+                         >
+                           ✓ Yes I got my cut
+                         </button>
+                         <button
+                           onClick={async () => {
+                             try {
+                               await updateDoc(doc(db, 'bookings', booking.id), { cutConfirmed: false, status: 'disputed' });
+                               toast.success('Got it. Thanks for letting us know.');
+                             } catch (e: any) { toast.error(e.message); }
+                           }}
+                           style={{ flex: 1, background: 'transparent', color: '#EF4444', border: '1px solid #EF444433', borderRadius: '99px', padding: '10px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}
+                         >
+                           ✗ No I didn&apos;t go
+                         </button>
+                       </div>
+                     </div>
+                   ))}
+               </div>
+             )}
              <h2 className="text-2xl font-black mb-6">Upcoming Appointments</h2>
              <div className="flex flex-col gap-3.5 mb-10">
                {upcomingBookings.length === 0 ? (

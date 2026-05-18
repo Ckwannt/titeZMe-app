@@ -241,19 +241,14 @@ service cloud.firestore {
       allow get: if isSignedIn()
         && (resource.data.clientId == request.auth.uid
           || resource.data.barberId == request.auth.uid
-          || resource.data.shopId == request.auth.uid
           || isAdmin());
 
       allow list: if isSignedIn()
         && (resource.data.clientId == request.auth.uid
           || resource.data.barberId == request.auth.uid
-          || resource.data.shopId == request.auth.uid
           || isAdmin());
 
       // Create: client creates a pending cash booking.
-      // Deliberately minimal — no serviceId existence check because the app
-      // uses serviceIds (array), not serviceId (string). Adding that check
-      // caused every booking creation to fail with permission-denied.
       allow create: if isSignedIn()
         && request.auth.uid == incoming().clientId
         && incoming().status == 'pending'
@@ -264,25 +259,13 @@ service cloud.firestore {
         && incoming().startTime is string
         && incoming().barberId is string;
 
-      // Update: client can cancel their own booking; barber can accept/complete/cancel.
-      // Admin can update anything. completedAt is allowed in the barber path.
+      // Update: client or barber can update their own bookings.
+      // No key restriction — supports cutConfirmed, hasReview, no_show, disputed fields.
       allow update: if isSignedIn()
-        && isValidBooking(incoming())
         && (
-          (request.auth.uid == existing().clientId
-           && incoming().status in ['cancelled_by_client']
-           && incoming().diff(existing()).affectedKeys()
-              .hasOnly(['status', 'updatedAt'])
-          )
-          ||
-          (request.auth.uid == existing().barberId
-           && incoming().status in
-              ['confirmed', 'completed', 'cancelled', 'cancelled_by_barber']
-           && incoming().diff(existing()).affectedKeys()
-              .hasOnly(['status', 'updatedAt', 'completedAt'])
-          )
-          ||
-          isAdmin()
+          resource.data.clientId == request.auth.uid
+          || resource.data.barberId == request.auth.uid
+          || isAdmin()
         );
 
       allow delete: if isAdmin();
