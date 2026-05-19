@@ -220,7 +220,13 @@ export default function BookingsPage() {
   };
 
   const handleMarkComplete = async (booking: any) => {
+    console.log('[markComplete] user.uid:', user?.uid);
+    console.log('[markComplete] booking.id:', booking.id);
+    console.log('[markComplete] booking.barberId:', booking.barberId);
+    console.log('[markComplete] booking.clientId:', booking.clientId);
+    console.log('[markComplete] uid match?', booking.barberId === user?.uid);
     try {
+      console.log('[markComplete] Write 1: updating booking...');
       const bookingRef = doc(db, 'bookings', booking.id);
       await updateDoc(bookingRef, {
         status: 'completed',
@@ -228,12 +234,16 @@ export default function BookingsPage() {
         updatedAt: Date.now(),
         cutConfirmed: false,
       });
+      console.log('[markComplete] Write 1: SUCCESS');
 
+      console.log('[markComplete] Read: fetching barber name...');
       const barberDoc = await getDoc(doc(db, 'users', user!.uid));
       const barberName = barberDoc.exists()
         ? `${barberDoc.data().firstName} ${barberDoc.data().lastName}`
         : 'Your barber';
+      console.log('[markComplete] Read: barberName =', barberName);
 
+      console.log('[markComplete] Write 2: adding notification...');
       await addDoc(collection(db, 'notifications'), {
         userId: booking.clientId,
         type: 'cut_confirmation',
@@ -246,10 +256,11 @@ export default function BookingsPage() {
         createdAt: Date.now(),
         expiresAt: Date.now() + (2 * 60 * 60 * 1000),
       });
+      console.log('[markComplete] Write 2: SUCCESS');
 
       toast.success('Booking marked as complete ✓');
     } catch (error: any) {
-      console.error('Mark complete error:', error);
+      console.error('[markComplete] FAILED:', error.code, error.message);
       toast.error(`Failed: ${error.message}`);
     }
   };
