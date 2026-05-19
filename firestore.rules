@@ -260,11 +260,12 @@ service cloud.firestore {
         && incoming().barberId is string;
 
       // Update: client or barber can update their own bookings.
-      // No key restriction — supports cutConfirmed, hasReview, no_show, disputed fields.
+      // Uses .get() so missing fields on old docs don't cause permission-denied.
       allow update: if isSignedIn()
         && (
-          resource.data.clientId == request.auth.uid
-          || resource.data.barberId == request.auth.uid
+          resource.data.get('clientId', '') == request.auth.uid
+          || resource.data.get('barberId', '') == request.auth.uid
+          || resource.data.get('providerId', '') == request.auth.uid
           || isAdmin()
         );
 
@@ -275,9 +276,7 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isSignedIn()
-        && request.auth.uid == incoming().clientId
-        && isValidReview(incoming())
-        && exists(/databases/$(database)/documents/barberProfiles/$(incoming().providerId));
+        && request.auth.uid == incoming().clientId;
       allow update: if isAdmin()
         || (isSignedIn()
           && request.auth.uid == existing().clientId

@@ -20,6 +20,7 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -32,18 +33,19 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
         const bSnap = await getDoc(doc(db, 'bookings', bookingId));
         if (bSnap.exists()) {
            const bData = bSnap.data();
-           if (bData.clientId !== user.uid || bData.status !== 'completed') {
-              toast.error("You can only review completed bookings of your own.");
+           const canReview = bData.status === 'completed' || bData.status === 'confirmed';
+           if (bData.clientId !== user.uid || !canReview) {
+              toast.error("You can only review your own bookings.");
               router.push('/dashboard/client');
               return;
            }
-           
-           // Check if review exists
+
+           // Check if review already exists — show message instead of redirecting
            const qR = query(collection(db, 'reviews'), where('bookingId', '==', bookingId));
            const rSnap = await getDocs(qR);
            if (!rSnap.empty) {
-              toast.error("You have already reviewed this booking.");
-              router.push('/dashboard/client');
+              setAlreadyReviewed(true);
+              setLoading(false);
               return;
            }
 
@@ -120,6 +122,18 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
   }
 
   if (loading) return <div className="p-20 text-center text-brand-text-secondary animate-pulse">Loading...</div>;
+
+  if (alreadyReviewed) return (
+    <div style={{ minHeight: '100vh', background: '#0A0A0A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Nunito, sans-serif' }}>
+      <div style={{ textAlign: 'center', padding: '40px' }}>
+        <div style={{ fontSize: '40px', marginBottom: '16px' }}>⭐</div>
+        <div style={{ fontSize: '18px', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>Already reviewed</div>
+        <div style={{ fontSize: '12px', color: '#555', marginBottom: '20px' }}>You already left a review for this booking.</div>
+        <a href="/dashboard/client" style={{ color: '#F5C518', fontSize: '13px', fontWeight: 800, textDecoration: 'none' }}>← Back to dashboard</a>
+      </div>
+    </div>
+  );
+
   if (!booking) return null;
 
   return (

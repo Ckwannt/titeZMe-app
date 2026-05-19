@@ -280,10 +280,15 @@ export default function ClientDashboard() {
                       <div className="text-right">
                         <div className="font-extrabold text-white text-sm mb-0.5">€{b.price}</div>
                         <div className="text-[10px] font-black uppercase text-[#666] mb-1">{b.status}</div>
-                        {b.status === 'completed' && (
+                        {(b.status === 'completed' || b.status === 'confirmed') && (
                           b.hasReview
                             ? <span className="text-[10px] font-extrabold text-[#22C55E]">✓ Reviewed</span>
-                            : <button onClick={() => router.push(`/review/${b.id}`)} className="text-[10px] font-extrabold text-brand-yellow hover:underline">Review</button>
+                            : <button
+                                onClick={() => router.push(`/review/${b.id}`)}
+                                style={{ background: 'transparent', color: '#F5C518', border: '1px solid #F5C51844', borderRadius: '99px', padding: '5px 14px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}
+                              >
+                                ⭐ Leave a review
+                              </button>
                         )}
                       </div>
                    </div>
