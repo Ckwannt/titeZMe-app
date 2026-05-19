@@ -220,49 +220,95 @@ export default function BookingsPage() {
   };
 
   const handleMarkComplete = async (booking: any) => {
-    console.log('[markComplete] user.uid:', user?.uid);
-    console.log('[markComplete] booking.id:', booking.id);
-    console.log('[markComplete] booking.barberId:', booking.barberId);
-    console.log('[markComplete] booking.clientId:', booking.clientId);
-    console.log('[markComplete] uid match?', booking.barberId === user?.uid);
-    try {
-      console.log('[markComplete] Write 1: updating booking...');
-      const bookingRef = doc(db, 'bookings', booking.id);
-      await updateDoc(bookingRef, {
-        status: 'completed',
-        completedAt: Date.now(),
-        updatedAt: Date.now(),
-        cutConfirmed: false,
-      });
-      console.log('[markComplete] Write 1: SUCCESS');
+    console.log('=== MARK COMPLETE DEBUG ===');
+    console.log('user.uid:', user?.uid);
+    console.log('booking.id:', booking.id);
+    console.log('booking.barberId:', booking.barberId);
+    console.log('booking.clientId:', booking.clientId);
+    console.log('booking.status:', booking.status);
+    console.log('UIDs match:', user?.uid === booking.barberId);
 
-      console.log('[markComplete] Read: fetching barber name...');
+    try {
+      console.log('--- Attempt Write 1 ---');
+      console.log('Writing to: bookings/', booking.id);
+      await updateDoc(
+        doc(db, 'bookings', booking.id),
+        {
+          status: 'completed',
+          completedAt: Date.now(),
+          updatedAt: Date.now(),
+          cutConfirmed: false,
+        }
+      );
+      console.log('Write 1 SUCCESS ✓');
+    } catch (error: any) {
+      console.error('Write 1 FAILED ✗');
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      toast.error(`Write 1 failed: ${error.message}`);
+      return;
+    }
+
+    try {
+      console.log('--- Attempt Read ---');
+      console.log('Reading: users/', user!.uid);
       const barberDoc = await getDoc(doc(db, 'users', user!.uid));
+      console.log('Read SUCCESS ✓');
+      console.log('barberDoc exists:', barberDoc.exists());
+
       const barberName = barberDoc.exists()
         ? `${barberDoc.data().firstName} ${barberDoc.data().lastName}`
         : 'Your barber';
-      console.log('[markComplete] Read: barberName =', barberName);
+      console.log('barberName:', barberName);
 
-      console.log('[markComplete] Write 2: adding notification...');
-      await addDoc(collection(db, 'notifications'), {
-        userId: booking.clientId,
-        type: 'cut_confirmation',
-        message: `Did you get your cut with ${barberName}? Tap to confirm.`,
-        bookingId: booking.id,
-        barberId: user!.uid,
-        barberName: barberName,
-        read: false,
-        linkTo: '/dashboard/client',
-        createdAt: Date.now(),
-        expiresAt: Date.now() + (2 * 60 * 60 * 1000),
-      });
-      console.log('[markComplete] Write 2: SUCCESS');
-
-      toast.success('Booking marked as complete ✓');
+      try {
+        console.log('--- Attempt Write 2 ---');
+        console.log('Writing to: notifications');
+        console.log('notification data:', {
+          userId: booking.clientId,
+          type: 'cut_confirmation',
+          message: `Did you get your cut with ${barberName}?`,
+          bookingId: booking.id,
+          barberId: user!.uid,
+          barberName: barberName,
+          read: false,
+          linkTo: '/dashboard/client',
+          createdAt: Date.now(),
+          expiresAt: Date.now() + 7200000,
+        });
+        await addDoc(
+          collection(db, 'notifications'),
+          {
+            userId: booking.clientId,
+            type: 'cut_confirmation',
+            message: `Did you get your cut with ${barberName}? Tap to confirm.`,
+            bookingId: booking.id,
+            barberId: user!.uid,
+            barberName: barberName,
+            read: false,
+            linkTo: '/dashboard/client',
+            createdAt: Date.now(),
+            expiresAt: Date.now() + (2 * 60 * 60 * 1000),
+          }
+        );
+        console.log('Write 2 SUCCESS ✓');
+      } catch (error: any) {
+        console.error('Write 2 FAILED ✗');
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        toast.error(`Write 2 failed: ${error.message}`);
+        return;
+      }
     } catch (error: any) {
-      console.error('[markComplete] FAILED:', error.code, error.message);
-      toast.error(`Failed: ${error.message}`);
+      console.error('Read FAILED ✗');
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      toast.error(`Read failed: ${error.message}`);
+      return;
     }
+
+    console.log('=== ALL WRITES SUCCESS ===');
+    toast.success('Booking marked as complete ✓');
   };
 
   const handleNoShow = async (booking: any) => {
