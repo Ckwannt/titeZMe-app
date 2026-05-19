@@ -95,50 +95,76 @@ async function fetchFeaturedBarbers() {
   }
 }
 
-function normalizeCity(raw: string): string {
-  const c = (raw || '').toLowerCase().trim();
-  if (!c) return '';
-  if (c.includes('casablanca')) return 'Casablanca';
-  if (c.includes('marrakesh') || c.includes('marrakech')) return 'Marrakesh';
-  if (c.includes('rabat')) return 'Rabat';
-  if (c.includes('tangier') || c.includes('tanger')) return 'Tangier';
-  if (c.includes('london') || c.includes('hackney') || c.includes('brixton') ||
-      c.includes('camden') || c.includes('islington') || c.includes('lambeth')) return 'London';
-  if (c.includes('paris') || c.includes('île-de-france') || c.includes('ile-de-france') ||
-      c.includes('boulogne') || c.includes('vincennes') || c.includes('montreuil')) return 'Paris';
-  if (c.includes('madrid') || c.includes('alcal') || c.includes('getafe') ||
-      c.includes('leganes') || c.includes('alcorcón')) return 'Madrid';
-  if (c.includes('barcelona') || c.includes('hospitalet') || c.includes('badalona')) return 'Barcelona';
-  if (c.includes('seville') || c.includes('sevilla')) return 'Seville';
-  if (c.includes('amsterdam')) return 'Amsterdam';
-  if (c.includes('berlin')) return 'Berlin';
-  if (c.includes('rome') || c.includes('roma')) return 'Rome';
-  if (c.includes('milan') || c.includes('milano')) return 'Milan';
-  if (c.includes('dubai')) return 'Dubai';
-  return raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+const COUNTRY_CAPITALS: Record<string, { capital: string; flag: string }> = {
+  'spain': { capital: 'Madrid', flag: '🇪🇸' },
+  'españa': { capital: 'Madrid', flag: '🇪🇸' },
+  'france': { capital: 'Paris', flag: '🇫🇷' },
+  'morocco': { capital: 'Rabat', flag: '🇲🇦' },
+  'maroc': { capital: 'Rabat', flag: '🇲🇦' },
+  'algeria': { capital: 'Algiers', flag: '🇩🇿' },
+  'algérie': { capital: 'Algiers', flag: '🇩🇿' },
+  'tunisia': { capital: 'Tunis', flag: '🇹🇳' },
+  'tunisie': { capital: 'Tunis', flag: '🇹🇳' },
+  'united kingdom': { capital: 'London', flag: '🇬🇧' },
+  'uk': { capital: 'London', flag: '🇬🇧' },
+  'england': { capital: 'London', flag: '🇬🇧' },
+  'netherlands': { capital: 'Amsterdam', flag: '🇳🇱' },
+  'belgium': { capital: 'Brussels', flag: '🇧🇪' },
+  'belgique': { capital: 'Brussels', flag: '🇧🇪' },
+  'germany': { capital: 'Berlin', flag: '🇩🇪' },
+  'deutschland': { capital: 'Berlin', flag: '🇩🇪' },
+  'uae': { capital: 'Abu Dhabi', flag: '🇦🇪' },
+  'united arab emirates': { capital: 'Abu Dhabi', flag: '🇦🇪' },
+  'saudi arabia': { capital: 'Riyadh', flag: '🇸🇦' },
+  'italy': { capital: 'Rome', flag: '🇮🇹' },
+  'portugal': { capital: 'Lisbon', flag: '🇵🇹' },
+  'sweden': { capital: 'Stockholm', flag: '🇸🇪' },
+  'canada': { capital: 'Ottawa', flag: '🇨🇦' },
+  'usa': { capital: 'Washington DC', flag: '🇺🇸' },
+  'united states': { capital: 'Washington DC', flag: '🇺🇸' },
+};
+
+function getCountryStats(barbers: any[], shops: any[]): { capital: string; flag: string; barberCount: number; shopCount: number }[] {
+  const countryMap: Record<string, { capital: string; flag: string; barberCount: number; shopCount: number }> = {};
+
+  barbers.forEach(barber => {
+    const country = (barber.country || '').toLowerCase().trim();
+    if (!country) return;
+    const mapping = COUNTRY_CAPITALS[country];
+    if (!mapping) return;
+    const key = mapping.capital;
+    if (!countryMap[key]) {
+      countryMap[key] = { capital: mapping.capital, flag: mapping.flag, barberCount: 0, shopCount: 0 };
+    }
+    countryMap[key].barberCount++;
+  });
+
+  shops.forEach(shop => {
+    const country = (shop.address?.country || shop.country || '').toLowerCase().trim();
+    if (!country) return;
+    const mapping = COUNTRY_CAPITALS[country];
+    if (!mapping) return;
+    const key = mapping.capital;
+    if (!countryMap[key]) {
+      countryMap[key] = { capital: mapping.capital, flag: mapping.flag, barberCount: 0, shopCount: 0 };
+    }
+    countryMap[key].shopCount++;
+  });
+
+  return Object.values(countryMap)
+    .filter(c => c.barberCount > 0)
+    .sort((a, b) => b.barberCount - a.barberCount);
 }
 
-async function fetchCitiesData(): Promise<{ city: string; barbers: number; shops: number }[]> {
+async function fetchCitiesData(): Promise<{ capital: string; flag: string; barberCount: number; shopCount: number }[]> {
   try {
     const [shopsSnap, barbersSnap] = await Promise.all([
       getDocs(query(collection(db, 'barbershops'), where('status', '==', 'active'))),
       getDocs(query(collection(db, 'barberProfiles'), where('isLive', '==', true))),
     ]);
-    const bc: Record<string, number> = {};
-    const sc: Record<string, number> = {};
-    barbersSnap.docs.forEach(d => {
-      const city = normalizeCity((d.data() as any).city || '');
-      if (city) bc[city] = (bc[city] || 0) + 1;
-    });
-    shopsSnap.docs.forEach(d => {
-      const city = normalizeCity((d.data() as any).address?.city || '');
-      if (city) sc[city] = (sc[city] || 0) + 1;
-    });
-    const all = new Set([...Object.keys(bc), ...Object.keys(sc)]);
-    return Array.from(all)
-      .map(city => ({ city, barbers: bc[city] || 0, shops: sc[city] || 0 }))
-      .sort((a, b) => (b.barbers + b.shops) - (a.barbers + a.shops))
-      .slice(0, 8);
+    const barbers = barbersSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+    const shops = shopsSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+    return getCountryStats(barbers, shops);
   } catch {
     return [];
   }
@@ -153,8 +179,8 @@ export default function LandingPage() {
     staleTime: 0,
   });
 
-  const { data: citiesData = [] } = useQuery({
-    queryKey: ['landing_cities_v2'],
+  const { data: countryStats = [] } = useQuery({
+    queryKey: ['landing_countries_v1'],
     queryFn: fetchCitiesData,
     staleTime: 5 * 60 * 1000,
   });
@@ -162,7 +188,7 @@ export default function LandingPage() {
   return (
     <LandingPageClient
       featuredBarbers={featuredBarbers}
-      citiesData={citiesData}
+      countryStats={countryStats}
     />
   );
 }
