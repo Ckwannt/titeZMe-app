@@ -1,10 +1,18 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Footer } from '@/components/Footer';
+import { countries } from 'countries-list';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
+
+function isoToFlag(iso: string): string {
+  return Array.from(iso.toUpperCase())
+    .map(c => String.fromCodePoint((c.codePointAt(0) as number) + 127397))
+    .join('');
+}
 
 function getCurrencySymbol(currency?: string): { sym: string; label: string } {
   switch ((currency ?? '').toUpperCase()) {
@@ -26,6 +34,45 @@ export default function LandingPageClient({
   featuredBarbers = [],
   countryStats = [],
 }: LandingPageClientProps) {
+
+  const [userCountry, setUserCountry] = useState<{
+    name: string;
+    capital: string;
+    flag: string;
+    isoCode: string;
+    hasBarbers: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`
+          );
+          const data = await res.json();
+          const countryCode = (data.address?.country_code || '').toUpperCase();
+          if (!countryCode) return;
+          const countryData = countries[countryCode as keyof typeof countries];
+          if (!countryData?.capital) return;
+          const hasBarbers = countryStats.some(c => c.isoCode === countryCode);
+          setUserCountry({
+            name: countryData.name,
+            capital: countryData.capital,
+            flag: isoToFlag(countryCode),
+            isoCode: countryCode,
+            hasBarbers,
+          });
+        } catch {
+          // silent fail
+        }
+      },
+      () => { /* user denied — silent fail */ },
+      { timeout: 5000 }
+    );
+  }, [countryStats]);
 
   // Helpers for featured barber cards
   const mainBarber = featuredBarbers[0] as any;
@@ -396,20 +443,47 @@ export default function LandingPageClient({
       <section id="cities" className="bg-[#0A0A0A] py-24 px-6 border-b border-[#1a1a1a]">
         <div className="max-w-[1200px] mx-auto">
           <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">CITIES</div>
-          <h2 className="text-4xl md:text-5xl font-black mb-12">We&apos;re live where you are</h2>
+          <h2 className="text-4xl md:text-5xl font-black mb-4">We&apos;re live where you are</h2>
+          {userCountry && (
+            <p className="text-sm font-bold text-gray-400 mb-10">
+              {userCountry.hasBarbers ? (
+                <>
+                  We&apos;re in {userCountry.flag} {userCountry.name}!{' '}
+                  <Link href="/barbers" className="text-brand-yellow">Book your cut now →</Link>
+                </>
+              ) : (
+                <>
+                  {userCountry.flag} Not in {userCountry.name} yet.{' '}
+                  <Link href="/barbers" className="text-brand-yellow">Help us grow →</Link>
+                </>
+              )}
+            </p>
+          )}
+          {!userCountry && <div className="mb-12" />}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {countryStats.map((country, i) => (
-              <div key={country.isoCode} className="p-6 rounded-3xl border transition-colors bg-[#111] border-[#2a2a2a] hover:border-brand-yellow/50">
+              <Link
+                key={country.isoCode}
+                href={`/barbers?country=${country.isoCode}`}
+                className="p-6 rounded-3xl border transition-colors bg-[#111] border-[#2a2a2a] hover:border-brand-yellow/50 block no-underline"
+              >
                 {i === 0 && <div className="text-[10px] font-black text-black bg-brand-yellow inline-block px-2 py-0.5 rounded mb-3 uppercase tracking-wider">Most popular</div>}
-                <div style={{ fontSize: '20px', marginBottom: '4px' }}>{country.flag}</div>
+                <div style={{ fontSize: '24px', marginBottom: '4px' }}>{country.flag}</div>
                 <h3 className="text-xl font-black text-white mb-1">{country.capital}</h3>
-                <div className="text-xs font-bold text-gray-500 mb-6">
+                <div className="text-xs font-bold text-gray-500 mb-4">
                   {country.barberCount} barber{country.barberCount !== 1 ? 's' : ''}
                   {country.shopCount > 0 ? ` · ${country.shopCount} shop${country.shopCount !== 1 ? 's' : ''}` : ''}
                 </div>
-                <Link href="/barbers" className="text-sm font-black text-brand-yellow">Explore →</Link>
-              </div>
+                <div className="text-sm font-black text-brand-yellow">Explore →</div>
+              </Link>
             ))}
+            {/* Invite card */}
+            <div className="p-6 rounded-3xl border transition-colors bg-[#0f0f0f] border-[#1a1a1a] opacity-60">
+              <div style={{ fontSize: '24px', marginBottom: '4px' }}>📍</div>
+              <h3 className="text-xl font-black text-[#888] mb-1">Your city?</h3>
+              <div className="text-xs font-bold text-[#555] mb-4">Invite a barber near you</div>
+              <Link href="/barbers" className="text-sm font-bold text-[#555]">Request it →</Link>
+            </div>
           </div>
         </div>
       </section>

@@ -150,7 +150,6 @@ async function fetchCitiesData(): Promise<{ capital: string; flag: string; barbe
     ]);
     const barbers = barbersSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
     const shops = shopsSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-    console.log('countryStats:', barbers.length > 0 ? getCountryStats(barbers, shops) : []);
     return barbers.length > 0 ? getCountryStats(barbers, shops) : [];
   } catch {
     return [];
