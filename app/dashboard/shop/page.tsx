@@ -170,9 +170,16 @@ export default function ShopOverviewPage() {
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "bookings"), where("shopId", "==", user.uid));
-    const unsub = onSnapshot(q, (snap) => {
-      setBookings(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Booking)));
-    });
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setBookings(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Booking)));
+      },
+      (error) => {
+        console.error("Shop bookings listener error:", error.message);
+        setBookings([]);
+      }
+    );
     return unsub;
   }, [user]);
 
@@ -250,11 +257,10 @@ export default function ShopOverviewPage() {
       : null;
   const totalReviews = barbers.reduce((s, b) => s + (b.reviewCount ?? 0), 0);
 
-  // Additional shop-wide stats
+  // Additional shop-wide stats (todayShopBookings is below, after todayDate is declared)
   const totalShopBookings = bookings.length;
   const pendingShopBookings = bookings.filter((b) => b.status === "pending").length;
   const confirmedShopBookings = bookings.filter((b) => b.status === "confirmed").length;
-  const todayShopBookings = bookings.filter((b) => b.date === todayDate).length;
 
   // Per-barber all-time stats (all statuses, not just completed)
   const getBarberShopStats = (barberId: string) => {
@@ -270,6 +276,9 @@ export default function ShopOverviewPage() {
   // Today's date (timezone-aware)
   const timezone = getTimezoneFromLocation(shop?.city, shop?.address?.country ?? shop?.country);
   const todayDate = getLocalDateString(timezone);
+
+  // Requires todayDate — must stay here
+  const todayShopBookings = bookings.filter((b) => b.date === todayDate).length;
 
   // Per-barber stats
   const barberStatsMap: Record<string, BarberStats> = {};
