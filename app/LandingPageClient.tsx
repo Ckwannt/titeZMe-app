@@ -6,6 +6,29 @@ import { Footer } from '@/components/Footer';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
+function normalizeCity(raw: string): string {
+  const c = (raw || '').toLowerCase().trim();
+  if (!c) return '';
+  if (c.includes('casablanca')) return 'Casablanca';
+  if (c.includes('marrakesh') || c.includes('marrakech')) return 'Marrakesh';
+  if (c.includes('rabat')) return 'Rabat';
+  if (c.includes('tangier') || c.includes('tanger')) return 'Tangier';
+  if (c.includes('london') || c.includes('hackney') || c.includes('brixton') ||
+      c.includes('camden') || c.includes('islington') || c.includes('lambeth')) return 'London';
+  if (c.includes('paris') || c.includes('île-de-france') || c.includes('ile-de-france') ||
+      c.includes('boulogne') || c.includes('vincennes') || c.includes('montreuil')) return 'Paris';
+  if (c.includes('madrid') || c.includes('alcal') || c.includes('getafe') ||
+      c.includes('leganes') || c.includes('alcorcón')) return 'Madrid';
+  if (c.includes('barcelona') || c.includes('hospitalet') || c.includes('badalona')) return 'Barcelona';
+  if (c.includes('seville') || c.includes('sevilla')) return 'Seville';
+  if (c.includes('amsterdam')) return 'Amsterdam';
+  if (c.includes('berlin')) return 'Berlin';
+  if (c.includes('rome') || c.includes('roma')) return 'Rome';
+  if (c.includes('milan') || c.includes('milano')) return 'Milan';
+  if (c.includes('dubai')) return 'Dubai';
+  return raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+}
+
 function getCurrencySymbol(currency?: string): { sym: string; label: string } {
   switch ((currency ?? '').toUpperCase()) {
     case 'MAD': return { sym: '', label: ' MAD' };
@@ -15,17 +38,26 @@ function getCurrencySymbol(currency?: string): { sym: string; label: string } {
   }
 }
 
+const COMING_SOON = ['Amsterdam', 'Berlin', 'Rome', 'Dubai', 'London', 'Barcelona'];
+
 interface LandingPageClientProps {
   featuredBarbers?: any[];
-  countryStats?: { capital: string; flag: string; barberCount: number; shopCount: number }[];
+  citiesData?: { city: string; barbers: number; shops: number }[];
 }
 
 // ─── component ───────────────────────────────────────────────────────────────
 
 export default function LandingPageClient({
   featuredBarbers = [],
-  countryStats = [],
+  citiesData = [],
 }: LandingPageClientProps) {
+  const citySlots = [...citiesData];
+  for (const cs of COMING_SOON) {
+    if (citySlots.length >= 8) break;
+    if (!citySlots.some(c => c.city === cs)) {
+      citySlots.push({ city: cs, barbers: 0, shops: 0 });
+    }
+  }
 
   // Helpers for featured barber cards
   const mainBarber = featuredBarbers[0] as any;
@@ -398,18 +430,26 @@ export default function LandingPageClient({
           <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">CITIES</div>
           <h2 className="text-4xl md:text-5xl font-black mb-12">We&apos;re live where you are</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {countryStats.map((country, i) => (
-              <div key={country.capital} className="p-6 rounded-3xl border transition-colors bg-[#111] border-[#2a2a2a] hover:border-brand-yellow/50">
-                {i === 0 && <div className="text-[10px] font-black text-black bg-brand-yellow inline-block px-2 py-0.5 rounded mb-3 uppercase tracking-wider">Most popular</div>}
-                <span style={{ fontSize: '20px' }}>{country.flag}</span>
-                <h3 className="text-xl font-black text-white mb-1 mt-1">{country.capital}</h3>
-                <div className="text-xs font-bold text-gray-500 mb-6">
-                  {country.barberCount} barber{country.barberCount !== 1 ? 's' : ''}
-                  {country.shopCount > 0 ? ` · ${country.shopCount} shop${country.shopCount !== 1 ? 's' : ''}` : ''}
+            {citySlots.slice(0, 8).map((city, i) => {
+              const isLive = city.barbers > 0 || city.shops > 0;
+              const isFirst = i === 0 && isLive;
+              return (
+                <div key={city.city} className={`p-6 rounded-3xl border transition-colors ${isLive ? 'bg-[#111] border-[#2a2a2a] hover:border-brand-yellow/50' : 'bg-[#0f0f0f] border-[#1a1a1a] opacity-60'}`}>
+                  {isFirst && <div className="text-[10px] font-black text-black bg-brand-yellow inline-block px-2 py-0.5 rounded mb-3 uppercase tracking-wider">Most popular</div>}
+                  <h3 className="text-xl font-black text-white mb-1">{city.city}</h3>
+                  <div className="text-xs font-bold text-gray-500 mb-6">
+                    {isLive
+                      ? `${city.barbers} barber${city.barbers !== 1 ? 's' : ''}${city.shops > 0 ? ` · ${city.shops} shop${city.shops !== 1 ? 's' : ''}` : ''}`
+                      : 'Coming soon'}
+                  </div>
+                  {isLive ? (
+                    <Link href="/barbers" className="text-sm font-black text-brand-yellow">Explore →</Link>
+                  ) : (
+                    <button className="text-sm font-bold text-gray-600">Request it →</button>
+                  )}
                 </div>
-                <Link href="/barbers" className="text-sm font-black text-brand-yellow">Explore →</Link>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
