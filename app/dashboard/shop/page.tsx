@@ -250,6 +250,23 @@ export default function ShopOverviewPage() {
       : null;
   const totalReviews = barbers.reduce((s, b) => s + (b.reviewCount ?? 0), 0);
 
+  // Additional shop-wide stats
+  const totalShopBookings = bookings.length;
+  const pendingShopBookings = bookings.filter((b) => b.status === "pending").length;
+  const confirmedShopBookings = bookings.filter((b) => b.status === "confirmed").length;
+  const todayShopBookings = bookings.filter((b) => b.date === todayDate).length;
+
+  // Per-barber all-time stats (all statuses, not just completed)
+  const getBarberShopStats = (barberId: string) => {
+    const bb = bookings.filter((b) => b.barberId === barberId);
+    const done = bb.filter((b) => b.status === "completed");
+    return {
+      totalBookings: bb.length,
+      completed: done.length,
+      revenue: done.reduce((s, b) => s + (b.price ?? 0), 0),
+    };
+  };
+
   // Today's date (timezone-aware)
   const timezone = getTimezoneFromLocation(shop?.city, shop?.address?.country ?? shop?.country);
   const todayDate = getLocalDateString(timezone);
@@ -422,6 +439,21 @@ export default function ShopOverviewPage() {
       </div>
       </ErrorBoundary>
 
+      {/* Secondary stats row */}
+      <div className="animate-fadeUp grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: "Today's bookings", val: todayShopBookings, color: "text-white" },
+          { label: "Pending", val: pendingShopBookings, color: "text-[#F5C518]" },
+          { label: "Confirmed", val: confirmedShopBookings, color: "text-[#60a5fa]" },
+          { label: "Total bookings", val: totalShopBookings, color: "text-[#888]" },
+        ].map((s, i) => (
+          <div key={i} className="bg-[#111] border border-[#1e1e1e] rounded-[14px] px-4 py-3 flex flex-col gap-1">
+            <div className={`text-xl font-black leading-none ${s.color}`}>{s.val}</div>
+            <div className="text-[11px] text-[#555] font-bold">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
       {/* Quick Actions */}
       <div className="animate-fadeUp flex flex-wrap gap-2 mb-6">
         <button
@@ -586,12 +618,20 @@ export default function ShopOverviewPage() {
                       <div className="w-11 h-11 rounded-xl bg-[#1a1a1a] flex items-center justify-center text-base font-black text-white shrink-0">
                         {barberInitials(b)}
                       </div>
-                      {/* Name + rating */}
+                      {/* Name + rating + shop summary */}
                       <div className="flex-1 min-w-[120px]">
                         <div className="font-extrabold text-[15px]">{barberFullName(b)}</div>
                         <div className="text-xs text-[#888] leading-none mt-0.5">
                           {(b.rating ?? 0) > 0 ? `★ ${b.rating}` : "No rating yet"}
                         </div>
+                        {(() => {
+                          const bs = getBarberShopStats(b.id);
+                          return bs.totalBookings > 0 ? (
+                            <div className="text-[10px] text-[#555] font-bold mt-1">
+                              {bs.totalBookings} booking{bs.totalBookings !== 1 ? "s" : ""} · {bs.completed} completed · {currencySymbol}{bs.revenue.toLocaleString()}
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
                       {/* Stats */}
                       <div className="flex gap-4 sm:gap-6 order-last sm:order-none w-full sm:w-auto mt-3 sm:mt-0 justify-around sm:justify-end">
