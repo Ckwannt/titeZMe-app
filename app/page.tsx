@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 import { getOpenStatus, getLocalDateString, getLocalHourString, getTimezoneFromLocation, getScheduleDocId } from '@/lib/schedule-utils';
 import LandingPageClient from './LandingPageClient';
+import { countries } from 'countries-list';
 
 // ─── data fetchers (client-side) ─────────────────────────────────────────────
 
@@ -95,50 +96,62 @@ async function fetchFeaturedBarbers() {
   }
 }
 
-function normalizeCity(raw: string): string {
-  const c = (raw || '').toLowerCase().trim();
-  if (!c) return '';
-  if (c.includes('casablanca')) return 'Casablanca';
-  if (c.includes('marrakesh') || c.includes('marrakech')) return 'Marrakesh';
-  if (c.includes('rabat')) return 'Rabat';
-  if (c.includes('tangier') || c.includes('tanger')) return 'Tangier';
-  if (c.includes('london') || c.includes('hackney') || c.includes('brixton') ||
-      c.includes('camden') || c.includes('islington') || c.includes('lambeth')) return 'London';
-  if (c.includes('paris') || c.includes('île-de-france') || c.includes('ile-de-france') ||
-      c.includes('boulogne') || c.includes('vincennes') || c.includes('montreuil')) return 'Paris';
-  if (c.includes('madrid') || c.includes('alcal') || c.includes('getafe') ||
-      c.includes('leganes') || c.includes('alcorcón')) return 'Madrid';
-  if (c.includes('barcelona') || c.includes('hospitalet') || c.includes('badalona')) return 'Barcelona';
-  if (c.includes('seville') || c.includes('sevilla')) return 'Seville';
-  if (c.includes('amsterdam')) return 'Amsterdam';
-  if (c.includes('berlin')) return 'Berlin';
-  if (c.includes('rome') || c.includes('roma')) return 'Rome';
-  if (c.includes('milan') || c.includes('milano')) return 'Milan';
-  if (c.includes('dubai')) return 'Dubai';
-  return raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+function isoToFlag(iso: string): string {
+  return Array.from(iso.toUpperCase())
+    .map(c => String.fromCodePoint((c.codePointAt(0) as number) + 127397))
+    .join('');
 }
 
-async function fetchCitiesData(): Promise<{ city: string; barbers: number; shops: number }[]> {
+function getCountryStats(barbers: any[], shops: any[]): { capital: string; flag: string; barberCount: number; shopCount: number; isoCode: string }[] {
+  const countryMap: Record<string, { capital: string; flag: string; barberCount: number; shopCount: number; isoCode: string }> = {};
+
+  barbers.forEach(barber => {
+    const isoCode = (barber.country || '').trim().toUpperCase();
+    if (!isoCode || isoCode.length !== 2) return;
+    const countryData = countries[isoCode as keyof typeof countries];
+    if (!countryData?.capital) return;
+    if (!countryMap[isoCode]) {
+      countryMap[isoCode] = { capital: countryData.capital, flag: isoToFlag(isoCode), barberCount: 0, shopCount: 0, isoCode };
+    }
+    countryMap[isoCode].barberCount++;
+  });
+
+  shops.forEach(shop => {
+    const shopCountry = (shop.address?.country || shop.country || '').trim();
+    if (!shopCountry) return;
+    let isoCode = '';
+    if (shopCountry.length === 2) {
+      isoCode = shopCountry.toUpperCase();
+    } else {
+      const found = Object.entries(countries).find(([, data]) =>
+        data.name.toLowerCase() === shopCountry.toLowerCase()
+      );
+      if (found) isoCode = found[0];
+    }
+    if (!isoCode) return;
+    const countryData = countries[isoCode as keyof typeof countries];
+    if (!countryData?.capital) return;
+    if (!countryMap[isoCode]) {
+      countryMap[isoCode] = { capital: countryData.capital, flag: isoToFlag(isoCode), barberCount: 0, shopCount: 0, isoCode };
+    }
+    countryMap[isoCode].shopCount++;
+  });
+
+  return Object.values(countryMap)
+    .filter(c => c.barberCount > 0)
+    .sort((a, b) => b.barberCount - a.barberCount);
+}
+
+async function fetchCitiesData(): Promise<{ capital: string; flag: string; barberCount: number; shopCount: number; isoCode: string }[]> {
   try {
     const [shopsSnap, barbersSnap] = await Promise.all([
       getDocs(query(collection(db, 'barbershops'), where('status', '==', 'active'))),
       getDocs(query(collection(db, 'barberProfiles'), where('isLive', '==', true))),
     ]);
-    const bc: Record<string, number> = {};
-    const sc: Record<string, number> = {};
-    barbersSnap.docs.forEach(d => {
-      const city = normalizeCity((d.data() as any).city || '');
-      if (city) bc[city] = (bc[city] || 0) + 1;
-    });
-    shopsSnap.docs.forEach(d => {
-      const city = normalizeCity((d.data() as any).address?.city || '');
-      if (city) sc[city] = (sc[city] || 0) + 1;
-    });
-    const all = new Set([...Object.keys(bc), ...Object.keys(sc)]);
-    return Array.from(all)
-      .map(city => ({ city, barbers: bc[city] || 0, shops: sc[city] || 0 }))
-      .sort((a, b) => (b.barbers + b.shops) - (a.barbers + a.shops))
-      .slice(0, 8);
+    const barbers = barbersSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+    const shops = shopsSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+    console.log('countryStats:', barbers.length > 0 ? getCountryStats(barbers, shops) : []);
+    return barbers.length > 0 ? getCountryStats(barbers, shops) : [];
   } catch {
     return [];
   }
@@ -153,8 +166,8 @@ export default function LandingPage() {
     staleTime: 0,
   });
 
-  const { data: citiesData = [] } = useQuery({
-    queryKey: ['landing_cities_v2'],
+  const { data: countryStats = [] } = useQuery({
+    queryKey: ['landing_countries_v2'],
     queryFn: fetchCitiesData,
     staleTime: 5 * 60 * 1000,
   });
@@ -162,7 +175,7 @@ export default function LandingPage() {
   return (
     <LandingPageClient
       featuredBarbers={featuredBarbers}
-      citiesData={citiesData}
+      countryStats={countryStats}
     />
   );
 }
