@@ -142,15 +142,6 @@ service cloud.firestore {
         && data.createdAt is number;
     }
 
-    function isValidNotification(data) {
-      return data.keys().hasAll(['userId', 'message', 'read', 'createdAt'])
-        && data.userId is string && data.userId.size() <= 128
-        && data.message is string && data.message.size() <= 500
-        && data.read is bool
-        && data.get('linkTo', null) == null || data.get('linkTo', null) is string
-        && data.createdAt is number;
-    }
-
     // Users
     match /users/{userId} {
       allow get: if isValidId(userId);
@@ -316,15 +307,12 @@ service cloud.firestore {
 
     // Notifications
     match /notifications/{notificationId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && isValidNotification(incoming());
-
+      allow read: if isSignedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
       allow update: if isSignedIn()
-        && request.auth.uid == existing().userId
-        && isValidNotification(incoming())
-        && incoming().userId == existing().userId
-        && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+        && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
     }
   }
 }
