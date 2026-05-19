@@ -237,7 +237,6 @@ export default function BookingsPage() {
           status: 'completed',
           completedAt: Date.now(),
           updatedAt: Date.now(),
-          cutConfirmed: false,
         }
       );
       console.log('Write 1 SUCCESS ✓');
