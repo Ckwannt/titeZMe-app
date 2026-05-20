@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -18,6 +18,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [errorStatus, setErrorStatus] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => { document.title = 'Log in — titeZMe'; }, []);
 
   if (loading) return null;
   if (user) {

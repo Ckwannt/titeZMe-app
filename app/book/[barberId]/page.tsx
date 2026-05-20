@@ -44,6 +44,8 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [honeypot, setHoneypot] = useState('');
 
+  useEffect(() => { document.title = 'Book an appointment — titeZMe'; }, []);
+
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['bookProfile', barberId],
     queryFn: async () => {

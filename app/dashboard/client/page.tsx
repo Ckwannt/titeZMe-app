@@ -20,6 +20,8 @@ export default function ClientDashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [fetching, setFetching] = useState(true);
 
+  useEffect(() => { document.title = 'My Bookings — titeZMe'; }, []);
+
   useEffect(() => {
     if (!loading && (!user || appUser?.role !== 'client')) {
       router.replace('/login');
