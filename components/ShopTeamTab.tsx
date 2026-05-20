@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, setDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, setDoc, doc, addDoc, onSnapshot, updateDoc, deleteDoc, getDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { inviteUpdateSchema, notificationSchema, inviteSchema } from "@/lib/schemas";
@@ -183,6 +183,7 @@ export function ShopTeamTab() {
         linkTo: '/dashboard/barber/invites',
         createdAt: currentTime,
       }));
+      updateDoc(doc(db, 'users', foundBarber.userId), { unreadCount: increment(1) }).catch(console.error);
 
       setFoundBarber(null);
       setInviteCode('');

@@ -105,6 +105,7 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
               linkTo: `/barber/${booking.barberId}`,
               createdAt: Date.now()
             }));
+      updateDoc(doc(db, 'users', booking.barberId), { unreadCount: increment(1) }).catch(console.error);
 
       toast.success('Review submitted ✓');
       router.push('/dashboard/client');

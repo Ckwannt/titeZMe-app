@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, getDoc, onSnapshot, writeBatch } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, onSnapshot, writeBatch, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
@@ -50,6 +50,7 @@ export function BarberInvitesTab() {
         read: false,
         createdAt: currentTime,
       });
+      batch.update(doc(db, 'users', invite.shopId), { unreadCount: increment(1) });
       await batch.commit();
       setShowWarningModal(null);
       setShowSoloModal(invite);
@@ -97,6 +98,7 @@ export function BarberInvitesTab() {
       batch.update(doc(db, 'invites', invite.id), { status: 'declined', respondedAt: currentTime });
       const notifRef = doc(collection(db, 'notifications'));
       batch.set(notifRef, { userId: invite.shopId, message: 'Your invite was declined.', read: false, createdAt: currentTime });
+      batch.update(doc(db, 'users', invite.shopId), { unreadCount: increment(1) });
       await batch.commit();
     } catch (e) {
       console.error('Failed to decline', e);

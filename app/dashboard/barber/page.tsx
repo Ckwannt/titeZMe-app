@@ -189,6 +189,7 @@ export default function BarberDashboardPage() {
           linkTo: '/dashboard/client',
           createdAt: Date.now()
         }));
+        updateDoc(doc(db, 'users', booking.clientId), { unreadCount: increment(1) }).catch(console.error);
       }
     } catch (e: any) { console.error('Error updating status', e); }
   };

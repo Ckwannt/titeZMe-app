@@ -1,33 +1,52 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, updateDoc, doc, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, updateDoc, doc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { notificationUpdateSchema } from "@/lib/schemas";
 
 export function NotificationBell() {
-  const { user } = useAuth();
+  const { user, appUser } = useAuth();
   const router = useRouter();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
 
+  // Badge count uses the cached unreadCount from the user doc (zero extra Firestore reads).
+  // Starts at the value from when the user logged in; resets to 0 locally when dropdown opens.
+  const [localUnreadCount, setLocalUnreadCount] = useState(appUser?.unreadCount || 0);
+
+  // Sync if appUser is refreshed or changes (e.g. after login)
   useEffect(() => {
-    if (!user) return;
+    setLocalUnreadCount(appUser?.unreadCount || 0);
+  }, [appUser?.unreadCount]);
+
+  // Lazy onSnapshot: only subscribe while the dropdown is open
+  useEffect(() => {
+    if (!user || !showDropdown) return;
     const q = query(
-      collection(db, 'notifications'), 
+      collection(db, 'notifications'),
       where('userId', '==', user.uid),
       where('read', '==', false)
-      // Note: we might need a composite index for where+orderBy, so sorting in client for safety
     );
     const unsub = onSnapshot(q, snap => {
       const notifs = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      notifs.sort((a,b) => b.createdAt - a.createdAt);
+      notifs.sort((a, b) => b.createdAt - a.createdAt);
       setNotifications(notifs);
     });
     return () => unsub();
-  }, [user]);
+  }, [user, showDropdown]);
+
+  const handleToggle = () => {
+    const opening = !showDropdown;
+    setShowDropdown(opening);
+    // On open: reset badge immediately (locally + in Firestore)
+    if (opening && user && localUnreadCount > 0) {
+      setLocalUnreadCount(0);
+      updateDoc(doc(db, 'users', user.uid), { unreadCount: 0 }).catch(console.error);
+    }
+  };
 
   const handleNotifClick = async (n: any) => {
     // Optimistic: mark read in local state immediately before Firestore responds
@@ -46,14 +65,14 @@ export function NotificationBell() {
 
   return (
     <div className="relative">
-      <button 
-        onClick={() => setShowDropdown(!showDropdown)}
+      <button
+        onClick={handleToggle}
         className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center relative hover:bg-[#2a2a2a] transition-colors"
       >
         <span className="text-[15px]">🔔</span>
-        {notifications.length > 0 && (
+        {localUnreadCount > 0 && (
           <div className="absolute top-0 right-0 w-4 h-4 bg-brand-red rounded-full flex items-center justify-center text-[9px] font-black pointer-events-none">
-            {notifications.length}
+            {localUnreadCount}
           </div>
         )}
       </button>
@@ -70,8 +89,8 @@ export function NotificationBell() {
               </div>
             ) : (
               notifications.map(n => (
-                <button 
-                  key={n.id} 
+                <button
+                  key={n.id}
                   onClick={() => handleNotifClick(n)}
                   className="w-full text-left p-3.5 border-b border-[#2a2a2a] hover:bg-[#1a1a1a] transition-colors flex flex-col gap-1"
                 >

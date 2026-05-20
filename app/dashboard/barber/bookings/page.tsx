@@ -99,6 +99,7 @@ export default function BookingsPage() {
               createdAt: Date.now(),
             })
           );
+          updateDoc(doc(db, 'users', booking.clientId), { unreadCount: increment(1) }).catch(console.error);
           await cleanupBookingLock(booking);
         }
         toast.info(`${expiredPending.length} expired booking request${expiredPending.length > 1 ? 's' : ''} were automatically cancelled.`);
@@ -202,6 +203,7 @@ export default function BookingsPage() {
           linkTo = `/review/${booking.id}`;
         }
         await addDoc(collection(db, 'notifications'), notificationSchema.parse({ userId: booking.clientId, message, read: false, linkTo, createdAt: Date.now() }));
+        updateDoc(doc(db, 'users', booking.clientId), { unreadCount: increment(1) }).catch(console.error);
       }
     } catch (e) { console.error(e); }
   };
