@@ -10,6 +10,7 @@ import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import { userUpdateSchema, bookingUpdateSchema } from "@/lib/schemas";
 import { cleanupBookingLock } from '@/lib/booking-lock-utils';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import Image from 'next/image';
 
 export default function ClientDashboard() {
@@ -19,6 +20,7 @@ export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState("Bookings");
   const [bookings, setBookings] = useState<any[]>([]);
   const [fetching, setFetching] = useState(true);
+  const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
 
   useEffect(() => { document.title = 'My Bookings — titeZMe'; }, []);
 
@@ -198,7 +200,7 @@ export default function ClientDashboard() {
                             : <button onClick={() => router.push(`/review/${b.id}`)} className="text-[11px] font-black text-brand-yellow border border-brand-yellow hover:bg-[#1a1500] px-3 py-1.5 rounded-lg transition-colors">Leave Review</button>
                         )}
                         {b.status === 'pending' || b.status === 'confirmed' ? (
-                          <button onClick={() => cancelBooking(b.id, b.date, b.startTime)} className="text-[11px] font-black text-brand-red hover:bg-[#1a0808] px-3 py-1.5 rounded-lg transition-colors">Cancel Booking</button>
+                          <button onClick={() => setConfirmCancel(b.id)} className="text-[11px] font-black text-brand-red hover:bg-[#1a0808] px-3 py-1.5 rounded-lg transition-colors">Cancel Booking</button>
                         ) : null}
                       </div>
                    </div>
@@ -233,6 +235,20 @@ export default function ClientDashboard() {
            </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={!!confirmCancel}
+        title="Cancel booking?"
+        message="This will cancel your appointment. The barber will be notified."
+        confirmText="Yes, cancel"
+        cancelText="Keep booking"
+        confirmColor="#EF4444"
+        onCancel={() => setConfirmCancel(null)}
+        onConfirm={async () => {
+          const booking = bookings.find(b => b.id === confirmCancel);
+          if (booking) await cancelBooking(confirmCancel!, booking.date, booking.startTime);
+          setConfirmCancel(null);
+        }}
+      />
     </div>
   );
 }

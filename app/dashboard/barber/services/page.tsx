@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { barberUpdateSchema } from "@/lib/schemas";
 import { safeFirestore } from '@/lib/firebase-helpers';
 import { sanitizeText } from '@/lib/sanitize';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 function getCurrencySymbol(c?: string) {
   const s: Record<string, string> = { 'EUR': '€', 'GBP': '£', 'USD': '$', 'MAD': 'MAD ', 'DZD': 'DA ', 'SAR': 'SAR ', 'AED': 'AED ', 'SEK': 'kr ', 'CHF': 'CHF ' };
@@ -40,6 +41,7 @@ export default function ServicesPage() {
   const [editSvcData, setEditSvcData] = useState({ name: '', duration: '', price: '', description: '' });
   const [serviceCurrency, setServiceCurrency] = useState('EUR');
   const [toastMessage, setToastMessage] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.uid],
@@ -185,7 +187,7 @@ export default function ServicesPage() {
               <div className="flex items-center gap-2 shrink-0">
                 <div className="font-black text-brand-yellow">{svcSym}{svc.price}</div>
                 <button onClick={() => { setEditingServiceId(svc.id); setEditSvcData({ name: svc.name, duration: String(svc.duration || ''), price: String(svc.price || ''), description: svc.description || '' }); }} className="text-[#444] hover:text-[#888] font-bold text-xs p-1.5">✏️</button>
-                <button onClick={async () => { await safeFirestore(() => deleteDoc(doc(db, 'services', svc.id)), { successMessage: 'Service deleted.', errorMessage: 'Failed to delete service.' }); mutateServices(); }} className="text-[#555] hover:text-brand-red font-bold text-xs p-1.5">✕</button>
+                <button onClick={() => setConfirmDelete(svc.id)} className="text-[#555] hover:text-brand-red font-bold text-xs p-1.5">✕</button>
               </div>
             </div>
           )
@@ -206,6 +208,20 @@ export default function ServicesPage() {
       </div>
 
       {toastMessage && <div className="fixed bottom-6 right-6 bg-[#1a0808] border border-brand-yellow/30 text-brand-yellow px-6 py-3 rounded-full font-bold text-sm shadow-xl animate-fadeUp z-50">{toastMessage}</div>}
+      <ConfirmDialog
+        isOpen={!!confirmDelete}
+        title="Delete service?"
+        message="Clients won't be able to book this service anymore. This cannot be undone."
+        confirmText="Delete"
+        cancelText="Keep"
+        confirmColor="#EF4444"
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={async () => {
+          await safeFirestore(() => deleteDoc(doc(db, 'services', confirmDelete!)), { successMessage: 'Service deleted.', errorMessage: 'Failed to delete service.' });
+          mutateServices();
+          setConfirmDelete(null);
+        }}
+      />
     </div>
   );
 }
