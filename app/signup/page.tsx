@@ -176,7 +176,25 @@ export default function SignupPage() {
 
     } catch (err: any) {
       console.error("Signup validation or save error:", err);
-      setErrorStatus(err.message || 'Failed to create account.');
+      const getFriendlyError = (code: string): string => {
+        switch (code) {
+          case 'auth/email-already-in-use':
+            return 'An account with this email already exists. Try logging in.';
+          case 'auth/weak-password':
+            return 'Password is too weak. Use at least 8 characters.';
+          case 'auth/invalid-email':
+            return 'Invalid email or password.';
+          case 'auth/operation-not-allowed':
+            return 'Sign up is temporarily disabled. Try again later.';
+          case 'auth/too-many-requests':
+            return 'Too many attempts. Try again in a few minutes.';
+          case 'auth/network-request-failed':
+            return 'Connection error. Check your internet and try again.';
+          default:
+            return 'Something went wrong. Please try again.';
+        }
+      };
+      setErrorStatus(getFriendlyError(err.code || ''));
     } finally {
       setIsSubmitting(false);
     }

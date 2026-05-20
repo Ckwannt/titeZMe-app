@@ -113,7 +113,24 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error(err);
-      setErrorStatus(err.message || 'Failed to login.');
+      const getFriendlyError = (code: string): string => {
+        switch (code) {
+          case 'auth/wrong-password':
+          case 'auth/user-not-found':
+          case 'auth/invalid-credential':
+          case 'auth/invalid-email':
+            return 'Invalid email or password.';
+          case 'auth/too-many-requests':
+            return 'Too many attempts. Try again in a few minutes.';
+          case 'auth/user-disabled':
+            return 'This account has been disabled. Contact support.';
+          case 'auth/network-request-failed':
+            return 'Connection error. Check your internet and try again.';
+          default:
+            return 'Something went wrong. Please try again.';
+        }
+      };
+      setErrorStatus(getFriendlyError(err.code || ''));
     } finally {
       setIsSubmitting(false);
     }
