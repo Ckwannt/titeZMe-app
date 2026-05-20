@@ -11,6 +11,7 @@ import Select from "react-select";
 import { Country, City } from "country-state-city";
 import ISO6391 from "iso-639-1";
 import { userUpdateSchema, scheduleSchema, barberSchema } from "@/lib/schemas";
+import { sanitizeText } from '@/lib/sanitize';
 
 export default function BarberOnboarding() {
   const router = useRouter();
@@ -154,7 +155,7 @@ export default function BarberOnboarding() {
       try {
         await setDoc(profileRef, barberSchema.parse({
                   userId: user.uid,
-                  bio: bio || "Professional barber.",
+                  bio: sanitizeText(bio || "Professional barber.", 2000),
                   city: selectedCityOption ? selectedCityOption.value : "Unknown",
                   country: selectedCountry ? selectedCountry.value : "Unknown",
                   phone: phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null,
@@ -205,7 +206,7 @@ export default function BarberOnboarding() {
           await setDoc(newServiceRef, {
             providerId: user.uid,
             providerType: 'barber',
-            name: svc.name,
+            name: sanitizeText(svc.name, 100),
             duration: parseInt((svc as any).duration || (svc as any).dur || "30"),
             price: parseFloat(svc.price || "0"),
             isActive: true
@@ -282,7 +283,8 @@ export default function BarberOnboarding() {
                   inputMode="numeric"
                   value={phoneNumberInput}
                   onChange={e => setPhoneNumberInput(e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[52px]" 
+                  maxLength={20}
+                  className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[52px]"
                   placeholder="600 000 000" 
                 />
               </div>
@@ -319,7 +321,7 @@ export default function BarberOnboarding() {
           </div>
           <div>
             <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">BIO</label>
-            <textarea value={bio} onChange={e => setBio(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] resize-y" rows={3} placeholder="Tell clients who you are, your style, your experience..." />
+            <textarea value={bio} onChange={e => setBio(e.target.value)} maxLength={2000} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] resize-y" rows={3} placeholder="Tell clients who you are, your style, your experience..." />
           </div>
           <div>
             <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">LANGUAGES</label>
@@ -465,7 +467,7 @@ export default function BarberOnboarding() {
               <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2.5 items-end">
                 <div>
                   <label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">SERVICE NAME</label>
-                  <input value={s.name} onChange={e => setServicesData(prev => prev.map((x, j) => j === i ? {...x, name: e.target.value} : x))} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" />
+                  <input value={s.name} onChange={e => setServicesData(prev => prev.map((x, j) => j === i ? {...x, name: e.target.value} : x))} maxLength={100} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" />
                 </div>
                 <div>
                   <label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">MINS</label>

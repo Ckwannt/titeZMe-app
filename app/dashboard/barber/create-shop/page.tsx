@@ -10,6 +10,7 @@ import Link from 'next/link';
 import Select from "react-select";
 import { Country, City } from "country-state-city";
 import { barberUpdateSchema, userUpdateSchema, barbershopSchema } from "@/lib/schemas";
+import { sanitizeText, sanitizeUrl } from '@/lib/sanitize';
 
 export default function CreateShopPage() {
   const router = useRouter();
@@ -118,7 +119,7 @@ export default function CreateShopPage() {
       const shopRef = doc(db, 'barbershops', user.uid);
       await setDoc(shopRef, barbershopSchema.parse({
               ownerId: user.uid,
-              name: name,
+              name: sanitizeText(name, 100),
               contactPhone: `+${phoneCode.value} ${phoneNumberInput}`,
               address: {
                 street: street,
@@ -128,8 +129,8 @@ export default function CreateShopPage() {
                 city: selectedCityOption.value,
                 country: selectedCountry.label.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]\s*/g, '')
               },
-              googleMapsUrl: googleMapsUrl,
-              description: description,
+              googleMapsUrl: sanitizeUrl(googleMapsUrl),
+              description: sanitizeText(description, 2000),
               photos: [],
               status: 'pending',
               barbers: [],
@@ -178,7 +179,8 @@ export default function CreateShopPage() {
             <input 
               required
               value={name} onChange={e => setName(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
+              maxLength={100}
+              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow"
               placeholder="e.g. Fade Factory" 
             />
           </div>
@@ -201,7 +203,8 @@ export default function CreateShopPage() {
                   inputMode="numeric"
                   value={phoneNumberInput}
                   onChange={e => setPhoneNumberInput(e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-[#0a0a0a] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[52px]" 
+                  maxLength={20}
+                  className="w-full bg-[#0a0a0a] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[52px]"
                   placeholder="600 000 000" 
                 />
               </div>
@@ -294,6 +297,7 @@ export default function CreateShopPage() {
             <textarea 
               value={description} onChange={e => setDescription(e.target.value)}
               rows={3}
+              maxLength={2000}
               className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow resize-none" 
               placeholder="Tell clients what makes your shop special..." 
             />

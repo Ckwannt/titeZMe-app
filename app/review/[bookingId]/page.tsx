@@ -145,6 +145,7 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
          <textarea 
            value={comment}
            onChange={e => setComment(e.target.value)}
+           maxLength={1000}
            placeholder="Fresh fade, great conversation..."
            className="w-full h-[120px] bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl p-4 text-white text-[14px] font-bold outline-none transition-colors focus:border-brand-yellow resize-none"
          />

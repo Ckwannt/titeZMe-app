@@ -12,6 +12,7 @@ import Select from 'react-select';
 import { Country, City } from 'country-state-city';
 import ISO6391 from 'iso-639-1';
 import { userUpdateSchema } from "@/lib/schemas";
+import { sanitizeText } from '@/lib/sanitize';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Image from 'next/image';
 
@@ -158,8 +159,8 @@ export default function ClientSettings() {
 
     try {
       const updateData: any = {
-        firstName: firstName.trim(),
-        lastName: lastName.trim()
+        firstName: sanitizeText(firstName.trim(), 100),
+        lastName: sanitizeText(lastName.trim(), 100)
       };
 
       if (phoneCode && phoneNumberInput) {
@@ -314,6 +315,7 @@ export default function ClientSettings() {
                   type="text"
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
+                  maxLength={100}
                   className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[52px]" 
                 />
               </div>
@@ -323,6 +325,7 @@ export default function ClientSettings() {
                   type="text"
                   value={lastName}
                   onChange={e => setLastName(e.target.value)}
+                  maxLength={100}
                   className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[52px]" 
                 />
               </div>
@@ -358,7 +361,8 @@ export default function ClientSettings() {
                     inputMode="numeric"
                     value={phoneNumberInput}
                     onChange={e => setPhoneNumberInput(e.target.value.replace(/\D/g, ''))}
-                    className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[52px]" 
+                    maxLength={20}
+                    className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[52px]"
                     placeholder="600 000 000" 
                   />
                 </div>
