@@ -7,7 +7,7 @@ import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import Select from "react-select";
-import { Country, City } from "country-state-city";
+// country-state-city loaded dynamically to avoid bundling 1.8 MB on initial load
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
@@ -48,25 +48,28 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
+  const [csc, setCsc] = useState<any>(null);
 
-  const countryOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.isoCode,
-    label: `${c.flag} ${c.name}`
-  })), []);
-  
-  const phoneCodeOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.phonecode,
-    label: `${c.flag} ${c.name} (+${c.phonecode})`
-  })), []);
+  useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
+
+  const countryOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.isoCode, label: `${c.flag} ${c.name}` }));
+  }, [csc]);
+
+  const phoneCodeOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.phonecode, label: `${c.flag} ${c.name} (+${c.phonecode})` }));
+  }, [csc]);
   
   useEffect(() => {
     setTimeout(() => {
       if (initPhoneCodeStr) {
-        const match = phoneCodeOptions.find(o => o.value === initPhoneCodeStr);
+        const match = phoneCodeOptions.find((o: any) => o.value === initPhoneCodeStr);
         if (match) setPhoneCode(match);
       }
       if (shop?.address?.country) {
-        const match = countryOptions.find(o => o.value === shop.address.country);
+        const match = countryOptions.find((o: any) => o.value === shop.address.country);
         if (match) setSelectedCountry(match);
       }
     }, 0);
@@ -74,9 +77,9 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
 
   useEffect(() => {
     setTimeout(() => {
-      if (shop?.address?.city && selectedCountry) {
-        const cities = City.getCitiesOfCountry(selectedCountry.value) || [];
-        const match = cities.find(c => c.name === shop.address.city);
+      if (shop?.address?.city && selectedCountry && csc) {
+        const cities = csc.City.getCitiesOfCountry(selectedCountry.value) || [];
+        const match = cities.find((c: any) => c.name === shop.address.city);
         if (match) {
           setSelectedCityOption({ value: match.name, label: match.name });
         } else if (shop.address.city) {
@@ -84,7 +87,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
         }
       }
     }, 0);
-  }, [shop?.address?.city, selectedCountry]);
+  }, [shop?.address?.city, selectedCountry, csc]);
 
   const selectStyles = {
     control: (base: any, state: any) => ({
@@ -428,11 +431,11 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
           <div>
             <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">City</label>
             <Select 
-              options={selectedCountry ? 
-                City.getCitiesOfCountry(selectedCountry.value)?.map(c => ({
+              options={selectedCountry && csc ?
+                (csc.City.getCitiesOfCountry(selectedCountry.value) ?? []).map((c: any) => ({
                   value: c.name,
                   label: c.name
-                })) || [] 
+                }))
                 : []
               } 
               value={selectedCityOption}

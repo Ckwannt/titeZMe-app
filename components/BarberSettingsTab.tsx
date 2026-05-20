@@ -8,8 +8,7 @@ import { sendPasswordResetEmail } from 'firebase/auth';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import Select from "react-select";
-import { Country, City } from "country-state-city";
-import ISO6391 from "iso-639-1";
+// country-state-city and iso-639-1 loaded dynamically to avoid bundling ~2 MB on initial load
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import { userUpdateSchema, barberUpdateSchema } from "@/lib/schemas";
@@ -42,38 +41,43 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
   const [phoneNumberInput, setPhoneNumberInput] = useState(initPhoneNumStr);
   const [phoneCode, setPhoneCode] = useState<any>(null);
+  const [csc, setCsc] = useState<any>(null);
+  const [iso6391, setIso6391] = useState<any>(null);
   
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
   const [selectedLanguages, setSelectedLanguages] = useState<any>([]);
 
-  const countryOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.isoCode,
-    label: `${c.flag} ${c.name}`
-  })), []);
-  
-  const phoneCodeOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.phonecode,
-    label: `${c.flag} ${c.name} (+${c.phonecode})`
-  })), []);
+  useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
+  useEffect(() => { import('iso-639-1').then(m => setIso6391(m.default)); }, []);
 
-  const languageOptions = useMemo(() => ISO6391.getAllNames().map(name => ({
-    value: name,
-    label: name
-  })), []);
+  const countryOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.isoCode, label: `${c.flag} ${c.name}` }));
+  }, [csc]);
+
+  const phoneCodeOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.phonecode, label: `${c.flag} ${c.name} (+${c.phonecode})` }));
+  }, [csc]);
+
+  const languageOptions = useMemo(() => {
+    if (!iso6391) return [];
+    return iso6391.getAllNames().map((name: string) => ({ value: name, label: name }));
+  }, [iso6391]);
   
   useEffect(() => {
     setTimeout(() => {
       if (initPhoneCodeStr) {
-        const match = phoneCodeOptions.find(o => o.value === initPhoneCodeStr);
+        const match = phoneCodeOptions.find((o: any) => o.value === initPhoneCodeStr);
         if (match) setPhoneCode(match);
       }
       if (profile?.country) {
-        const match = countryOptions.find(o => o.value === profile.country);
+        const match = countryOptions.find((o: any) => o.value === profile.country);
         if (match) setSelectedCountry(match);
       }
       if (profile?.languages?.length) {
-        const matches = languageOptions.filter(o => profile.languages.includes(o.value));
+        const matches = languageOptions.filter((o: any) => profile.languages.includes(o.value));
         setSelectedLanguages(matches);
       }
     }, 0);
@@ -81,9 +85,9 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
   useEffect(() => {
     setTimeout(() => {
-      if (profile?.city && selectedCountry) {
-        const cities = City.getCitiesOfCountry(selectedCountry.value) || [];
-        const match = cities.find(c => c.name === profile.city);
+      if (profile?.city && selectedCountry && csc) {
+        const cities = csc.City.getCitiesOfCountry(selectedCountry.value) || [];
+        const match = cities.find((c: any) => c.name === profile.city);
         if (match) {
           setSelectedCityOption({ value: match.name, label: match.name });
         } else if (profile.city) {
@@ -91,7 +95,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         }
       }
     }, 0);
-  }, [profile?.city, selectedCountry]);
+  }, [profile?.city, selectedCountry, csc]);
 
   const selectStyles = {
     control: (base: any, state: any) => ({
@@ -454,13 +458,13 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
           <div>
             <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">City</label>
             <Select 
-              options={selectedCountry ? 
-                City.getCitiesOfCountry(selectedCountry.value)?.map(c => ({
+              options={selectedCountry && csc ?
+                (csc.City.getCitiesOfCountry(selectedCountry.value) ?? []).map((c: any) => ({
                   value: c.name,
                   label: c.name
-                })) || [] 
+                }))
                 : []
-              } 
+              }
               value={selectedCityOption}
               onChange={setSelectedCityOption}
               isDisabled={!selectedCountry}
