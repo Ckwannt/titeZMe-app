@@ -249,8 +249,8 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       const langArr = selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : [];
 
       await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({
-              firstName: formData.firstName,
-              lastName: formData.lastName,
+              firstName: sanitizeText(formData.firstName, 100),
+              lastName: sanitizeText(formData.lastName, 100),
               phone: phoneStr,
               phoneCountryCode: phoneCode ? phoneCode.value : null,
               city: cityStr,
@@ -395,6 +395,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
               type="text" 
               value={formData.firstName}
               onChange={e => setFormData({...formData, firstName: e.target.value})}
+              maxLength={100}
               className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
             />
           </div>
@@ -404,6 +405,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
               type="text" 
               value={formData.lastName}
               onChange={e => setFormData({...formData, lastName: e.target.value})}
+              maxLength={100}
               className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
             />
           </div>
@@ -427,7 +429,8 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
                 inputMode="numeric"
                 value={phoneNumberInput}
                 onChange={e => setPhoneNumberInput(e.target.value.replace(/\D/g, ''))}
-                className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[48px]" 
+                maxLength={20}
+                className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[48px]"
                 placeholder="600 000 000" 
               />
             </div>
@@ -472,6 +475,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
           <textarea 
             value={formData.bio}
             onChange={e => setFormData({...formData, bio: e.target.value})}
+            maxLength={2000}
             className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm h-24 resize-none focus:border-brand-yellow outline-none"
             placeholder="Tell your clients a bit about yourself..."
           />
