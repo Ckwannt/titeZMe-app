@@ -43,3 +43,10 @@ body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-brand-border2); border-radius: 99px; }
+
+/* Prevent iOS Safari auto-zoom on input focus (triggered below 16px font-size) */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}

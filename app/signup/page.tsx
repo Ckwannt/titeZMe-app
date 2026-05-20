@@ -24,6 +24,7 @@ export default function SignupPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
+  const [emailError, setEmailError] = useState('');
 
   useEffect(() => { document.title = 'Create account — titeZMe'; }, []);
 
@@ -98,6 +99,13 @@ export default function SignupPage() {
       </div>
     );
   }
+
+  const validateEmail = (value: string): string => {
+    if (!value) return '';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) return 'Please enter a valid email address';
+    return '';
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -313,13 +321,23 @@ export default function SignupPage() {
 
         <div>
           <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">EMAIL <span className="text-brand-red">*</span></label>
-          <input 
+          <input
             required
             type="email"
-            value={email} onChange={e => setEmail(e.target.value)}
-            className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-            placeholder="you@email.com" 
+            value={email}
+            onChange={e => {
+              setEmail(e.target.value);
+              setEmailError(validateEmail(e.target.value));
+            }}
+            className="w-full bg-[#141414] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors"
+            style={{ border: emailError ? '1px solid #EF4444' : '1px solid #2a2a2a' }}
+            placeholder="you@email.com"
           />
+          {emailError && (
+            <div style={{ fontSize: '11px', color: '#EF4444', marginTop: '4px' }}>
+              {emailError}
+            </div>
+          )}
           {submitAttempted && !email && <span className="text-brand-red text-xs mt-1 block">This field is required</span>}
         </div>
 
@@ -333,6 +351,16 @@ export default function SignupPage() {
             className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow"
           />
           {submitAttempted && !password && <span className="text-brand-red text-xs mt-1 block">This field is required</span>}
+          {password.length > 0 && password.length < 8 && (
+            <div style={{ fontSize: '11px', color: '#EF4444', marginTop: '4px' }}>
+              Password must be at least 8 characters ({password.length}/8)
+            </div>
+          )}
+          {password.length >= 8 && (
+            <div style={{ fontSize: '11px', color: '#22C55E', marginTop: '4px' }}>
+              ✓ Password looks good
+            </div>
+          )}
         </div>
 
         {errorStatus && (
@@ -341,9 +369,9 @@ export default function SignupPage() {
           </div>
         )}
 
-        <button 
-          type="submit" 
-          disabled={isSubmitting}
+        <button
+          type="submit"
+          disabled={isSubmitting || !!emailError || email.length === 0 || password.length < 8 || firstName.length === 0}
           className="bg-brand-yellow text-[#0a0a0a] w-full mt-4 px-7 py-3.5 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
         >
           {isSubmitting ? 'Creating account...' : 'Create Account'}
