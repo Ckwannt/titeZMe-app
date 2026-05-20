@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { userSchema } from '@/lib/schemas';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { PasswordInput } from '@/components/PasswordInput';
+import { toast } from '@/lib/toast';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -21,6 +22,8 @@ export default function SignupPage() {
   const [errorStatus, setErrorStatus] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
+  const [emailVerified, setEmailVerified] = useState(false);
 
   if (loading) return null;
   if (user && !submitAttempted) {
@@ -28,8 +31,78 @@ export default function SignupPage() {
     return null;
   }
 
+  if (emailVerified) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#0A0A0A',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'Nunito, sans-serif',
+        padding: '20px'
+      }}>
+        <div style={{
+          background: '#111',
+          border: '1px solid #1e1e1e',
+          borderRadius: '20px',
+          padding: '40px',
+          maxWidth: '400px',
+          width: '100%',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>✉️</div>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>
+            Check your email
+          </div>
+          <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.7', marginBottom: '24px' }}>
+            We sent a verification link to
+            <span style={{ color: '#F5C518', display: 'block', marginTop: '4px' }}>
+              {email}
+            </span>
+            Click the link to activate your account.
+          </div>
+          <div style={{ fontSize: '11px', color: '#444', marginBottom: '16px' }}>
+            Didn&apos;t receive it? Check spam or request a new one.
+          </div>
+          <button
+            onClick={async () => {
+              await sendEmailVerification(auth.currentUser!);
+              toast.success('Verification email resent ✓');
+            }}
+            style={{
+              background: 'transparent',
+              border: '1px solid #2a2a2a',
+              color: '#888',
+              borderRadius: '99px',
+              padding: '10px 20px',
+              fontSize: '12px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              marginBottom: '12px',
+              width: '100%'
+            }}
+          >
+            Resend verification email
+          </button>
+          <Link
+            href="/login"
+            style={{ color: '#555', fontSize: '11px', textDecoration: 'none' }}
+          >
+            Already verified? Log in →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (honeypot) {
+      console.log('Bot detected via honeypot');
+      return;
+    }
     setSubmitAttempted(true);
 
     if (!firstName || !lastName || !email || !password) {
@@ -57,10 +130,12 @@ export default function SignupPage() {
       });
       await setDoc(doc(db, 'users', newUser.uid), userSchema.parse(userData));
 
-      // 3. Redirect to login or straight to dashboard
-      // Immediately redirect without waiting for auth observer
-      if (role === 'client') router.push('/onboarding/client');
-      else if (role === 'barber') router.push('/onboarding/barber');
+      // 3. Send verification email and show verification screen
+      await sendEmailVerification(userCredential.user, {
+        url: 'https://titezme.com/login',
+        handleCodeInApp: false
+      });
+      setEmailVerified(true);
 
     } catch (err: any) {
       console.error("Signup validation or save error:", err);
@@ -79,6 +154,23 @@ export default function SignupPage() {
       </div>
 
       <form noValidate onSubmit={handleSignup} className="animate-fadeUp !delay-[50ms] flex flex-col gap-4">
+        <input
+          type="text"
+          name="website"
+          value={honeypot}
+          onChange={e => setHoneypot(e.target.value)}
+          style={{
+            position: 'absolute',
+            left: '-9999px',
+            width: '1px',
+            height: '1px',
+            opacity: 0,
+            pointerEvents: 'none'
+          }}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+        />
         <div>
           <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">I AM A...</label>
           <div className="flex gap-2">
