@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -11,6 +11,8 @@ import { PasswordInput } from '@/components/PasswordInput';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect');
   const { user, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,6 +47,12 @@ export default function LoginPage() {
       }
 
       const userData = userDoc.exists() ? userDoc.data() : { role: 'client' };
+
+      const safeRedirect = redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('/admin');
+      if (safeRedirect) {
+        router.replace(redirectTo);
+        return;
+      }
 
       if (userData.role === 'admin') {
         router.replace('/admin');
@@ -82,6 +90,12 @@ export default function LoginPage() {
           setIsSubmitting(false);
           return;
         }
+        const safeRedirect = redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('/admin');
+        if (safeRedirect) {
+          router.replace(redirectTo);
+          return;
+        }
+
         if (udata.role === 'client') {
           if (udata.isOnboarded) router.push('/dashboard/client');
           else router.push('/onboarding/client');
