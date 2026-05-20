@@ -73,9 +73,48 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // Security headers on every route
       {
         source: '/(.*)',
         headers: securityHeaders
+      },
+      // Public pages: short CDN cache, instant stale-while-revalidate
+      {
+        source: '/barbers',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=30, stale-while-revalidate=120' }]
+      },
+      {
+        source: '/shops',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=30, stale-while-revalidate=120' }]
+      },
+      {
+        source: '/barber/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' }]
+      },
+      {
+        source: '/shop/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' }]
+      },
+      {
+        source: '/',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' }]
+      },
+      // Static content pages: 1 hour CDN cache
+      {
+        source: '/how-it-works',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=86400' }]
+      },
+      {
+        source: '/terms',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=86400' }]
+      },
+      {
+        source: '/privacy',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=86400' }]
+      },
+      {
+        source: '/contact',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=86400' }]
       }
     ];
   },
