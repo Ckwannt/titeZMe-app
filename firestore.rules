@@ -153,7 +153,7 @@ service cloud.firestore {
 
     // Users
     match /users/{userId} {
-      allow get: if isSignedIn();
+      allow get: if true;
       allow list: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
 
       allow create: if isSignedIn()
@@ -166,6 +166,8 @@ service cloud.firestore {
         && isValidUser(incoming())
         && incoming().uid == existing().uid
         && (incoming().role == existing().role || incoming().role == 'barber');
+
+      allow delete: if isAdmin();
     }
 
     // Barber Profiles
