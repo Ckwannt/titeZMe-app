@@ -9,6 +9,7 @@ import { bookingUpdateSchema, notificationSchema } from "@/lib/schemas";
 import { cleanupBookingLock } from '@/lib/booking-lock-utils';
 import { safeFirestore } from '@/lib/firebase-helpers';
 import { toast } from '@/lib/toast';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 function getCurrencySymbol(c?: string) {
   const s: Record<string, string> = { 'EUR': '€', 'GBP': '£', 'USD': '$', 'MAD': 'MAD ', 'DZD': 'DA ', 'SAR': 'SAR ', 'AED': 'AED ', 'SEK': 'kr ', 'CHF': 'CHF ' };
@@ -58,6 +59,7 @@ export default function BookingsPage() {
   const [bookingsStatusFilter, setBookingsStatusFilter] = useState('all');
   const [bookingsSearch, setBookingsSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [confirmDecline, setConfirmDecline] = useState<string | null>(null);
   const BOOKINGS_PER_PAGE = 20;
 
   const { data: profile } = useQuery({
@@ -262,7 +264,7 @@ export default function BookingsPage() {
             {b.status === 'pending' && (
               <div className="flex gap-1.5 w-full sm:w-auto mt-1 sm:mt-0 justify-end">
                 <button onClick={() => updateBookingStatus(b.id, 'confirmed')} className="bg-[#0f2010] border border-brand-green/30 text-brand-green rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-green/20">✓ Accept</button>
-                <button onClick={() => updateBookingStatus(b.id, 'cancelled_by_barber')} className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-red/20">✕ Decline</button>
+                <button onClick={() => setConfirmDecline(b.id)} className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-red/20">✕ Decline</button>
               </div>
             )}
             {b.status === 'confirmed' && (
@@ -310,6 +312,19 @@ export default function BookingsPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        isOpen={!!confirmDecline}
+        title="Decline booking?"
+        message="The client will be notified that their booking was declined."
+        confirmText="Yes, decline"
+        cancelText="Keep"
+        confirmColor="#EF4444"
+        onCancel={() => setConfirmDecline(null)}
+        onConfirm={async () => {
+          await updateBookingStatus(confirmDecline!, 'cancelled_by_barber');
+          setConfirmDecline(null);
+        }}
+      />
     </div>
   );
 }
