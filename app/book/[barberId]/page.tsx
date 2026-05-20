@@ -233,6 +233,8 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
               createdAt: Date.now()
             }));
 
+      toast.success('🎉 Booking request sent! Check your dashboard.');
+      await new Promise(resolve => setTimeout(resolve, 1000));
       router.push('/dashboard/client');
 
     } catch (e: any) {
@@ -243,7 +245,21 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
          setSelectedEndTime('');
          setStep(3); // Go back to slots
       } else {
-         toast.error("Failed to book constraint check. " + e.message);
+         const getBookingError = (err: any): string => {
+           const code = err?.code || '';
+           const msg = (err?.message || '').toLowerCase();
+           if (code === 'permission-denied' || msg.includes('permission')) {
+             return 'Unable to complete booking. Please try again.';
+           }
+           if (msg.includes('overlap') || msg.includes('taken') || msg.includes('slot')) {
+             return 'This slot was just taken. Please choose another time.';
+           }
+           if (code === 'unavailable' || msg.includes('network')) {
+             return 'Connection error. Check your internet and try again.';
+           }
+           return 'Booking failed. Please try again.';
+         };
+         toast.error(getBookingError(e));
       }
     }
     setIsSubmitting(false);
