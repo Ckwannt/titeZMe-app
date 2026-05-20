@@ -163,7 +163,17 @@ export default function LoginPage() {
         <div>
           <div className="flex justify-between items-end mb-1.5">
             <label className="text-[11px] font-extrabold text-brand-text-secondary block">PASSWORD</label>
-            <a href="#" className="text-[10px] font-extrabold text-[#777] hover:text-white transition-colors">Forgot?</a>
+            <a
+              href="/forgot-password"
+              style={{
+                color: '#555',
+                fontSize: '11px',
+                textDecoration: 'none',
+                fontWeight: 700
+              }}
+            >
+              Forgot password?
+            </a>
           </div>
           <PasswordInput
             required
