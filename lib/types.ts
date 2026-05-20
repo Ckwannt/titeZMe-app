@@ -49,6 +49,7 @@ export interface UserDocument {
   createdAt: number;
   notifyInviteResponse?: boolean;
   notifyNewBooking?: boolean;
+  unreadCount?: number;
 }
 
 export interface Barbershop {

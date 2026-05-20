@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { collection, query, where, getDocs, doc, getDoc, runTransaction, setDoc, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, runTransaction, setDoc, addDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { BarberProfileSkeleton } from '@/components/skeletons';
 import { SmartTimePicker } from '@/components/SmartTimePicker';
@@ -225,7 +225,8 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
               linkTo: '/dashboard/barber',
               createdAt: Date.now()
             }));
-      
+      updateDoc(doc(db, 'users', barberId), { unreadCount: increment(1) }).catch(console.error);
+
       // Notify client
       await addDoc(collection(db, 'notifications'), notificationSchema.parse({
               userId: user.uid,
@@ -234,6 +235,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
               linkTo: '/dashboard/client',
               createdAt: Date.now()
             }));
+      updateDoc(doc(db, 'users', user.uid), { unreadCount: increment(1) }).catch(console.error);
 
       toast.success('🎉 Booking request sent! Check your dashboard.');
       await new Promise(resolve => setTimeout(resolve, 1000));
