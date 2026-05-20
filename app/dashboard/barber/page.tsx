@@ -65,6 +65,8 @@ export default function BarberDashboardPage() {
   const [rangeError, setRangeError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
 
+  useEffect(() => { document.title = 'Dashboard — titeZMe'; }, []);
+
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/login');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -24,6 +24,8 @@ export default function SignupPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
+
+  useEffect(() => { document.title = 'Create account — titeZMe'; }, []);
 
   if (loading) return null;
   if (user && !submitAttempted) {

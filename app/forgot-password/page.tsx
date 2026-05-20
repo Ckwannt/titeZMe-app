@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -9,6 +9,8 @@ export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => { document.title = 'Reset password — titeZMe'; }, []);
 
   const handleReset = async () => {
     if (!email.trim()) {

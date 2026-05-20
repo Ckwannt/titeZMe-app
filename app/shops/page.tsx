@@ -173,6 +173,8 @@ export default function ShopsPage() {
   const [geoApplied, setGeoApplied] = useState(false);
   const [geoCity, setGeoCity] = useState('');
 
+  useEffect(() => { document.title = 'Find a Barbershop — titeZMe'; }, []);
+
   // Geolocation auto-fill — same as /barbers page.
   // Shops store address.country as the full country name ("Spain"), so we use
   // found.name (not isoCode) for the activeFilter.country comparison.
