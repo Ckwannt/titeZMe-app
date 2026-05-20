@@ -60,6 +60,7 @@ export default function BookingsPage() {
   const [bookingsSearch, setBookingsSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [confirmDecline, setConfirmDecline] = useState<string | null>(null);
+  const [completing, setCompleting] = useState<string | null>(null);
   const BOOKINGS_PER_PAGE = 20;
 
   const { data: profile } = useQuery({
@@ -269,7 +270,13 @@ export default function BookingsPage() {
             )}
             {b.status === 'confirmed' && (
               <div className="flex gap-1.5 w-full sm:w-auto mt-1 sm:mt-0 justify-end">
-                <button onClick={() => updateBookingStatus(b.id, 'completed')} className="bg-brand-surface border border-brand-border text-white rounded-lg px-3 py-1.5 text-xs font-extrabold hover:border-[#444]">Mark Complete</button>
+                <button
+                  onClick={async () => { setCompleting(b.id); try { await updateBookingStatus(b.id, 'completed'); } finally { setCompleting(null); } }}
+                  disabled={completing === b.id}
+                  className="bg-brand-surface border border-brand-border text-white rounded-lg px-3 py-1.5 text-xs font-extrabold hover:border-[#444] disabled:opacity-60"
+                >
+                  {completing === b.id ? 'Completing...' : 'Mark Complete'}
+                </button>
               </div>
             )}
           </div>

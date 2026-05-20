@@ -42,6 +42,8 @@ export default function ServicesPage() {
   const [serviceCurrency, setServiceCurrency] = useState('EUR');
   const [toastMessage, setToastMessage] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [addingService, setAddingService] = useState(false);
+  const [savingService, setSavingService] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.uid],
@@ -71,15 +73,21 @@ export default function ServicesPage() {
   const addService = async () => {
     if (!newServiceName || !newServicePrice || !user) return;
     if ((services as any[]).some((s: any) => s.name.toLowerCase().trim() === newServiceName.toLowerCase().trim())) { toast(`You already have '${newServiceName}'. Edit the existing one instead.`); return; }
-    const result = await safeFirestore(
-      () => setDoc(doc(collection(db, 'services')), { providerId: user.uid, providerType: 'barber', name: sanitizeText(newServiceName, 100), duration: parseInt(newServiceDuration) || 30, price: parseFloat(newServicePrice), description: sanitizeText(newServiceDescription, 150), isActive: true, sortOrder: (services as any[]).length }),
-      { successMessage: 'Service added!', errorMessage: 'Failed to add service.' }
-    );
-    if (result !== null) { setNewServiceName(''); setNewServicePrice(''); setNewServiceDuration(''); setNewServiceDescription(''); mutateServices(); }
+    setAddingService(true);
+    try {
+      const result = await safeFirestore(
+        () => setDoc(doc(collection(db, 'services')), { providerId: user.uid, providerType: 'barber', name: sanitizeText(newServiceName, 100), duration: parseInt(newServiceDuration) || 30, price: parseFloat(newServicePrice), description: sanitizeText(newServiceDescription, 150), isActive: true, sortOrder: (services as any[]).length }),
+        { successMessage: 'Service added!', errorMessage: 'Failed to add service.' }
+      );
+      if (result !== null) { setNewServiceName(''); setNewServicePrice(''); setNewServiceDuration(''); setNewServiceDescription(''); mutateServices(); }
+    } finally {
+      setAddingService(false);
+    }
   };
 
   const saveEditService = async (svcId: string) => {
-    try { await updateDoc(doc(db, 'services', svcId), { name: sanitizeText(editSvcData.name, 100), duration: parseInt(editSvcData.duration) || 30, price: parseFloat(editSvcData.price) || 0, description: sanitizeText(editSvcData.description, 150), updatedAt: Date.now() }); setEditingServiceId(null); toast('Service updated ✓'); mutateServices(); } catch (e) { console.error(e); }
+    setSavingService(true);
+    try { await updateDoc(doc(db, 'services', svcId), { name: sanitizeText(editSvcData.name, 100), duration: parseInt(editSvcData.duration) || 30, price: parseFloat(editSvcData.price) || 0, description: sanitizeText(editSvcData.description, 150), updatedAt: Date.now() }); setEditingServiceId(null); toast('Service updated ✓'); mutateServices(); } catch (e) { console.error(e); } finally { setSavingService(false); }
   };
 
   const toggleServiceActive = async (svcId: string, currentIsActive: boolean) => {
@@ -162,7 +170,7 @@ export default function ServicesPage() {
               <textarea value={editSvcData.description} onChange={e => setEditSvcData(p => ({ ...p, description: e.target.value }))} maxLength={150} rows={2} placeholder="Description (optional)" className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-brand-yellow resize-none mb-3" />
               <div className="flex gap-2 justify-end">
                 <button onClick={() => setEditingServiceId(null)} className="text-[#555] hover:text-white text-xs font-bold px-3 py-1.5">Cancel</button>
-                <button onClick={() => saveEditService(svc.id)} className="bg-brand-yellow text-[#0a0a0a] text-xs font-black px-4 py-1.5 rounded-lg hover:opacity-90">Save</button>
+                <button onClick={() => saveEditService(svc.id)} disabled={savingService} className="bg-brand-yellow text-[#0a0a0a] text-xs font-black px-4 py-1.5 rounded-lg hover:opacity-90 disabled:opacity-60">{savingService ? 'Saving...' : 'Save'}</button>
               </div>
             </div>
           ) : (
@@ -203,7 +211,7 @@ export default function ServicesPage() {
         </div>
         <div className="mb-2"><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">DESCRIPTION (optional)</label><textarea value={newServiceDescription} onChange={e => setNewServiceDescription(e.target.value)} maxLength={150} rows={2} placeholder="What does this service include?" className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow resize-none" /><div className="text-[10px] text-[#444] text-right mt-0.5">{newServiceDescription.length}/150</div></div>
         <div className="flex items-center gap-2 mb-3"><label className="text-[10px] font-extrabold text-brand-text-secondary uppercase">Currency:</label><select value={serviceCurrency} onChange={e => updateServiceCurrency(e.target.value)} className="bg-[#141414] border border-[#2a2a2a] text-white text-xs rounded-lg px-3 py-1.5 outline-none focus:border-brand-yellow transition-colors">{CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}</select></div>
-        <button onClick={addService} className="bg-brand-yellow text-[#0a0a0a] w-full mt-2 px-7 py-3 rounded-xl font-black text-sm transition-all hover:opacity-90">Add Service</button>
+        <button onClick={addService} disabled={addingService} className="bg-brand-yellow text-[#0a0a0a] w-full mt-2 px-7 py-3 rounded-xl font-black text-sm transition-all hover:opacity-90 disabled:opacity-60">{addingService ? 'Adding...' : 'Add Service'}</button>
         <div className="mt-4"><div className="text-[10px] text-[#555] font-bold mb-2">Quick add:</div><div className="flex flex-wrap gap-2">{QUICK_CHIPS.map(chip => { const exists = (services as any[]).some((s: any) => s.name.toLowerCase() === chip.name.toLowerCase()); return (<button key={chip.name} disabled={exists} onClick={() => { setNewServiceName(chip.name); setNewServiceDuration(String(chip.duration)); setNewServicePrice(''); document.getElementById('add-service-form')?.scrollIntoView({ behavior: 'smooth' }); }} className={`inline-flex items-center gap-1 text-[11px] font-bold rounded-full px-3 py-1 border transition-colors ${exists ? 'border-[#1e1e1e] text-[#444] bg-[#111] cursor-not-allowed' : 'bg-[#141414] border-dashed border-[#2a2a2a] text-[#666] hover:border-brand-yellow hover:text-brand-yellow cursor-pointer'}`}>{exists ? '✓' : '+'} {chip.name}</button>); })}</div></div>
       </div>
 
