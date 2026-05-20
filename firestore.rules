@@ -9,7 +9,7 @@ service cloud.firestore {
     }
 
     match /connection_test/{docId} {
-      allow read, write: if true; // Temporary test rule
+      allow read, write: if isSignedIn();
     }
 
     // Phase 3: Primitive Definition
@@ -153,7 +153,7 @@ service cloud.firestore {
 
     // Users
     match /users/{userId} {
-      allow get: if isValidId(userId);
+      allow get: if isSignedIn();
       allow list: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
 
       allow create: if isSignedIn()
