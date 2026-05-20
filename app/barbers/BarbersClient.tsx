@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
-import { Country, City } from 'country-state-city';
+// country-state-city loaded dynamically to avoid bundling 1.8 MB on initial load
 import { getOpenStatus, getScheduleDocId } from '@/lib/schedule-utils';
 import { locationsMatch } from '@/lib/location-utils';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -163,6 +163,9 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   const [geoCity, setGeoCity] = useState('');
   const [geoCountry, setGeoCountry] = useState('');
   const [geoApplied, setGeoApplied] = useState(false);
+  const [csc, setCsc] = useState<any>(null);
+
+  useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
 
   // Auto-detect user location and pre-populate filters
   useEffect(() => {
@@ -186,8 +189,9 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
             setGeoCity(city);
             setGeoCountry(country);
             // Only auto-apply if user hasn't already set filters manually
-            const found = Country.getAllCountries().find(
-              (c) => c.name.toLowerCase() === country.toLowerCase()
+            const { Country: CountryLib } = await import('country-state-city');
+            const found = CountryLib.getAllCountries().find(
+              (c: any) => c.name.toLowerCase() === country.toLowerCase()
             );
             if (found) {
               setCountryCode(found.isoCode);
@@ -229,8 +233,11 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   const [page, setPage] = useState(1);
   const [copied, setCopied] = useState(false);
 
-  const countries = Country.getAllCountries();
-  const cities = countryCode ? (City.getCitiesOfCountry(countryCode) ?? []) : [];
+  const countries = useMemo(() => csc ? csc.Country.getAllCountries() : [], [csc]);
+  const cities = useMemo(() => {
+    if (!csc || !countryCode) return [];
+    return csc.City.getCitiesOfCountry(countryCode) ?? [];
+  }, [csc, countryCode]);
 
   const filtered = useMemo(() => {
     let list = [...allBarbers];
@@ -314,7 +321,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <select value={countryCode} onChange={e => {
-              const c = Country.getAllCountries().find(c => c.isoCode === e.target.value);
+              const c = countries.find((c: any) => c.isoCode === e.target.value);
               setCountryCode(e.target.value);
               setCountryName(c?.name || '');
               setSelectedCity('');
@@ -322,7 +329,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
               className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors"
             >
               <option value="">Choose a country</option>
-              {countries.map(c => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
+              {countries.map((c: any) => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
             </select>
 
             <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)}
@@ -330,7 +337,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
               className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <option value="">Choose a city</option>
-              {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+              {cities.map((c: any) => <option key={c.name} value={c.name}>{c.name}</option>)}
             </select>
 
             <button onClick={handleSearch} disabled={!selectedCity}

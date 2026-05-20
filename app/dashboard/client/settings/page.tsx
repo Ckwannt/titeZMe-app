@@ -9,8 +9,7 @@ import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
 import Select from 'react-select';
-import { Country, City } from 'country-state-city';
-import ISO6391 from 'iso-639-1';
+// country-state-city and iso-639-1 loaded dynamically to avoid bundling ~2 MB on initial load
 import { userUpdateSchema } from "@/lib/schemas";
 import { sanitizeText } from '@/lib/sanitize';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -31,6 +30,8 @@ export default function ClientSettings() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [csc, setCsc] = useState<any>(null);
+  const [iso6391, setIso6391] = useState<any>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -56,8 +57,11 @@ export default function ClientSettings() {
       }
       
       if (appUser.country) {
-        const c = Country.getCountryByCode(appUser.country);
-        if (c) setSelectedCountry({ value: c.isoCode, label: `${c.flag} ${c.name}` });
+        // Pre-populate on next tick after csc loads
+        import('country-state-city').then(({ Country: C }) => {
+          const c = C.getCountryByCode(appUser.country!);
+          if (c) setSelectedCountry({ value: c.isoCode, label: `${c.flag} ${c.name}` });
+        });
       }
       if (appUser.city) {
         setSelectedCityOption({ value: appUser.city, label: appUser.city });
@@ -68,20 +72,23 @@ export default function ClientSettings() {
     }
   }, [appUser]);
 
-  const countryOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.isoCode,
-    label: `${c.flag} ${c.name}`
-  })), []);
-  
-  const phoneCodeOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.phonecode,
-    label: `${c.flag} ${c.name} (+${c.phonecode})`
-  })), []);
+  useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
+  useEffect(() => { import('iso-639-1').then(m => setIso6391(m.default)); }, []);
 
-  const languageOptions = useMemo(() => ISO6391.getAllNames().map(name => ({
-    value: name,
-    label: name
-  })), []);
+  const countryOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.isoCode, label: `${c.flag} ${c.name}` }));
+  }, [csc]);
+
+  const phoneCodeOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.phonecode, label: `${c.flag} ${c.name} (+${c.phonecode})` }));
+  }, [csc]);
+
+  const languageOptions = useMemo(() => {
+    if (!iso6391) return [];
+    return iso6391.getAllNames().map((name: string) => ({ value: name, label: name }));
+  }, [iso6391]);
 
   const selectStyles = {
     control: (base: any, state: any) => ({
@@ -397,8 +404,8 @@ export default function ClientSettings() {
                 </div>
                 <div>
                   <Select 
-                    options={selectedCountry ? 
-                      City.getCitiesOfCountry(selectedCountry.value)?.map(c => ({
+                    options={selectedCountry && csc ?
+                      (csc.City.getCitiesOfCountry(selectedCountry.value) ?? []).map((c: any) => ({
                         value: c.name,
                         label: c.name
                       })) || [] 

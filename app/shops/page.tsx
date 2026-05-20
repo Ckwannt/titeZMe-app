@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
-import { Country, City } from 'country-state-city';
+// country-state-city loaded dynamically to avoid bundling 1.8 MB on initial load
 import { getOpenStatus, getTimezoneFromLocation, getLocalDateString } from '@/lib/schedule-utils';
 import { locationsMatch } from '@/lib/location-utils';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -172,7 +172,9 @@ export default function ShopsPage() {
   const [page, setPage] = useState(1);
   const [geoApplied, setGeoApplied] = useState(false);
   const [geoCity, setGeoCity] = useState('');
+  const [csc, setCsc] = useState<any>(null);
 
+  useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
   useEffect(() => { document.title = 'Find a Barbershop — titeZMe'; }, []);
 
   // Geolocation auto-fill — same as /barbers page.
@@ -197,8 +199,9 @@ export default function ShopsPage() {
             data.address?.county || '';
           const country = data.address?.country || '';
           if (city && country) {
-            const found = Country.getAllCountries().find(
-              c => c.name.toLowerCase() === country.toLowerCase()
+            const { Country: CountryLib } = await import('country-state-city');
+            const found = CountryLib.getAllCountries().find(
+              (c: any) => c.name.toLowerCase() === country.toLowerCase()
             );
             if (found) {
               setCountryCode(found.isoCode);
@@ -219,8 +222,11 @@ export default function ShopsPage() {
     );
   }, []);
 
-  const countries = Country.getAllCountries();
-  const cities = countryCode ? (City.getCitiesOfCountry(countryCode) ?? []) : [];
+  const countries = useMemo(() => csc ? csc.Country.getAllCountries() : [], [csc]);
+  const cities = useMemo(() => {
+    if (!csc || !countryCode) return [];
+    return csc.City.getCitiesOfCountry(countryCode) ?? [];
+  }, [csc, countryCode]);
 
   const { data: allShops = [], isLoading, refetch: refetchShops } = useQuery({
     queryKey: ['shopsListV2'],
@@ -308,7 +314,7 @@ export default function ShopsPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <select value={countryCode}
               onChange={e => {
-                const opt = countries.find(c => c.isoCode === e.target.value);
+                const opt = countries.find((c: any) => c.isoCode === e.target.value);
                 setCountryCode(e.target.value);
                 setCountryName(opt?.name ?? '');
                 setSelectedCity('');
@@ -316,7 +322,7 @@ export default function ShopsPage() {
               className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors"
             >
               <option value="">Choose a country</option>
-              {countries.map(c => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
+              {countries.map((c: any) => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
             </select>
 
             <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)}
@@ -324,7 +330,7 @@ export default function ShopsPage() {
               className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <option value="">Choose a city</option>
-              {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+              {cities.map((c: any) => <option key={c.name} value={c.name}>{c.name}</option>)}
             </select>
 
             <button onClick={handleSearch} disabled={!selectedCity}

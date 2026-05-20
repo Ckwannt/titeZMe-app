@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase';
 import Link from 'next/link';
 
 import Select from "react-select";
-import { Country, City } from "country-state-city";
+// country-state-city loaded dynamically to avoid bundling 1.8 MB on initial load
 import { barberUpdateSchema, userUpdateSchema, barbershopSchema } from "@/lib/schemas";
 import { sanitizeText, sanitizeUrl } from '@/lib/sanitize';
 
@@ -32,16 +32,19 @@ export default function CreateShopPage() {
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorStatus, setErrorStatus] = useState('');
+  const [csc, setCsc] = useState<any>(null);
 
-  const countryOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.isoCode,
-    label: `${c.flag} ${c.name}`
-  })), []);
-  
-  const phoneCodeOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.phonecode,
-    label: `${c.flag} ${c.name} (+${c.phonecode})`
-  })), []);
+  useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
+
+  const countryOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.isoCode, label: `${c.flag} ${c.name}` }));
+  }, [csc]);
+
+  const phoneCodeOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.phonecode, label: `${c.flag} ${c.name} (+${c.phonecode})` }));
+  }, [csc]);
 
   const selectStyles = {
     control: (base: any, state: any) => ({
@@ -228,13 +231,13 @@ export default function CreateShopPage() {
             <div>
               <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">CITY <span className="text-brand-red">*</span></label>
               <Select 
-                options={selectedCountry ? 
-                  City.getCitiesOfCountry(selectedCountry.value)?.map(c => ({
+                options={selectedCountry && csc ?
+                  (csc.City.getCitiesOfCountry(selectedCountry.value) ?? []).map((c: any) => ({
                     value: c.name,
                     label: c.name
-                  })) || [] 
+                  }))
                   : []
-                } 
+                }
                 value={selectedCityOption}
                 onChange={setSelectedCityOption}
                 isDisabled={!selectedCountry}

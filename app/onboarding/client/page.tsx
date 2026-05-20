@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import Select from 'react-select';
-import { Country, City } from 'country-state-city';
-import ISO6391 from 'iso-639-1';
+// country-state-city and iso-639-1 loaded dynamically to avoid bundling ~2 MB on initial load
 import { userUpdateSchema } from "@/lib/schemas";
 
 export default function ClientOnboarding() {
@@ -23,21 +22,26 @@ export default function ClientOnboarding() {
   const [phoneCode, setPhoneCode] = useState<any>(null);
   const [phoneNumberInput, setPhoneNumberInput] = useState("");
   const [selectedLanguages, setSelectedLanguages] = useState<any>([]);
+  const [csc, setCsc] = useState<any>(null);
+  const [iso6391, setIso6391] = useState<any>(null);
 
-  const countryOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.isoCode,
-    label: `${c.flag} ${c.name}`
-  })), []);
-  
-  const phoneCodeOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.phonecode,
-    label: `${c.flag} ${c.name} (+${c.phonecode})`
-  })), []);
+  useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
+  useEffect(() => { import('iso-639-1').then(m => setIso6391(m.default)); }, []);
 
-  const languageOptions = useMemo(() => ISO6391.getAllNames().map(name => ({
-    value: name,
-    label: name
-  })), []);
+  const countryOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.isoCode, label: `${c.flag} ${c.name}` }));
+  }, [csc]);
+
+  const phoneCodeOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.phonecode, label: `${c.flag} ${c.name} (+${c.phonecode})` }));
+  }, [csc]);
+
+  const languageOptions = useMemo(() => {
+    if (!iso6391) return [];
+    return iso6391.getAllNames().map((name: string) => ({ value: name, label: name }));
+  }, [iso6391]);
 
   const selectStyles = {
     control: (base: any, state: any) => ({
@@ -231,13 +235,13 @@ export default function ClientOnboarding() {
             </div>
             <div>
               <Select 
-                options={selectedCountry ? 
-                  City.getCitiesOfCountry(selectedCountry.value)?.map(c => ({
+                options={selectedCountry && csc ?
+                  (csc.City.getCitiesOfCountry(selectedCountry.value) ?? []).map((c: any) => ({
                     value: c.name,
                     label: c.name
-                  })) || [] 
+                  }))
                   : []
-                } 
+                }
                 value={selectedCityOption}
                 onChange={setSelectedCityOption}
                 isDisabled={!selectedCountry}

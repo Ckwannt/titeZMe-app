@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from 'next/link';
 
 import { useRouter } from "next/navigation";
@@ -8,8 +8,7 @@ import { doc, collection, setDoc, updateDoc, query, where, getDocs } from "fireb
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import Select from "react-select";
-import { Country, City } from "country-state-city";
-import ISO6391 from "iso-639-1";
+// country-state-city and iso-639-1 loaded dynamically to avoid bundling ~2 MB on initial load
 import { userUpdateSchema, scheduleSchema, barberSchema } from "@/lib/schemas";
 import { sanitizeText } from '@/lib/sanitize';
 
@@ -40,24 +39,30 @@ export default function BarberOnboarding() {
     { name: "Classic Cut", duration: "30", price: "14" }
   ]);
   const [titzData, setTitzData] = useState({ duration: "45", price: "20" });
+  const [csc, setCsc] = useState<any>(null);
+  const [iso6391, setIso6391] = useState<any>(null);
+
+  useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
+  useEffect(() => { import('iso-639-1').then(m => setIso6391(m.default)); }, []);
+
   const toggleVibe = (v: string) => setVibe(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]);
   const toggleSpec = (s: string) => setSpecialty(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
   const toggleClientele = (c: string) => setClientele(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
 
-  const countryOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.isoCode,
-    label: `${c.flag} ${c.name}`
-  })), []);
-  
-  const phoneCodeOptions = useMemo(() => Country.getAllCountries().map(c => ({
-    value: c.phonecode,
-    label: `${c.flag} ${c.name} (+${c.phonecode})`
-  })), []);
+  const countryOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.isoCode, label: `${c.flag} ${c.name}` }));
+  }, [csc]);
 
-  const languageOptions = useMemo(() => ISO6391.getAllNames().map(name => ({
-    value: name,
-    label: name
-  })), []);
+  const phoneCodeOptions = useMemo(() => {
+    if (!csc) return [];
+    return csc.Country.getAllCountries().map((c: any) => ({ value: c.phonecode, label: `${c.flag} ${c.name} (+${c.phonecode})` }));
+  }, [csc]);
+
+  const languageOptions = useMemo(() => {
+    if (!iso6391) return [];
+    return iso6391.getAllNames().map((name: string) => ({ value: name, label: name }));
+  }, [iso6391]);
 
   const selectStyles = {
     control: (base: any, state: any) => ({
@@ -304,11 +309,11 @@ export default function BarberOnboarding() {
                 placeholder="Country..."
               />
               <Select 
-                options={selectedCountry ? 
-                  City.getCitiesOfCountry(selectedCountry.value)?.map(c => ({
+                options={selectedCountry && csc ?
+                  (csc.City.getCitiesOfCountry(selectedCountry.value) ?? []).map((c: any) => ({
                     value: c.name,
                     label: c.name
-                  })) || [] 
+                  }))
                   : []
                 } 
                 value={selectedCityOption}
