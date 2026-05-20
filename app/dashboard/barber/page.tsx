@@ -505,6 +505,40 @@ export default function BarberDashboardPage() {
         })()}
       </div>
 
+      {/* Profile completion checklist */}
+      {profilePct < 100 && (
+        <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 900, color: '#fff' }}>Complete your profile</div>
+            <div style={{ fontSize: '12px', fontWeight: 800, color: '#F5C518' }}>{profilePct}%</div>
+          </div>
+          <div style={{ background: '#1e1e1e', borderRadius: '99px', height: '4px', marginBottom: '16px', overflow: 'hidden' }}>
+            <div style={{ background: '#F5C518', height: '100%', width: `${profilePct}%`, borderRadius: '99px', transition: 'width 0.3s ease' }} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {profileItems.filter((item: any) => !item.done).map((item: any) => (
+              <Link
+                key={item.label}
+                href={tabPaths[item.tab] || '/dashboard/barber/settings'}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#888', textDecoration: 'none', padding: '6px 0' }}
+              >
+                <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '1px solid #333', flexShrink: 0 }} />
+                {item.label} →
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+      {profilePct === 100 && (
+        <div style={{ background: '#0f2010', border: '1px solid #22C55E33', borderRadius: '12px', padding: '14px 16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '20px' }}>🎉</span>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 900, color: '#22C55E' }}>Profile complete!</div>
+            <div style={{ fontSize: '11px', color: '#555' }}>You&apos;re ready to receive bookings.</div>
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
@@ -534,6 +568,16 @@ export default function BarberDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Services empty state */}
+      {(services as any[]).length === 0 && (
+        <div style={{ background: '#0d0d0d', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '20px', textAlign: 'center', marginBottom: '20px' }}>
+          <div style={{ fontSize: '24px', marginBottom: '8px' }}>✂️</div>
+          <div style={{ fontSize: '13px', fontWeight: 800, color: '#fff', marginBottom: '4px' }}>No services yet</div>
+          <div style={{ fontSize: '11px', color: '#555', marginBottom: '12px' }}>Add your services so clients know what you offer.</div>
+          <Link href="/dashboard/barber/services" style={{ color: '#F5C518', fontSize: '11px', fontWeight: 800, textDecoration: 'none' }}>Add services →</Link>
+        </div>
+      )}
 
       {/* Next appointment countdown */}
       {nextBooking && (() => {
@@ -623,6 +667,13 @@ export default function BarberDashboardPage() {
         )}
       </div>
       </ErrorBoundary>
+
+      {/* Reviews empty state */}
+      {(profile?.reviewCount || 0) === 0 && (
+        <div style={{ padding: '16px', textAlign: 'center', color: '#444', fontSize: '12px', marginTop: '8px' }}>
+          No reviews yet. Complete your first booking to start getting reviews.
+        </div>
+      )}
 
       {/* Weekly earnings chart */}
       <ErrorBoundary section="earnings chart">
