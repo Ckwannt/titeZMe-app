@@ -1,55 +1,111 @@
-﻿'use client';
+'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 
+const PUBLIC_ROUTES = [
+  '/',
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/barbers',
+  '/shops',
+  '/how-it-works',
+  '/contact',
+  '/terms',
+  '/privacy',
+  '/admin/login',
+];
+
+const PUBLIC_PREFIXES = [
+  '/barber/',
+  '/shop/',
+];
+
+function isPublicRoute(path: string): boolean {
+  if (PUBLIC_ROUTES.includes(path)) return true;
+  if (PUBLIC_PREFIXES.some(prefix => path.startsWith(prefix))) return true;
+  return false;
+}
+
+function LoadingScreen() {
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      background: '#0A0A0A',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999,
+      flexDirection: 'column',
+      gap: '16px'
+    }}>
+      <div style={{
+        width: '36px',
+        height: '36px',
+        border: '3px solid #1e1e1e',
+        borderTop: '3px solid #F5C518',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite'
+      }} />
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export function RouteGuard({ children }: { children: React.ReactNode }) {
-  const { user, appUser, authLoading } = useAuth();
+  const { user, appUser, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [authorized, setAuthorized] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        if (pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding')) {
-          router.replace('/login');
-        }
-      } else if (appUser) {
-        if ((!appUser.isOnboarded && !pathname.startsWith('/onboarding') && pathname !== '/' && pathname !== '/login' && pathname !== '/signup')) {
-          if (appUser.role === 'client') {
-            router.replace('/onboarding/client');
-          } else if (appUser.role === 'barber') {
-            router.replace('/onboarding/barber');
-          }
-        }
-      }
-    }
-  }, [user, appUser, authLoading, pathname, router]);
+    if (loading) return;
 
-  // Block ALL rendering until Firebase Auth confirms identity.
-  // This eliminates the flash of protected/wrong content.
-  if (authLoading) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: '#0A0A0A',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <div style={{
-          width: '32px',
-          height: '32px',
-          border: '3px solid #1e1e1e',
-          borderTop: '3px solid #F5C518',
-          borderRadius: '50%',
-          animation: 'rg-spin 0.8s linear infinite',
-        }} />
-        <style>{`@keyframes rg-spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
+    const isPublic = isPublicRoute(pathname);
+
+    if (isPublic) {
+      setAuthorized(true);
+      setChecking(false);
+      return;
+    }
+
+    if (!user) {
+      setAuthorized(false);
+      setChecking(false);
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+      return;
+    }
+
+    // Onboarding redirect — preserve existing behaviour
+    if (appUser && !appUser.isOnboarded &&
+        !pathname.startsWith('/onboarding') &&
+        pathname !== '/' &&
+        pathname !== '/login' &&
+        pathname !== '/signup') {
+      if (appUser.role === 'client') {
+        router.replace('/onboarding/client');
+      } else if (appUser.role === 'barber') {
+        router.replace('/onboarding/barber');
+      }
+      setAuthorized(false);
+      setChecking(false);
+      return;
+    }
+
+    setAuthorized(true);
+    setChecking(false);
+  }, [user, appUser, loading, pathname, router]);
+
+  if (loading || checking) return <LoadingScreen />;
+  if (!authorized) return <LoadingScreen />;
 
   return <>{children}</>;
 }
