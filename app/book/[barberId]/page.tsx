@@ -8,6 +8,8 @@ import { BarberProfileSkeleton } from '@/components/skeletons';
 import { SmartTimePicker } from '@/components/SmartTimePicker';
 import { toast } from '@/lib/toast';
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import { sendEmailVerification } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { notificationSchema } from "@/lib/schemas";
 
@@ -40,6 +42,7 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [selectedEndTime, setSelectedEndTime] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
 
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['bookProfile', barberId],
@@ -109,6 +112,10 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
   }
 
   const handleConfirm = async () => {
+    if (honeypot) {
+      console.log('Bot detected in booking');
+      return;
+    }
     if (!user || !selectedDate || !selectedTime || selectedServices.length === 0) return;
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -244,6 +251,105 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
 
   if (loading) return <BarberProfileSkeleton />;
 
+  if (user && !user.emailVerified) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#0A0A0A',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'Nunito, sans-serif',
+        padding: '20px'
+      }}>
+        <div style={{
+          background: '#111',
+          border: '1px solid #F5C51833',
+          borderRadius: '20px',
+          padding: '40px',
+          maxWidth: '380px',
+          width: '100%',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '40px', marginBottom: '16px' }}>✉️</div>
+          <div style={{ fontSize: '18px', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>
+            Verify your email first
+          </div>
+          <div style={{ fontSize: '12px', color: '#666', lineHeight: '1.7', marginBottom: '20px' }}>
+            You need to verify your email before booking a barber.
+            Check your inbox for the verification link.
+          </div>
+          <button
+            onClick={async () => {
+              await sendEmailVerification(user);
+              toast.success('Verification email sent ✓');
+            }}
+            style={{
+              background: '#F5C518',
+              color: '#0a0a0a',
+              border: 'none',
+              borderRadius: '99px',
+              padding: '12px',
+              fontSize: '13px',
+              fontWeight: 900,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              width: '100%',
+              marginBottom: '12px'
+            }}
+          >
+            Resend verification email
+          </button>
+          <Link
+            href="/dashboard/client"
+            style={{ color: '#555', fontSize: '11px', textDecoration: 'none' }}
+          >
+            ← Back to dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (user && appUser) {
+    const createdAt = Number(appUser.createdAt) || 0;
+    const fiveMinutes = 5 * 60 * 1000;
+    const accountAge = Date.now() - createdAt;
+    if (accountAge < fiveMinutes) {
+      const waitSeconds = Math.ceil((fiveMinutes - accountAge) / 1000);
+      const waitMinutes = Math.ceil(waitSeconds / 60);
+      return (
+        <div style={{
+          minHeight: '100vh',
+          background: '#0A0A0A',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'Nunito, sans-serif',
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#111',
+            border: '1px solid #1e1e1e',
+            borderRadius: '20px',
+            padding: '40px',
+            maxWidth: '380px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>⏳</div>
+            <div style={{ fontSize: '18px', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>
+              Almost ready
+            </div>
+            <div style={{ fontSize: '12px', color: '#666', lineHeight: '1.7' }}>
+              New accounts can book after {waitMinutes} minute{waitMinutes !== 1 ? 's' : ''}.
+              This helps us keep the Platform safe for everyone.
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
+
   return (
     <div className="max-w-[600px] mx-auto px-6 py-10 md:py-16">
        
@@ -367,6 +473,23 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
 
        {step === 4 && (
          <div className="animate-fadeUp">
+           <input
+             type="text"
+             name="website"
+             value={honeypot}
+             onChange={e => setHoneypot(e.target.value)}
+             style={{
+               position: 'absolute',
+               left: '-9999px',
+               width: '1px',
+               height: '1px',
+               opacity: 0,
+               pointerEvents: 'none'
+             }}
+             tabIndex={-1}
+             autoComplete="off"
+             aria-hidden="true"
+           />
            <h1 className="text-3xl font-black mb-8">Review your booking</h1>
 
            <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl overflow-hidden mb-6">
