@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Nunito } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { CookieBanner } from '@/components/CookieBanner';
@@ -11,18 +11,43 @@ import './globals.css';
 
 const nunito = Nunito({ subsets: ['latin'], variable: '--font-nunito' });
 
+export const viewport: Viewport = {
+  themeColor: '#0A0A0A',
+};
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://tite-z-me-app.vercel.app'),
   title: {
-    default: 'titeZMe — Find Your Perfect Barber',
-    template: '%s — titeZMe',
+    default: 'titeZMe — Book Your Barber',
+    template: '%s | titeZMe',
   },
-  description: 'Find top-rated barbers near you. Real availability. Book in 30 seconds. Cash only.',
-  keywords: ['barber', 'barbershop', 'haircut', 'fade', 'booking', 'hair'],
+  description: 'Find and book the best barbers near you. titeZMe connects you with top barbers and barbershops.',
+  metadataBase: new URL('https://titezme.com'),
+  icons: {
+    icon: [
+      { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    other: [
+      { rel: 'android-chrome', url: '/web-app-manifest-192x192.png' },
+      { rel: 'android-chrome', url: '/web-app-manifest-512x512.png' },
+    ],
+  },
+  manifest: '/site.webmanifest',
   openGraph: {
-    type: 'website',
+    title: 'titeZMe — Book Your Barber',
+    description: 'Find and book the best barbers near you.',
+    url: 'https://titezme.com',
     siteName: 'titeZMe',
-    images: ['/wordmark.png'],
+    locale: 'en_GB',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'titeZMe — Book Your Barber',
+    description: 'Find and book the best barbers near you.',
   },
 };
 
