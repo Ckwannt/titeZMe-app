@@ -107,12 +107,11 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
     setAutoSavedMsg('');
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(async () => {
-      await saveSchedule();
+      await saveScheduleRef.current(); // always calls the latest saveSchedule
       setHasUnsavedChanges(false);
       setAutoSavedMsg('✓ Saved automatically');
       setTimeout(() => setAutoSavedMsg(''), 2000);
     }, 2000);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
   // Cleanup auto-save timer on unmount
@@ -195,6 +194,12 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
     }
     setSaving(false);
   };
+
+  // Keep a ref to saveSchedule so the memoized auto-save timer always calls
+  // the LATEST version (with current availableSlots), not a stale closure
+  // from the first render when availableSlots was still empty.
+  const saveScheduleRef = React.useRef(saveSchedule);
+  saveScheduleRef.current = saveSchedule;
 
   // Standard day slots (09:00–18:00, lunch break at 13:00)
   const STANDARD_SLOTS = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'];
