@@ -399,6 +399,7 @@ export default function ShopsPage() {
 
                 return (
                   <Link key={s.id} href={`/shop/${s.id}`}
+                    prefetch={false}
                     onMouseEnter={() => router.prefetch(`/shop/${s.id}`)}
                     className="bg-[#141414] border border-[#222] rounded-[12px] overflow-hidden cursor-pointer flex flex-col">
 

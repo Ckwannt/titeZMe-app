@@ -410,6 +410,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
 
                 return (
                   <Link key={b.id} href={`/barber/${b.id}`}
+                    prefetch={false}
                     onMouseEnter={() => router.prefetch(`/barber/${b.id}`)}
                     className="bg-[#141414] border border-[#222] rounded-[12px] p-[14px] cursor-pointer flex flex-col">
 
