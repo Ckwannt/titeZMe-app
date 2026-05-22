@@ -50,3 +50,15 @@ textarea,
 select {
   font-size: 16px !important;
 }
+
+/* Mobile-only / desktop-only utility classes used by TopNav */
+@media (min-width: 768px) {
+  .show-mobile-only {
+    display: none !important;
+  }
+}
+@media (max-width: 767px) {
+  .hidden-mobile {
+    display: none !important;
+  }
+}
