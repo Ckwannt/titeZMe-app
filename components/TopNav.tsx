@@ -39,7 +39,6 @@ export function TopNav() {
             </div>
             <Link href="/barbers" className={getLinkClass('/barbers')}>Barbers</Link>
             <Link href="/shops" className={getLinkClass('/shops')}>Shops</Link>
-            <Link href="/contact" className={getLinkClass('/contact')}>Contact</Link>
           </div>
         </div>
         

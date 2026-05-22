@@ -13,11 +13,13 @@ export function Footer() {
           </div>
           
           <div className="flex gap-6 sm:gap-8 flex-wrap justify-center">
-             <span className="text-xs font-bold text-[#888580] cursor-default">About</span>
-             <span className="text-xs font-bold text-[#888580] cursor-default">For Barbers</span>
+             <Link href="/about" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">About</Link>
+             <Link href="/for-barbers" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">For Barbers</Link>
+             <Link href="/for-shops" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">For Shops</Link>
              <Link href="/cities" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Cities</Link>
              <Link href="/privacy" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Privacy</Link>
              <Link href="/terms" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Terms</Link>
+             <Link href="/contact" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Contact</Link>
              <Link href="/cookies" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Cookie settings</Link>
           </div>
           
