@@ -11,11 +11,15 @@ const PUBLIC_ROUTES = [
   '/forgot-password',
   '/barbers',
   '/shops',
+  '/about',
+  '/for-barbers',
+  '/for-shops',
+  '/cities',
   '/how-it-works',
   '/contact',
   '/terms',
   '/privacy',
-  '/admin/login',
+  '/cookies',
 ];
 
 const PUBLIC_PREFIXES = [
