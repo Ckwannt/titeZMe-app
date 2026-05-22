@@ -244,8 +244,8 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
 
     if (activeFilter) {
       list = list.filter(b => {
-        // City: bi-directional partial match handles "Madrid" vs "Madrid, Comunidad de Madrid"
-        const cityMatch = locationsMatch(b.city, activeFilter.city);
+        // City: skip city filter when not selected; bi-directional partial match otherwise
+        const cityMatch = !activeFilter.city || locationsMatch(b.city, activeFilter.city);
         // Country: exact ISO-code comparison ("ES" === "ES")
         const countryMatch =
           !activeFilter.country ||
@@ -271,12 +271,12 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const handleSearch = () => {
-    if (countryCode && selectedCity) {
-      // Store ISO code for comparison with barberProfiles.country ("ES")
-      // Store full name separately for display in the UI badge
-      setActiveFilter({ city: selectedCity, country: countryCode, countryDisplay: countryName });
-      setPage(1);
-    }
+    setActiveFilter(
+      countryCode || selectedCity
+        ? { city: selectedCity, country: countryCode, countryDisplay: countryName }
+        : null
+    );
+    setPage(1);
   };
 
   const clearAll = () => {
@@ -340,8 +340,8 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
               {cities.map((c: any) => <option key={c.name} value={c.name}>{c.name}</option>)}
             </select>
 
-            <button onClick={handleSearch} disabled={!selectedCity}
-              className="bg-brand-yellow text-[#0a0a0a] font-black px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap">
+            <button onClick={handleSearch} disabled={false}
+              className="bg-brand-yellow text-[#0a0a0a] font-black px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-opacity whitespace-nowrap">
               Search barbers →
             </button>
           </div>
@@ -356,7 +356,9 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {activeFilter && (
               <span className="bg-[#1a1a1a] border border-[#2a2a2a] text-white text-xs font-bold px-3 py-1 rounded-full">
-                {activeFilter.city}, {activeFilter.countryDisplay || activeFilter.country}
+                {activeFilter.city
+                  ? `${activeFilter.city}, ${activeFilter.countryDisplay || activeFilter.country}`
+                  : activeFilter.countryDisplay || activeFilter.country}
               </span>
             )}
             {nameSearch && (
@@ -383,7 +385,11 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
           <div className="text-center py-24">
             <div className="text-5xl mb-4">💈</div>
             <h3 className="text-xl font-black mb-2">
-              {activeFilter ? `No barbers in ${activeFilter.city} yet` : 'No barbers yet'}
+              {activeFilter
+                ? activeFilter.city
+                  ? `No barbers in ${activeFilter.city} yet`
+                  : `No barbers in ${activeFilter.countryDisplay || activeFilter.country} yet`
+                : 'No barbers found'}
             </h3>
             <p className="text-[#555] text-sm mb-6">
               {activeFilter ? 'Know a barber there? Share titeZMe with them.' : 'Check back soon.'}

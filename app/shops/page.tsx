@@ -246,8 +246,8 @@ export default function ShopsPage() {
 
     if (activeFilter) {
       list = list.filter(s => {
-        // City: bi-directional partial match for flexibility
-        const cityMatch = locationsMatch(s.city, activeFilter.city);
+        // City: skip city filter when not selected; bi-directional partial match otherwise
+        const cityMatch = !activeFilter.city || locationsMatch(s.city, activeFilter.city);
         // Country: flexible match — shops store full country name ("Spain")
         const countryMatch =
           !activeFilter.country ||
@@ -270,10 +270,12 @@ export default function ShopsPage() {
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const handleSearch = () => {
-    if (countryName && selectedCity) {
-      setActiveFilter({ city: selectedCity, country: countryName });
-      setPage(1);
-    }
+    setActiveFilter(
+      countryName || selectedCity
+        ? { city: selectedCity, country: countryName }
+        : null
+    );
+    setPage(1);
   };
 
   const clearAll = () => {
@@ -333,8 +335,8 @@ export default function ShopsPage() {
               {cities.map((c: any) => <option key={c.name} value={c.name}>{c.name}</option>)}
             </select>
 
-            <button onClick={handleSearch} disabled={!selectedCity}
-              className="bg-brand-yellow text-[#0a0a0a] font-black px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap">
+            <button onClick={handleSearch} disabled={false}
+              className="bg-brand-yellow text-[#0a0a0a] font-black px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-opacity whitespace-nowrap">
               Search shops →
             </button>
           </div>
@@ -349,7 +351,9 @@ export default function ShopsPage() {
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {activeFilter && (
               <span className="bg-[#1a1a1a] border border-[#2a2a2a] text-white text-xs font-bold px-3 py-1 rounded-full">
-                {activeFilter.city}, {activeFilter.country}
+                {activeFilter.city
+                  ? `${activeFilter.city}, ${activeFilter.country}`
+                  : activeFilter.country}
               </span>
             )}
             {nameSearch && (
@@ -378,7 +382,11 @@ export default function ShopsPage() {
           <div className="text-center py-24">
             <div className="text-5xl mb-4">🏪</div>
             <h3 className="text-xl font-black mb-2">
-              {activeFilter ? `No barbershops in ${activeFilter.city} yet` : 'No barbershops yet'}
+              {activeFilter
+                ? activeFilter.city
+                  ? `No barbershops in ${activeFilter.city} yet`
+                  : `No barbershops in ${activeFilter.country} yet`
+                : 'No barbershops found'}
             </h3>
             <p className="text-[#555] text-sm mb-6">
               {activeFilter ? 'Own a shop? Join titeZMe free.' : 'Check back soon.'}
