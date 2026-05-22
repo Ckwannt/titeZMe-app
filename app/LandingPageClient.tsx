@@ -124,120 +124,209 @@ export default function LandingPageClient({
             </div>
           </div>
 
-          {/* Right column — real open barbers */}
-          {featuredBarbers.length > 0 && mainBarber && (
+          {/* Right column — featured barbers + shops, unified */}
+          {((featuredBarbers.length > 0 && !!mainBarber) || (featuredShops.length > 0 && !!mainShop)) && (
             <div className="flex-1 lg:max-w-[440px] animate-fadeUp mt-10 lg:mt-0">
 
-              {/* Main featured card */}
-              {(() => {
-                const name = `${mainBarber.firstName} ${mainBarber.lastName}`.trim() || 'Barber';
-                const vibes: string[] = mainBarber.vibes || mainBarber.vibe || [];
-                const specialties: string[] = mainBarber.specialties || [];
-                const languages: string[] = mainBarber.languages || [];
-                const { sym, label } = getCurrencySymbol(mainBarber.currency);
-                const hasRating = typeof mainBarber.rating === 'number' && mainBarber.rating > 0;
-                return (
-                  <div className="bg-[#111] border border-[#1e1e1e] rounded-[16px] p-5 mb-[10px] relative">
-                    {/* FEATURED label */}
-                    <div className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-brand-orange">
-                      {mainBarber.isOpenNow ? 'FEATURED | OPEN NOW' : 'FEATURED'}
-                    </div>
-                    {/* Top row: avatar + name/city/rating */}
-                    <div className="flex gap-3 items-start mb-4 pr-24">
-                      {mainBarber.photoUrl ? (
-                        <Image src={mainBarber.photoUrl} alt={name} width={52} height={52}
-                          className="rounded-[12px] object-cover shrink-0" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="w-[52px] h-[52px] rounded-[12px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-xl text-[#0a0a0a] shrink-0">
-                          {name[0]}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-[15px] font-extrabold text-white leading-tight truncate">{name}</h3>
-                        <div className="text-[12px] text-[#666] mt-0.5">{mainBarber.userCity}</div>
-                        <div className="text-[12px] font-bold text-brand-yellow mt-0.5">
-                          ★ {hasRating ? mainBarber.rating.toFixed(2) : 'New ✨'}
-                          {(mainBarber.reviewCount || 0) > 0 && (
-                            <span className="text-[#555] font-normal text-[10px] ml-1">({mainBarber.reviewCount} reviews)</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    {/* Specialty + vibe tags */}
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {specialties.slice(0, 2).map((s: string) => (
-                        <span key={s} className="bg-[#1a1500] text-brand-yellow border border-brand-yellow/20 rounded-[4px] px-2 py-0.5 text-[10px] font-black uppercase">{s}</span>
-                      ))}
-                      {vibes.slice(0, 1).map((v: string) => (
-                        <span key={v} className="bg-[#141414] text-[#888] border border-[#1a1a1a] rounded-[4px] px-2 py-0.5 text-[10px] font-bold">{v}</span>
-                      ))}
-                    </div>
-                    {/* Languages */}
-                    {languages.length > 0 && (
-                      <div className="text-[12px] text-[#888] font-bold mb-3">
-                        🗣 {languages.slice(0, 3).join(' · ')}
-                      </div>
-                    )}
-                    {/* Next slots inset box */}
-                    <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-[10px] px-[14px] py-[12px] mb-3">
-                      <div className="text-[9px] font-black uppercase text-[#444] tracking-[0.08em] mb-2">NEXT AVAILABLE SLOTS</div>
-                      <div className="flex gap-2 flex-wrap">
-                        {mainBarber.nextSlots && mainBarber.nextSlots.length > 0 ? (
-                          mainBarber.nextSlots.map((s: string) => (
-                            <span key={s} className="bg-brand-yellow text-[#0a0a0a] rounded-full px-[14px] py-[6px] text-[11px] font-extrabold">
-                              Today {s}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-[11px] text-[#555] font-bold">No slots today</span>
-                        )}
-                      </div>
-                    </div>
-                    {/* Price + Book Now */}
-                    <div className="flex justify-between items-center">
-                      <div className="text-[18px] font-black text-white">
-                        {mainBarber.minPrice !== null
-                          ? `${sym}${mainBarber.minPrice}${mainBarber.maxPrice && mainBarber.maxPrice !== mainBarber.minPrice ? `-${sym}${mainBarber.maxPrice}` : ''}${label}`
-                          : 'Prices on request'}
-                      </div>
-                      <Link href="/barbers" className="bg-brand-yellow text-[#0a0a0a] rounded-full font-black text-[13px] px-5 py-[10px] hover:opacity-90 transition-opacity">
-                        Book Now →
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })()}
+              {/* ── Barber cards ── */}
+              {featuredBarbers.length > 0 && mainBarber && (<>
 
-              {/* Two small cards */}
-              {smallBarbers.length > 0 && (
-                <div className="grid grid-cols-2 gap-[10px]">
-                  {smallBarbers.map((b: any) => {
-                    const name = `${b.firstName} ${b.lastName}`.trim() || 'Barber';
-                    const { sym, label } = getCurrencySymbol(b.currency);
-                    const hasRating = typeof b.rating === 'number' && b.rating > 0;
-                    return (
-                      <Link href="/barbers" key={b.id}
-                        className={`border border-[#1e1e1e] rounded-[12px] p-3 flex gap-2.5 items-center hover:border-[#2a2a2a] transition-colors ${b.isOpenNow ? 'bg-[#111]' : 'bg-[#0d0d0d]'}`}>
-                        {b.photoUrl ? (
-                          <Image src={b.photoUrl} alt={name} width={36} height={36}
-                            className="rounded-[9px] object-cover shrink-0" referrerPolicy="no-referrer" />
+                {/* Main featured barber card */}
+                {(() => {
+                  const name = `${mainBarber.firstName} ${mainBarber.lastName}`.trim() || 'Barber';
+                  const vibes: string[] = mainBarber.vibes || mainBarber.vibe || [];
+                  const specialties: string[] = mainBarber.specialties || [];
+                  const languages: string[] = mainBarber.languages || [];
+                  const { sym, label } = getCurrencySymbol(mainBarber.currency);
+                  const hasRating = typeof mainBarber.rating === 'number' && mainBarber.rating > 0;
+                  return (
+                    <div className="bg-[#111] border border-[#1e1e1e] rounded-[16px] p-5 mb-[10px] relative">
+                      {/* FEATURED label */}
+                      <div className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-brand-orange">
+                        {mainBarber.isOpenNow ? 'FEATURED | OPEN NOW' : 'FEATURED'}
+                      </div>
+                      {/* Top row: avatar + name/city/rating */}
+                      <div className="flex gap-3 items-start mb-4 pr-24">
+                        {mainBarber.photoUrl ? (
+                          <Image src={mainBarber.photoUrl} alt={name} width={52} height={52}
+                            className="rounded-[12px] object-cover shrink-0" referrerPolicy="no-referrer" />
                         ) : (
-                          <div className="w-9 h-9 rounded-[9px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-sm text-[#0a0a0a] shrink-0">
+                          <div className="w-[52px] h-[52px] rounded-[12px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-xl text-[#0a0a0a] shrink-0">
                             {name[0]}
                           </div>
                         )}
-                        <div className="min-w-0">
-                          <div className="text-[12px] font-extrabold text-white truncate">{name}</div>
-                          <div className="text-[10px] text-[#555] mt-0.5">
-                            ★ {hasRating ? b.rating.toFixed(1) : 'New'}{b.minPrice !== null ? ` · ${sym}${b.minPrice}${label}` : ''}
-                          </div>
-                          <div className={`text-[9px] font-extrabold mt-0.5 ${b.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
-                            ● {b.isOpenNow ? 'Open Now' : 'Closed'}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-[15px] font-extrabold text-white leading-tight truncate">{name}</h3>
+                          <div className="text-[12px] text-[#666] mt-0.5">{mainBarber.userCity}</div>
+                          <div className="text-[12px] font-bold text-brand-yellow mt-0.5">
+                            ★ {hasRating ? mainBarber.rating.toFixed(2) : 'New ✨'}
+                            {(mainBarber.reviewCount || 0) > 0 && (
+                              <span className="text-[#555] font-normal text-[10px] ml-1">({mainBarber.reviewCount} reviews)</span>
+                            )}
                           </div>
                         </div>
+                      </div>
+                      {/* Specialty + vibe tags */}
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {specialties.slice(0, 2).map((s: string) => (
+                          <span key={s} className="bg-[#1a1500] text-brand-yellow border border-brand-yellow/20 rounded-[4px] px-2 py-0.5 text-[10px] font-black uppercase">{s}</span>
+                        ))}
+                        {vibes.slice(0, 1).map((v: string) => (
+                          <span key={v} className="bg-[#141414] text-[#888] border border-[#1a1a1a] rounded-[4px] px-2 py-0.5 text-[10px] font-bold">{v}</span>
+                        ))}
+                      </div>
+                      {/* Languages */}
+                      {languages.length > 0 && (
+                        <div className="text-[12px] text-[#888] font-bold mb-3">
+                          🗣 {languages.slice(0, 3).join(' · ')}
+                        </div>
+                      )}
+                      {/* Next slots inset box */}
+                      <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-[10px] px-[14px] py-[12px] mb-3">
+                        <div className="text-[9px] font-black uppercase text-[#444] tracking-[0.08em] mb-2">NEXT AVAILABLE SLOTS</div>
+                        <div className="flex gap-2 flex-wrap">
+                          {mainBarber.nextSlots && mainBarber.nextSlots.length > 0 ? (
+                            mainBarber.nextSlots.map((s: string) => (
+                              <span key={s} className="bg-brand-yellow text-[#0a0a0a] rounded-full px-[14px] py-[6px] text-[11px] font-extrabold">
+                                Today {s}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-[11px] text-[#555] font-bold">No slots today</span>
+                          )}
+                        </div>
+                      </div>
+                      {/* Price + Book Now */}
+                      <div className="flex justify-between items-center">
+                        <div className="text-[18px] font-black text-white">
+                          {mainBarber.minPrice !== null
+                            ? `${sym}${mainBarber.minPrice}${mainBarber.maxPrice && mainBarber.maxPrice !== mainBarber.minPrice ? `-${sym}${mainBarber.maxPrice}` : ''}${label}`
+                            : 'Prices on request'}
+                        </div>
+                        <Link href="/barbers" className="bg-brand-yellow text-[#0a0a0a] rounded-full font-black text-[13px] px-5 py-[10px] hover:opacity-90 transition-opacity">
+                          Book Now →
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Two small barber cards */}
+                {smallBarbers.length > 0 && (
+                  <div className="grid grid-cols-2 gap-[10px]">
+                    {smallBarbers.map((b: any) => {
+                      const name = `${b.firstName} ${b.lastName}`.trim() || 'Barber';
+                      const { sym, label } = getCurrencySymbol(b.currency);
+                      const hasRating = typeof b.rating === 'number' && b.rating > 0;
+                      return (
+                        <Link href="/barbers" key={b.id}
+                          className={`border border-[#1e1e1e] rounded-[12px] p-3 flex gap-2.5 items-center hover:border-[#2a2a2a] transition-colors ${b.isOpenNow ? 'bg-[#111]' : 'bg-[#0d0d0d]'}`}>
+                          {b.photoUrl ? (
+                            <Image src={b.photoUrl} alt={name} width={36} height={36}
+                              className="rounded-[9px] object-cover shrink-0" referrerPolicy="no-referrer" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-[9px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-sm text-[#0a0a0a] shrink-0">
+                              {name[0]}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="text-[12px] font-extrabold text-white truncate">{name}</div>
+                            <div className="text-[10px] text-[#555] mt-0.5">
+                              ★ {hasRating ? b.rating.toFixed(1) : 'New'}{b.minPrice !== null ? ` · ${sym}${b.minPrice}${label}` : ''}
+                            </div>
+                            <div className={`text-[9px] font-extrabold mt-0.5 ${b.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
+                              ● {b.isOpenNow ? 'Open Now' : 'Closed'}
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+
+              </>)}
+
+              {/* ── Shop cards — directly below barber cards, no heading ── */}
+              {featuredShops.length > 0 && mainShop && (
+                <div className={featuredBarbers.length > 0 && !!mainBarber ? 'mt-[10px]' : ''}>
+
+                  {/* Main featured shop card */}
+                  <div className="bg-[#111] border border-[#1e1e1e] rounded-[16px] p-5 mb-[10px] relative">
+                    <div className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-brand-orange">
+                      {mainShop.isOpenNow ? 'FEATURED | OPEN NOW' : 'FEATURED'}
+                    </div>
+                    <div className="flex gap-3 items-start mb-4 pr-24">
+                      {mainShop.coverPhotoUrl ? (
+                        <Image src={mainShop.coverPhotoUrl} alt={mainShop.name} width={52} height={52}
+                          className="rounded-[12px] object-cover shrink-0" referrerPolicy="no-referrer" />
+                      ) : (
+                        <div className="w-[52px] h-[52px] rounded-[12px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-xl text-[#0a0a0a] shrink-0">
+                          {mainShop.name[0]}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[10px] text-[#555] font-bold mb-0.5">🏪 Barbershop</div>
+                        <h3 className="text-[15px] font-extrabold text-white leading-tight truncate">{mainShop.name}</h3>
+                        {mainShop.city && <div className="text-[12px] text-[#666] mt-0.5">📍 {mainShop.city}</div>}
+                        {mainShop.rating !== null && (
+                          <div className="text-[12px] font-bold text-brand-yellow mt-0.5">
+                            ★ {mainShop.rating.toFixed(1)}
+                            {mainShop.reviewCount > 0 && (
+                              <span className="text-[#555] font-normal text-[10px] ml-1">({mainShop.reviewCount} reviews)</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-[10px] px-[14px] py-[12px] mb-3">
+                      <div className="text-[9px] font-black uppercase text-[#444] tracking-[0.08em] mb-2">SHOP DETAILS</div>
+                      <div className="flex gap-6">
+                        <div>
+                          <div className="text-[13px] font-black text-white">{mainShop.barberCount}</div>
+                          <div className="text-[10px] text-[#555]">{mainShop.barberCount === 1 ? 'Barber' : 'Barbers'}</div>
+                        </div>
+                        <div>
+                          <div className={`text-[13px] font-extrabold ${mainShop.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
+                            ● {mainShop.isOpenNow ? 'Open Now' : 'Closed'}
+                          </div>
+                          <div className="text-[10px] text-[#555]">Status</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <Link href={`/shop/${mainShop.id}`} className="bg-brand-yellow text-[#0a0a0a] rounded-full font-black text-[13px] px-5 py-[10px] hover:opacity-90 transition-opacity">
+                        View Shop →
                       </Link>
-                    );
-                  })}
+                    </div>
+                  </div>
+
+                  {/* Two small shop cards */}
+                  {smallShops.length > 0 && (
+                    <div className="grid grid-cols-2 gap-[10px]">
+                      {smallShops.map((s: any) => (
+                        <Link href={`/shop/${s.id}`} key={s.id}
+                          className={`border border-[#1e1e1e] rounded-[12px] p-3 flex gap-2.5 items-center hover:border-[#2a2a2a] transition-colors ${s.isOpenNow ? 'bg-[#111]' : 'bg-[#0d0d0d]'}`}>
+                          {s.coverPhotoUrl ? (
+                            <Image src={s.coverPhotoUrl} alt={s.name} width={36} height={36}
+                              className="rounded-[9px] object-cover shrink-0" referrerPolicy="no-referrer" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-[9px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-sm text-[#0a0a0a] shrink-0">
+                              {s.name[0]}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="text-[10px] text-[#555] font-bold">🏪</div>
+                            <div className="text-[12px] font-extrabold text-white truncate">{s.name}</div>
+                            {s.city && <div className="text-[10px] text-[#555] truncate">{s.city}</div>}
+                            <div className={`text-[9px] font-extrabold mt-0.5 ${s.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
+                              ● {s.isOpenNow ? 'Open' : 'Closed'}
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
                 </div>
               )}
 
@@ -245,106 +334,6 @@ export default function LandingPageClient({
           )}
         </div>
       </section>
-
-      {/* ── FEATURED SHOPS ──────────────────────────────────────────────────── */}
-      {featuredShops.length > 0 && mainShop && (
-        <section className="max-w-[1200px] mx-auto px-6 py-16">
-          <div className="flex flex-col lg:flex-row gap-16 items-start">
-
-            {/* Left — heading */}
-            <div className="flex-1">
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">FEATURED BARBERSHOPS</div>
-              <h2 className="text-5xl font-black leading-[1.1] mb-6">Top shops<br className="hidden md:block" /> near you</h2>
-              <p className="text-gray-500 font-bold mb-8 max-w-sm leading-relaxed">
-                Book through a barbershop and choose your barber. Real availability, instant confirmation.
-              </p>
-              <Link href="/shops" className="inline-flex items-center gap-2 text-sm font-extrabold text-brand-yellow hover:opacity-80 transition-opacity">
-                Browse all shops →
-              </Link>
-            </div>
-
-            {/* Right — cards */}
-            <div className="flex-1 lg:max-w-[440px] w-full">
-
-              {/* Main shop card */}
-              <div className="bg-[#111] border border-[#1e1e1e] rounded-[16px] p-5 mb-[10px] relative">
-                <div className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-brand-orange">
-                  {mainShop.isOpenNow ? 'FEATURED | OPEN NOW' : 'FEATURED'}
-                </div>
-                <div className="flex gap-3 items-start mb-4 pr-24">
-                  {mainShop.coverPhotoUrl ? (
-                    <Image src={mainShop.coverPhotoUrl} alt={mainShop.name} width={52} height={52}
-                      className="rounded-[12px] object-cover shrink-0" referrerPolicy="no-referrer" />
-                  ) : (
-                    <div className="w-[52px] h-[52px] rounded-[12px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-xl text-[#0a0a0a] shrink-0">
-                      {mainShop.name[0]}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-[15px] font-extrabold text-white leading-tight truncate">{mainShop.name}</h3>
-                    {mainShop.city && <div className="text-[12px] text-[#666] mt-0.5">📍 {mainShop.city}</div>}
-                    {mainShop.rating !== null && (
-                      <div className="text-[12px] font-bold text-brand-yellow mt-0.5">
-                        ★ {mainShop.rating.toFixed(1)}
-                        {mainShop.reviewCount > 0 && (
-                          <span className="text-[#555] font-normal text-[10px] ml-1">({mainShop.reviewCount} reviews)</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-[10px] px-[14px] py-[12px] mb-3">
-                  <div className="text-[9px] font-black uppercase text-[#444] tracking-[0.08em] mb-2">SHOP DETAILS</div>
-                  <div className="flex gap-6">
-                    <div>
-                      <div className="text-[13px] font-black text-white">{mainShop.barberCount}</div>
-                      <div className="text-[10px] text-[#555]">{mainShop.barberCount === 1 ? 'Barber' : 'Barbers'}</div>
-                    </div>
-                    <div>
-                      <div className={`text-[13px] font-extrabold ${mainShop.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
-                        ● {mainShop.isOpenNow ? 'Open Now' : 'Closed'}
-                      </div>
-                      <div className="text-[10px] text-[#555]">Status</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <Link href={`/shop/${mainShop.id}`} className="bg-brand-yellow text-[#0a0a0a] rounded-full font-black text-[13px] px-5 py-[10px] hover:opacity-90 transition-opacity">
-                    View Shop →
-                  </Link>
-                </div>
-              </div>
-
-              {/* Two small shop cards */}
-              {smallShops.length > 0 && (
-                <div className="grid grid-cols-2 gap-[10px]">
-                  {smallShops.map((s: any) => (
-                    <Link href={`/shop/${s.id}`} key={s.id}
-                      className={`border border-[#1e1e1e] rounded-[12px] p-3 flex gap-2.5 items-center hover:border-[#2a2a2a] transition-colors ${s.isOpenNow ? 'bg-[#111]' : 'bg-[#0d0d0d]'}`}>
-                      {s.coverPhotoUrl ? (
-                        <Image src={s.coverPhotoUrl} alt={s.name} width={36} height={36}
-                          className="rounded-[9px] object-cover shrink-0" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="w-9 h-9 rounded-[9px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-sm text-[#0a0a0a] shrink-0">
-                          {s.name[0]}
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <div className="text-[12px] font-extrabold text-white truncate">{s.name}</div>
-                        {s.city && <div className="text-[10px] text-[#555] mt-0.5 truncate">{s.city}</div>}
-                        <div className={`text-[9px] font-extrabold mt-0.5 ${s.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
-                          ● {s.isOpenNow ? 'Open' : 'Closed'}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ── SOCIAL PROOF ────────────────────────────────────────────────────── */}
       <section className="bg-[#050505] py-24 px-6 border-y border-[#1a1a1a]">
