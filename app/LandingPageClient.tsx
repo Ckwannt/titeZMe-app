@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Footer } from '@/components/Footer';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -464,7 +463,6 @@ export default function LandingPageClient({
         </div>
       </section>
 
-      <Footer />
     </div>
   );
 }

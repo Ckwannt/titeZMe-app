@@ -3,6 +3,22 @@
 import { usePathname } from 'next/navigation';
 import { TopNav } from '@/components/TopNav';
 import { RouteGuard } from '@/components/RouteGuard';
+import { Footer } from '@/components/Footer';
+
+const FOOTER_ROUTES = [
+  '/',
+  '/about',
+  '/for-barbers',
+  '/for-shops',
+  '/cities',
+  '/privacy',
+  '/terms',
+  '/contact',
+  '/cookies',
+  '/how-it-works',
+  '/barbers',
+  '/shops',
+];
 
 /**
  * Renders TopNav + RouteGuard for all non-admin pages.
@@ -18,6 +34,10 @@ export function ConditionalNav({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  const showFooter = FOOTER_ROUTES.includes(pathname) ||
+    pathname.startsWith('/barber/') ||
+    pathname.startsWith('/shop/');
+
   return (
     <>
       <TopNav />
@@ -26,6 +46,7 @@ export function ConditionalNav({ children }: { children: React.ReactNode }) {
           {children}
         </RouteGuard>
       </main>
+      {showFooter && <Footer />}
     </>
   );
 }

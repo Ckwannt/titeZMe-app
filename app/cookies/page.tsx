@@ -1,77 +1,178 @@
-'use client';
+'use client'
+
+import { useState, useEffect } from 'react'
 
 export default function CookiesPage() {
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    document.title = 'Cookie Settings — titeZMe'
+    const stored = localStorage.getItem('cookie_analytics')
+    if (stored !== null) {
+      setAnalyticsEnabled(stored === 'true')
+    }
+  }, [])
+
+  const handleSave = () => {
+    localStorage.setItem('cookie_analytics', analyticsEnabled.toString())
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
+  }
+
   return (
-    <div className="bg-[#0A0A0A] text-[#F0EDE8] pt-24 min-h-screen font-sans border-t border-[#1E1E1E]">
-      <section className="bg-[#111111] py-24 px-6 min-h-screen">
-        <div className="max-w-[800px] mx-auto text-left">
-          <div className="text-xs font-bold text-[#FFD600] uppercase tracking-widest mb-4">LEGAL</div>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">Cookie Policy</h1>
-          <p className="text-sm font-bold text-[#888580] mb-1">Last updated: May 2026</p>
-          <p className="text-sm font-bold text-[#888580] mb-12">Effective date: May 2026</p>
+    <div style={{
+      minHeight: '100vh',
+      background: '#0A0A0A',
+      fontFamily: 'Nunito, sans-serif',
+      color: '#fff',
+      padding: '80px 24px'
+    }}>
+      <div style={{ maxWidth: '680px', margin: '0 auto' }}>
 
-          <div className="text-[#888580] space-y-12 leading-relaxed">
-            
-            <div>
-              <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 1 — Introduction</h2>
-              <p>titeZMe (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) uses cookies and similar tracking technologies to track the activity on our Platform and store certain information. This Cookie Policy explains what cookies are, how we use them, and your choices regarding their use.</p>
-            </div>
+        {/* Header */}
+        <div style={{ marginBottom: '48px' }}>
+          <div style={{
+            fontSize: '11px', fontWeight: 800, color: '#555',
+            letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '16px'
+          }}>
+            PRIVACY
+          </div>
+          <h1 style={{ fontSize: '40px', fontWeight: 900, margin: '0 0 16px', lineHeight: 1.1 }}>
+            Cookie Settings
+          </h1>
+          <p style={{ fontSize: '14px', color: '#555', lineHeight: 1.7, margin: 0 }}>
+            We use cookies to keep you logged in and understand how titeZMe is used.
+            You can manage your preferences below.
+          </p>
+        </div>
 
-            <div>
-              <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 2 — What Are Cookies?</h2>
-              <p>Cookies are small files placed on your computer or mobile device by a website. They hold a modest amount of data specific to you and the website, enabling the website to &quot;remember&quot; your actions or preferences over time.</p>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 3 — Types of Cookies We Use</h2>
-              
-              <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">3.1 Essential Cookies</h3>
-              <p className="mb-2">These are necessary for the website to function properly. They cannot be disabled in our systems. They are usually set in response to actions made by you, such as logging in or filling in forms.</p>
-              <ul className="list-disc pl-5 space-y-2 text-[#888580] mb-4">
-                <li>Firebase authentication tokens</li>
-                <li>Session state management</li>
-                <li>Security and fraud prevention markers</li>
-              </ul>
-
-              <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">3.2 Preferences Cookies</h3>
-              <p className="mb-2">These enable the website to provide enhanced functionality and personalization. If you do not allow these cookies, some services may not function optimally.</p>
-              <ul className="list-disc pl-5 space-y-2 text-[#888580] mb-4">
-                <li>Language settings</li>
-                <li>Selected city or region</li>
-                <li>Theme preferences</li>
-              </ul>
-
-              <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">3.3 Analytics Cookies</h3>
-              <p className="mb-2">These allow us to count visits and traffic sources so we can measure and improve the performance of our site. They help us know which pages are the most and least popular.</p>
-              <ul className="list-disc pl-5 space-y-2 text-[#888580]">
-                <li>Google Analytics (anonymized usage tracking)</li>
-                <li>Page load time measurement</li>
-              </ul>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 4 — Your Choices</h2>
-              <p className="mb-4">You have the right to decide whether to accept or reject non-essential cookies. You can set or amend your web browser controls to accept or refuse cookies, or use our Cookie Preference Center.</p>
-              <p>If you choose to reject cookies, you may still use our website though your access to some functionality and areas may be restricted.</p>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 5 — Changes to this Cookie Policy</h2>
-              <p>We may update this Cookie Policy from time to time. The updated version will be indicated by an updated &quot;Last updated&quot; date. We encourage you to review this Cookie Policy frequently to be informed of how we are using cookies.</p>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 6 — Contact Us</h2>
-              <p className="mb-2">If you have any questions about our use of cookies or other technologies, please email us at:</p>
-              <p className="font-bold">
-                titeZMe Privacy Team<br/>
-                Email: <a href="mailto:privacy@titezme.com" className="text-[#FFD600] hover:underline">privacy@titezme.com</a>
+        {/* Essential cookies */}
+        <div style={{
+          background: '#111',
+          border: '1px solid #1e1e1e',
+          borderRadius: '16px',
+          padding: '24px',
+          marginBottom: '16px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 900, color: '#fff' }}>Essential cookies</div>
+                <div style={{
+                  background: '#1e1e1e', color: '#555', fontSize: '10px', fontWeight: 800,
+                  padding: '2px 8px', borderRadius: '99px', letterSpacing: '0.05em'
+                }}>
+                  ALWAYS ON
+                </div>
+              </div>
+              <p style={{ fontSize: '13px', color: '#555', lineHeight: 1.7, margin: 0 }}>
+                These cookies are required for titeZMe to work. They keep you logged in,
+                protect your account security, and remember your preferences. They cannot be disabled.
               </p>
+              <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {[
+                  { name: 'Firebase Auth', purpose: 'Keeps you logged in securely' },
+                  { name: 'Session storage', purpose: 'Remembers your preferences this visit' },
+                ].map(c => (
+                  <div key={c.name} style={{ fontSize: '12px', color: '#444', display: 'flex', gap: '8px' }}>
+                    <span style={{ color: '#333', flexShrink: 0 }}>{c.name}:</span>
+                    {c.purpose}
+                  </div>
+                ))}
+              </div>
             </div>
-
+            <div style={{
+              width: '44px', height: '24px', background: '#22C55E',
+              borderRadius: '99px', flexShrink: 0, opacity: 0.5, cursor: 'not-allowed'
+            }} />
           </div>
         </div>
-      </section>
+
+        {/* Analytics cookies */}
+        <div style={{
+          background: '#111',
+          border: `1px solid ${analyticsEnabled ? '#F5C51833' : '#1e1e1e'}`,
+          borderRadius: '16px',
+          padding: '24px',
+          marginBottom: '32px',
+          transition: 'border-color 0.2s'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '14px', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>
+                Analytics cookies
+              </div>
+              <p style={{ fontSize: '13px', color: '#555', lineHeight: 1.7, margin: 0 }}>
+                These help us understand how people use titeZMe so we can make it better.
+                We use Google Analytics to see which pages are visited and how users navigate
+                the platform. No personal data is sold.
+              </p>
+              <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {[
+                  { name: 'Google Analytics', purpose: 'Page views and usage patterns' },
+                  { name: '_ga, _gid', purpose: 'Distinguish unique visitors' },
+                ].map(c => (
+                  <div key={c.name} style={{ fontSize: '12px', color: '#444', display: 'flex', gap: '8px' }}>
+                    <span style={{ color: '#333', flexShrink: 0 }}>{c.name}:</span>
+                    {c.purpose}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Toggle */}
+            <button
+              onClick={() => setAnalyticsEnabled(!analyticsEnabled)}
+              style={{
+                width: '44px', height: '24px',
+                background: analyticsEnabled ? '#F5C518' : '#2a2a2a',
+                borderRadius: '99px', border: 'none', cursor: 'pointer',
+                flexShrink: 0, position: 'relative', transition: 'background 0.2s'
+              }}
+              aria-label="Toggle analytics"
+            >
+              <div style={{
+                position: 'absolute', width: '18px', height: '18px',
+                background: '#fff', borderRadius: '50%', top: '3px',
+                left: analyticsEnabled ? '23px' : '3px',
+                transition: 'left 0.2s'
+              }} />
+            </button>
+          </div>
+        </div>
+
+        {/* Save button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button
+            onClick={handleSave}
+            style={{
+              background: '#F5C518', color: '#0a0a0a', border: 'none',
+              borderRadius: '99px', padding: '13px 28px', fontSize: '14px',
+              fontWeight: 900, cursor: 'pointer', fontFamily: 'Nunito, sans-serif'
+            }}
+          >
+            Save preferences
+          </button>
+          {saved && (
+            <div style={{ fontSize: '13px', color: '#22C55E', fontWeight: 800 }}>
+              ✓ Saved
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid #141414' }}>
+          <p style={{ fontSize: '12px', color: '#444', lineHeight: 1.7, margin: '0 0 8px' }}>
+            For more information about how we handle your data, read our{' '}
+            <a href="/privacy" style={{ color: '#F5C518', textDecoration: 'none' }}>Privacy Policy</a>.
+          </p>
+          <p style={{ fontSize: '12px', color: '#444', lineHeight: 1.7, margin: 0 }}>
+            Your preferences are saved in your browser. Clearing your browser data will reset these settings.
+          </p>
+        </div>
+
+      </div>
     </div>
-  );
+  )
 }
