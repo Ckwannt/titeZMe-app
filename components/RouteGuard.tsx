@@ -20,6 +20,7 @@ const PUBLIC_ROUTES = [
   '/terms',
   '/privacy',
   '/cookies',
+  '/admin/login',
 ];
 
 const PUBLIC_PREFIXES = [
