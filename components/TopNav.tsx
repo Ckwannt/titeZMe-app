@@ -32,7 +32,6 @@ export function TopNav() {
           </Link>
           <div className="hidden md:flex flex-1 justify-start space-x-6 items-center">
             <Link href="/" className={getLinkClass('/')}>Home</Link>
-            <Link href="/how-it-works" className={getLinkClass('/how-it-works')}>How it works</Link>
             <div className="flex items-center cursor-default">
               <span className="text-sm font-bold text-[#888580] cursor-default">Cuts</span>
               <span style={{ marginLeft: '4px', background: '#1a1a1a', color: '#F5C518', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '99px', border: '1px solid #2a2a2a', verticalAlign: 'middle' }}>Soon</span>
