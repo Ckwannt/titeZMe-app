@@ -25,23 +25,28 @@ export function TopNav() {
   return (
     <div className="sticky top-0 left-0 right-0 z-50 flex flex-col w-full">
       {/* ROW 1: Main Nav */}
-      <div className="bg-[#0A0A0A] border-b border-[#1E1E1E] px-6 py-4 flex items-center justify-between">
-        <div className="flex-1 flex justify-start items-center space-x-8">
-          <Link href="/" className="flex items-center mr-4">
+      <div className="bg-[#0A0A0A] border-b border-[#1E1E1E] px-6 py-4 flex items-center relative">
+
+        {/* LEFT — Logo */}
+        <div className="flex-shrink-0 z-10">
+          <Link href="/" className="flex items-center">
             <Wordmark height={24} />
           </Link>
-          <div className="hidden md:flex flex-1 justify-start space-x-6 items-center">
-            <Link href="/" className={getLinkClass('/')}>Home</Link>
-            <div className="flex items-center cursor-default">
-              <span className="text-sm font-bold text-[#888580] cursor-default">Cuts</span>
-              <span style={{ marginLeft: '4px', background: '#1a1a1a', color: '#F5C518', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '99px', border: '1px solid #2a2a2a', verticalAlign: 'middle' }}>Soon</span>
-            </div>
-            <Link href="/barbers" className={getLinkClass('/barbers')}>Barbers</Link>
-            <Link href="/shops" className={getLinkClass('/shops')}>Shops</Link>
-          </div>
         </div>
-        
-        <div className="flex-1 flex justify-end items-center gap-4">
+
+        {/* CENTER — Nav links (desktop + tablet only) */}
+        <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+          <Link href="/" className={getLinkClass('/')}>Home</Link>
+          <div className="flex items-center cursor-default">
+            <span className="text-sm font-bold text-[#888580] cursor-default">Cuts</span>
+            <span style={{ marginLeft: '4px', background: '#1a1a1a', color: '#F5C518', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '99px', border: '1px solid #2a2a2a', verticalAlign: 'middle' }}>Soon</span>
+          </div>
+          <Link href="/barbers" className={getLinkClass('/barbers')}>Barbers</Link>
+          <Link href="/shops" className={getLinkClass('/shops')}>Shops</Link>
+        </div>
+
+        {/* RIGHT — Actions */}
+        <div className="flex items-center gap-4 ml-auto flex-shrink-0 z-10">
           <div className="hidden md:flex items-center gap-1 text-sm font-bold text-[#888580]">
             <span>🌍</span> EN
           </div>
@@ -52,7 +57,7 @@ export function TopNav() {
                 {appUser?.role === 'client' && <Link href="/dashboard/client" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">Dashboard</Link>}
                 {appUser?.role === 'barber' && <Link href="/dashboard/barber" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">Dashboard</Link>}
               </div>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="text-sm font-bold text-[#888580] hover:text-red-500 transition-colors"
               >
@@ -71,6 +76,7 @@ export function TopNav() {
             </div>
           )}
         </div>
+
       </div>
       
       {/* ROW 2: Ticker */}
