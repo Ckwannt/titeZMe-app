@@ -41,6 +41,7 @@ const COMING_SOON = ['Amsterdam', 'Berlin', 'Rome', 'Dubai', 'London', 'Barcelon
 
 interface LandingPageClientProps {
   featuredBarbers?: any[];
+  featuredShops?: any[];
   citiesData?: { city: string; barbers: number; shops: number }[];
 }
 
@@ -48,6 +49,7 @@ interface LandingPageClientProps {
 
 export default function LandingPageClient({
   featuredBarbers = [],
+  featuredShops = [],
   citiesData = [],
 }: LandingPageClientProps) {
   const citySlots = [...citiesData];
@@ -61,6 +63,10 @@ export default function LandingPageClient({
   // Helpers for featured barber cards
   const mainBarber = featuredBarbers[0] as any;
   const smallBarbers = featuredBarbers.slice(1, 3) as any[];
+
+  // Helpers for featured shop cards
+  const mainShop = featuredShops[0] as any;
+  const smallShops = featuredShops.slice(1, 3) as any[];
 
   return (
     <div className="bg-[#0A0A0A] text-white pt-24 min-h-screen font-sans">
@@ -239,6 +245,106 @@ export default function LandingPageClient({
           )}
         </div>
       </section>
+
+      {/* ── FEATURED SHOPS ──────────────────────────────────────────────────── */}
+      {featuredShops.length > 0 && mainShop && (
+        <section className="max-w-[1200px] mx-auto px-6 py-16">
+          <div className="flex flex-col lg:flex-row gap-16 items-start">
+
+            {/* Left — heading */}
+            <div className="flex-1">
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">FEATURED BARBERSHOPS</div>
+              <h2 className="text-5xl font-black leading-[1.1] mb-6">Top shops<br className="hidden md:block" /> near you</h2>
+              <p className="text-gray-500 font-bold mb-8 max-w-sm leading-relaxed">
+                Book through a barbershop and choose your barber. Real availability, instant confirmation.
+              </p>
+              <Link href="/shops" className="inline-flex items-center gap-2 text-sm font-extrabold text-brand-yellow hover:opacity-80 transition-opacity">
+                Browse all shops →
+              </Link>
+            </div>
+
+            {/* Right — cards */}
+            <div className="flex-1 lg:max-w-[440px] w-full">
+
+              {/* Main shop card */}
+              <div className="bg-[#111] border border-[#1e1e1e] rounded-[16px] p-5 mb-[10px] relative">
+                <div className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-brand-orange">
+                  {mainShop.isOpenNow ? 'FEATURED | OPEN NOW' : 'FEATURED'}
+                </div>
+                <div className="flex gap-3 items-start mb-4 pr-24">
+                  {mainShop.coverPhotoUrl ? (
+                    <Image src={mainShop.coverPhotoUrl} alt={mainShop.name} width={52} height={52}
+                      className="rounded-[12px] object-cover shrink-0" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="w-[52px] h-[52px] rounded-[12px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-xl text-[#0a0a0a] shrink-0">
+                      {mainShop.name[0]}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-[15px] font-extrabold text-white leading-tight truncate">{mainShop.name}</h3>
+                    {mainShop.city && <div className="text-[12px] text-[#666] mt-0.5">📍 {mainShop.city}</div>}
+                    {mainShop.rating !== null && (
+                      <div className="text-[12px] font-bold text-brand-yellow mt-0.5">
+                        ★ {mainShop.rating.toFixed(1)}
+                        {mainShop.reviewCount > 0 && (
+                          <span className="text-[#555] font-normal text-[10px] ml-1">({mainShop.reviewCount} reviews)</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-[10px] px-[14px] py-[12px] mb-3">
+                  <div className="text-[9px] font-black uppercase text-[#444] tracking-[0.08em] mb-2">SHOP DETAILS</div>
+                  <div className="flex gap-6">
+                    <div>
+                      <div className="text-[13px] font-black text-white">{mainShop.barberCount}</div>
+                      <div className="text-[10px] text-[#555]">{mainShop.barberCount === 1 ? 'Barber' : 'Barbers'}</div>
+                    </div>
+                    <div>
+                      <div className={`text-[13px] font-extrabold ${mainShop.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
+                        ● {mainShop.isOpenNow ? 'Open Now' : 'Closed'}
+                      </div>
+                      <div className="text-[10px] text-[#555]">Status</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Link href={`/shop/${mainShop.id}`} className="bg-brand-yellow text-[#0a0a0a] rounded-full font-black text-[13px] px-5 py-[10px] hover:opacity-90 transition-opacity">
+                    View Shop →
+                  </Link>
+                </div>
+              </div>
+
+              {/* Two small shop cards */}
+              {smallShops.length > 0 && (
+                <div className="grid grid-cols-2 gap-[10px]">
+                  {smallShops.map((s: any) => (
+                    <Link href={`/shop/${s.id}`} key={s.id}
+                      className={`border border-[#1e1e1e] rounded-[12px] p-3 flex gap-2.5 items-center hover:border-[#2a2a2a] transition-colors ${s.isOpenNow ? 'bg-[#111]' : 'bg-[#0d0d0d]'}`}>
+                      {s.coverPhotoUrl ? (
+                        <Image src={s.coverPhotoUrl} alt={s.name} width={36} height={36}
+                          className="rounded-[9px] object-cover shrink-0" referrerPolicy="no-referrer" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-[9px] bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-sm text-[#0a0a0a] shrink-0">
+                          {s.name[0]}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-[12px] font-extrabold text-white truncate">{s.name}</div>
+                        {s.city && <div className="text-[10px] text-[#555] mt-0.5 truncate">{s.city}</div>}
+                        <div className={`text-[9px] font-extrabold mt-0.5 ${s.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
+                          ● {s.isOpenNow ? 'Open' : 'Closed'}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── SOCIAL PROOF ────────────────────────────────────────────────────── */}
       <section className="bg-[#050505] py-24 px-6 border-y border-[#1a1a1a]">
