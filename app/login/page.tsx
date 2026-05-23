@@ -18,8 +18,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [errorStatus, setErrorStatus] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [barberCount, setBarberCount] = useState<number | null>(null);
 
   useEffect(() => { document.title = 'Log in — titeZMe'; }, []);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'aggregations', 'stats'));
+        if (snap.exists()) {
+          setBarberCount(snap.data().totalBarbers || null);
+        }
+      } catch {
+        // Silent fail
+      }
+    };
+    fetchCount();
+  }, []);
 
   if (loading) return null;
   if (user) {
@@ -145,6 +161,21 @@ export default function LoginPage() {
         <p className="text-brand-text-secondary text-[15px]">Log in to your titeZMe account.</p>
       </div>
 
+      {barberCount && barberCount > 0 && (
+        <div style={{
+          textAlign: 'center',
+          fontSize: '12px',
+          color: '#444',
+          fontWeight: 700,
+          marginBottom: '20px',
+          fontFamily: 'Nunito, sans-serif'
+        }}>
+          Join{' '}
+          <span style={{ color: '#F5C518' }}>{barberCount}</span>
+          {' '}barbers and clients already on titeZMe
+        </div>
+      )}
+
       <button
         type="button"
         onClick={handleGoogleSignIn}
@@ -194,20 +225,7 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <div className="flex justify-between items-end mb-1.5">
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block">PASSWORD</label>
-            <a
-              href="/forgot-password"
-              style={{
-                color: '#555',
-                fontSize: '11px',
-                textDecoration: 'none',
-                fontWeight: 700
-              }}
-            >
-              Forgot password?
-            </a>
-          </div>
+          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">PASSWORD</label>
           <PasswordInput
             required
             value={password}
@@ -217,19 +235,118 @@ export default function LoginPage() {
           />
         </div>
 
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: '4px'
+        }}>
+          <label style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            color: '#555',
+            fontFamily: 'Nunito, sans-serif',
+            fontWeight: 700
+          }}>
+            <div
+              onClick={() => setRememberMe(!rememberMe)}
+              style={{
+                width: '16px',
+                height: '16px',
+                borderRadius: '4px',
+                border: rememberMe ? 'none' : '1px solid #2a2a2a',
+                background: rememberMe ? '#F5C518' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'all 0.15s'
+              }}
+            >
+              {rememberMe && (
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#0a0a0a"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </div>
+            Remember me
+          </label>
+
+          <a
+            href="/forgot-password"
+            style={{
+              fontSize: '12px',
+              color: '#555',
+              textDecoration: 'none',
+              fontWeight: 700,
+              fontFamily: 'Nunito, sans-serif'
+            }}
+          >
+            Forgot password?
+          </a>
+        </div>
+
         {errorStatus && (
           <div className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-xl px-4 py-3 text-xs font-bold leading-tight mt-1">
             {errorStatus}
           </div>
         )}
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={isSubmitting}
           className="bg-brand-yellow text-[#0a0a0a] w-full mt-3 px-7 py-4 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
         >
           {isSubmitting ? 'Logging in...' : 'Log In →'}
         </button>
+
+        <div style={{
+          fontSize: '11px',
+          color: '#444',
+          textAlign: 'center',
+          lineHeight: 1.6,
+          fontFamily: 'Nunito, sans-serif',
+          marginTop: '12px'
+        }}>
+          By logging in you agree to our{' '}
+          <a
+            href="/terms"
+            target="_blank"
+            style={{
+              color: '#666',
+              textDecoration: 'underline',
+              textUnderlineOffset: '2px'
+            }}
+          >
+            Terms of Service
+          </a>
+          {' '}and{' '}
+          <a
+            href="/privacy"
+            target="_blank"
+            style={{
+              color: '#666',
+              textDecoration: 'underline',
+              textUnderlineOffset: '2px'
+            }}
+          >
+            Privacy Policy
+          </a>
+          .
+        </div>
 
         <div className="text-center mt-6 text-sm text-brand-text-secondary">
           New here? <Link href="/signup" className="text-white font-extrabold hover:text-brand-yellow transition-colors">Create an account</Link>

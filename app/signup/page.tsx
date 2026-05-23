@@ -19,12 +19,16 @@ export default function SignupPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);
   const [errorStatus, setErrorStatus] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const [emailVerified, setEmailVerified] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const [firstNameValid, setFirstNameValid] = useState<boolean | null>(null);
+  const [emailValid, setEmailValid] = useState<boolean | null>(null);
 
   useEffect(() => { document.title = 'Create account — titeZMe'; }, []);
 
@@ -107,6 +111,27 @@ export default function SignupPage() {
     return '';
   };
 
+  const isValidEmail = (value: string): boolean => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
+  const getPasswordStrength = (pass: string): { score: number; label: string; color: string } => {
+    if (pass.length === 0) return { score: 0, label: '', color: '#2a2a2a' };
+
+    let score = 0;
+    if (pass.length >= 8) score++;
+    if (pass.length >= 12) score++;
+    if (/[A-Z]/.test(pass)) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[^A-Za-z0-9]/.test(pass)) score++;
+
+    if (score <= 1) return { score: 1, label: 'Weak', color: '#EF4444' };
+    if (score === 2) return { score: 2, label: 'Fair', color: '#F97316' };
+    if (score === 3) return { score: 3, label: 'Good', color: '#F5C518' };
+    if (score >= 4) return { score: 4, label: 'Strong', color: '#22C55E' };
+    return { score: 0, label: '', color: '#2a2a2a' };
+  };
+
   const handleGoogleSignIn = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -153,6 +178,15 @@ export default function SignupPage() {
     setSubmitAttempted(true);
 
     if (!firstName || !lastName || !email || !password) {
+      return;
+    }
+
+    if (!confirmPassword) {
+      setErrorStatus('Please confirm your password');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrorStatus("Passwords don't match");
       return;
     }
 
@@ -299,11 +333,22 @@ export default function SignupPage() {
         <div className="grid grid-cols-2 gap-3 mt-2">
           <div>
             <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">FIRST NAME <span className="text-brand-red">*</span></label>
-            <input 
+            <input
               required
-              value={firstName} onChange={e => setFirstName(e.target.value)}
-              className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-              placeholder="Your name" 
+              value={firstName}
+              onChange={e => {
+                setFirstName(e.target.value);
+                setFirstNameValid(e.target.value.trim().length >= 2);
+              }}
+              className="w-full bg-[#141414] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow"
+              style={{
+                border: firstNameValid === true
+                  ? '1px solid #22C55E'
+                  : firstNameValid === false
+                    ? '1px solid #EF4444'
+                    : '1px solid #2a2a2a'
+              }}
+              placeholder="Your name"
             />
             {submitAttempted && !firstName && <span className="text-brand-red text-xs mt-1 block">This field is required</span>}
           </div>
@@ -321,18 +366,46 @@ export default function SignupPage() {
 
         <div>
           <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">EMAIL <span className="text-brand-red">*</span></label>
-          <input
-            required
-            type="email"
-            value={email}
-            onChange={e => {
-              setEmail(e.target.value);
-              setEmailError(validateEmail(e.target.value));
-            }}
-            className="w-full bg-[#141414] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors"
-            style={{ border: emailError ? '1px solid #EF4444' : '1px solid #2a2a2a' }}
-            placeholder="you@email.com"
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={e => {
+                setEmail(e.target.value);
+                setEmailError(validateEmail(e.target.value));
+                if (e.target.value.length > 3) {
+                  setEmailValid(isValidEmail(e.target.value));
+                } else {
+                  setEmailValid(null);
+                }
+              }}
+              className="w-full bg-[#141414] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors"
+              style={{
+                border: emailValid === true
+                  ? '1px solid #22C55E'
+                  : emailValid === false
+                    ? '1px solid #EF4444'
+                    : '1px solid #2a2a2a',
+                paddingRight: emailValid === true ? '40px' : undefined
+              }}
+              placeholder="you@email.com"
+            />
+            {emailValid === true && (
+              <div style={{
+                position: 'absolute',
+                right: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#22C55E',
+                fontSize: '14px',
+                fontWeight: 900,
+                pointerEvents: 'none'
+              }}>
+                ✓
+              </div>
+            )}
+          </div>
           {emailError && (
             <div style={{ fontSize: '11px', color: '#EF4444', marginTop: '4px' }}>
               {emailError}
@@ -350,6 +423,43 @@ export default function SignupPage() {
             placeholder="••••••••"
             className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow"
           />
+          {password.length > 0 && (() => {
+            const strength = getPasswordStrength(password);
+            return (
+              <div style={{ marginTop: '8px' }}>
+                <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                  {[1, 2, 3, 4].map(level => (
+                    <div
+                      key={level}
+                      style={{
+                        flex: 1,
+                        height: '3px',
+                        borderRadius: '99px',
+                        background: strength.score >= level ? strength.color : '#1e1e1e',
+                        transition: 'background 0.3s'
+                      }}
+                    />
+                  ))}
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  color: strength.color,
+                  fontWeight: 800,
+                  fontFamily: 'Nunito, sans-serif',
+                  transition: 'color 0.3s'
+                }}>
+                  {strength.label}
+                  {strength.score < 3 && password.length > 0 && (
+                    <span style={{ color: '#444', fontWeight: 700, marginLeft: '6px' }}>
+                      {!/[A-Z]/.test(password) && '· Add uppercase '}
+                      {!/[0-9]/.test(password) && '· Add a number '}
+                      {password.length < 8 && `· ${8 - password.length} more characters`}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
           {submitAttempted && !password && <span className="text-brand-red text-xs mt-1 block">This field is required</span>}
           {password.length > 0 && password.length < 8 && (
             <div style={{ fontSize: '11px', color: '#EF4444', marginTop: '4px' }}>
@@ -359,6 +469,64 @@ export default function SignupPage() {
           {password.length >= 8 && (
             <div style={{ fontSize: '11px', color: '#22C55E', marginTop: '4px' }}>
               ✓ Password looks good
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">CONFIRM PASSWORD <span className="text-brand-red">*</span></label>
+          <div style={{ position: 'relative' }}>
+            <PasswordInput
+              value={confirmPassword}
+              onChange={(val) => {
+                setConfirmPassword(val);
+                if (val.length > 0) {
+                  setPasswordMatch(val === password);
+                } else {
+                  setPasswordMatch(null);
+                }
+              }}
+              placeholder="Confirm password"
+              style={{
+                background: '#141414',
+                border: passwordMatch === null
+                  ? '1px solid #2a2a2a'
+                  : passwordMatch
+                    ? '1px solid #22C55E'
+                    : '1px solid #EF4444',
+                borderRadius: '10px',
+                padding: '12px 44px 12px 16px',
+                color: '#fff',
+                fontSize: '16px',
+                fontFamily: 'Nunito, sans-serif',
+                outline: 'none',
+                width: '100%',
+                transition: 'border-color 0.2s'
+              }}
+            />
+            {passwordMatch === true && (
+              <div style={{
+                position: 'absolute',
+                right: '44px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#22C55E',
+                fontSize: '14px',
+                fontWeight: 900,
+                pointerEvents: 'none'
+              }}>
+                ✓
+              </div>
+            )}
+          </div>
+          {passwordMatch === false && (
+            <div style={{
+              fontSize: '11px',
+              color: '#EF4444',
+              marginTop: '4px',
+              fontFamily: 'Nunito, sans-serif'
+            }}>
+              Passwords don&apos;t match
             </div>
           )}
         </div>
@@ -376,6 +544,41 @@ export default function SignupPage() {
         >
           {isSubmitting ? 'Creating account...' : 'Create Account'}
         </button>
+
+        <div style={{
+          fontSize: '11px',
+          color: '#444',
+          textAlign: 'center',
+          lineHeight: 1.6,
+          fontFamily: 'Nunito, sans-serif',
+          marginTop: '12px'
+        }}>
+          By creating an account you agree to our{' '}
+          <a
+            href="/terms"
+            target="_blank"
+            style={{
+              color: '#666',
+              textDecoration: 'underline',
+              textUnderlineOffset: '2px'
+            }}
+          >
+            Terms of Service
+          </a>
+          {' '}and{' '}
+          <a
+            href="/privacy"
+            target="_blank"
+            style={{
+              color: '#666',
+              textDecoration: 'underline',
+              textUnderlineOffset: '2px'
+            }}
+          >
+            Privacy Policy
+          </a>
+          .
+        </div>
 
         <div className="text-center mt-6 text-sm text-brand-text-secondary">
           Already have an account? <Link href="/login" className="text-white font-extrabold hover:text-brand-yellow transition-colors">Log In</Link>
