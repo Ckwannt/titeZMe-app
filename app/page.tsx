@@ -144,48 +144,6 @@ async function fetchCitiesData(): Promise<{ city: string; barbers: number; shops
   }
 }
 
-// ─── featured shops fetcher ───────────────────────────────────────────────────
-
-async function fetchFeaturedShops() {
-  try {
-    const snap = await getDocs(query(
-      collection(db, 'barbershops'),
-      where('status', '==', 'active'),
-    ));
-    const shops = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-    if (shops.length === 0) return [];
-
-    // Prioritize shops marked as featured, fall back to all active
-    const featured = shops.filter((s: any) => s.featured);
-    const rest = shops.filter((s: any) => !s.featured);
-    const prioritized = [...featured, ...rest].slice(0, 3);
-
-    const schedSnaps = await Promise.all(
-      prioritized.map((s: any) => getDoc(doc(db, 'schedules', `${s.id}_shard_0`)))
-    );
-
-    return prioritized.map((s: any, i: number) => {
-      const sched = schedSnaps[i].exists() ? (schedSnaps[i].data() as any) : null;
-      const city = s.address?.city || '';
-      const country = s.address?.country || '';
-      const status = getOpenStatus(sched?.availableSlots, city, country, s.id);
-      return {
-        id: s.id,
-        name: s.name || 'Barbershop',
-        coverPhotoUrl: s.coverPhotoUrl || null,
-        city,
-        country,
-        isOpenNow: status.isOpen,
-        barberCount: (s.barbers || []).length,
-        rating: typeof s.rating === 'number' ? s.rating : null,
-        reviewCount: typeof s.reviewCount === 'number' ? s.reviewCount : 0,
-      };
-    });
-  } catch {
-    return [];
-  }
-}
-
 // ─── page component ───────────────────────────────────────────────────────────
 
 export default function LandingPage() {
@@ -201,16 +159,9 @@ export default function LandingPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: featuredShops = [] } = useQuery({
-    queryKey: ['landing_featured_shops'],
-    queryFn: fetchFeaturedShops,
-    staleTime: 2 * 60 * 1000,
-  });
-
   return (
     <LandingPageClient
       featuredBarbers={featuredBarbers}
-      featuredShops={featuredShops}
       citiesData={citiesData}
     />
   );
