@@ -179,9 +179,6 @@ export function TopNav() {
             <span>Find barbers near you →</span>
           </div>
         </div>
-        <Link href="/#browse-barbers" className="ml-4 shrink-0 text-xs font-bold text-[#FFD600] hover:text-white transition-colors bg-[#1E1E1E] px-3 py-1 rounded-full">
-          Book now →
-        </Link>
       </div>
 
       {/* MOBILE DRAWER — full screen, shown when menuOpen */}
