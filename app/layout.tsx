@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   },
   description: 'Find and book the best barbers near you. titeZMe connects you with top barbers and barbershops.',
   metadataBase: new URL('https://titezme.com'),
+  alternates: {
+    canonical: 'https://titezme.com',
+  },
   icons: {
     icon: [
       { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },

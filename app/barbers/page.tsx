@@ -4,6 +4,9 @@ import BarbersClient from './BarbersClient';
 export const metadata = {
   title: 'Find a Barber',
   description: 'Browse top-rated barbers by city. Real availability. Book in seconds on titeZMe.',
+  alternates: {
+    canonical: 'https://titezme.com/barbers',
+  },
 };
 
 export type BarberCard = {
