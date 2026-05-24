@@ -22,6 +22,11 @@ export default function BarberOnboarding() {
   const [errorMsg, setErrorMsg] = useState('');
 
   // Step 1
+  // firstName / lastName are editable so barbers coming in via Google with no
+  // displayName aren't permanently stuck in the onboarding loop (mirror of the
+  // client onboarding fix).
+  const [firstName, setFirstName] = useState(appUser?.firstName || '');
+  const [lastName, setLastName] = useState(appUser?.lastName || '');
   const [bio, setBio] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
@@ -45,6 +50,13 @@ export default function BarberOnboarding() {
 
   useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
   useEffect(() => { getLanguageOptions().then(setLanguageOptions); }, []);
+
+  // Pre-fill names once appUser resolves (initial useState fires before context loads)
+  useEffect(() => {
+    if (appUser?.firstName && !firstName) setFirstName(appUser.firstName);
+    if (appUser?.lastName && !lastName) setLastName(appUser.lastName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appUser?.firstName, appUser?.lastName]);
 
   const toggleVibe = (v: string) => setVibe(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]);
   const toggleSpec = (s: string) => setSpecialty(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
@@ -223,8 +235,8 @@ export default function BarberOnboarding() {
       try {
         await updateDoc(userRef, userUpdateSchema.parse({
           isOnboarded: true,
-          firstName: appUser?.firstName || '',
-          lastName: appUser?.lastName || '',
+          firstName: firstName.trim() || appUser?.firstName || '',
+          lastName: lastName.trim() || appUser?.lastName || '',
           phone: phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null,
           phoneCountryCode: phoneCode?.value || null,
           city: selectedCityOption?.value || 'Unknown',
@@ -267,15 +279,47 @@ export default function BarberOnboarding() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">FIRST NAME</label>
-              <div className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-[#888] text-sm cursor-not-allowed">
-                {appUser?.firstName || "—"}
-              </div>
+              <input
+                type="text"
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+                placeholder="First name"
+                maxLength={100}
+                style={{
+                  background: '#141414',
+                  border: '1px solid #2a2a2a',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  color: '#fff',
+                  fontSize: '16px',
+                  fontFamily: 'Nunito, sans-serif',
+                  outline: 'none',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                }}
+              />
             </div>
             <div>
               <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LAST NAME</label>
-              <div className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-[#888] text-sm cursor-not-allowed">
-                {appUser?.lastName || "—"}
-              </div>
+              <input
+                type="text"
+                value={lastName}
+                onChange={e => setLastName(e.target.value)}
+                placeholder="Last name"
+                maxLength={100}
+                style={{
+                  background: '#141414',
+                  border: '1px solid #2a2a2a',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  color: '#fff',
+                  fontSize: '16px',
+                  fontFamily: 'Nunito, sans-serif',
+                  outline: 'none',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                }}
+              />
             </div>
           </div>
           <div>
