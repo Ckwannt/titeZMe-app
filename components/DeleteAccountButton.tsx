@@ -2,244 +2,410 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
-import { collection, query, where, getDocs, writeBatch, doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import {
+  deleteClientAccount,
+  deleteBarberAccount,
+  deleteShopOwnerAccount,
+  reauthenticateUser,
+} from '@/lib/delete-account';
 
 interface DeleteAccountButtonProps {
-  role?: 'client' | 'barber';
+  role: 'client' | 'barber';
 }
 
-export function DeleteAccountButton({ role = 'client' }: DeleteAccountButtonProps) {
-  const router = useRouter();
+const clientMessage = `This cannot be undone.
+
+What happens immediately:
+- You are logged out
+- Your profile is deleted
+- Your personal data is removed
+- Future bookings are cancelled and your barber is notified
+
+What stays (anonymized):
+- Past completed bookings appear as Anonymous
+- Reviews you left stay on barber profiles anonymized (barbers keep their ratings)`;
+
+const barberMessage = `This cannot be undone.
+
+What happens immediately:
+- You are logged out
+- Your barber profile is deleted
+- You disappear from titeZMe
+- Future bookings are cancelled and clients are notified
+- Your services and schedule are deleted
+
+What stays:
+- Your cut count stays with any shops you worked at
+- Past booking records stay anonymized as Former Barber
+- If you were in a shop the shop keeps its historical cut counts`;
+
+export function DeleteAccountButton({ role }: DeleteAccountButtonProps) {
   const { user, appUser } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const router = useRouter();
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showReauth, setShowReauth] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [reauthPassword, setReauthPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const isGoogleUser = user?.providerData.some(p => p.providerId === 'google.com') ?? false;
 
   const handleDelete = async () => {
-    if (!user || !appUser) return;
-    setIsDeleting(true);
-    setErrorMsg('');
+    if (!user?.uid || !appUser?.role) return;
+
+    setDeleting(true);
+    setError('');
 
     try {
-      const uid = user.uid;
+      if (appUser.role === 'client') {
+        await deleteClientAccount(user.uid);
+      } else if (appUser.role === 'barber') {
+        const profileSnap = await getDoc(doc(db, 'barberProfiles', user.uid));
+        const profile = profileSnap.data();
+        const shopId = profile?.shopId || null;
+        const ownsShop = profile?.ownsShop || false;
 
-      if (role === 'client') {
-        // Soft delete — mark user as deleted with 30-day recovery window
-        await updateDoc(doc(db, 'users', uid), {
-          isDeleted: true,
-          deletedAt: Date.now(),
-          scheduledPermanentDeleteAt: Date.now() + (30 * 24 * 60 * 60 * 1000),
-        });
-
-        const batch = writeBatch(db);
-
-        // 1. All bookings where clientId == uid -> update to 'cancelled_by_client'
-        const bookingsQ = query(collection(db, 'bookings'), where('clientId', '==', uid));
-        const bookingsSnap = await getDocs(bookingsQ);
-        bookingsSnap.forEach((d) => {
-          batch.update(d.ref, { status: 'cancelled_by_client', updatedAt: Date.now() });
-        });
-
-        // 2. All reviews where clientId == uid -> delete
-        const reviewsQ = query(collection(db, 'reviews'), where('clientId', '==', uid));
-        const reviewsSnap = await getDocs(reviewsQ);
-        reviewsSnap.forEach((d) => {
-          batch.delete(d.ref);
-        });
-
-        // 3. All notifications where userId == uid -> delete
-        const notifQ = query(collection(db, 'notifications'), where('userId', '==', uid));
-        const notifSnap = await getDocs(notifQ);
-        notifSnap.forEach((d) => {
-          batch.delete(d.ref);
-        });
-
-        // 4. users/{uid} document
-        batch.delete(doc(db, 'users', uid));
-
-        await batch.commit();
-      } 
-      else if (role === 'barber') {
-        // Soft delete — mark barberProfile as deleted with 30-day recovery window
-        await updateDoc(doc(db, 'barberProfiles', uid), {
-          isDeleted: true,
-          deletedAt: Date.now(),
-          isLive: false,
-          isSolo: false,
-          scheduledPermanentDeleteAt: Date.now() + (30 * 24 * 60 * 60 * 1000),
-        });
-        await updateDoc(doc(db, 'users', uid), {
-          isDeleted: true,
-          deletedAt: Date.now(),
-        });
-
-        const batch = writeBatch(db);
-
-        // 1. All bookings where barberId == uid AND status in ['pending','confirmed'] -> 'cancelled_by_barber'
-        // Firestore 'in' query has limits, so we query barberId and filter client-side if needed, 
-        // or just use `where('barberId', '==', uid)` and check status.
-        const bookingsQ = query(collection(db, 'bookings'), where('barberId', '==', uid));
-        const bookingsSnap = await getDocs(bookingsQ);
-        bookingsSnap.forEach((d) => {
-          const status = d.data().status;
-          if (status === 'pending' || status === 'confirmed') {
-            batch.update(d.ref, { status: 'cancelled_by_barber', updatedAt: Date.now() });
-
-            // Send notification to client
-            if (d.data().clientId) {
-              const notifRef = doc(collection(db, 'notifications'));
-              let msg = `Your booking was cancelled because the barber deleted their account.`;
-              if (status === 'confirmed') {
-                msg = `Your booking was cancelled because the barber deleted their account. Please arrange payment directly with another barber.`;
-              }
-              batch.set(notifRef, {
-                userId: d.data().clientId,
-                message: msg,
-                read: false,
-                createdAt: Date.now()
-              });
-            }
-          }
-        });
-
-        // 2. All services where providerId == uid -> delete
-        const servicesQ = query(collection(db, 'services'), where('providerId', '==', uid));
-        const servicesSnap = await getDocs(servicesQ);
-        servicesSnap.forEach((d) => {
-          batch.delete(d.ref);
-        });
-
-        // 3. schedules/{uid}_shard_0
-        batch.delete(doc(db, 'schedules', `${uid}_shard_0`));
-
-        // 4. All reviews where barberId == uid (as providerId) 
-        // Wait, the Review model uses providerId for barbers and shops.
-        const reviewsQ = query(collection(db, 'reviews'), where('providerId', '==', uid));
-        const reviewsSnap = await getDocs(reviewsQ);
-        reviewsSnap.forEach((d) => {
-          batch.delete(d.ref);
-        });
-
-        // 5. All invites where barberId == uid -> delete
-        const invitesQ = query(collection(db, 'invites'), where('barberId', '==', uid));
-        const invitesSnap = await getDocs(invitesQ);
-        invitesSnap.forEach((d) => {
-          batch.delete(d.ref);
-        });
-
-        // 6. All notifications where userId == uid
-        const notifQ = query(collection(db, 'notifications'), where('userId', '==', uid));
-        const notifSnap = await getDocs(notifQ);
-        notifSnap.forEach((d) => {
-          batch.delete(d.ref);
-        });
-
-        // 7 & 8. Shop ownership handled here
-        if (appUser.ownsShop) {
-          // Update all barbers where shopId == uid
-          const shopBarbersQ = query(collection(db, 'barberProfiles'), where('shopId', '==', uid));
-          const shopBarbersSnap = await getDocs(shopBarbersQ);
-          // Wait, modifying other barbers is restricted by rules!
-          shopBarbersSnap.forEach((d) => {
-             // Will probably fail due to firestore rules if done via client SDK!
-             // Let's do it and see what happens, we might just fail but we can try ignoring the error
-             try { batch.update(d.ref, { shopId: null }); } catch (e) {}
-          });
-
-          // Delete barbershops/{uid}
-          batch.delete(doc(db, 'barbershops', uid));
-
-          // Delete all invites where shopId == uid
-          const shopInvitesQ = query(collection(db, 'invites'), where('shopId', '==', uid));
-          const shopInvitesSnap = await getDocs(shopInvitesQ);
-          shopInvitesSnap.forEach((d) => {
-            batch.delete(d.ref);
-          });
-        }
-
-        // 9. barbers/{uid} (which is barberProfiles/{uid})
-        batch.delete(doc(db, 'barberProfiles', uid));
-
-        // 10. users/{uid}
-        batch.delete(doc(db, 'users', uid));
-
-        try {
-            await batch.commit();
-        } catch (e: any) {
-            console.error("Batch failure, delegating to API...", e);
-            // Fallback to API if rules blocked shop updates
-            const token = await auth.currentUser?.getIdToken();
-            if (token) {
-                await fetch('/api/delete-account', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-            }
+        if (ownsShop && shopId) {
+          await deleteShopOwnerAccount(user.uid, shopId);
+        } else {
+          await deleteBarberAccount(user.uid);
         }
       }
 
-      // Final Step: Delete the Firebase Auth user
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        await currentUser.delete();
-      }
-      
-      router.push('/');
+      await signOut(auth);
+      router.replace('/');
     } catch (err: any) {
-      console.error("Deletion error:", err);
-      if (err.code === 'auth/requires-recent-login') {
-        setErrorMsg('Please log out and log back in to verify your identity before deleting your account.');
+      if (err?.code === 'auth/requires-recent-login') {
+        setShowReauth(true);
+        setShowConfirm(false);
       } else {
-        setErrorMsg('Failed to delete account. Please try again.');
+        console.error('Delete account error:', err);
+        setError('Failed to delete account. Please try again.');
       }
-      setIsDeleting(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleReauth = async () => {
+    setDeleting(true);
+    setError('');
+
+    try {
+      await reauthenticateUser(isGoogleUser ? undefined : reauthPassword);
+      setShowReauth(false);
+      setReauthPassword('');
+      await handleDelete();
+    } catch (err: any) {
+      console.error('Reauth error:', err);
+      setError(isGoogleUser ? 'Re-authentication failed. Please try again.' : 'Incorrect password. Please try again.');
+    } finally {
+      setDeleting(false);
     }
   };
 
   return (
     <>
-      <div className="w-full mt-4 pt-4 border-t border-[#2a2a2a] px-2 flex justify-center">
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="text-xs font-bold text-brand-red flex items-center gap-2 px-4 py-2 hover:bg-brand-red/10 rounded-xl transition-colors w-full justify-center opacity-80 hover:opacity-100"
+      {/* Trigger */}
+      <button
+        onClick={() => {
+          setShowConfirm(true);
+          setError('');
+        }}
+        style={{
+          background: 'transparent',
+          border: '1px solid #EF444433',
+          color: '#EF4444',
+          borderRadius: '99px',
+          padding: '10px 20px',
+          fontSize: '13px',
+          fontWeight: 800,
+          cursor: 'pointer',
+          fontFamily: 'Nunito, sans-serif',
+        }}
+      >
+        Delete account
+      </button>
+
+      {/* Confirmation dialog */}
+      {showConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
         >
-          🗑 Delete Account
-        </button>
-      </div>
+          <div
+            style={{
+              background: '#111',
+              border: '1px solid #2a2a2a',
+              borderRadius: '20px',
+              padding: '32px',
+              maxWidth: '400px',
+              width: '100%',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '18px',
+                fontWeight: 900,
+                color: '#fff',
+                marginBottom: '16px',
+                fontFamily: 'Nunito, sans-serif',
+              }}
+            >
+              {role === 'client' ? 'Delete your account?' : 'Delete your barber account?'}
+            </div>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 max-w-sm w-full relative overflow-hidden shadow-2xl">
-            <h2 className="text-xl font-black text-white mb-2">Delete your account?</h2>
-            <p className="text-[#888] text-sm mb-6 leading-relaxed">
-              Your account will be deactivated immediately. You have 30 days to recover it before all data is permanently deleted. Active bookings will be cancelled.
-            </p>
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#666',
+                lineHeight: 1.8,
+                marginBottom: '24px',
+                fontFamily: 'Nunito, sans-serif',
+                whiteSpace: 'pre-line',
+              }}
+            >
+              {role === 'client' ? clientMessage : barberMessage}
+            </div>
 
-            {errorMsg && (
-              <div className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-xl px-4 py-3 text-xs font-bold leading-tight mb-4">
-                {errorMsg}
+            {error && (
+              <div
+                style={{
+                  background: '#1a0808',
+                  border: '1px solid #EF444433',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  fontSize: '12px',
+                  color: '#EF4444',
+                  marginBottom: '16px',
+                  fontFamily: 'Nunito, sans-serif',
+                }}
+              >
+                {error}
               </div>
             )}
 
-            <div className="flex gap-3">
-              <button 
-                disabled={isDeleting}
-                onClick={() => setIsOpen(false)}
-                className="flex-1 bg-[#2a2a2a] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#333] transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button 
-                disabled={isDeleting}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
                 onClick={handleDelete}
-                className="flex-[1.5] bg-brand-red text-white py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors disabled:opacity-50"
+                disabled={deleting}
+                style={{
+                  background: deleting ? '#2a0808' : '#EF4444',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '99px',
+                  padding: '13px',
+                  fontSize: '14px',
+                  fontWeight: 900,
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  fontFamily: 'Nunito, sans-serif',
+                  width: '100%',
+                }}
               >
-                {isDeleting ? 'Deleting...' : 'Yes, delete everything'}
+                {deleting ? 'Deleting...' : 'Delete everything →'}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowConfirm(false);
+                  setError('');
+                }}
+                disabled={deleting}
+                style={{
+                  background: 'transparent',
+                  color: '#888',
+                  border: '1px solid #2a2a2a',
+                  borderRadius: '99px',
+                  padding: '13px',
+                  fontSize: '14px',
+                  fontWeight: 900,
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  fontFamily: 'Nunito, sans-serif',
+                  width: '100%',
+                }}
+              >
+                Keep my account
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Re-auth dialog — appears when delete fails with auth/requires-recent-login */}
+      {showReauth && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+          }}
+        >
+          <div
+            style={{
+              background: '#111',
+              border: '1px solid #2a2a2a',
+              borderRadius: '20px',
+              padding: '32px',
+              maxWidth: '380px',
+              width: '100%',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '16px',
+                fontWeight: 900,
+                color: '#fff',
+                marginBottom: '8px',
+                fontFamily: 'Nunito, sans-serif',
+              }}
+            >
+              Confirm your identity
+            </div>
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#555',
+                marginBottom: '20px',
+                lineHeight: 1.6,
+                fontFamily: 'Nunito, sans-serif',
+              }}
+            >
+              For security please confirm your identity before we delete your account.
+            </div>
+
+            {error && (
+              <div
+                style={{
+                  background: '#1a0808',
+                  border: '1px solid #EF444433',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  fontSize: '12px',
+                  color: '#EF4444',
+                  marginBottom: '16px',
+                  fontFamily: 'Nunito, sans-serif',
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            {isGoogleUser ? (
+              <button
+                onClick={handleReauth}
+                disabled={deleting}
+                style={{
+                  width: '100%',
+                  background: '#fff',
+                  border: 'none',
+                  borderRadius: '99px',
+                  padding: '12px',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  fontFamily: 'Nunito, sans-serif',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginBottom: '10px',
+                  color: '#0a0a0a',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                {deleting ? 'Verifying...' : 'Confirm with Google'}
+              </button>
+            ) : (
+              <>
+                <input
+                  type="password"
+                  placeholder="Your password"
+                  value={reauthPassword}
+                  onChange={e => setReauthPassword(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !deleting && reauthPassword) {
+                      handleReauth();
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    background: '#141414',
+                    border: '1px solid #2a2a2a',
+                    borderRadius: '10px',
+                    padding: '12px 16px',
+                    color: '#fff',
+                    fontSize: '16px',
+                    fontFamily: 'Nunito, sans-serif',
+                    outline: 'none',
+                    marginBottom: '12px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                <button
+                  onClick={handleReauth}
+                  disabled={deleting || !reauthPassword}
+                  style={{
+                    width: '100%',
+                    background: !reauthPassword || deleting ? '#2a0808' : '#EF4444',
+                    border: 'none',
+                    borderRadius: '99px',
+                    padding: '12px',
+                    fontSize: '13px',
+                    fontWeight: 900,
+                    cursor: !reauthPassword || deleting ? 'not-allowed' : 'pointer',
+                    color: '#fff',
+                    fontFamily: 'Nunito, sans-serif',
+                    marginBottom: '10px',
+                  }}
+                >
+                  {deleting ? 'Verifying...' : 'Confirm deletion'}
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={() => {
+                setShowReauth(false);
+                setReauthPassword('');
+                setError('');
+              }}
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                color: '#555',
+                fontSize: '12px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                fontFamily: 'Nunito, sans-serif',
+                padding: '8px',
+              }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
