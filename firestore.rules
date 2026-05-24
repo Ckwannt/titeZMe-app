@@ -253,6 +253,40 @@ service cloud.firestore {
       allow delete: if isSignedIn() && request.auth.uid == existing().providerId;
     }
 
+    // Invites — shop → barber team invitations
+    // Required so shop owners and invited barbers can read their own invites
+    // and update status (accept/decline). Without this block the invites
+    // collection falls through to the global deny-all, breaking the shop
+    // dashboard's pending-invites listener with permission-denied.
+    match /invites/{inviteId} {
+      allow read: if isSignedIn()
+        && (
+          resource.data.shopId == request.auth.uid
+          || resource.data.barberId == request.auth.uid
+          || isAdmin()
+        );
+
+      allow create: if isSignedIn()
+        && incoming().shopId is string
+        && incoming().barberId is string
+        && incoming().status == 'pending';
+
+      allow update: if isSignedIn()
+        && (
+          resource.data.barberId == request.auth.uid
+          || resource.data.shopId == request.auth.uid
+          || isAdmin()
+        )
+        && incoming().shopId == existing().shopId
+        && incoming().barberId == existing().barberId;
+
+      allow delete: if isSignedIn()
+        && (
+          resource.data.shopId == request.auth.uid
+          || isAdmin()
+        );
+    }
+
     // Bookings
     match /bookings/{bookingId} {
       allow get: if isSignedIn()
