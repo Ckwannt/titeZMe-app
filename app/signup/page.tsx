@@ -148,7 +148,7 @@ export default function SignupPage() {
           lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
           profilePhotoUrl: user.photoURL || '',
           role: 'client',
-          isOnboarded: true,
+          isOnboarded: false,
           createdAt: Date.now()
         });
       }

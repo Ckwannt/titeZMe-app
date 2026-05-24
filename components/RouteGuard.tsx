@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { isProfileComplete } from '@/lib/profile-complete';
 
 const PUBLIC_ROUTES = [
   '/',
@@ -100,6 +101,23 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
       } else if (appUser.role === 'barber') {
         router.replace('/onboarding/barber');
       }
+      setAuthorized(false);
+      setChecking(false);
+      return;
+    }
+
+    // Profile-completion enforcement — catches old users AND Google sign-in
+    // users who slipped through with isOnboarded: true but are missing
+    // required fields (phone, city, country) or have default barber data.
+    if (
+      appUser?.isOnboarded === true &&
+      !isProfileComplete(appUser) &&
+      !pathname.startsWith('/onboarding')
+    ) {
+      const redirectPath = appUser.role === 'barber'
+        ? '/onboarding/barber'
+        : '/onboarding/client';
+      router.replace(redirectPath);
       setAuthorized(false);
       setChecking(false);
       return;
