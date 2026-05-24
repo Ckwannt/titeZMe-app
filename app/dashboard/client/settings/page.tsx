@@ -18,9 +18,11 @@ const Select = dynamic(
     )
   }
 ) as any;
-// country-state-city and iso-639-1 loaded dynamically to avoid bundling ~2 MB on initial load
+// country-state-city loaded dynamically to avoid bundling ~2 MB on initial load
+// iso-639-1 is loaded via the @/lib/languages wrapper (handles CJS class interop)
 import { userUpdateSchema } from "@/lib/schemas";
 import { sanitizeText } from '@/lib/sanitize';
+import { getLanguageOptions } from '@/lib/languages';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Image from 'next/image';
 
@@ -40,7 +42,7 @@ export default function ClientSettings() {
   const [isUploading, setIsUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [csc, setCsc] = useState<any>(null);
-  const [iso6391, setIso6391] = useState<any>(null);
+  const [languageOptions, setLanguageOptions] = useState<{value: string; label: string}[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,7 +84,7 @@ export default function ClientSettings() {
   }, [appUser]);
 
   useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
-  useEffect(() => { import('iso-639-1').then(m => setIso6391(m.default || m)); }, []);
+  useEffect(() => { getLanguageOptions().then(setLanguageOptions); }, []);
 
   const countryOptions = useMemo(() => {
     if (!csc) return [];
@@ -94,10 +96,6 @@ export default function ClientSettings() {
     return csc.Country.getAllCountries().map((c: any) => ({ value: c.phonecode, label: `${c.flag} ${c.name} (+${c.phonecode})` }));
   }, [csc]);
 
-  const languageOptions = useMemo(() => {
-    if (!iso6391) return [];
-    return iso6391.getAllNames().map((name: string) => ({ value: name, label: name }));
-  }, [iso6391]);
 
   const selectStyles = {
     control: (base: any, state: any) => ({

@@ -8,9 +8,10 @@ import { doc, collection, setDoc, updateDoc, query, where, getDocs } from "fireb
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import Select from "react-select";
-// country-state-city and iso-639-1 loaded dynamically to avoid bundling ~2 MB on initial load
+// country-state-city loaded dynamically to avoid bundling ~2 MB on initial load
 import { userUpdateSchema, scheduleSchema, barberSchema } from "@/lib/schemas";
 import { sanitizeText } from '@/lib/sanitize';
+import { getLanguageOptions } from '@/lib/languages';
 
 export default function BarberOnboarding() {
   const router = useRouter();
@@ -40,10 +41,10 @@ export default function BarberOnboarding() {
   ]);
   const [titzData, setTitzData] = useState({ duration: "45", price: "20" });
   const [csc, setCsc] = useState<any>(null);
-  const [iso6391, setIso6391] = useState<any>(null);
+  const [languageOptions, setLanguageOptions] = useState<{value: string; label: string}[]>([]);
 
   useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
-  useEffect(() => { import('iso-639-1').then(m => setIso6391(m.default)); }, []);
+  useEffect(() => { getLanguageOptions().then(setLanguageOptions); }, []);
 
   const toggleVibe = (v: string) => setVibe(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]);
   const toggleSpec = (s: string) => setSpecialty(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
@@ -59,10 +60,6 @@ export default function BarberOnboarding() {
     return csc.Country.getAllCountries().map((c: any) => ({ value: c.phonecode, label: `${c.flag} ${c.name} (+${c.phonecode})` }));
   }, [csc]);
 
-  const languageOptions = useMemo(() => {
-    if (!iso6391) return [];
-    return iso6391.getAllNames().map((name: string) => ({ value: name, label: name }));
-  }, [iso6391]);
 
   const selectStyles = {
     control: (base: any, state: any) => ({

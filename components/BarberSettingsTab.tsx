@@ -17,12 +17,14 @@ const Select = dynamic(
     )
   }
 ) as any;
-// country-state-city and iso-639-1 loaded dynamically to avoid bundling ~2 MB on initial load
+// country-state-city loaded dynamically to avoid bundling ~2 MB on initial load
+// iso-639-1 is loaded via the @/lib/languages wrapper (handles CJS class interop)
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import { userUpdateSchema, barberUpdateSchema } from "@/lib/schemas";
 import { sanitizeText, sanitizeHandle } from '@/lib/sanitize';
 import { invalidateBarber } from '@/lib/invalidate';
+import { getLanguageOptions } from '@/lib/languages';
 
 interface BarberSettingsTabProps {
   profile: any;
@@ -51,14 +53,14 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
   const [phoneNumberInput, setPhoneNumberInput] = useState(initPhoneNumStr);
   const [phoneCode, setPhoneCode] = useState<any>(null);
   const [csc, setCsc] = useState<any>(null);
-  const [iso6391, setIso6391] = useState<any>(null);
-  
+  const [languageOptions, setLanguageOptions] = useState<{value: string; label: string}[]>([]);
+
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
   const [selectedLanguages, setSelectedLanguages] = useState<any>([]);
 
   useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
-  useEffect(() => { import('iso-639-1').then(m => setIso6391(m.default || m)); }, []);
+  useEffect(() => { getLanguageOptions().then(setLanguageOptions); }, []);
 
   const countryOptions = useMemo(() => {
     if (!csc) return [];
@@ -70,10 +72,6 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     return csc.Country.getAllCountries().map((c: any) => ({ value: c.phonecode, label: `${c.flag} ${c.name} (+${c.phonecode})` }));
   }, [csc]);
 
-  const languageOptions = useMemo(() => {
-    if (!iso6391) return [];
-    return iso6391.getAllNames().map((name: string) => ({ value: name, label: name }));
-  }, [iso6391]);
   
   useEffect(() => {
     setTimeout(() => {
