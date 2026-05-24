@@ -13,7 +13,7 @@ import { userUpdateSchema } from "@/lib/schemas";
 export interface AppUser {
   uid: string;
   email: string;
-  role: 'client' | 'barber';
+  role: 'client' | 'barber' | 'admin';
   firstName: string;
   lastName: string;
   isOnboarded: boolean;

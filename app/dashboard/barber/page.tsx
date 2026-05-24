@@ -55,6 +55,7 @@ export default function BarberDashboardPage() {
   const [now, setNow] = useState(new Date());
   const [recentNotifs, setRecentNotifs] = useState<(Notification & { id: string })[]>([]);
   const [bookings, setBookings] = useState<(Booking & { id: string })[]>([]);
+  const [myAppointments, setMyAppointments] = useState<any[]>([]);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [blockFrom, setBlockFrom] = useState('');
   const [blockTo, setBlockTo] = useState('');
@@ -112,6 +113,22 @@ export default function BarberDashboardPage() {
       setBookings(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Booking & { id: string })));
     });
     return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Bookings the barber made AS A CLIENT (booking another barber).
+  // Requires composite index: clientId ASC + status ASC + date ASC.
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(
+      collection(db, 'bookings'),
+      where('clientId', '==', user.uid),
+      where('status', 'in', ['pending', 'confirmed']),
+      orderBy('date', 'asc')
+    );
+    const unsub = onSnapshot(q, snap => {
+      setMyAppointments(snap.docs.map(d => ({ id: d.id, ...d.data() } as any)));
+    });
+    return () => unsub();
   }, [user?.uid]);
 
   useEffect(() => {
@@ -596,6 +613,103 @@ export default function BarberDashboardPage() {
           </div>
         );
       })()}
+
+      {/* My Appointments — bookings the barber made as a client */}
+      {myAppointments.length > 0 && (
+        <div style={{
+          background: '#111',
+          border: '1px solid #1e1e1e',
+          borderRadius: '16px',
+          padding: '20px',
+          marginBottom: '24px'
+        }}>
+          <div style={{
+            fontSize: '13px',
+            fontWeight: 900,
+            color: '#fff',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            ✂️ My Appointments
+            <span style={{
+              background: '#F5C51822',
+              color: '#F5C518',
+              fontSize: '10px',
+              fontWeight: 800,
+              padding: '2px 8px',
+              borderRadius: '99px'
+            }}>
+              {myAppointments.length}
+            </span>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px'
+          }}>
+            {myAppointments.map(booking => (
+              <div
+                key={booking.id}
+                style={{
+                  background: '#0d0d0d',
+                  border: '1px solid #1a1a1a',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}
+              >
+                <div>
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    color: '#fff',
+                    marginBottom: '4px'
+                  }}>
+                    {booking.barberName || 'Your barber'}
+                  </div>
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#555'
+                  }}>
+                    {booking.date} · {booking.startTime}
+                  </div>
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  padding: '4px 10px',
+                  borderRadius: '99px',
+                  background: booking.status === 'confirmed' ? '#0f2010' : '#1a1400',
+                  color: booking.status === 'confirmed' ? '#22C55E' : '#F5C518'
+                }}>
+                  {booking.status === 'confirmed' ? 'Confirmed ✓' : 'Pending'}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Link
+            href="/dashboard/client"
+            style={{
+              display: 'block',
+              textAlign: 'center',
+              fontSize: '11px',
+              color: '#555',
+              textDecoration: 'none',
+              fontWeight: 800,
+              marginTop: '12px'
+            }}
+          >
+            View full booking history →
+          </Link>
+        </div>
+      )}
 
       {/* Today's schedule timeline */}
       <ErrorBoundary section="today's schedule">

@@ -222,6 +222,14 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
               <span className="absolute w-[18px] h-[18px] left-[3px] top-[3px] bg-white rounded-full transition-transform peer-checked:translate-x-5 peer-checked:bg-[#0a0a0a]" />
             </label>
           </div>
+
+          <Link
+            href="/dashboard/client"
+            className="block px-2 py-2 text-[11px] font-bold text-[#555] hover:text-[#888] transition-colors"
+          >
+            📅 My Appointments
+            <div className="text-[10px] text-[#444] font-normal mt-0.5">Booked as client →</div>
+          </Link>
         </div>
       </div>
 

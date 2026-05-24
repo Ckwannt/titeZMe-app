@@ -298,7 +298,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   const handleBooking = (serviceId?: string) => {
     if (!user) { router.push(`/login?redirect=/barber/${barberId}`); return; }
     if (!appUser?.role) { toast.error('Please log in to book'); return; }
-    if ((appUser?.role as string) === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
+    if (appUser?.role === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
     if (appUser?.uid === barberId) { toast.error('You cannot book yourself'); return; }
     if (!appUser?.isOnboarded) {
       router.push(appUser?.role === 'barber' ? '/onboarding/barber' : '/onboarding/client');
@@ -312,7 +312,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
   const handleToggleFav = async () => {
     if (!user) { router.push('/login'); return; }
-    if ((appUser?.role as string) === 'admin') { toast.error('Admin accounts cannot save barbers'); return; }
+    if (appUser?.role === 'admin') { toast.error('Admin accounts cannot save barbers'); return; }
     // Optimistic update — flip immediately
     const wasAlreadyFav = isFav;
     setOptimisticFav(!wasAlreadyFav);

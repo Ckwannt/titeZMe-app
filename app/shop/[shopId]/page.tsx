@@ -249,7 +249,7 @@ export default function ShopProfilePage() {
   const handleServiceBook = (serviceId: string) => {
     if (!user) { router.push(`/login?redirect=/shop/${shopId}`); return; }
     if (!appUser?.role) { toast.error('Please log in to book'); return; }
-    if ((appUser?.role as string) === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
+    if (appUser?.role === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
     if (!appUser?.isOnboarded) {
       router.push(appUser?.role === 'barber' ? '/onboarding/barber' : '/onboarding/client');
       return;
@@ -263,7 +263,7 @@ export default function ShopProfilePage() {
     e.preventDefault();
     if (!user) { router.push(`/login?redirect=/shop/${shopId}`); return; }
     if (!appUser?.role) { toast.error('Please log in to book'); return; }
-    if ((appUser?.role as string) === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
+    if (appUser?.role === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
     if (!appUser?.isOnboarded) {
       router.push(appUser?.role === 'barber' ? '/onboarding/barber' : '/onboarding/client');
       return;
