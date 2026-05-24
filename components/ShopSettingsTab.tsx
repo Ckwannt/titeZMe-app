@@ -6,7 +6,16 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
-import Select from "react-select";
+import dynamic from 'next/dynamic';
+const Select = dynamic(
+  () => import('react-select'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-10 bg-white/5 rounded animate-pulse" />
+    )
+  }
+) as any;
 // country-state-city loaded dynamically to avoid bundling 1.8 MB on initial load
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -420,7 +429,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
             <Select 
               options={countryOptions} 
               value={selectedCountry}
-              onChange={(option) => {
+              onChange={(option: any) => {
                 setSelectedCountry(option);
                 setSelectedCityOption(null);
               }}

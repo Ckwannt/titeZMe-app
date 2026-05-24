@@ -7,7 +7,16 @@ import { db, storage, auth } from '@/lib/firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
-import Select from "react-select";
+import dynamic from 'next/dynamic';
+const Select = dynamic(
+  () => import('react-select'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-10 bg-white/5 rounded animate-pulse" />
+    )
+  }
+) as any;
 // country-state-city and iso-639-1 loaded dynamically to avoid bundling ~2 MB on initial load
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
@@ -447,7 +456,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
             <Select 
               options={countryOptions} 
               value={selectedCountry}
-              onChange={(option) => {
+              onChange={(option: any) => {
                 setSelectedCountry(option);
                 setSelectedCityOption(null);
               }}
