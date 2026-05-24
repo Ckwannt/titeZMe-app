@@ -82,7 +82,7 @@ export default function ClientSettings() {
   }, [appUser]);
 
   useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
-  useEffect(() => { import('iso-639-1').then(m => setIso6391(m.default)); }, []);
+  useEffect(() => { import('iso-639-1').then(m => setIso6391(m.default || m)); }, []);
 
   const countryOptions = useMemo(() => {
     if (!csc) return [];
