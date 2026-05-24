@@ -182,7 +182,10 @@ service cloud.firestore {
           )
         );
 
-      allow delete: if isAdmin();
+      allow delete: if (
+        (isSignedIn() && request.auth.uid == userId)
+        || isAdmin()
+      );
     }
 
     // Barber Profiles
@@ -193,16 +196,36 @@ service cloud.firestore {
         && request.auth.uid == incoming().userId
         && isValidBarberProfile(incoming());
 
-      allow update: if isAdmin()
-        || (isSignedIn()
+      allow update: if (
+        isAdmin()
+        || (
+          isSignedIn()
           && (existing().get('barberCode', '') == '' || incoming().get('barberCode', '') == existing().get('barberCode', ''))
           && (
             (request.auth.uid == existing().userId && isValidBarberProfile(incoming()) && incoming().userId == existing().userId)
             ||
             (incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalCuts']) && isValidBarberProfile(incoming()))
-          ));
+          )
+        )
+        // Shop owner setting a former team member solo during shop deletion.
+        // Limited to (shopId, isSolo) and only when the new shopId is null
+        // and the existing shopId is the shop the requester owns.
+        || (
+          isSignedIn()
+          && existing().shopId != null
+          && existing().shopId is string
+          && exists(/databases/$(database)/documents/barbershops/$(existing().shopId))
+          && request.auth.uid == get(/databases/$(database)/documents/barbershops/$(existing().shopId)).data.ownerId
+          && incoming().shopId == null
+          && incoming().isSolo == true
+          && incoming().diff(existing()).affectedKeys().hasOnly(['shopId', 'isSolo'])
+        )
+      );
 
-      allow delete: if isAdmin();
+      allow delete: if (
+        (isSignedIn() && request.auth.uid == profileId)
+        || isAdmin()
+      );
     }
 
     // Schedules
@@ -215,6 +238,13 @@ service cloud.firestore {
         && request.auth.uid == existing().userId
         && isValidSchedule(incoming())
         && incoming().userId == existing().userId;
+      // Delete allowed by the owning user (for account deletion) or admin.
+      // Schedule doc IDs are `{uid}_shard_0`, so we check the stored userId
+      // field on the doc itself rather than parsing the document ID.
+      allow delete: if (
+        (isSignedIn() && resource.data.userId == request.auth.uid)
+        || isAdmin()
+      );
     }
 
     // Barbershops — ONLY SECTION CHANGED FROM ORIGINAL
@@ -227,13 +257,28 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.auth.uid == incoming().ownerId;
 
-      allow update: if isAdmin()
-        || (isSignedIn()
+      allow update: if (
+        isAdmin()
+        || (
+          isSignedIn()
           && request.auth.uid == existing().ownerId
-          && incoming().ownerId == existing().ownerId);
+          && incoming().ownerId == existing().ownerId
+        )
+        // Team barber removing themselves from the shop's `barbers` array
+        // during their own account deletion. Limited to the barbers field;
+        // requester must be in the current list and absent from the new one.
+        || (
+          isSignedIn()
+          && (request.auth.uid in existing().get('barbers', []))
+          && !(request.auth.uid in incoming().get('barbers', []))
+          && incoming().diff(existing()).affectedKeys().hasOnly(['barbers'])
+        )
+      );
 
-      allow delete: if isAdmin()
-        || (isSignedIn() && request.auth.uid == existing().ownerId);
+      allow delete: if (
+        isAdmin()
+        || (isSignedIn() && request.auth.uid == existing().ownerId)
+      );
     }
 
     // Services
@@ -317,24 +362,88 @@ service cloud.firestore {
 
       // Update: client can cancel their own booking; barber can accept/complete/cancel.
       // Admin can update anything. completedAt is allowed in the barber path.
-      allow update: if isSignedIn()
-        && isValidBooking(incoming())
-        && (
-          (request.auth.uid == existing().clientId
-           && incoming().status in ['cancelled_by_client']
-           && incoming().diff(existing()).affectedKeys()
-              .hasOnly(['status', 'updatedAt'])
+      // Account-deletion clauses skip isValidBooking() because they only
+      // touch a couple of fields (status/cancellationReason or id/name) and
+      // do not need to re-validate the whole document shape.
+      allow update: if (
+        (
+          isSignedIn()
+          && isValidBooking(incoming())
+          && (
+            (
+              request.auth.uid == existing().clientId
+              && (incoming().status in ['cancelled_by_client'])
+              && incoming().diff(existing()).affectedKeys()
+                 .hasOnly(['status', 'updatedAt'])
+            )
+            ||
+            (
+              request.auth.uid == existing().barberId
+              && (incoming().status in ['confirmed', 'completed', 'cancelled', 'cancelled_by_barber'])
+              && incoming().diff(existing()).affectedKeys()
+                 .hasOnly(['status', 'updatedAt', 'completedAt'])
+            )
           )
-          ||
-          (request.auth.uid == existing().barberId
-           && incoming().status in
-              ['confirmed', 'completed', 'cancelled', 'cancelled_by_barber']
-           && incoming().diff(existing()).affectedKeys()
-              .hasOnly(['status', 'updatedAt', 'completedAt'])
-          )
-          ||
-          isAdmin()
-        );
+        )
+        // Account deletion — client cancels their future booking with a reason
+        || (
+          isSignedIn()
+          && request.auth.uid == existing().clientId
+          && incoming().status == 'cancelled_by_client'
+          && incoming().diff(existing()).affectedKeys()
+             .hasOnly(['status', 'updatedAt', 'cancellationReason'])
+        )
+        // Account deletion — client anonymizes their past booking
+        || (
+          isSignedIn()
+          && request.auth.uid == existing().clientId
+          && incoming().clientId == 'deleted_user'
+          && incoming().clientName == 'Anonymous'
+          && incoming().diff(existing()).affectedKeys()
+             .hasOnly(['clientId', 'clientName'])
+        )
+        // Account deletion — barber cancels their future booking with a reason
+        || (
+          isSignedIn()
+          && request.auth.uid == existing().barberId
+          && incoming().status == 'cancelled_by_barber'
+          && incoming().diff(existing()).affectedKeys()
+             .hasOnly(['status', 'updatedAt', 'cancellationReason'])
+        )
+        // Account deletion — barber anonymizes their past booking
+        || (
+          isSignedIn()
+          && request.auth.uid == existing().barberId
+          && incoming().barberId == 'deleted_barber'
+          && incoming().barberName == 'Former Barber'
+          && incoming().diff(existing()).affectedKeys()
+             .hasOnly(['barberId', 'barberName'])
+        )
+        // Shop deletion — owner cancels future shop booking with a reason
+        || (
+          isSignedIn()
+          && existing().shopId != null
+          && existing().shopId is string
+          && exists(/databases/$(database)/documents/barbershops/$(existing().shopId))
+          && request.auth.uid == get(/databases/$(database)/documents/barbershops/$(existing().shopId)).data.ownerId
+          && incoming().status == 'cancelled'
+          && incoming().diff(existing()).affectedKeys()
+             .hasOnly(['status', 'updatedAt', 'cancellationReason'])
+        )
+        // Shop deletion — owner anonymizes past shop booking
+        || (
+          isSignedIn()
+          && existing().shopId != null
+          && existing().shopId is string
+          && exists(/databases/$(database)/documents/barbershops/$(existing().shopId))
+          && request.auth.uid == get(/databases/$(database)/documents/barbershops/$(existing().shopId)).data.ownerId
+          && incoming().shopId == 'deleted_shop'
+          && incoming().shopName == 'Deleted Shop'
+          && incoming().diff(existing()).affectedKeys()
+             .hasOnly(['shopId', 'shopName'])
+        )
+        || isAdmin()
+      );
 
       allow delete: if isAdmin();
     }
@@ -346,13 +455,32 @@ service cloud.firestore {
         && request.auth.uid == incoming().clientId
         && isValidReview(incoming())
         && exists(/databases/$(database)/documents/barberProfiles/$(incoming().providerId));
-      allow update: if isAdmin()
-        || (isSignedIn()
+      allow update: if (
+        isAdmin()
+        || (
+          isSignedIn()
           && request.auth.uid == existing().clientId
           && isValidReview(incoming())
           && incoming().clientId == existing().clientId
-          && incoming().providerId == existing().providerId);
-      allow delete: if isAdmin();
+          && incoming().providerId == existing().providerId
+        )
+        // Account deletion — client anonymizes their own past review.
+        // Skips isValidReview() because we only touch clientId/clientName.
+        || (
+          isSignedIn()
+          && request.auth.uid == existing().clientId
+          && incoming().clientId == 'deleted_user'
+          && incoming().clientName == 'Anonymous'
+          && incoming().diff(existing()).affectedKeys().hasOnly(['clientId', 'clientName'])
+        )
+      );
+      allow delete: if (
+        isAdmin()
+        // Barber deleting reviews they received (during account deletion).
+        || (isSignedIn() && resource.data.providerId == request.auth.uid)
+        // Client deleting their own review (e.g. retract, account deletion).
+        || (isSignedIn() && resource.data.clientId == request.auth.uid)
+      );
     }
 
     // Admin audit logs
@@ -399,6 +527,12 @@ service cloud.firestore {
         && isValidNotification(incoming())
         && incoming().userId == existing().userId
         && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+
+      // Delete allowed by the recipient (for account deletion / dismiss) or admin.
+      allow delete: if (
+        (isSignedIn() && resource.data.userId == request.auth.uid)
+        || isAdmin()
+      );
     }
   }
 }
