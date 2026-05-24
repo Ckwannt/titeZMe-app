@@ -6,8 +6,9 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import Select from 'react-select';
-// country-state-city and iso-639-1 loaded dynamically to avoid bundling ~2 MB on initial load
+// country-state-city loaded dynamically to avoid bundling ~2 MB on initial load
 import { userUpdateSchema } from "@/lib/schemas";
+import { getLanguageOptions } from '@/lib/languages';
 
 export default function ClientOnboarding() {
   const router = useRouter();
@@ -23,10 +24,10 @@ export default function ClientOnboarding() {
   const [phoneNumberInput, setPhoneNumberInput] = useState("");
   const [selectedLanguages, setSelectedLanguages] = useState<any>([]);
   const [csc, setCsc] = useState<any>(null);
-  const [iso6391, setIso6391] = useState<any>(null);
+  const [languageOptions, setLanguageOptions] = useState<{value: string; label: string}[]>([]);
 
   useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
-  useEffect(() => { import('iso-639-1').then(m => setIso6391(m.default)); }, []);
+  useEffect(() => { getLanguageOptions().then(setLanguageOptions); }, []);
 
   const countryOptions = useMemo(() => {
     if (!csc) return [];
@@ -38,10 +39,6 @@ export default function ClientOnboarding() {
     return csc.Country.getAllCountries().map((c: any) => ({ value: c.phonecode, label: `${c.flag} ${c.name} (+${c.phonecode})` }));
   }, [csc]);
 
-  const languageOptions = useMemo(() => {
-    if (!iso6391) return [];
-    return iso6391.getAllNames().map((name: string) => ({ value: name, label: name }));
-  }, [iso6391]);
 
   const selectStyles = {
     control: (base: any, state: any) => ({
