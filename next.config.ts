@@ -67,7 +67,7 @@ const nextConfig: NextConfig = {
     ],
   },
   output: 'standalone',
-  transpilePackages: ['motion'],
+  transpilePackages: ['motion', 'iso-639-1'],
   experimental: {
     optimizePackageImports: ['country-state-city', 'recharts'],
   },
