@@ -162,10 +162,25 @@ service cloud.firestore {
         && incoming().uid == request.auth.uid;
 
       allow update: if isSignedIn()
-        && request.auth.uid == userId
-        && isValidUser(incoming())
-        && incoming().uid == existing().uid
-        && (incoming().role == existing().role || incoming().role == 'barber');
+        && (
+          (
+            request.auth.uid == userId
+            && isValidUser(incoming())
+            && incoming().uid == existing().uid
+            && (
+              incoming().role == existing().role
+              || incoming().role == 'barber'
+            )
+          )
+          ||
+          (
+            incoming().diff(existing())
+              .affectedKeys()
+              .hasOnly(['unreadCount'])
+            && incoming().unreadCount is number
+            && incoming().unreadCount >= 0
+          )
+        );
 
       allow delete: if isAdmin();
     }
@@ -331,7 +346,12 @@ service cloud.firestore {
     // (preventing double booking) lives in the Firestore transaction itself.
     match /bookingLocks/{lockId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow create: if isSignedIn()
+        && lockId.matches('^[a-zA-Z0-9_\\-]+$')
+        && lockId.size() <= 128;
+      allow update: if isSignedIn()
+        && lockId.matches('^[a-zA-Z0-9_\\-]+$');
+      allow delete: if isSignedIn();
     }
 
     // Notifications
