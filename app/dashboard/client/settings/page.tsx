@@ -8,7 +8,16 @@ import { useRouter } from 'next/navigation';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
-import Select from 'react-select';
+import dynamic from 'next/dynamic';
+const Select = dynamic(
+  () => import('react-select'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-10 bg-white/5 rounded animate-pulse" />
+    )
+  }
+) as any;
 // country-state-city and iso-639-1 loaded dynamically to avoid bundling ~2 MB on initial load
 import { userUpdateSchema } from "@/lib/schemas";
 import { sanitizeText } from '@/lib/sanitize';
@@ -380,10 +389,10 @@ export default function ClientSettings() {
               <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LOCATION</label>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Select 
-                    options={countryOptions} 
+                  <Select
+                    options={countryOptions}
                     value={selectedCountry}
-                    onChange={(option) => {
+                    onChange={(option: any) => {
                       setSelectedCountry(option);
                       setSelectedCityOption(null);
                     }}
