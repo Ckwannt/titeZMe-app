@@ -216,9 +216,20 @@ export default function BarberOnboarding() {
         } catch (e: any) { throw new Error(`Step 3: Service creation failed (${svc.name}) - ` + e.message); }
       }
 
-      // 4. User update
+      // 4. User update — write all profile-complete fields to the users doc.
+      //    Without this, RouteGuard's isProfileComplete() check fails on the
+      //    users doc (which is missing phone/city/country) and the barber
+      //    loops back into onboarding forever.
       try {
-        await updateDoc(userRef, userUpdateSchema.parse({ isOnboarded: true }));
+        await updateDoc(userRef, userUpdateSchema.parse({
+          isOnboarded: true,
+          firstName: appUser?.firstName || '',
+          lastName: appUser?.lastName || '',
+          phone: phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null,
+          phoneCountryCode: phoneCode?.value || null,
+          city: selectedCityOption?.value || 'Unknown',
+          country: selectedCountry?.value || 'Unknown',
+        }));
       } catch(e: any) { throw new Error("Step 4: User confirmation flag failed - " + e.message); }
 
       // await batch.commit(); // Batch replaced to help debug

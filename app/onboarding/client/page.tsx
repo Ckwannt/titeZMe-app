@@ -18,6 +18,11 @@ export default function ClientOnboarding() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // firstName / lastName are editable so users coming in via Google with no
+  // displayName aren't permanently stuck in the onboarding loop.
+  const [firstName, setFirstName] = useState(appUser?.firstName || '');
+  const [lastName, setLastName] = useState(appUser?.lastName || '');
+
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
   const [phoneCode, setPhoneCode] = useState<any>(null);
@@ -25,6 +30,12 @@ export default function ClientOnboarding() {
   const [selectedLanguages, setSelectedLanguages] = useState<any>([]);
   const [csc, setCsc] = useState<any>(null);
   const [languageOptions, setLanguageOptions] = useState<{value: string; label: string}[]>([]);
+
+  // Pre-fill names once appUser resolves (initial useState fires before context loads)
+  useEffect(() => {
+    if (appUser?.firstName) setFirstName(appUser.firstName);
+    if (appUser?.lastName) setLastName(appUser.lastName);
+  }, [appUser?.firstName, appUser?.lastName]);
 
   useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
   useEffect(() => { getLanguageOptions().then(setLanguageOptions); }, []);
@@ -106,7 +117,14 @@ export default function ClientOnboarding() {
     e.preventDefault();
     setSubmitAttempted(true);
     
-    if (!phoneCode || !phoneNumberInput || !selectedCountry || !selectedCityOption) {
+    if (
+      !firstName.trim() ||
+      !lastName.trim() ||
+      !phoneCode ||
+      !phoneNumberInput ||
+      !selectedCountry ||
+      !selectedCityOption
+    ) {
       return;
     }
 
@@ -117,6 +135,8 @@ export default function ClientOnboarding() {
     try {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, userUpdateSchema.parse({
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
               phone: `+${phoneCode.value} ${phoneNumberInput}`,
               phoneCountryCode: phoneCode.value,
               country: selectedCountry.value,
@@ -148,16 +168,54 @@ export default function ClientOnboarding() {
       <form onSubmit={handleSubmit} className="animate-fadeUp flex flex-col gap-5">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">FIRST NAME</label>
-            <div className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-[#888] text-sm cursor-not-allowed">
-              {appUser?.firstName || "—"}
-            </div>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">FIRST NAME <span className="text-brand-red">*</span></label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={e => setFirstName(e.target.value)}
+              placeholder="First name"
+              maxLength={100}
+              style={{
+                background: '#141414',
+                border: `1px solid ${submitAttempted && !firstName.trim() ? '#EF4444' : '#2a2a2a'}`,
+                borderRadius: '10px',
+                padding: '12px 16px',
+                color: '#fff',
+                fontSize: '16px',
+                fontFamily: 'Nunito, sans-serif',
+                outline: 'none',
+                width: '100%',
+                boxSizing: 'border-box',
+              }}
+            />
+            {submitAttempted && !firstName.trim() && (
+              <span className="text-brand-red text-xs mt-1 block">Required</span>
+            )}
           </div>
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LAST NAME</label>
-            <div className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-[#888] text-sm cursor-not-allowed">
-              {appUser?.lastName || "—"}
-            </div>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LAST NAME <span className="text-brand-red">*</span></label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={e => setLastName(e.target.value)}
+              placeholder="Last name"
+              maxLength={100}
+              style={{
+                background: '#141414',
+                border: `1px solid ${submitAttempted && !lastName.trim() ? '#EF4444' : '#2a2a2a'}`,
+                borderRadius: '10px',
+                padding: '12px 16px',
+                color: '#fff',
+                fontSize: '16px',
+                fontFamily: 'Nunito, sans-serif',
+                outline: 'none',
+                width: '100%',
+                boxSizing: 'border-box',
+              }}
+            />
+            {submitAttempted && !lastName.trim() && (
+              <span className="text-brand-red text-xs mt-1 block">Required</span>
+            )}
           </div>
         </div>
 
