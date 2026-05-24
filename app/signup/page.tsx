@@ -147,13 +147,13 @@ export default function SignupPage() {
           firstName: user.displayName?.split(' ')[0] || '',
           lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
           profilePhotoUrl: user.photoURL || '',
-          role: 'client',
+          role: role,
           isOnboarded: false,
           createdAt: Date.now()
         });
       }
 
-      const userData = userDoc.exists() ? userDoc.data() : { role: 'client' };
+      const userData = userDoc.exists() ? userDoc.data() : { role: role };
 
       if (userData.role === 'admin') {
         router.replace('/admin');
@@ -252,6 +252,41 @@ export default function SignupPage() {
         <p className="text-brand-text-secondary text-[15px]">Create an account to get started.</p>
       </div>
 
+      {/* Role selection — must be visible BEFORE Google button so user's choice
+          is honored by handleGoogleSignIn (which reads the `role` state). */}
+      <div className="mb-3">
+        <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">I AM A...</label>
+        <div className="flex gap-2">
+          {[
+            { id: 'client', label: 'Client', icon: '👤' },
+            { id: 'barber', label: 'Barber', icon: '✂️' },
+          ].map(r => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => setRole(r.id as any)}
+              className={`flex-1 rounded-xl p-3 text-[13px] font-extrabold transition-all border-2 flex flex-col items-center gap-1 ${
+                role === r.id
+                  ? "bg-[#1a1500] border-brand-yellow text-brand-yellow"
+                  : "bg-[#141414] border-[#2a2a2a] text-[#888] hover:border-[#444] hover:text-white"
+              }`}
+            >
+              <div className="text-xl">{r.icon}</div>
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div style={{
+        fontSize: '11px',
+        color: '#444',
+        textAlign: 'center',
+        marginBottom: '16px',
+        fontFamily: 'Nunito, sans-serif',
+      }}>
+        Choose your role before signing up
+      </div>
+
       <button
         type="button"
         onClick={handleGoogleSignIn}
@@ -306,29 +341,6 @@ export default function SignupPage() {
           autoComplete="off"
           aria-hidden="true"
         />
-        <div>
-          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">I AM A...</label>
-          <div className="flex gap-2">
-            {[
-              { id: 'client', label: 'Client', icon: '👤' },
-              { id: 'barber', label: 'Barber', icon: '✂️' },
-            ].map(r => (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => setRole(r.id as any)}
-                className={`flex-1 rounded-xl p-3 text-[13px] font-extrabold transition-all border-2 flex flex-col items-center gap-1 ${
-                  role === r.id 
-                    ? "bg-[#1a1500] border-brand-yellow text-brand-yellow" 
-                    : "bg-[#141414] border-[#2a2a2a] text-[#888] hover:border-[#444] hover:text-white"
-                }`}
-              >
-                <div className="text-xl">{r.icon}</div>
-                {r.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="grid grid-cols-2 gap-3 mt-2">
           <div>

@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { PasswordInput } from '@/components/PasswordInput';
@@ -52,19 +52,12 @@ export default function LoginPage() {
       const userDoc = await getDoc(doc(db, 'users', user.uid));
 
       if (!userDoc.exists()) {
-        await setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid,
-          email: user.email,
-          firstName: user.displayName?.split(' ')[0] || '',
-          lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
-          profilePhotoUrl: user.photoURL || '',
-          role: 'client',
-          isOnboarded: false,
-          createdAt: Date.now()
-        });
+        await signOut(auth);
+        setErrorStatus('No titeZMe account found for this Google account. Please sign up first.');
+        return;
       }
 
-      const userData = userDoc.exists() ? userDoc.data() : { role: 'client' };
+      const userData = userDoc.data()!;
 
       const safeRedirect = redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('/admin');
       if (safeRedirect) {
@@ -300,8 +293,33 @@ export default function LoginPage() {
         </div>
 
         {errorStatus && (
-          <div className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-xl px-4 py-3 text-xs font-bold leading-tight mt-1">
+          <div style={{
+            background: '#1a0808',
+            border: '1px solid #EF444433',
+            borderRadius: '10px',
+            padding: '12px 14px',
+            fontSize: '12px',
+            color: '#EF4444',
+            lineHeight: 1.7,
+            fontFamily: 'Nunito, sans-serif',
+            marginTop: '4px',
+          }}>
             {errorStatus}
+            {errorStatus.includes('sign up') && (
+              <a
+                href="/signup"
+                style={{
+                  display: 'block',
+                  marginTop: '8px',
+                  color: '#F5C518',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  fontSize: '12px',
+                }}
+              >
+                Create an account →
+              </a>
+            )}
           </div>
         )}
 
