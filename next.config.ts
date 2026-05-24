@@ -69,7 +69,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   transpilePackages: ['motion'],
   experimental: {
-    optimizePackageImports: ['country-state-city', 'iso-639-1', 'recharts'],
+    optimizePackageImports: ['country-state-city', 'recharts'],
   },
   async headers() {
     return [
