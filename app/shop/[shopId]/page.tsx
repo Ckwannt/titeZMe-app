@@ -248,8 +248,12 @@ export default function ShopProfilePage() {
 
   const handleServiceBook = (serviceId: string) => {
     if (!user) { router.push(`/login?redirect=/shop/${shopId}`); return; }
-    if (appUser?.role !== 'client') { toast.error('You need a client account to book'); return; }
-    if (!appUser?.isOnboarded) { router.push('/onboarding/client'); return; }
+    if (!appUser?.role) { toast.error('Please log in to book'); return; }
+    if ((appUser?.role as string) === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
+    if (!appUser?.isOnboarded) {
+      router.push(appUser?.role === 'barber' ? '/onboarding/barber' : '/onboarding/client');
+      return;
+    }
     const firstAvailable = barbers.find(b => b.availableToday && b.isLive);
     if (!firstAvailable) { toast.error('No barbers available right now'); return; }
     router.push(`/book/${firstAvailable.id}?context=shop&serviceId=${serviceId}`);
@@ -258,8 +262,12 @@ export default function ShopProfilePage() {
   const handleBarberBook = (barberId: string, e: React.MouseEvent) => {
     e.preventDefault();
     if (!user) { router.push(`/login?redirect=/shop/${shopId}`); return; }
-    if (appUser?.role !== 'client') { toast.error('You need a client account to book'); return; }
-    if (!appUser?.isOnboarded) { router.push('/onboarding/client'); return; }
+    if (!appUser?.role) { toast.error('Please log in to book'); return; }
+    if ((appUser?.role as string) === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
+    if (!appUser?.isOnboarded) {
+      router.push(appUser?.role === 'barber' ? '/onboarding/barber' : '/onboarding/client');
+      return;
+    }
     router.push(`/book/${barberId}?context=shop`);
   };
 

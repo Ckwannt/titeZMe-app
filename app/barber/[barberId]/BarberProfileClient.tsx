@@ -297,8 +297,13 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
   const handleBooking = (serviceId?: string) => {
     if (!user) { router.push(`/login?redirect=/barber/${barberId}`); return; }
-    if (appUser?.role !== 'client') { toast.error('You need a client account to book'); return; }
-    if (!appUser?.isOnboarded) { router.push('/onboarding/client'); return; }
+    if (!appUser?.role) { toast.error('Please log in to book'); return; }
+    if ((appUser?.role as string) === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
+    if (appUser?.uid === barberId) { toast.error('You cannot book yourself'); return; }
+    if (!appUser?.isOnboarded) {
+      router.push(appUser?.role === 'barber' ? '/onboarding/barber' : '/onboarding/client');
+      return;
+    }
     if (!profile?.isLive) { toast.error('This barber is not accepting bookings right now'); return; }
     const qs = new URLSearchParams({ context: bookingContext });
     if (serviceId) qs.set('serviceId', serviceId);
@@ -307,7 +312,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
   const handleToggleFav = async () => {
     if (!user) { router.push('/login'); return; }
-    if (appUser?.role !== 'client') { toast.error('Only clients can save barbers'); return; }
+    if ((appUser?.role as string) === 'admin') { toast.error('Admin accounts cannot save barbers'); return; }
     // Optimistic update — flip immediately
     const wasAlreadyFav = isFav;
     setOptimisticFav(!wasAlreadyFav);
