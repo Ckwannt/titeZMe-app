@@ -166,33 +166,43 @@ export default function BarberOnboarding() {
 
       // 1. BarberProfile
       const profileRef = doc(db, 'barberProfiles', user.uid);
+      // [DEBUG] Build payload separately so we can log it BEFORE the write attempt.
+      const profileData = barberSchema.parse({
+        userId: user.uid,
+        bio: sanitizeText(bio || "Professional barber.", 2000),
+        city: selectedCityOption ? selectedCityOption.value : "Unknown",
+        country: selectedCountry ? selectedCountry.value : "Unknown",
+        phone: phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null,
+        languages: selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : ["English"],
+        vibes: vibe,
+        specialties: specialty,
+        clientele: clientele,
+        barberCode: uniqueCode,
+        titeZMeCut: {
+          durationMinutes: parseInt(titzData.duration || "45"),
+          price: parseFloat(titzData.price || "20")
+        },
+        isSolo: true,
+        shopId: null,
+        rating: 0,
+        totalCuts: 0,
+        reviewCount: 0,
+        photos: [],
+        isLive: false,
+        isOnboarded: true,
+        approvalStatus: 'pending'
+      });
+      console.log('STEP 1 ATTEMPTING WRITE:', JSON.stringify(profileData));
+      console.log('STEP 1 auth.uid:', user.uid, 'profileRef.path:', profileRef.path);
       try {
-        await setDoc(profileRef, barberSchema.parse({
-                  userId: user.uid,
-                  bio: sanitizeText(bio || "Professional barber.", 2000),
-                  city: selectedCityOption ? selectedCityOption.value : "Unknown",
-                  country: selectedCountry ? selectedCountry.value : "Unknown",
-                  phone: phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null,
-                  languages: selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : ["English"],
-                  vibes: vibe,
-                  specialties: specialty,
-                  clientele: clientele,
-                  barberCode: uniqueCode,
-                  titeZMeCut: {
-                    durationMinutes: parseInt(titzData.duration || "45"),
-                    price: parseFloat(titzData.price || "20")
-                  },
-                  isSolo: true,
-                  shopId: null,
-                  rating: 0,
-                  totalCuts: 0,
-                  reviewCount: 0,
-                  photos: [],
-                  isLive: false,
-                  isOnboarded: true,
-                  approvalStatus: 'pending'
-                }));
-      } catch (e: any) { throw new Error("Step 1: Profile creation failed - " + e.message); }
+        await setDoc(profileRef, profileData);
+      } catch (e: any) {
+        console.error('STEP 1 FULL ERROR:', e);
+        console.error('STEP 1 ERROR CODE:', e?.code);
+        console.error('STEP 1 ERROR MESSAGE:', e?.message);
+        console.error('STEP 1 ERROR DETAILS:', JSON.stringify(e, Object.getOwnPropertyNames(e)));
+        throw new Error("Step 1: Profile creation failed - " + e.message);
+      }
 
       // 2. Schedule
       const scheduleRef = doc(db, 'schedules', `${user.uid}_shard_0`);
