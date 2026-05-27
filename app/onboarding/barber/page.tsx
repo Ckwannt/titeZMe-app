@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from 'next/link';
 
 import { useRouter } from "next/navigation";
-import { doc, collection, setDoc, updateDoc, query, where, getDocs } from "firebase/firestore";
+import { doc, collection, setDoc, updateDoc, query, where, getDocs, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import Select from "react-select";
@@ -140,32 +140,41 @@ export default function BarberOnboarding() {
     setIsSubmitting(true);
     setErrorMsg('');
     try {
+      const profileRef = doc(db, 'barberProfiles', user.uid);
+      const existingProfileSnap = await getDoc(profileRef);
+      const existingProfile = existingProfileSnap.exists()
+        ? existingProfileSnap.data() : null;
+      const existingBarberCode =
+        existingProfile?.barberCode ?? null;
+      const existingApprovalStatus =
+        existingProfile?.approvalStatus ?? 'pending';
+
       // 0. Data Integrity Fix
       const userRef = doc(db, 'users', user.uid);
       try {
-        await setDoc(userRef, userUpdateSchema.parse({ 
-                  createdAt: Date.now(), 
+        await setDoc(userRef, userUpdateSchema.parse({
                   role: 'barber'
                 }), { merge: true });
       } catch (e: any) { 
         throw new Error("Step 0: Data Integrity Setup failed - " + e.message); 
       }
 
-      // Generate Unique Barber Code
-      let uniqueCode = '';
-      let isUnique = false;
-      while (!isUnique) {
-        const randomString = Math.random().toString(36).substring(2, 8).toUpperCase();
-        uniqueCode = `TZB-${randomString}`;
-        const q = query(collection(db, 'barberProfiles'), where('barberCode', '==', uniqueCode));
-        const qs = await getDocs(q);
-        if (qs.empty) {
-          isUnique = true;
+      // Generate Unique Barber Code (reuse existing if already set)
+      let uniqueCode = existingBarberCode;
+      if (!uniqueCode) {
+        let isUnique = false;
+        while (!isUnique) {
+          const randomString = Math.random().toString(36).substring(2, 8).toUpperCase();
+          uniqueCode = `TZB-${randomString}`;
+          const q = query(collection(db, 'barberProfiles'), where('barberCode', '==', uniqueCode));
+          const qs = await getDocs(q);
+          if (qs.empty) {
+            isUnique = true;
+          }
         }
       }
 
       // 1. BarberProfile
-      const profileRef = doc(db, 'barberProfiles', user.uid);
       // [DEBUG] Build payload separately so we can log it BEFORE the write attempt.
       const profileData = barberSchema.parse({
         userId: user.uid,
@@ -195,7 +204,11 @@ export default function BarberOnboarding() {
       console.log('STEP 1 ATTEMPTING WRITE:', JSON.stringify(profileData));
       console.log('STEP 1 auth.uid:', user.uid, 'profileRef.path:', profileRef.path);
       try {
-        await setDoc(profileRef, profileData);
+        await setDoc(
+          profileRef,
+          { ...profileData, approvalStatus: existingApprovalStatus },
+          { merge: true }
+        );
       } catch (e: any) {
         console.error('STEP 1 FULL ERROR:', e);
         console.error('STEP 1 ERROR CODE:', e?.code);
@@ -206,36 +219,45 @@ export default function BarberOnboarding() {
 
       // 2. Schedule
       const scheduleRef = doc(db, 'schedules', `${user.uid}_shard_0`);
-      try {
-        await setDoc(scheduleRef, scheduleSchema.parse({
-                  userId: user.uid,
-                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Madrid',
-                  weeklyHours: {
-                    days: [], // Closed on all days by default
-                    opensAt: "09:00",
-                    closesAt: "18:00",
-                    lunchBreak: true,
-                    slotDuration: 30,
-                    cleanupBuffer: 0
-                  },
-                  blockedDates: []
-                }));
-      } catch (e: any) { throw new Error("Step 2: Schedule creation failed - " + e.message); }
+      const existingScheduleSnap = await getDoc(scheduleRef);
+      if (!existingScheduleSnap.exists()) {
+        try {
+          await setDoc(scheduleRef, scheduleSchema.parse({
+                    userId: user.uid,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Madrid',
+                    weeklyHours: {
+                      days: [], // Closed on all days by default
+                      opensAt: "09:00",
+                      closesAt: "18:00",
+                      lunchBreak: true,
+                      slotDuration: 30,
+                      cleanupBuffer: 0
+                    },
+                    blockedDates: []
+                  }));
+        } catch (e: any) { throw new Error("Step 2: Schedule creation failed - " + e.message); }
+      }
 
       // 3. Services
-      for (const svc of servicesData) {
-        if (!svc.name) continue;
-        const newServiceRef = doc(collection(db, 'services'));
-        try {
-          await setDoc(newServiceRef, {
-            providerId: user.uid,
-            providerType: 'barber',
-            name: sanitizeText(svc.name, 100),
-            duration: parseInt((svc as any).duration || (svc as any).dur || "30"),
-            price: parseFloat(svc.price || "0"),
-            isActive: true
-          });
-        } catch (e: any) { throw new Error(`Step 3: Service creation failed (${svc.name}) - ` + e.message); }
+      const existingServicesSnap = await getDocs(
+        query(collection(db, 'services'),
+        where('providerId', '==', user.uid))
+      );
+      if (existingServicesSnap.empty) {
+        for (const svc of servicesData) {
+          if (!svc.name) continue;
+          const newServiceRef = doc(collection(db, 'services'));
+          try {
+            await setDoc(newServiceRef, {
+              providerId: user.uid,
+              providerType: 'barber',
+              name: sanitizeText(svc.name, 100),
+              duration: parseInt((svc as any).duration || (svc as any).dur || "30"),
+              price: parseFloat(svc.price || "0"),
+              isActive: true
+            });
+          } catch (e: any) { throw new Error(`Step 3: Service creation failed (${svc.name}) - ` + e.message); }
+        }
       }
 
       // 4. User update — write all profile-complete fields to the users doc.
