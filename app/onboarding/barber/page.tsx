@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from 'next/link';
 
 import { useRouter } from "next/navigation";
-import { doc, collection, setDoc, updateDoc, query, where, getDocs } from "firebase/firestore";
+import { doc, collection, setDoc, updateDoc, query, where, getDocs, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import Select from "react-select";
@@ -57,6 +57,27 @@ export default function BarberOnboarding() {
     if (appUser?.lastName && !lastName) setLastName(appUser.lastName);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appUser?.firstName, appUser?.lastName]);
+
+  // Guard: if the barberProfile already exists and is fully onboarded,
+  // skip onboarding and send straight to the dashboard. This prevents
+  // a re-onboarding loop when the users doc is missing phone/city/country
+  // but the barberProfile is already complete.
+  useEffect(() => {
+    if (!appUser) return;
+    if (appUser.role !== 'barber') return;
+
+    const checkExisting = async () => {
+      const profileRef = doc(db, 'barberProfiles', appUser.uid);
+      const snap = await getDoc(profileRef);
+      if (snap.exists() && snap.data().isOnboarded === true) {
+        // Profile already complete — send to dashboard, skip onboarding
+        router.replace('/dashboard/barber');
+      }
+    };
+
+    checkExisting();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appUser]);
 
   const toggleVibe = (v: string) => setVibe(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]);
   const toggleSpec = (s: string) => setSpecialty(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);

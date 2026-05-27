@@ -113,7 +113,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
               }
             }
-            
+
+            // Heal: if users doc is missing phone/city/country,
+            // copy them from the barberProfile so isProfileComplete()
+            // stops returning false for a fully-onboarded barber.
+            if (
+              userData.role === 'barber' &&
+              userData.isOnboarded === true &&
+              (!userData.phone?.trim() || !userData.city?.trim() || !userData.country?.trim())
+            ) {
+              const profileRef = doc(db, 'barberProfiles', firebaseUser.uid);
+              const profileSnap = await getDoc(profileRef);
+              if (profileSnap.exists()) {
+                const p = profileSnap.data();
+                const updates: Record<string, string> = {};
+                if (!userData.phone?.trim() && p.phone) updates.phone = p.phone;
+                if (!userData.city?.trim() && p.city)  updates.city  = p.city;
+                if (!userData.country?.trim() && p.country) updates.country = p.country;
+                if (Object.keys(updates).length > 0) {
+                  try {
+                    const { updateDoc } = await import('firebase/firestore');
+                    await updateDoc(docRef, updates);
+                    Object.assign(userData, updates);
+                    console.log("Healing Incomplete State: Copied phone/city/country from barberProfile to users doc.", updates);
+                  } catch (e) {
+                    console.error("Failed to heal phone/city/country from barberProfile", e);
+                  }
+                }
+              }
+            }
+
             setAppUser(userData);
           } else {
             console.warn('User document not found in Firestore after retry');
