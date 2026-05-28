@@ -6,7 +6,7 @@ import {
   onDocumentUpdated,
   onDocumentCreated,
 } from 'firebase-functions/v2/firestore';
-import { auth as authV1 } from 'firebase-functions/v1';
+import * as functionsV1 from 'firebase-functions/v1';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { setGlobalOptions } from 'firebase-functions/v2';
 
@@ -285,7 +285,11 @@ export const scheduledCleanup = onSchedule(
   }
 );
 
-export const onUserDeleted = authV1.user().onDelete(async (user) => {
+export const onUserDeleted = functionsV1
+  .region('europe-west2')
+  .auth
+  .user()
+  .onDelete(async (user) => {
     const uid = user.uid;
     const batch = db.batch();
 
