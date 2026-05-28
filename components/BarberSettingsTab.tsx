@@ -620,21 +620,79 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
             </div>
             <button
               onClick={async () => {
-                if (confirm('Are you sure you want to leave your shop?')) {
-                  try {
-                    const { writeBatch, doc } = await import('firebase/firestore');
-                    const batch = writeBatch(db);
-                    batch.update(doc(db, 'barberProfiles', user!.uid), {
-                      shopId: null,
-                      isSolo: true
+                if (!confirm(
+                  'Leave your shop? All your pending and ' +
+                  'confirmed shop bookings will be cancelled ' +
+                  'and clients will be notified.'
+                )) return;
+
+                try {
+                  const {
+                    writeBatch, doc, collection,
+                    query, where, getDocs, arrayRemove
+                  } = await import('firebase/firestore');
+
+                  const currentShopId = profile?.shopId;
+                  const now = Date.now();
+                  const batch = writeBatch(db);
+
+                  if (currentShopId) {
+                    // 1. Find active bookings for this barber
+                    const bookingsSnap = await getDocs(query(
+                      collection(db, 'bookings'),
+                      where('barberId', '==', user!.uid),
+                      where('status', 'in', ['pending', 'confirmed'])
+                    ));
+
+                    // Filter to shop bookings only (client-side)
+                    const shopBookings = bookingsSnap.docs.filter(
+                      d => d.data().shopId === currentShopId
+                    );
+
+                    // 2. Cancel each booking + notify client
+                    for (const bookingDoc of shopBookings) {
+                      batch.update(bookingDoc.ref, {
+                        status: 'cancelled_by_barber',
+                        updatedAt: now,
+                        cancellationReason: 'barber_left_shop',
+                      });
+                      batch.set(doc(collection(db, 'notifications')), {
+                        userId: bookingDoc.data().clientId,
+                        message: `Your booking on ${bookingDoc.data().date} at ${bookingDoc.data().startTime} was cancelled — your barber has left the shop.`,
+                        read: false,
+                        linkTo: '/dashboard/client',
+                        createdAt: now,
+                      });
+                    }
+
+                    // 3. Remove barber from shop's barbers array
+                    batch.update(
+                      doc(db, 'barbershops', currentShopId),
+                      { barbers: arrayRemove(user!.uid) }
+                    );
+
+                    // 4. Notify shop owner
+                    batch.set(doc(collection(db, 'notifications')), {
+                      userId: currentShopId,
+                      message: `A barber has left your shop. ${shopBookings.length} booking(s) were cancelled.`,
+                      read: false,
+                      linkTo: '/dashboard/shop',
+                      createdAt: now,
                     });
-                    await batch.commit();
-                    alert('You are now visible in barber search');
-                    // Force refresh or reload profile
-                    window.location.reload();
-                  } catch (e) {
-                    console.error('Failed to leave shop', e);
                   }
+
+                  // 5. Update barber profile
+                  batch.update(doc(db, 'barberProfiles', user!.uid), {
+                    shopId: null,
+                    isSolo: true,
+                  });
+
+                  await batch.commit();
+                  alert('You have left the shop.');
+                  window.location.reload();
+                } catch (e) {
+                  console.error('Failed to leave shop', e);
+                  alert('Something went wrong. Please try again.');
                 }
               }}
               className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#3b1a1a] transition-colors whitespace-nowrap"
