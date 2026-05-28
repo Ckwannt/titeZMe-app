@@ -82,27 +82,37 @@ export default function BookingsPage() {
         (b: any) => b.status === 'pending' && b.createdAt < Date.now() - TWO_HOURS
       );
       if (expiredPending.length > 0) {
+        let cancelledCount = 0;
         for (const booking of expiredPending) {
-          await safeFirestore(() =>
+          const result = await safeFirestore(() =>
             updateDoc(doc(db, 'bookings', booking.id), {
               status: 'cancelled',
               updatedAt: Date.now(),
               cancelReason: 'auto_expired',
             })
           );
-          await safeFirestore(() =>
-            addDoc(collection(db, 'notifications'), {
-              userId: booking.clientId,
-              message: `Your booking request on ${booking.date} at ${booking.startTime} expired because the barber didn't respond in time. Please book again.`,
-              read: false,
-              linkTo: '/dashboard/client',
-              createdAt: Date.now(),
-            })
-          );
-          updateDoc(doc(db, 'users', booking.clientId), { unreadCount: increment(1) }).catch(console.error);
-          await cleanupBookingLock(booking);
+          if (result !== null) {
+            // Only proceed with notification and cleanup
+            // if the booking update succeeded
+            await safeFirestore(() =>
+              addDoc(collection(db, 'notifications'), {
+                userId: booking.clientId,
+                message: `Your booking request on ${booking.date} at ${booking.startTime} expired because the barber didn't respond in time. Please book again.`,
+                read: false,
+                linkTo: '/dashboard/client',
+                createdAt: Date.now(),
+              })
+            );
+            updateDoc(doc(db, 'users', booking.clientId), { unreadCount: increment(1) }).catch(console.error);
+            await cleanupBookingLock(booking);
+            cancelledCount++;
+          }
         }
-        toast.info(`${expiredPending.length} expired booking request${expiredPending.length > 1 ? 's' : ''} were automatically cancelled.`);
+        if (cancelledCount > 0) {
+          toast.info(
+            `${cancelledCount} expired booking request${cancelledCount > 1 ? 's were' : ' was'} automatically cancelled.`
+          );
+        }
       }
     });
   }, [user?.uid]);
