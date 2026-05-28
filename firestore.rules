@@ -458,7 +458,10 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.auth.uid == incoming().clientId
         && isValidReview(incoming())
-        && exists(/databases/$(database)/documents/barberProfiles/$(incoming().providerId));
+        && exists(/databases/$(database)/documents/barberProfiles/$(incoming().providerId))
+        && exists(/databases/$(database)/documents/bookings/$(incoming().bookingId))
+        && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.clientId == request.auth.uid
+        && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.status == 'completed';
       allow update: if (
         isAdmin()
         || (
