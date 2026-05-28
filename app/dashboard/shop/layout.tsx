@@ -1,18 +1,34 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useQuery } from "@tanstack/react-query";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function ShopDashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, appUser } = useAuth();
+  const { user, appUser, loading } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
   const [toastMessage, setToastMessage] = useState('');
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    if (!appUser?.ownsShop) {
+      router.replace(
+        appUser?.role === 'client'
+          ? '/dashboard/client'
+          : '/dashboard/barber'
+      );
+    }
+  }, [user, appUser, loading, router]);
 
   const { data: shop } = useQuery({
     queryKey: ['shop', user?.uid],
