@@ -352,13 +352,16 @@ service cloud.firestore {
       // caused every booking creation to fail with permission-denied.
       allow create: if isSignedIn()
         && request.auth.uid == incoming().clientId
+        && request.auth.uid != incoming().barberId
         && incoming().status == 'pending'
         && incoming().paymentMethod == 'cash'
         && incoming().price is number
         && incoming().price >= 0
         && incoming().date is string
         && incoming().startTime is string
-        && incoming().barberId is string;
+        && incoming().barberId is string
+        && get(/databases/$(database)/documents/barberProfiles/$(incoming().barberId)).data.isLive == true
+        && get(/databases/$(database)/documents/barberProfiles/$(incoming().barberId)).data.approvalStatus == 'approved';
 
       // Update: client can cancel their own booking; barber can accept/complete/cancel.
       // Admin can update anything. completedAt is allowed in the barber path.
