@@ -63,7 +63,9 @@ export default function ClientDashboard() {
                   const u = bProfile.data();
                   b.barberName = `${u.firstName || ''} ${u.lastName || ''}`.trim();
                 }
-              } catch { /* non-critical */ }
+              } catch (e) {
+                console.error('Failed to enrich barber name:', e);
+              }
             }
             // Handle old (serviceId) and new (serviceNames) structures
             if (b.serviceNames && Array.isArray(b.serviceNames)) {
@@ -72,7 +74,9 @@ export default function ClientDashboard() {
               try {
                 const svc = await getDoc(doc(db, 'services', b.serviceId));
                 if (svc.exists()) b.serviceName = svc.data().name;
-              } catch { /* non-critical */ }
+              } catch (e) {
+                console.error('Failed to enrich service name:', e);
+              }
             }
             return b;
           })
