@@ -76,25 +76,7 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
          createdAt: Date.now()
       });
 
-      // 2. Update BarberProfile (Note: The Rules allow rating/reviewCount updates)
-      const pRef = doc(db, 'barberProfiles', booking.barberId);
-      const pSnap = await getDoc(pRef);
-      if (pSnap.exists()) {
-         const pData = pSnap.data();
-         const currentRating = pData.rating || 0;
-         const currentCount = pData.totalReviews || pData.reviewCount || 0;
-         const newCount = currentCount + 1;
-         const newRating = ((currentRating * currentCount) + rating) / newCount;
-         
-         const updateData: any = {
-           rating: newRating,
-           reviewCount: increment(1)
-         };
-         
-         await updateDoc(pRef, updateData);
-      }
-
-      // 3. Mark booking as reviewed so the dashboard shows "Reviewed ✓"
+      // 2. Mark booking as reviewed so the dashboard shows "Reviewed ✓"
       await updateDoc(doc(db, 'bookings', bookingId), { hasReview: true });
 
       // 4. Notify Barber
