@@ -4,91 +4,91 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
+import { algoliasearch } from 'algoliasearch';
 // country-state-city loaded dynamically to avoid bundling 1.8 MB on initial load
-import { getOpenStatus, getScheduleDocId } from '@/lib/schedule-utils';
 import { locationsMatch } from '@/lib/location-utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { BarberCard } from './page';
 
+const algoliaClient = algoliasearch(
+  process.env.NEXT_PUBLIC_ALGOLIA_APP_ID!,
+  process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY!
+);
+
+// ─── open status helper ───────────────────────────────────────────────────────
+
+function computeOpenStatus(
+  weeklyDays: string[],
+  opensAt: string,
+  closesAt: string
+) {
+  if (!weeklyDays || weeklyDays.length === 0) {
+    return {
+      isOpenNow:   false,
+      openLabel:   '',
+      openColor:   '',
+      hasSchedule: false,
+    };
+  }
+  const now = new Date();
+  const dayName = now.toLocaleDateString(
+    'en-US', { weekday: 'short' }
+  );
+  const currentTime = [
+    now.getHours().toString().padStart(2, '0'),
+    now.getMinutes().toString().padStart(2, '0'),
+  ].join(':');
+  const isOpenNow =
+    weeklyDays.includes(dayName) &&
+    currentTime >= (opensAt  || '00:00') &&
+    currentTime <= (closesAt || '23:59');
+  return {
+    isOpenNow,
+    openLabel:   isOpenNow ? 'Open now' : 'Closed',
+    openColor:   isOpenNow ? 'green'    : 'gray',
+    hasSchedule: true,
+  };
+}
+
 // ─── client-side data fetcher ─────────────────────────────────────────────────
 
 async function fetchBarbers(): Promise<BarberCard[]> {
-  const snap = await getDocs(query(
-    collection(db, 'barberProfiles'),
-    where('isLive', '==', true),
-    where('isSolo', '==', true),
-    where('approvalStatus', '==', 'approved'),
-  ));
-  const profiles = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-  if (profiles.length === 0) return [];
-
-  const ids: string[] = profiles.filter((p: any) => !p.isDeleted).map((p: any) => p.id);
-  const filteredProfiles = profiles.filter((p: any) => !p.isDeleted);
-  if (ids.length === 0) return [];
-
-  const [userSnaps, scheduleSnaps] = await Promise.all([
-    Promise.all(ids.map(id => getDoc(doc(db, 'users', id)))),
-    Promise.all(ids.map(id => getDoc(doc(db, 'schedules', getScheduleDocId(id))))),
-  ]);
-
-  const serviceChunkPromises: Promise<any>[] = [];
-  for (let i = 0; i < ids.length; i += 10) {
-    const chunk = ids.slice(i, i + 10);
-    serviceChunkPromises.push(getDocs(query(
-      collection(db, 'services'),
-      where('providerId', 'in', chunk),
-      where('providerType', '==', 'barber'),
-      where('isActive', '==', true),
-    )));
-  }
-  const serviceChunkResults = await Promise.all(serviceChunkPromises);
-  const servicesPriceMap = new Map<string, number[]>();
-  serviceChunkResults.forEach(snap => {
-    snap.docs.forEach((d: any) => {
-      const data = d.data();
-      const price = Number(data.price) || 0;
-      if (price > 0) {
-        const arr = servicesPriceMap.get(data.providerId) || [];
-        arr.push(price);
-        servicesPriceMap.set(data.providerId, arr);
-      }
-    });
+  const response = await algoliaClient.search({
+    requests: [{
+      indexName: 'barbers',
+      query:     '',
+      filters:
+        'isLive:true AND ' +
+        'approvalStatus:approved AND ' +
+        'isSolo:true',
+      hitsPerPage: 1000,
+    }],
   });
 
-  return filteredProfiles.map((p: any, i: number) => {
-    const user = userSnaps[i].exists() ? (userSnaps[i].data() as any) : {};
-    const sched = scheduleSnaps[i].exists() ? (scheduleSnaps[i].data() as any) : null;
-    const prices = servicesPriceMap.get(p.id) || [];
-    const city = p.city || user.city || '';
-    // barberProfiles stores country as ISO code (e.g. "ES") set during onboarding.
-    // users stores the same ISO code only after the barber updates Settings.
-    // Always prefer barberProfiles so newly-onboarded barbers appear in search.
-    const country = p.country || user.country || '';
-    const status = getOpenStatus(sched?.availableSlots, city, country, p.id);
+  const hits =
+    (response.results[0] as any).hits as any[];
 
-    return {
-      id: p.id,
-      profilePhotoUrl: p.profilePhotoUrl,
-      photoUrl: user.photoUrl,
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      country,
-      city,
-      street: '',
-      languages: p.languages || [],
-      vibes: p.vibes || p.vibe || [],
-      currency: p.currency,
-      barberCode: p.barberCode || '',
-      isOpenNow: status.isOpen,
-      openLabel: status.label,
-      openColor: status.color,
-      hasSchedule: sched !== null,
-      minPrice: prices.length > 0 ? Math.min(...prices) : null,
-    };
-  });
+  return hits.map((hit: any) => ({
+    id:             hit.objectID,
+    firstName:      hit.firstName      || '',
+    lastName:       hit.lastName       || '',
+    profilePhotoUrl: hit.photoUrl      || '',
+    photoUrl:       hit.photoUrl       || '',
+    city:           hit.city           || '',
+    country:        hit.country        || '',
+    languages:      hit.languages      || [],
+    vibes:          hit.vibes          || [],
+    currency:       hit.currency       || 'EUR',
+    barberCode:     hit.barberCode     || '',
+    street:         '',
+    minPrice:       hit.minPrice       || 0,
+    ...computeOpenStatus(
+      hit.weeklyDays || [],
+      hit.opensAt    || '09:00',
+      hit.closesAt   || '18:00'
+    ),
+  }));
 }
 
 const PER_PAGE = 12;
