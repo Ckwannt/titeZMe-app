@@ -11,6 +11,15 @@
       ]
     },
     {
+      "collectionGroup": "barberProfiles",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isLive",         "order": "ASCENDING" },
+        { "fieldPath": "isSolo",         "order": "ASCENDING" },
+        { "fieldPath": "approvalStatus", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "bookings",
       "queryScope": "COLLECTION",
       "fields": [
