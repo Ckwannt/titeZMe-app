@@ -25,7 +25,16 @@ export default function ClientDashboard() {
   useEffect(() => { document.title = 'My Bookings — titeZMe'; }, []);
 
   useEffect(() => {
-    if (!loading && (!user || appUser?.role !== 'client')) {
+    if (loading) return;
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    if (appUser?.role === 'barber') {
+      router.replace('/dashboard/barber');
+      return;
+    }
+    if (appUser?.role !== 'client') {
       router.replace('/login');
     }
   }, [user, appUser, loading, router]);
