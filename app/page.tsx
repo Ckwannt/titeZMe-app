@@ -84,7 +84,7 @@ async function fetchFeaturedBarbers() {
         ...p,
         firstName: user.firstName || '',
         lastName: user.lastName || '',
-        userCity: user.city || p.city || '',
+        userCity: p.city || user.city || '',
         photoUrl: p.profilePhotoUrl || user.photoUrl,
         minPrice: prices.length > 0 ? Math.min(...prices) : null,
         maxPrice: prices.length > 0 ? Math.max(...prices) : null,
