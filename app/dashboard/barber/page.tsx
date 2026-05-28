@@ -159,29 +159,6 @@ export default function BarberDashboardPage() {
       const batch = writeBatch(db);
       batch.update(doc(db, 'bookings', id), bookingUpdateSchema.parse({ status, updatedAt: timeNow }));
 
-      if (status === 'completed' && booking && booking.status !== 'completed' && user) {
-        batch.update(doc(db, 'barberProfiles', user.uid), {
-          totalCuts: increment(1)
-        });
-
-        if (profile?.shopId) {
-          batch.update(doc(db, 'barbershops', profile.shopId), {
-            totalBookings: increment(1)
-          });
-        }
-
-        const dateObj = new Date(booking.date || timeNow);
-        const yyyy = dateObj.getFullYear();
-        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const aggRef = doc(db, 'aggregations', `${user.uid}_${yyyy}_${mm}`);
-
-        batch.set(aggRef, {
-          totalCuts: increment(1),
-          totalRevenue: increment(Number(booking.price) || 0),
-          totalHours: increment((Number(booking.duration) || 30) / 60)
-        }, { merge: true });
-      }
-
       await batch.commit();
 
       // Clean up the booking lock slot so the time becomes bookable again
