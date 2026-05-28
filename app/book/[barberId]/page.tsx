@@ -175,6 +175,41 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
         return;
       }
 
+      // Cross-barber overlap check
+      // Catches: client books barber A at 14:00 for 60min
+      // then books barber B at 14:30 — the existing check
+      // misses this because barberId differs.
+      const clientDaySnap = await getDocs(query(
+        collection(db, 'bookings'),
+        where('clientId', '==', user.uid),
+        where('date',     '==', selectedDate),
+        where('status',   'in', ['pending', 'confirmed'])
+      ));
+
+      if (!clientDaySnap.empty) {
+        const reqStart = new Date(
+          `${selectedDate}T${selectedTime}`
+        ).getTime();
+        const reqEnd = reqStart + (totalDuration * 60 * 1000);
+
+        for (const b of clientDaySnap.docs) {
+          const bd = b.data();
+          const bStart = bd.appointmentTimestamp
+            || new Date(`${bd.date}T${bd.startTime}`).getTime();
+          const bEnd = bd.endTime
+            ? new Date(`${bd.date}T${bd.endTime}`).getTime()
+            : bStart + ((bd.totalDuration || 30) * 60 * 1000);
+
+          if (Math.max(reqStart, bStart) < Math.min(reqEnd, bEnd)) {
+            toast.error(
+              'You already have a booking that overlaps with this time slot.'
+            );
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
+
       const lockDocRef = doc(db, 'bookingLocks', `${barberId}_${selectedDate}`);
       const newBookingId = doc(collection(db, 'bookings')).id; 
 
