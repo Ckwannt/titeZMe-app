@@ -13,6 +13,7 @@ import {
   orderBy,
   limit,
   deleteDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
@@ -316,6 +317,43 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
           timestamp: Date.now(),
         }),
       ]);
+
+      // Notify clients with active bookings.
+      // Do NOT auto-cancel — suspension may be
+      // temporary. Clients are informed and can
+      // contact support or wait for reinstatement.
+      try {
+        const activeBookings = await getDocs(query(
+          collection(db, 'bookings'),
+          where('barberId', '==', id),
+          where('status', 'in', ['pending', 'confirmed'])
+        ));
+
+        if (!activeBookings.empty) {
+          const notifBatch = writeBatch(db);
+          const now = Date.now();
+
+          for (const bookingDoc of activeBookings.docs) {
+            notifBatch.set(
+              doc(collection(db, 'notifications')),
+              {
+                userId: bookingDoc.data().clientId,
+                message: `Your upcoming booking on ${bookingDoc.data().date} at ${bookingDoc.data().startTime} may be affected. The barber's account has been suspended. Please contact support.`,
+                read: false,
+                linkTo: '/dashboard/client',
+                createdAt: Date.now(),
+              }
+            );
+          }
+
+          await notifBatch.commit();
+        }
+      } catch (notifErr) {
+        // Notification failure must not roll back
+        // the suspension itself
+        console.error('Failed to notify clients:', notifErr);
+      }
+
       toast.success('Account suspended');
       await loadData();
     } catch (err) {
