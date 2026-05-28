@@ -16,10 +16,11 @@ export function isProfileComplete(user: Record<string, any>): boolean {
 
   if (!hasBasicFields) return false;
 
-  // Barbers who skipped onboarding get city="Unknown" by default.
-  // Treat that as incomplete so they're re-routed to onboarding.
+  // Barbers: isOnboarded flag on the users doc is the sole routing gate.
+  // phone/city/country live authoritatively on barberProfiles, not users,
+  // so we do not check them here for barbers.
   if (user.role === 'barber') {
-    if (BARBER_DEFAULTS.includes(user.city)) return false;
+    return user.isOnboarded === true;
   }
 
   return true;
