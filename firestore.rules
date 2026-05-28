@@ -314,7 +314,8 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && incoming().shopId is string
         && incoming().barberId is string
-        && incoming().status == 'pending';
+        && incoming().status == 'pending'
+        && incoming().shopId == request.auth.uid;
 
       allow update: if isSignedIn()
         && (
@@ -489,6 +490,14 @@ service cloud.firestore {
     // Admin audit logs
     match /adminLogs/{logId} {
       allow read, write: if isAdmin();
+    }
+
+    // Aggregations — written by Cloud Function (Admin SDK,
+    // bypasses rules). Public read needed for login page
+    // barber count display (aggregations/stats).
+    match /aggregations/{docId} {
+      allow read: if true;
+      allow write: if false;
     }
 
     // Feature requests (shop photos notify)
