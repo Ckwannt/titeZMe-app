@@ -1,86 +1,142 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import { algoliasearch } from 'algoliasearch';
 
 admin.initializeApp();
 
 const db = admin.firestore();
 
-// Helper to rebuild searchSnapshot for a barber
-async function updateBarberSearchSnapshot(barberId: string) {
-  const profileRef = db.collection("barberProfiles").doc(barberId);
-  const profileSnap = await profileRef.get();
-  
-  if (!profileSnap.exists) return;
+const algoliaClient = algoliasearch(
+  process.env.ALGOLIA_APP_ID || '',
+  process.env.ALGOLIA_ADMIN_KEY || ''
+);
+const ALGOLIA_INDEX = 'barbers';
 
+async function syncBarberToAlgolia(
+  barberId: string
+): Promise<void> {
+  const profileRef = db
+    .collection('barberProfiles')
+    .doc(barberId);
+  const profileSnap = await profileRef.get();
+  if (!profileSnap.exists) return;
   const profile = profileSnap.data() || {};
-  
-  // Get lowest price from services
-  const servicesSnap = await db.collection("services").where("providerId", "==", barberId).get();
-  let lowestPrice = Infinity;
-  servicesSnap.forEach(doc => {
-    const data = doc.data();
-    if (data.price !== undefined && data.price < lowestPrice) {
-      lowestPrice = data.price;
+
+  // Skip if barber is not live or not approved
+  if (
+    !profile.isLive ||
+    profile.approvalStatus !== 'approved'
+  ) {
+    // Remove from Algolia if they were
+    // previously live but are now offline
+    try {
+      await algoliaClient.deleteObject({
+        indexName: ALGOLIA_INDEX,
+        objectID: barberId,
+      });
+    } catch {
+      // Not in index — that's fine
+    }
+    return;
+  }
+
+  // Get name and photo from users doc
+  const userSnap = await db
+    .collection('users')
+    .doc(barberId)
+    .get();
+  const user = userSnap.exists
+    ? userSnap.data() || {}
+    : {};
+
+  // Get min price from services
+  const servicesSnap = await db
+    .collection('services')
+    .where('providerId', '==', barberId)
+    .get();
+  let minPrice = profile.titeZMeCut?.price || 0;
+  servicesSnap.forEach((doc) => {
+    const price = doc.data().price;
+    if (
+      typeof price === 'number' &&
+      (minPrice === 0 || price < minPrice)
+    ) {
+      minPrice = price;
     }
   });
 
-  // Also check titeZMeCut
-  if (profile.titeZMeCut && profile.titeZMeCut.price < lowestPrice) {
-    lowestPrice = profile.titeZMeCut.price;
-  }
+  // Get schedule for open hours
+  const schedSnap = await db
+    .collection('schedules')
+    .doc(`${barberId}_shard_0`)
+    .get();
+  const sched = schedSnap.exists
+    ? schedSnap.data() || {}
+    : {};
+  const weeklyDays: string[] =
+    sched.weeklyHours?.days || [];
+  const opensAt: string =
+    sched.weeklyHours?.opensAt || '09:00';
+  const closesAt: string =
+    sched.weeklyHours?.closesAt || '18:00';
 
-  if (lowestPrice === Infinity) lowestPrice = 0; // fallback
-
-  // Get open/close status from schedule
-  // Note: App shards schedules, so checking _shard_0
-  const schedSnap = await db.collection("schedules").doc(`${barberId}_shard_0`).get();
-  let isOpenToday = false;
-  if (schedSnap.exists) {
-    const sched = schedSnap.data() || {};
-    const days = sched.weeklyHours?.days || [];
-    const today = new Date().toLocaleDateString('en-US', {weekday: 'short'});
-    isOpenToday = days.includes(today);
-  }
-
-  const searchSnapshot = {
-    name: profile.name || (profile.firstName ? `${profile.firstName} ${profile.lastName}` : ""),
-    city: profile.location?.city || "",
-    country: profile.location?.country || "TN",
-    lowestPrice,
-    currency: "€",
-    rating: profile.rating || 0,
-    reviewCount: profile.totalReviews || profile.reviewCount || 0,
-    vibes: profile.vibes || [],
-    languages: profile.languages || ["EN"],
-    topSpecialties: (profile.specialties || []).slice(0, 3),
-    isLive: profile.isLive || false,
-    photos: profile.photos || [], 
-    isSolo: profile.isSolo !== undefined ? profile.isSolo : true,
-    isOpenToday
+  const record = {
+    objectID:       barberId,
+    firstName:      user.firstName || '',
+    lastName:       user.lastName  || '',
+    fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+    photoUrl:
+      profile.profilePhotoUrl ||
+      user.photoUrl            ||
+      '',
+    city:           profile.city     || '',
+    country:        profile.country  || '',
+    languages:      profile.languages  || [],
+    specialties:    profile.specialties || [],
+    vibes:          profile.vibes       || [],
+    rating:         profile.rating      || 0,
+    reviewCount:
+      profile.reviewCount ||
+      profile.totalReviews ||
+      0,
+    minPrice,
+    currency:       profile.currency || '€',
+    barberCode:     profile.barberCode || '',
+    isLive:         profile.isLive,
+    approvalStatus: profile.approvalStatus,
+    isSolo:         profile.isSolo !== false,
+    shopId:         profile.shopId || null,
+    titeZMeCut:     profile.titeZMeCut || null,
+    weeklyDays,
+    opensAt,
+    closesAt,
   };
 
-  await profileRef.update({ searchSnapshot });
+  await algoliaClient.saveObject({
+    indexName: ALGOLIA_INDEX,
+    body: record,
+  });
 }
 
 export const onBarberUpdated = functions.firestore
-  .document("barberProfiles/{barberId}")
+  .document('barberProfiles/{barberId}')
   .onWrite(async (change, context) => {
-    // Prevent infinite loop if only searchSnapshot changed
-    const before = change.before.data();
-    const after = change.after.data();
-    
-    if (before && after) {
-      const copyBefore = { ...before };
-      const copyAfter = { ...after };
-      delete copyBefore.searchSnapshot;
-      delete copyAfter.searchSnapshot;
-      
-      if (JSON.stringify(copyBefore) === JSON.stringify(copyAfter)) {
-        return null;
+    const barberId = context.params.barberId;
+
+    // Handle deletion
+    if (!change.after.exists) {
+      try {
+        await algoliaClient.deleteObject({
+          indexName: ALGOLIA_INDEX,
+          objectID: barberId,
+        });
+      } catch {
+        // Not in index — that's fine
       }
+      return null;
     }
-    
-    await updateBarberSearchSnapshot(context.params.barberId);
+
+    await syncBarberToAlgolia(barberId);
     return null;
   });
 
@@ -278,7 +334,7 @@ export const onBarberServiceUpdated = functions.firestore
   .onWrite(async (change, context) => {
     const data = change.after.exists ? change.after.data() : change.before.data();
     if (data && data.providerId) {
-      await updateBarberSearchSnapshot(data.providerId);
+      await syncBarberToAlgolia(data.providerId);
     }
     return null;
   });
@@ -290,7 +346,7 @@ export const onBarberScheduleUpdated = functions.firestore
     if (barberId.includes("_shard_")) {
       barberId = barberId.split("_shard_")[0];
     }
-    await updateBarberSearchSnapshot(barberId);
+    await syncBarberToAlgolia(barberId);
     return null;
   });
 
