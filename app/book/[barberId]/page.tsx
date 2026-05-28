@@ -59,6 +59,17 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
   });
 
   useEffect(() => {
+    if (loadingProfile) return;
+    if (
+      !profile ||
+      !profile.isLive ||
+      profile.approvalStatus !== 'approved'
+    ) {
+      router.replace('/barbers');
+    }
+  }, [profile, loadingProfile]);
+
+  useEffect(() => {
     if (profile && step === 1) {
       if (!(profile.isSolo && profile.shopId)) {
         setBookingContext(profile.shopId && !profile.isSolo ? 'shop' : 'solo');
@@ -120,6 +131,10 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
     }
     if (!user || !selectedDate || !selectedTime || selectedServices.length === 0) return;
     if (isSubmitting) return;
+    if (user.uid === barberId) {
+      toast.error('You cannot book your own profile.');
+      return;
+    }
     setIsSubmitting(true);
 
     try {
