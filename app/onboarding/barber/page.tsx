@@ -148,6 +148,8 @@ export default function BarberOnboarding() {
         existingProfile?.barberCode ?? null;
       const existingApprovalStatus =
         existingProfile?.approvalStatus ?? 'pending';
+      const existingIsLive =
+        existingProfile?.isLive ?? false;
 
       // 0. Data Integrity Fix
       const userRef = doc(db, 'users', user.uid);
@@ -206,7 +208,11 @@ export default function BarberOnboarding() {
       try {
         await setDoc(
           profileRef,
-          { ...profileData, approvalStatus: existingApprovalStatus },
+          {
+            ...profileData,
+            approvalStatus: existingApprovalStatus,
+            isLive: existingIsLive,
+          },
           { merge: true }
         );
       } catch (e: any) {
