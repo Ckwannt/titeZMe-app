@@ -78,8 +78,14 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
 
       // 2. Mark booking as reviewed so the dashboard shows "Reviewed ✓"
       await updateDoc(doc(db, 'bookings', bookingId), { hasReview: true });
+    } catch (e: any) {
+      toast.error('Failed to submit review. ' + e.message);
+      setIsSubmitting(false);
+      return;
+    }
 
-      // 4. Notify Barber
+    // Review exists — secondary writes
+    try {
       await addDoc(collection(db, 'notifications'), notificationSchema.parse({
               userId: booking.barberId,
               message: `⭐ ${booking.clientName || 'A client'} left you a ${rating}-star review!`,
@@ -88,14 +94,12 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
               createdAt: Date.now()
             }));
       updateDoc(doc(db, 'users', booking.barberId), { unreadCount: increment(1) }).catch(console.error);
-
-      toast.success('Review submitted ✓');
-      router.push('/dashboard/client');
-
-    } catch (e: any) {
-      console.error(e);
-      toast.error("Failed to complete review. " + e.message);
+    } catch (notifErr) {
+      console.error('Review notification failed:', notifErr);
     }
+
+    toast.success('Review submitted ✓');
+    router.push('/dashboard/client');
     setIsSubmitting(false);
   }
 

@@ -234,31 +234,6 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
         });
       });
 
-      // After transaction success
-      // Notify barber
-      await addDoc(collection(db, 'notifications'), notificationSchema.parse({
-              userId: barberId,
-              message: `New booking request for ${selectedDate} at ${selectedTime}.`,
-              read: false,
-              linkTo: '/dashboard/barber',
-              createdAt: Date.now()
-            }));
-      updateDoc(doc(db, 'users', barberId), { unreadCount: increment(1) }).catch(console.error);
-
-      // Notify client
-      await addDoc(collection(db, 'notifications'), notificationSchema.parse({
-              userId: user.uid,
-              message: `Your booking for ${selectedDate} at ${selectedTime} is pending confirmation.`,
-              read: false,
-              linkTo: '/dashboard/client',
-              createdAt: Date.now()
-            }));
-      updateDoc(doc(db, 'users', user.uid), { unreadCount: increment(1) }).catch(console.error);
-
-      toast.success('🎉 Booking request sent! Check your dashboard.');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      router.push('/dashboard/client');
-
     } catch (e: any) {
       console.error(e);
       if (e.message === "OVERLAP") {
@@ -283,7 +258,37 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
          };
          toast.error(getBookingError(e));
       }
+      setIsSubmitting(false);
+      return;
     }
+
+    // Booking exists — secondary writes
+    try {
+      await addDoc(collection(db, 'notifications'), notificationSchema.parse({
+              userId: barberId,
+              message: `New booking request for ${selectedDate} at ${selectedTime}.`,
+              read: false,
+              linkTo: '/dashboard/barber',
+              createdAt: Date.now()
+            }));
+      updateDoc(doc(db, 'users', barberId), { unreadCount: increment(1) }).catch(console.error);
+
+      await addDoc(collection(db, 'notifications'), notificationSchema.parse({
+              userId: user.uid,
+              message: `Your booking for ${selectedDate} at ${selectedTime} is pending confirmation.`,
+              read: false,
+              linkTo: '/dashboard/client',
+              createdAt: Date.now()
+            }));
+      updateDoc(doc(db, 'users', user.uid), { unreadCount: increment(1) }).catch(console.error);
+    } catch (notifErr) {
+      // Booking was created — do not surface this error
+      console.error('Post-booking notifications failed:', notifErr);
+    }
+
+    toast.success('🎉 Booking request sent! Check your dashboard.');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    router.push('/dashboard/client');
     setIsSubmitting(false);
   }
 
