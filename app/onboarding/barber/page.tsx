@@ -147,7 +147,9 @@ export default function BarberOnboarding() {
       const existingBarberCode =
         existingProfile?.barberCode ?? null;
       const existingApprovalStatus =
-        existingProfile?.approvalStatus ?? 'pending';
+        existingProfile?.approvalStatus === 'approved'
+          ? 'approved'
+          : 'pending';
       const existingIsLive =
         existingProfile?.isLive ?? false;
 
