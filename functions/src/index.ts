@@ -228,6 +228,46 @@ export const onUserDeleted = functions.auth.user().onDelete(async (user) => {
   batch.delete(scheduleRef);
 
   await batch.commit();
+
+  // Cancel pending/confirmed bookings for this barber.
+  // For in-app deletions, deleteBarberAccount() already
+  // cancelled these before reaching here — the query
+  // returns empty and this block is a no-op.
+  // For admin Console or SDK deletions that bypass the
+  // app flow, this is the only place that handles cleanup.
+  const activeBookings = await db
+    .collection('bookings')
+    .where('barberId', '==', uid)
+    .where('status', 'in', ['pending', 'confirmed'])
+    .get();
+
+  if (!activeBookings.empty) {
+    const cleanupBatch = db.batch();
+    const now = Date.now();
+
+    for (const bookingDoc of activeBookings.docs) {
+      cleanupBatch.update(bookingDoc.ref, {
+        status: 'cancelled_by_barber',
+        updatedAt: now,
+        cancellationReason: 'account_deleted',
+      });
+
+      const notifRef = db.collection('notifications').doc();
+      cleanupBatch.set(notifRef, {
+        userId: bookingDoc.data().clientId,
+        message: 'A barber you booked has deleted their account. Your booking was cancelled.',
+        read: false,
+        createdAt: now,
+        linkTo: '/dashboard/client',
+      });
+    }
+
+    await cleanupBatch.commit();
+    console.log(
+      `Cancelled ${activeBookings.size} active booking(s) for deleted user ${uid}`
+    );
+  }
+
   console.log(`Successfully cleaned up data for deleted user ${uid}`);
   return null;
 });
