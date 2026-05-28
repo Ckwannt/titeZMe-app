@@ -6,11 +6,14 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
-const algoliaClient = algoliasearch(
-  process.env.ALGOLIA_APP_ID || '',
-  process.env.ALGOLIA_ADMIN_KEY || ''
-);
 const ALGOLIA_INDEX = 'barbers';
+
+function getAlgoliaClient() {
+  return algoliasearch(
+    process.env.ALGOLIA_APP_ID || '',
+    process.env.ALGOLIA_ADMIN_KEY || ''
+  );
+}
 
 async function syncBarberToAlgolia(
   barberId: string
@@ -30,7 +33,7 @@ async function syncBarberToAlgolia(
     // Remove from Algolia if they were
     // previously live but are now offline
     try {
-      await algoliaClient.deleteObject({
+      await getAlgoliaClient().deleteObject({
         indexName: ALGOLIA_INDEX,
         objectID: barberId,
       });
@@ -112,7 +115,7 @@ async function syncBarberToAlgolia(
     closesAt,
   };
 
-  await algoliaClient.saveObject({
+  await getAlgoliaClient().saveObject({
     indexName: ALGOLIA_INDEX,
     body: record,
   });
@@ -126,7 +129,7 @@ export const onBarberUpdated = functions.firestore
     // Handle deletion
     if (!change.after.exists) {
       try {
-        await algoliaClient.deleteObject({
+        await getAlgoliaClient().deleteObject({
           indexName: ALGOLIA_INDEX,
           objectID: barberId,
         });
