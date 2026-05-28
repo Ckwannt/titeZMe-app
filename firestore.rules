@@ -362,7 +362,9 @@ service cloud.firestore {
         && incoming().startTime is string
         && incoming().barberId is string
         && get(/databases/$(database)/documents/barberProfiles/$(incoming().barberId)).data.isLive == true
-        && get(/databases/$(database)/documents/barberProfiles/$(incoming().barberId)).data.approvalStatus == 'approved';
+        && get(/databases/$(database)/documents/barberProfiles/$(incoming().barberId)).data.approvalStatus == 'approved'
+        && incoming().appointmentTimestamp is number
+        && incoming().appointmentTimestamp > request.time.toMillis();
 
       // Update: client can cancel their own booking; barber can accept/complete/cancel.
       // Admin can update anything. completedAt is allowed in the barber path.
@@ -379,6 +381,11 @@ service cloud.firestore {
               && (incoming().status in ['cancelled_by_client'])
               && incoming().diff(existing()).affectedKeys()
                  .hasOnly(['status', 'updatedAt'])
+              && (
+                existing().get('appointmentTimestamp', 0) == 0
+                || existing().get('appointmentTimestamp', 0)
+                   - request.time.toMillis() > 7200000
+              )
             )
             ||
             (

@@ -222,6 +222,9 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
           totalDuration,
           date: selectedDate,
           startTime: selectedTime,
+          appointmentTimestamp: new Date(
+            `${selectedDate}T${selectedTime}`
+          ).getTime(),
           endTime: selectedEndTime || new Date(reqEnd).toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit'}),
           status: 'pending',
           paymentMethod: 'cash',
