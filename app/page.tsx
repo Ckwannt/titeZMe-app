@@ -16,6 +16,7 @@ async function fetchFeaturedBarbers() {
       collection(db, 'barberProfiles'),
       where('isLive', '==', true),
       where('isSolo', '==', true),
+      where('approvalStatus', '==', 'approved'),
     ));
     const profiles = snap.docs
       .map(d => ({ id: d.id, ...d.data() } as any))
