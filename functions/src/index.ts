@@ -121,7 +121,7 @@ async function syncBarberToAlgolia(
   });
 }
 
-export const onBarberUpdated = functions.firestore
+export const onBarberUpdated = functions.region('europe-west2').firestore
   .document('barberProfiles/{barberId}')
   .onWrite(async (change, context) => {
     const barberId = context.params.barberId;
@@ -143,7 +143,7 @@ export const onBarberUpdated = functions.firestore
     return null;
   });
 
-export const onBookingComplete = functions.firestore
+export const onBookingComplete = functions.region('europe-west2').firestore
   .document("bookings/{bookingId}")
   .onUpdate(async (change, context) => {
     const before = change.before.data();
@@ -206,7 +206,7 @@ export const onBookingComplete = functions.firestore
     return null;
   });
 
-export const onReviewCreated = functions.firestore
+export const onReviewCreated = functions.region('europe-west2').firestore
   .document("reviews/{reviewId}")
   .onCreate(async (snap, context) => {
     const review = snap.data();
@@ -238,7 +238,7 @@ export const onReviewCreated = functions.firestore
     return null;
   });
 
-export const scheduledCleanup = functions.pubsub
+export const scheduledCleanup = functions.region('europe-west2').pubsub
   .schedule("every 24 hours")
   .timeZone("UTC")
   .onRun(async (context) => {
@@ -271,7 +271,7 @@ export const scheduledCleanup = functions.pubsub
     return null;
   });
 
-export const onUserDeleted = functions.auth.user().onDelete(async (user) => {
+export const onUserDeleted = functions.region('europe-west2').auth.user().onDelete(async (user) => {
   const uid = user.uid;
   const batch = db.batch();
 
@@ -332,7 +332,7 @@ export const onUserDeleted = functions.auth.user().onDelete(async (user) => {
 });
 
 // Backward compatibility or existing triggers below
-export const onBarberServiceUpdated = functions.firestore
+export const onBarberServiceUpdated = functions.region('europe-west2').firestore
   .document("services/{serviceId}")
   .onWrite(async (change, context) => {
     const data = change.after.exists ? change.after.data() : change.before.data();
@@ -342,7 +342,7 @@ export const onBarberServiceUpdated = functions.firestore
     return null;
   });
 
-export const onBarberScheduleUpdated = functions.firestore
+export const onBarberScheduleUpdated = functions.region('europe-west2').firestore
   .document("schedules/{barberId}")
   .onWrite(async (change, context) => {
     let barberId = context.params.barberId;
