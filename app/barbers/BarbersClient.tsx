@@ -20,6 +20,7 @@ async function fetchBarbers(): Promise<BarberCard[]> {
     collection(db, 'barberProfiles'),
     where('isLive', '==', true),
     where('isSolo', '==', true),
+    where('approvalStatus', '==', 'approved'),
   ));
   const profiles = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
   if (profiles.length === 0) return [];
