@@ -5,9 +5,11 @@ import { collection, query, where, getDocs, doc, getDoc, onSnapshot, writeBatch,
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export function BarberInvitesTab() {
   const { user, appUser } = useAuth();
+  const { t } = useLang();
   const router = useRouter();
   const [invites, setInvites] = useState<any[]>([]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -126,15 +128,15 @@ export function BarberInvitesTab() {
     return (
       <div className="animate-fadeUp flex flex-col items-center text-center py-16 max-w-md mx-auto">
         <div className="text-5xl mb-4">🏪</div>
-        <h2 className="text-[16px] font-extrabold mb-3">You own a shop</h2>
+        <h2 className="text-[16px] font-extrabold mb-3">{t('settings.youOwnShop')}</h2>
         <p className="text-[13px] text-[#666] mb-8 leading-relaxed">
-          Invites are for independent barbers looking to join a team. Since you own a shop, you can invite barbers to YOUR team instead.
+          {t('settings.youOwnShopDesc')}
         </p>
         <button
           onClick={() => router.push('/dashboard/shop')}
           className="bg-brand-yellow text-[#0a0a0a] font-black px-7 py-3 rounded-full text-sm hover:opacity-90 transition-opacity"
         >
-          Manage my team →
+          {t('buttons.manageTeam')}
         </button>
       </div>
     );
@@ -145,26 +147,26 @@ export function BarberInvitesTab() {
 
   return (
     <div className="animate-fadeUp">
-      <h1 className="text-2xl font-black mb-6">Invites 📨</h1>
+      <h1 className="text-2xl font-black mb-6">{t('headings.invites')}</h1>
 
       {/* Change 2 — Barber code card */}
       {barberCode && (
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 mb-8">
-          <div className="text-[10px] font-extrabold text-[#555] uppercase tracking-wider mb-2">Your barber code</div>
+          <div className="text-[10px] font-extrabold text-[#555] uppercase tracking-wider mb-2">{t('headings.yourBarberCode')}</div>
           <div className="flex items-center gap-3 mb-2">
             <span className="font-mono text-[20px] font-black text-brand-yellow">{barberCode}</span>
             <button onClick={copyCode} className="text-xs text-[#888] hover:text-white transition-colors border border-[#2a2a2a] rounded-lg px-3 py-1.5 font-bold">
-              {codeCopied ? '✓ Copied' : '📋 Copy'}
+              {codeCopied ? t('buttons.copied') : `📋 ${t('buttons.copy')}`}
             </button>
           </div>
-          <p className="text-[11px] text-[#555]">Share this code with shops so they can invite you to their team.</p>
+          <p className="text-[11px] text-[#555]">{t('settings.shareCodeDesc')}</p>
         </div>
       )}
 
       {/* Change 2 — Pending invites */}
       {pending.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-[13px] font-extrabold text-[#888] uppercase tracking-wider mb-4">Pending invites</h2>
+          <h2 className="text-[13px] font-extrabold text-[#888] uppercase tracking-wider mb-4">{t('headings.activePendingInvites')}</h2>
           <div className="flex flex-col gap-3">
             {pending.map(inv => (
               <div key={inv.id} className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
@@ -181,14 +183,14 @@ export function BarberInvitesTab() {
                     disabled={actionLoading === inv.id}
                     className="flex-1 md:flex-none bg-[#1a0808] border border-[#3b1a1a] text-brand-red px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-brand-red/20 disabled:opacity-50"
                   >
-                    Decline
+                    {t('buttons.decline')}
                   </button>
                   <button
                     onClick={() => handleAccept(inv)}
                     disabled={actionLoading === inv.id}
                     className="flex-1 md:flex-none bg-brand-green text-black px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-green-500 disabled:opacity-50"
                   >
-                    Accept
+                    {t('buttons.accept')}
                   </button>
                 </div>
               </div>
@@ -200,7 +202,7 @@ export function BarberInvitesTab() {
       {/* Change 2 — Invite history */}
       {history.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-[13px] font-extrabold text-[#888] uppercase tracking-wider mb-4">Invite history</h2>
+          <h2 className="text-[13px] font-extrabold text-[#888] uppercase tracking-wider mb-4">{t('headings.inviteHistory')}</h2>
           <div className="flex flex-col gap-3">
             {history.map(inv => (
               <div key={inv.id} className="bg-brand-surface border border-brand-border rounded-2xl p-4 flex justify-between items-center">
@@ -222,7 +224,7 @@ export function BarberInvitesTab() {
       {/* Empty state */}
       {pending.length === 0 && history.length === 0 && (
         <div className="bg-brand-surface border border-brand-border rounded-3xl p-8 text-center text-[#888]">
-          No invites yet. Share your Barber Code with shops!
+          {t('emptyStates.noInvitesYet')}
         </div>
       )}
 
@@ -230,14 +232,14 @@ export function BarberInvitesTab() {
       {showWarningModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 max-w-sm w-full">
-            <h2 className="text-xl font-black text-white mb-2">Change Shop?</h2>
+            <h2 className="text-xl font-black text-white mb-2">{t('modals.changeShopTitle')}</h2>
             <p className="text-[#888] text-sm mb-6 leading-relaxed">
-              You are currently linked to another shop. Accepting this will remove you from that shop. Your existing bookings will not be affected. Continue?
+              {t('modals.changeShopDesc')}
             </p>
             <div className="flex gap-3">
-              <button disabled={actionLoading === showWarningModal.id} onClick={() => setShowWarningModal(null)} className="flex-1 bg-[#2a2a2a] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#333] disabled:opacity-50">Cancel</button>
+              <button disabled={actionLoading === showWarningModal.id} onClick={() => setShowWarningModal(null)} className="flex-1 bg-[#2a2a2a] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#333] disabled:opacity-50">{t('buttons.cancel')}</button>
               <button disabled={actionLoading === showWarningModal.id} onClick={() => processAccept(showWarningModal)} className="flex-[1.5] bg-brand-green text-black py-3 rounded-xl font-bold text-sm hover:bg-green-500 disabled:opacity-50">
-                {actionLoading === showWarningModal.id ? 'Accepting...' : 'Yes, link new shop'}
+                {actionLoading === showWarningModal.id ? t('settings.accepting') : t('buttons.linkNewShop')}
               </button>
             </div>
           </div>
@@ -247,13 +249,13 @@ export function BarberInvitesTab() {
       {showSoloModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 max-w-sm w-full">
-            <h2 className="text-xl font-black text-white mb-2">Solo Bookings</h2>
+            <h2 className="text-xl font-black text-white mb-2">{t('modals.soloBookingsTitle')}</h2>
             <p className="text-[#888] text-sm mb-6 leading-relaxed">
               You joined {showSoloModal.shopName}. Do you still want to accept solo bookings outside the shop?
             </p>
             <div className="flex flex-col gap-3">
-              <button disabled={actionLoading === showSoloModal.id} onClick={() => handleKeepSolo(true)} className="w-full bg-brand-yellow text-black py-3 rounded-xl font-bold text-sm hover:bg-yellow-500 disabled:opacity-50">Yes, keep solo bookings</button>
-              <button disabled={actionLoading === showSoloModal.id} onClick={() => handleKeepSolo(false)} className="w-full bg-[#2a2a2a] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#333] disabled:opacity-50">No, shop bookings only</button>
+              <button disabled={actionLoading === showSoloModal.id} onClick={() => handleKeepSolo(true)} className="w-full bg-brand-yellow text-black py-3 rounded-xl font-bold text-sm hover:bg-yellow-500 disabled:opacity-50">{t('buttons.keepSoloBookings')}</button>
+              <button disabled={actionLoading === showSoloModal.id} onClick={() => handleKeepSolo(false)} className="w-full bg-[#2a2a2a] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#333] disabled:opacity-50">{t('buttons.shopBookingsOnly')}</button>
             </div>
           </div>
         </div>

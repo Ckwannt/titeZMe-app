@@ -8,6 +8,7 @@ import { db } from '@/lib/firebase';
 import { bookingUpdateSchema } from '@/lib/schemas';
 import { toast } from '@/lib/toast';
 import { getLocalDateString, getTimezoneFromLocation } from '@/lib/schedule-utils';
+import { useLang } from '@/lib/i18n/LangContext';
 
 function getCurrencySymbol(c?: string): string {
   const m: Record<string, string> = { EUR: '€', GBP: '£', USD: '$', MAD: 'MAD ', DZD: 'DA ', TND: 'DT ' };
@@ -54,6 +55,7 @@ function exportCSV(bookings: any[], currSym: string) {
 
 export default function ShopBookingsPage() {
   const { user, loading } = useAuth();
+  const { t } = useLang();
   const router = useRouter();
 
   const [bookings, setBookings] = useState<any[]>([]);
@@ -180,12 +182,12 @@ export default function ShopBookingsPage() {
   const totalPages = Math.ceil(filtered.length / BOOKINGS_PER_PAGE);
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
-    const loadingToast = toast.loading('Updating...');
+    const loadingToast = toast.loading(t('shop.updatingBooking'));
     try {
       await updateDoc(doc(db, 'bookings', bookingId), bookingUpdateSchema.parse({ status: newStatus, updatedAt: Date.now() }));
-      toast.success('Booking updated.', { id: loadingToast });
+      toast.success(t('shop.bookingUpdated'), { id: loadingToast });
     } catch (e) {
-      toast.error('Failed to update.', { id: loadingToast });
+      toast.error(t('shop.failedUpdate'), { id: loadingToast });
     }
   };
 
@@ -194,22 +196,22 @@ export default function ShopBookingsPage() {
   return (
     <div className="animate-fadeUp p-6 md:p-8 md:px-10">
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
-        <h1 className="text-2xl font-black">All Bookings 📅</h1>
+        <h1 className="text-2xl font-black">{t('bookings.allBookings')} 📅</h1>
         <button
           onClick={() => exportCSV(filtered, currSym)}
           className="text-[12px] font-bold border border-[#2a2a2a] text-[#888] hover:border-brand-yellow hover:text-brand-yellow px-4 py-2 rounded-full transition-colors"
         >
-          ↓ Export CSV
+          ↓ {t('bookings.exportCSV').replace(' ↓', '')}
         </button>
       </div>
 
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {[
-          { val: monthBookings.length, label: 'Total this month', color: 'text-white' },
-          { val: monthPending.length, label: 'Pending', color: 'text-brand-yellow' },
-          { val: monthCompleted.length, label: 'Completed', color: 'text-brand-green' },
-          { val: monthCancelled.length, label: 'Cancelled', color: 'text-brand-red' },
+          { val: monthBookings.length, label: t('shop.totalThisMonth'), color: 'text-white' },
+          { val: monthPending.length, label: t('status.pending'), color: 'text-brand-yellow' },
+          { val: monthCompleted.length, label: t('status.completed'), color: 'text-brand-green' },
+          { val: monthCancelled.length, label: t('status.cancelled'), color: 'text-brand-red' },
         ].map((s, i) => (
           <div key={i} className="bg-brand-surface border border-brand-border rounded-2xl p-4">
             <div className={`text-2xl font-black ${s.color}`}>{s.val}</div>
@@ -223,7 +225,7 @@ export default function ShopBookingsPage() {
         {/* Search */}
         <input
           type="text"
-          placeholder="Search client, barber, service..."
+          placeholder={t('shop.searchFilter')}
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-brand-yellow transition-colors flex-1 min-w-[180px]"
@@ -235,7 +237,7 @@ export default function ShopBookingsPage() {
           onChange={e => setBarberFilter(e.target.value)}
           className="bg-[#141414] border border-[#2a2a2a] text-white rounded-xl px-3 py-2.5 text-sm outline-none"
         >
-          <option value="all">All barbers</option>
+          <option value="all">{t('shop.allBarbersFilter')}</option>
           {barberOptions.map(b => (
             <option key={b.id} value={b.id}>{b.name}</option>
           ))}
@@ -244,17 +246,17 @@ export default function ShopBookingsPage() {
 
       {/* Time + Status filters */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {(['today', 'week', 'month', 'all'] as const).map(t => (
-          <button key={t} onClick={() => setTimeFilter(t)}
-            className={`text-[12px] font-bold px-4 py-1.5 rounded-full transition-colors capitalize ${timeFilter === t ? 'bg-brand-yellow text-black' : 'bg-[#1a1a1a] text-[#888] hover:text-white'}`}>
-            {t === 'all' ? 'All time' : t === 'week' ? 'This Week' : t === 'month' ? 'This Month' : 'Today'}
+        {(['today', 'week', 'month', 'all'] as const).map(tab => (
+          <button key={tab} onClick={() => setTimeFilter(tab)}
+            className={`text-[12px] font-bold px-4 py-1.5 rounded-full transition-colors capitalize ${timeFilter === tab ? 'bg-brand-yellow text-black' : 'bg-[#1a1a1a] text-[#888] hover:text-white'}`}>
+            {tab === 'all' ? t('shop.allTime') : tab === 'week' ? t('shop.thisWeekFilter') : tab === 'month' ? t('shop.thisMonthFilter') : t('buttons.today')}
           </button>
         ))}
         <div className="w-px bg-[#2a2a2a] mx-1" />
         {(['all', 'pending', 'confirmed', 'completed', 'cancelled'] as const).map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
             className={`text-[12px] font-bold px-4 py-1.5 rounded-full transition-colors capitalize ${statusFilter === s ? 'bg-[#2a2a2a] text-white' : 'text-[#666] hover:text-white'}`}>
-            {s === 'all' ? 'All statuses' : s}
+            {s === 'all' ? t('shop.allStatuses') : s}
           </button>
         ))}
       </div>
@@ -263,7 +265,7 @@ export default function ShopBookingsPage() {
       {filtered.length === 0 ? (
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-8 text-center text-[#555]">
           <div className="text-3xl mb-3">📅</div>
-          <div className="font-bold text-sm">No bookings match your filters</div>
+          <div className="font-bold text-sm">{t('shop.noBookingsFilter')}</div>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -300,11 +302,11 @@ export default function ShopBookingsPage() {
                 <div className="mt-3 pt-3 border-t border-[#2a2a2a] flex gap-2">
                   <button onClick={() => handleStatusChange(b.id, 'confirmed')}
                     className="text-[11px] font-black text-brand-green border border-brand-green/40 hover:bg-[#0f2010] px-3 py-1.5 rounded-lg transition-colors">
-                    ✓ Confirm
+                    {t('shop.confirmAction')}
                   </button>
                   <button onClick={() => handleStatusChange(b.id, 'cancelled_by_barber')}
                     className="text-[11px] font-black text-brand-red border border-brand-red/40 hover:bg-[#1a0808] px-3 py-1.5 rounded-lg transition-colors">
-                    ✕ Decline
+                    {t('bookings.declineBtn')}
                   </button>
                 </div>
               )}
@@ -322,7 +324,7 @@ export default function ShopBookingsPage() {
           <div className="flex items-center justify-center gap-2">
             <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
               className="px-3 py-1.5 text-[12px] font-bold text-[#888] hover:text-white disabled:opacity-40">
-              ← Previous
+              {t('bookings.previousPage')}
             </button>
             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
               const pageNum = Math.max(1, Math.min(currentPage - 2, totalPages - 4)) + i;
