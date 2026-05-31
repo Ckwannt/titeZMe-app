@@ -10,6 +10,7 @@ import { algoliasearch } from 'algoliasearch';
 import { locationsMatch } from '@/lib/location-utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { BarberCard } from './page';
+import { useLang } from '@/lib/i18n/LangContext';
 
 const algoliaClient = algoliasearch(
   process.env.NEXT_PUBLIC_ALGOLIA_APP_ID!,
@@ -233,6 +234,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   const debouncedNameSearch = useDebounce(nameSearch, 300);
   const [page, setPage] = useState(1);
   const [copied, setCopied] = useState(false);
+  const { t } = useLang();
 
   const countries = useMemo(() => csc ? csc.Country.getAllCountries() : [], [csc]);
   const cities = useMemo(() => {
@@ -469,7 +471,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
                         {b.minPrice !== null ? `from ${sym}${b.minPrice}` : 'On request'}
                       </span>
                       <span className="text-[12px] font-bold text-[#E8491D]">
-                        View profile →
+                        {t('buttons.viewProfile')}
                       </span>
                     </div>
                   </Link>
