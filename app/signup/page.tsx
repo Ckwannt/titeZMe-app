@@ -10,6 +10,7 @@ import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { PasswordInput } from '@/components/PasswordInput';
 import { toast } from '@/lib/toast';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function SignupPage() {
   const [emailError, setEmailError] = useState('');
   const [firstNameValid, setFirstNameValid] = useState<boolean | null>(null);
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const { t } = useLang();
 
   useEffect(() => { document.title = 'Create account — titeZMe'; }, []);
 
@@ -60,7 +62,7 @@ export default function SignupPage() {
         }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>✉️</div>
           <div style={{ fontSize: '20px', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>
-            Check your email
+            {t('misc.checkEmail')}
           </div>
           <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.7', marginBottom: '24px' }}>
             We sent a verification link to
@@ -75,7 +77,7 @@ export default function SignupPage() {
           <button
             onClick={async () => {
               await sendEmailVerification(auth.currentUser!);
-              toast.success('Verification email resent ✓');
+              toast.success(t('success.verificationResent'));
             }}
             style={{
               background: 'transparent',
@@ -91,13 +93,13 @@ export default function SignupPage() {
               width: '100%'
             }}
           >
-            Resend verification email
+            {t('buttons.resendVerification')}
           </button>
           <Link
             href="/login"
             style={{ color: '#555', fontSize: '11px', textDecoration: 'none' }}
           >
-            Already verified? Log in →
+            {t('buttons.alreadyVerified')} →
           </Link>
         </div>
       </div>
@@ -107,7 +109,7 @@ export default function SignupPage() {
   const validateEmail = (value: string): string => {
     if (!value) return '';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value)) return 'Please enter a valid email address';
+    if (!emailRegex.test(value)) return t('errors.invalidEmail');
     return '';
   };
 
@@ -164,7 +166,7 @@ export default function SignupPage() {
       }
     } catch (error: any) {
       if (error.code !== 'auth/popup-closed-by-user') {
-        setErrorStatus('Google sign in failed. Please try again.');
+        setErrorStatus(t('errors.googleSignInFailed'));
       }
     }
   };
@@ -227,15 +229,15 @@ export default function SignupPage() {
           case 'auth/weak-password':
             return 'Password is too weak. Use at least 8 characters.';
           case 'auth/invalid-email':
-            return 'Invalid email or password.';
+            return t('errors.invalidCredentials');
           case 'auth/operation-not-allowed':
             return 'Sign up is temporarily disabled. Try again later.';
           case 'auth/too-many-requests':
-            return 'Too many attempts. Try again in a few minutes.';
+            return t('errors.tooManyAttempts');
           case 'auth/network-request-failed':
-            return 'Connection error. Check your internet and try again.';
+            return t('errors.connectionError');
           default:
-            return 'Something went wrong. Please try again.';
+            return t('errors.somethingWentWrong');
         }
       };
       setErrorStatus(getFriendlyError(err.code || ''));
@@ -248,7 +250,7 @@ export default function SignupPage() {
     <div className="max-w-[440px] mx-auto p-6 mt-10 md:mt-20">
       <div className="animate-fadeUp mb-8 text-center">
         <div className="text-3xl mb-3">🔥</div>
-        <h1 className="text-[28px] font-black leading-tight mb-2">Join titeZMe</h1>
+        <h1 className="text-[28px] font-black leading-tight mb-2">{t('headings.joinTitle')}</h1>
         <p className="text-brand-text-secondary text-[15px]">Create an account to get started.</p>
       </div>
 
@@ -314,7 +316,7 @@ export default function SignupPage() {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
-        Continue with Google
+        {t('buttons.continueWithGoogle')}
       </button>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
@@ -344,7 +346,7 @@ export default function SignupPage() {
 
         <div className="grid grid-cols-2 gap-3 mt-2">
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">FIRST NAME <span className="text-brand-red">*</span></label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.firstName').toUpperCase()} <span className="text-brand-red">*</span></label>
             <input
               required
               value={firstName}
@@ -362,22 +364,22 @@ export default function SignupPage() {
               }}
               placeholder="Your name"
             />
-            {submitAttempted && !firstName && <span className="text-brand-red text-xs mt-1 block">This field is required</span>}
+            {submitAttempted && !firstName && <span className="text-brand-red text-xs mt-1 block">{t('errors.fieldRequired')}</span>}
           </div>
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LAST NAME <span className="text-brand-red">*</span></label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.lastName').toUpperCase()} <span className="text-brand-red">*</span></label>
             <input 
               required
               value={lastName} onChange={e => setLastName(e.target.value)}
               className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
               placeholder="Your last name" 
             />
-            {submitAttempted && !lastName && <span className="text-brand-red text-xs mt-1 block">This field is required</span>}
+            {submitAttempted && !lastName && <span className="text-brand-red text-xs mt-1 block">{t('errors.fieldRequired')}</span>}
           </div>
         </div>
 
         <div>
-          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">EMAIL <span className="text-brand-red">*</span></label>
+          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.email').toUpperCase()} <span className="text-brand-red">*</span></label>
           <div style={{ position: 'relative' }}>
             <input
               required
@@ -401,7 +403,7 @@ export default function SignupPage() {
                     : '1px solid #2a2a2a',
                 paddingRight: emailValid === true ? '40px' : undefined
               }}
-              placeholder="you@email.com"
+              placeholder={t('forms.emailPlaceholder')}
             />
             {emailValid === true && (
               <div style={{
@@ -423,11 +425,11 @@ export default function SignupPage() {
               {emailError}
             </div>
           )}
-          {submitAttempted && !email && <span className="text-brand-red text-xs mt-1 block">This field is required</span>}
+          {submitAttempted && !email && <span className="text-brand-red text-xs mt-1 block">{t('errors.fieldRequired')}</span>}
         </div>
 
         <div>
-          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">PASSWORD <span className="text-brand-red">*</span></label>
+          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.password').toUpperCase()} <span className="text-brand-red">*</span></label>
           <PasswordInput
             required
             value={password}
@@ -472,10 +474,10 @@ export default function SignupPage() {
               </div>
             );
           })()}
-          {submitAttempted && !password && <span className="text-brand-red text-xs mt-1 block">This field is required</span>}
+          {submitAttempted && !password && <span className="text-brand-red text-xs mt-1 block">{t('errors.fieldRequired')}</span>}
           {password.length > 0 && password.length < 8 && (
             <div style={{ fontSize: '11px', color: '#EF4444', marginTop: '4px' }}>
-              Password must be at least 8 characters ({password.length}/8)
+              {t('errors.passwordTooShort')} ({password.length}/8)
             </div>
           )}
           {password.length >= 8 && (
@@ -486,7 +488,7 @@ export default function SignupPage() {
         </div>
 
         <div>
-          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">CONFIRM PASSWORD <span className="text-brand-red">*</span></label>
+          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.confirmPassword').toUpperCase()} <span className="text-brand-red">*</span></label>
           <div style={{ position: 'relative' }}>
             <PasswordInput
               value={confirmPassword}
@@ -538,7 +540,7 @@ export default function SignupPage() {
               marginTop: '4px',
               fontFamily: 'Nunito, sans-serif'
             }}>
-              Passwords don&apos;t match
+              {t('errors.passwordsNoMatch')}
             </div>
           )}
         </div>
@@ -554,7 +556,7 @@ export default function SignupPage() {
           disabled={isSubmitting || !!emailError || email.length === 0 || password.length < 8 || firstName.length === 0}
           className="bg-brand-yellow text-[#0a0a0a] w-full mt-4 px-7 py-3.5 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
         >
-          {isSubmitting ? 'Creating account...' : 'Create Account'}
+          {isSubmitting ? 'Creating account...' : t('buttons.createAccount')}
         </button>
 
         <div style={{

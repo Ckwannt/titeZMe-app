@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLang } from '@/lib/i18n/LangContext';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -52,6 +53,7 @@ export default function LandingPageClient({
   featuredShops = [],
   citiesData = [],
 }: LandingPageClientProps) {
+  const { t } = useLang();
   const citySlots = [...citiesData];
   for (const cs of COMING_SOON) {
     if (citySlots.length >= 8) break;
@@ -79,7 +81,7 @@ export default function LandingPageClient({
           <div className="flex-1 animate-fadeUp">
             <div className="inline-flex items-center gap-2 border border-[#2a2a2a] rounded-full px-3 py-1 mb-8">
               <div className="w-1.5 h-1.5 rounded-full bg-brand-green"></div>
-              <span className="text-xs font-bold text-gray-500">2,400+ barbers · 18 cities · live now</span>
+              <span className="text-xs font-bold text-gray-500">{t('landing.statBarbers')}</span>
             </div>
 
             <h1 className="text-6xl md:text-[88px] font-black leading-[0.95] tracking-tight mb-8">
@@ -89,17 +91,17 @@ export default function LandingPageClient({
             </h1>
 
             <p className="text-lg text-gray-400 font-bold mb-10 max-w-[480px] leading-relaxed">
-              Top-rated barbers in your city. Real availability. Cash only — no fees, no apps, no nonsense. Book in under 30 seconds.
+              {t('landing.heroDesc')}
             </p>
 
             <div className="flex flex-wrap gap-4 mb-16">
               <Link href="/barbers"
                 className="bg-[#F5C518] text-[#0a0a0a] font-black px-7 py-3.5 rounded-full text-[15px] hover:opacity-90 transition-opacity">
-                Find a barber →
+                {t('buttons.findBarber')}
               </Link>
               <Link href="/shops"
                 className="border-2 border-[#2a2a2a] text-white font-extrabold px-7 py-3.5 rounded-full text-[15px] hover:bg-[#1a1a1a] transition-colors">
-                Find a barbershop →
+                {t('buttons.findBarbershop')}
               </Link>
             </div>
 
@@ -107,19 +109,19 @@ export default function LandingPageClient({
             <div className="flex gap-8 md:gap-12 md:max-w-md justify-between">
               <div>
                 <div className="text-[32px] font-black text-brand-yellow leading-tight mb-1">2.4k+</div>
-                <div className="text-xs text-gray-500 font-bold">Barbers</div>
+                <div className="text-xs text-gray-500 font-bold">{t('landing.barbersLabel')}</div>
               </div>
               <div>
                 <div className="text-[32px] font-black text-white leading-tight mb-1">4.97</div>
-                <div className="text-xs text-gray-500 font-bold">Avg rating</div>
+                <div className="text-xs text-gray-500 font-bold">{t('landing.avgRatingLabel')}</div>
               </div>
               <div>
                 <div className="text-[32px] font-black text-white leading-tight mb-1">551</div>
-                <div className="text-xs text-gray-500 font-bold">Booked today</div>
+                <div className="text-xs text-gray-500 font-bold">{t('landing.bookedTodayLabel')}</div>
               </div>
               <div>
                 <div className="text-[32px] font-black text-brand-yellow leading-tight mb-1">0%</div>
-                <div className="text-xs text-gray-500 font-bold">Fees</div>
+                <div className="text-xs text-gray-500 font-bold">{t('landing.feesLabel')}</div>
               </div>
             </div>
           </div>
@@ -143,7 +145,7 @@ export default function LandingPageClient({
                     <div className="bg-[#111] border border-[#1e1e1e] rounded-[16px] p-5 mb-[10px] relative">
                       {/* FEATURED label */}
                       <div className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-brand-orange">
-                        {mainBarber.isOpenNow ? 'FEATURED | OPEN NOW' : 'FEATURED'}
+                        {mainBarber.isOpenNow ? t('status.featuredOpenNow') : t('status.featured')}
                       </div>
                       {/* Top row: avatar + name/city/rating */}
                       <div className="flex gap-3 items-start mb-4 pr-24">
@@ -192,7 +194,7 @@ export default function LandingPageClient({
                               </span>
                             ))
                           ) : (
-                            <span className="text-[11px] text-[#555] font-bold">No slots today</span>
+                            <span className="text-[11px] text-[#555] font-bold">{t('forms.noSlotsToday')}</span>
                           )}
                         </div>
                       </div>
@@ -204,7 +206,7 @@ export default function LandingPageClient({
                             : 'Prices on request'}
                         </div>
                         <Link href="/barbers" className="bg-brand-yellow text-[#0a0a0a] rounded-full font-black text-[13px] px-5 py-[10px] hover:opacity-90 transition-opacity">
-                          Book Now →
+                          {t('buttons.bookNow')}
                         </Link>
                       </div>
                     </div>
@@ -235,7 +237,7 @@ export default function LandingPageClient({
                               ★ {hasRating ? b.rating.toFixed(1) : 'New'}{b.minPrice !== null ? ` · ${sym}${b.minPrice}${label}` : ''}
                             </div>
                             <div className={`text-[9px] font-extrabold mt-0.5 ${b.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
-                              ● {b.isOpenNow ? 'Open Now' : 'Closed'}
+                              ● {b.isOpenNow ? t('status.openNow') : t('status.closed')}
                             </div>
                           </div>
                         </Link>
@@ -253,7 +255,7 @@ export default function LandingPageClient({
                   {/* Main featured shop card */}
                   <div className="bg-[#111] border border-[#1e1e1e] rounded-[16px] p-5 mb-[10px] relative">
                     <div className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-brand-orange">
-                      {mainShop.isOpenNow ? 'FEATURED | OPEN NOW' : 'FEATURED'}
+                      {mainShop.isOpenNow ? t('status.featuredOpenNow') : t('status.featured')}
                     </div>
                     <div className="flex gap-3 items-start mb-4 pr-24">
                       {mainShop.coverPhotoUrl ? (
@@ -287,7 +289,7 @@ export default function LandingPageClient({
                         </div>
                         <div>
                           <div className={`text-[13px] font-extrabold ${mainShop.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
-                            ● {mainShop.isOpenNow ? 'Open Now' : 'Closed'}
+                            ● {mainShop.isOpenNow ? t('status.openNow') : t('status.closed')}
                           </div>
                           <div className="text-[10px] text-[#555]">Status</div>
                         </div>
@@ -295,7 +297,7 @@ export default function LandingPageClient({
                     </div>
                     <div className="flex justify-end">
                       <Link href={`/shop/${mainShop.id}`} className="bg-brand-yellow text-[#0a0a0a] rounded-full font-black text-[13px] px-5 py-[10px] hover:opacity-90 transition-opacity">
-                        View Shop →
+                        {t('buttons.viewShop')}
                       </Link>
                     </div>
                   </div>
@@ -319,7 +321,7 @@ export default function LandingPageClient({
                             <div className="text-[12px] font-extrabold text-white truncate">{s.name}</div>
                             {s.city && <div className="text-[10px] text-[#555] truncate">{s.city}</div>}
                             <div className={`text-[9px] font-extrabold mt-0.5 ${s.isOpenNow ? 'text-[#22c55e]' : 'text-[#555]'}`}>
-                              ● {s.isOpenNow ? 'Open' : 'Closed'}
+                              ● {s.isOpenNow ? t('status.open') : t('status.closed')}
                             </div>
                           </div>
                         </Link>
@@ -340,7 +342,7 @@ export default function LandingPageClient({
         <div className="max-w-[1200px] mx-auto">
           <div className="grid lg:grid-cols-[1fr_2.5fr] gap-12">
             <div>
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">SOCIAL PROOF</div>
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{t('landing.socialProof')}</div>
               <h2 className="text-5xl font-black leading-[1.1] mb-2">Real clients.</h2>
               <h2 className="text-4xl font-bold text-gray-500 mb-8">Real talk.</h2>
               <div className="bg-[#0f0f0f] p-6 rounded-3xl border border-[#1a1a1a] inline-block">
@@ -392,14 +394,14 @@ export default function LandingPageClient({
       {/* ── HOW IT WORKS ────────────────────────────────────────────────────── */}
       <section id="how-it-works" className="bg-[#0A0A0A] py-32 px-6">
         <div className="max-w-[1200px] mx-auto text-center mb-20">
-          <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">HOW IT WORKS</div>
-          <h2 className="text-4xl md:text-5xl font-black">Booked in 3 steps. No drama.</h2>
+          <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{t('landing.howItWorks')}</div>
+          <h2 className="text-4xl md:text-5xl font-black">{t('landing.bookedIn3Steps')}</h2>
         </div>
         <div className="max-w-[1200px] mx-auto grid md:grid-cols-3 gap-12 lg:gap-20">
           {[
-            { n: '01', t: 'Pick your city', d: 'Open the app on any device or browser. We detect your location automatically, or choose your city and availability.', i: '📍' },
-            { n: '02', t: 'Choose your barber', d: "Filter by specialty, language, vibe, price. See who's open right now in real time this very minute.", i: '✂️' },
-            { n: '03', t: 'Show up. Pay cash.', d: 'Book in under 30 seconds. Arrive, get the cut you chose directly. Zero drama. 100% real.', i: '💵' },
+            { n: '01', t: t('landing.step1Title'), d: t('landing.step1Desc'), i: '📍' },
+            { n: '02', t: t('landing.step2Title'), d: t('landing.step2Desc'), i: '✂️' },
+            { n: '03', t: t('landing.step3Title'), d: t('landing.step3Desc'), i: '💵' },
           ].map((step, i) => (
             <div key={i} className="relative flex flex-col items-center text-center">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 text-[180px] font-black text-[#111] leading-none z-0 tracking-tighter" style={{ marginTop: '-60px' }}>{step.n}</div>
@@ -417,17 +419,17 @@ export default function LandingPageClient({
       <section id="for-barbers" className="bg-[#111] py-24 px-6 border-y border-[#1a1a1a]">
         <div className="max-w-[1200px] mx-auto grid lg:grid-cols-[1.2fr_1fr] gap-16 lg:gap-8 items-center">
           <div>
-            <div className="text-xs font-bold text-brand-orange uppercase tracking-widest mb-4">FOR BARBERS</div>
+            <div className="text-xs font-bold text-brand-orange uppercase tracking-widest mb-4">{t('landing.forBarbers')}</div>
             <h2 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-6">
               Your chair. <br/>
               <span className="text-brand-yellow">Your rules.</span> <br/>
               <span className="text-brand-yellow">Your money.</span>
             </h2>
             <p className="text-lg font-bold text-gray-400 mb-10 max-w-[420px]">
-              No commission fees during beta. Set your hours, set your price, keep everything. We send clients to your chair.
+              {t('landing.barberNoFees')}
             </p>
             <div className="flex flex-col gap-4 mb-10">
-              {['0% commission — keep every dirham/euro', 'Profile live in under 10 minutes', 'Your own schedule — no one owns your time', 'Clients find you — you just cut'].map((text, i) => (
+              {[t('landing.barberBenefit1'), t('landing.barberBenefit2'), t('landing.barberBenefit3'), t('landing.barberBenefit4')].map((text, i) => (
                 <div key={i} className="flex gap-3 items-start">
                   <div className="w-6 h-6 rounded-full bg-brand-yellow/10 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-brand-yellow text-xs font-black">✓</span>
@@ -470,17 +472,17 @@ export default function LandingPageClient({
       <section id="for-shops" className="bg-[#111] py-24 px-6 border-b border-[#1a1a1a]">
         <div className="max-w-[1200px] mx-auto grid lg:grid-cols-[1.2fr_1fr] gap-16 lg:gap-8 items-center">
           <div>
-            <div className="text-xs font-bold text-brand-orange uppercase tracking-widest mb-4">FOR SHOPS</div>
+            <div className="text-xs font-bold text-brand-orange uppercase tracking-widest mb-4">{t('landing.forShops')}</div>
             <h2 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-6">
               Your shop. <br/>
               <span className="text-brand-yellow">Your team.</span> <br/>
               <span className="text-brand-yellow">Your reputation.</span>
             </h2>
             <p className="text-lg font-bold text-gray-400 mb-10 max-w-[420px]">
-              Manage your barbers, track performance, and let clients find your shop online. All in one place. Zero paperwork.
+              {t('landing.shopDesc')}
             </p>
             <div className="flex flex-col gap-4 mb-10">
-              {['Invite barbers by their unique code', 'See earnings per barber per month', 'Your own public shop profile', 'Clients book directly with your team'].map((text, i) => (
+              {[t('landing.shopBenefit1'), t('landing.shopBenefit2'), t('landing.shopBenefit3'), t('landing.shopBenefit4')].map((text, i) => (
                 <div key={i} className="flex gap-3 items-start">
                   <div className="w-6 h-6 rounded-full bg-brand-yellow/10 flex items-center justify-center shrink-0 mt-0.5">
                     <span className="text-brand-yellow text-xs font-black">✓</span>
@@ -522,25 +524,25 @@ export default function LandingPageClient({
       {/* ── CITIES ──────────────────────────────────────────────────────────── */}
       <section id="cities" className="bg-[#0A0A0A] py-24 px-6 border-b border-[#1a1a1a]">
         <div className="max-w-[1200px] mx-auto">
-          <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">CITIES</div>
-          <h2 className="text-4xl md:text-5xl font-black mb-12">We&apos;re live where you are</h2>
+          <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{t('landing.citiesSection')}</div>
+          <h2 className="text-4xl md:text-5xl font-black mb-12">{t('landing.liveCities')}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {citySlots.slice(0, 8).map((city, i) => {
               const isLive = city.barbers > 0 || city.shops > 0;
               const isFirst = i === 0 && isLive;
               return (
                 <div key={city.city} className={`p-6 rounded-3xl border transition-colors ${isLive ? 'bg-[#111] border-[#2a2a2a] hover:border-brand-yellow/50' : 'bg-[#0f0f0f] border-[#1a1a1a] opacity-60'}`}>
-                  {isFirst && <div className="text-[10px] font-black text-black bg-brand-yellow inline-block px-2 py-0.5 rounded mb-3 uppercase tracking-wider">Most popular</div>}
+                  {isFirst && <div className="text-[10px] font-black text-black bg-brand-yellow inline-block px-2 py-0.5 rounded mb-3 uppercase tracking-wider">{t('status.mostPopular')}</div>}
                   <h3 className="text-xl font-black text-white mb-1">{city.city}</h3>
                   <div className="text-xs font-bold text-gray-500 mb-6">
                     {isLive
                       ? `${city.barbers} barber${city.barbers !== 1 ? 's' : ''}${city.shops > 0 ? ` · ${city.shops} shop${city.shops !== 1 ? 's' : ''}` : ''}`
-                      : 'Coming soon'}
+                      : t('status.comingSoon')}
                   </div>
                   {isLive ? (
-                    <Link href="/barbers" className="text-sm font-black text-brand-yellow">Explore →</Link>
+                    <Link href="/barbers" className="text-sm font-black text-brand-yellow">{t('buttons.explore')}</Link>
                   ) : (
-                    <button className="text-sm font-bold text-gray-600">Request it →</button>
+                    <button className="text-sm font-bold text-gray-600">{t('buttons.requestIt')}</button>
                   )}
                 </div>
               );
@@ -552,7 +554,7 @@ export default function LandingPageClient({
       {/* ── FINAL CTA ───────────────────────────────────────────────────────── */}
       <section id="contact" className="bg-brand-yellow text-black py-32 px-6 text-center">
         <div className="max-w-[800px] mx-auto">
-          <div className="text-[11px] font-black uppercase tracking-widest mb-6 opacity-70">ONE LAST THING</div>
+          <div className="text-[11px] font-black uppercase tracking-widest mb-6 opacity-70">{t('landing.oneLastThing')}</div>
           <h2 className="text-5xl md:text-7xl font-black leading-[0.9] tracking-tight">
             Your next cut is <br/> 30 seconds away.
           </h2>

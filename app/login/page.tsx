@@ -8,6 +8,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { PasswordInput } from '@/components/PasswordInput';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [barberCount, setBarberCount] = useState<number | null>(null);
+  const { t } = useLang();
 
   useEffect(() => { document.title = 'Log in — titeZMe'; }, []);
 
@@ -53,7 +55,7 @@ export default function LoginPage() {
 
       if (!userDoc.exists()) {
         await signOut(auth);
-        setErrorStatus('No titeZMe account found for this Google account. Please sign up first.');
+        setErrorStatus(t('errors.noAccountFound'));
         return;
       }
 
@@ -74,7 +76,7 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       if (error.code !== 'auth/popup-closed-by-user') {
-        setErrorStatus('Google sign in failed. Please try again.');
+        setErrorStatus(t('errors.googleSignInFailed'));
       }
     }
   };
@@ -97,7 +99,7 @@ export default function LoginPage() {
         if (udata.role === 'admin' || udata.isAdmin === true) {
           const { signOut } = await import('firebase/auth');
           await signOut(auth);
-          setErrorStatus('This is an admin account. Please use /admin/login instead.');
+          setErrorStatus(t('errors.adminAccountError'));
           setIsSubmitting(false);
           return;
         }
@@ -130,15 +132,15 @@ export default function LoginPage() {
           case 'auth/user-not-found':
           case 'auth/invalid-credential':
           case 'auth/invalid-email':
-            return 'Invalid email or password.';
+            return t('errors.invalidCredentials');
           case 'auth/too-many-requests':
-            return 'Too many attempts. Try again in a few minutes.';
+            return t('errors.tooManyAttempts');
           case 'auth/user-disabled':
-            return 'This account has been disabled. Contact support.';
+            return t('errors.accountDisabled');
           case 'auth/network-request-failed':
-            return 'Connection error. Check your internet and try again.';
+            return t('errors.connectionError');
           default:
-            return 'Something went wrong. Please try again.';
+            return t('errors.somethingWentWrong');
         }
       };
       setErrorStatus(getFriendlyError(err.code || ''));
@@ -150,7 +152,7 @@ export default function LoginPage() {
   return (
     <div className="max-w-[400px] mx-auto p-6 mt-10 md:mt-24">
       <div className="animate-fadeUp mb-8 text-center">
-        <h1 className="text-[32px] font-black tracking-tight mb-2">Welcome Back</h1>
+        <h1 className="text-[32px] font-black tracking-tight mb-2">{t('headings.welcomeBack')}</h1>
         <p className="text-brand-text-secondary text-[15px]">Log in to your titeZMe account.</p>
       </div>
 
@@ -196,7 +198,7 @@ export default function LoginPage() {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
-        Continue with Google
+        {t('buttons.continueWithGoogle')}
       </button>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
@@ -207,23 +209,23 @@ export default function LoginPage() {
 
       <form onSubmit={handleLogin} className="animate-fadeUp flex flex-col gap-4">
         <div>
-          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">EMAIL</label>
-          <input 
+          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.email').toUpperCase()}</label>
+          <input
             required
             type="email"
             value={email} onChange={e => setEmail(e.target.value)}
-            className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3.5 text-white text-[15px] outline-none transition-colors focus:border-brand-yellow" 
-            placeholder="you@email.com" 
+            className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3.5 text-white text-[15px] outline-none transition-colors focus:border-brand-yellow"
+            placeholder={t('forms.emailPlaceholder')}
           />
         </div>
 
         <div>
-          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">PASSWORD</label>
+          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.password').toUpperCase()}</label>
           <PasswordInput
             required
             value={password}
             onChange={setPassword}
-            placeholder="••••••••"
+            placeholder={t('forms.passwordPlaceholder')}
             className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3.5 text-white text-[15px] outline-none transition-colors focus:border-brand-yellow"
           />
         </div>
@@ -275,7 +277,7 @@ export default function LoginPage() {
                 </svg>
               )}
             </div>
-            Remember me
+            {t('forms.rememberMe')}
           </label>
 
           <a
@@ -288,7 +290,7 @@ export default function LoginPage() {
               fontFamily: 'Nunito, sans-serif'
             }}
           >
-            Forgot password?
+            {t('forms.forgotPassword')}
           </a>
         </div>
 
@@ -328,7 +330,7 @@ export default function LoginPage() {
           disabled={isSubmitting}
           className="bg-brand-yellow text-[#0a0a0a] w-full mt-3 px-7 py-4 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
         >
-          {isSubmitting ? 'Logging in...' : 'Log In →'}
+          {isSubmitting ? 'Logging in...' : t('buttons.logIn')}
         </button>
 
         <div style={{

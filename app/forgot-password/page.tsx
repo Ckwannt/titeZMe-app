@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useLang();
 
   useEffect(() => { document.title = 'Reset password — titeZMe'; }, []);
 
@@ -31,7 +33,7 @@ export default function ForgotPasswordPage() {
       ) {
         setSent(true);
       } else {
-        setError('Something went wrong. Please try again.');
+        setError(t('errors.somethingWentWrong'));
       }
     } finally {
       setLoading(false);
@@ -155,7 +157,7 @@ export default function ForgotPasswordPage() {
               color: '#fff',
               marginBottom: '8px'
             }}>
-              Check your email
+              {t('misc.checkEmail')}
             </div>
             <div style={{
               fontSize: '12px',
