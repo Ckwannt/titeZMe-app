@@ -1,17 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Wordmark } from './Wordmark';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { NotificationBell } from './NotificationBell';
+import { useLang } from '@/lib/i18n/LangContext';
+import type { Language } from '@/lib/i18n/translations';
 
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, appUser, logout } = useAuth();
+  const { lang, setLang } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const langMenuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
     await logout();
@@ -28,6 +33,17 @@ export function TopNav() {
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  // Close lang menu on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) {
+        setShowLangMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -67,9 +83,65 @@ export function TopNav() {
         {/* RIGHT — Actions */}
         <div className="flex items-center gap-3 ml-auto flex-shrink-0 z-10">
 
-          {/* Desktop: EN + logged-in/out state */}
-          <div className="hidden md:flex items-center gap-1 text-sm font-bold text-[#888580]">
-            <span>🌍</span> EN
+          {/* Desktop: language dropdown */}
+          <div ref={langMenuRef} className="relative hidden md:flex items-center">
+            <button
+              onClick={() => setShowLangMenu(v => !v)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '13px',
+                fontWeight: 800,
+                color: '#888580',
+                fontFamily: 'Nunito, sans-serif',
+                padding: '4px 8px',
+                borderRadius: '99px',
+              }}
+            >
+              🌍 {lang.toUpperCase()}
+            </button>
+            {showLangMenu && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                background: '#111111',
+                border: '1px solid #2a2a2a',
+                borderRadius: '12px',
+                padding: '6px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+                zIndex: 9999,
+                minWidth: '110px',
+              }}>
+                {(['en', 'fr', 'es'] as const).map(l => (
+                  <button
+                    key={l}
+                    onClick={() => { setLang(l); setShowLangMenu(false); }}
+                    style={{
+                      background: lang === l ? '#1a1a1a' : 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: lang === l ? 900 : 600,
+                      color: lang === l ? '#F5C518' : '#888580',
+                      fontFamily: 'Nunito, sans-serif',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    {l === 'en' ? '🇬🇧  EN — English' : l === 'fr' ? '🇫🇷  FR — Français' : '🇪🇸  ES — Español'}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           {user ? (
             <div className="hidden md:flex items-center gap-4 border-l border-[#1E1E1E] pl-4">
@@ -292,13 +364,14 @@ export function TopNav() {
             display: 'flex',
             gap: '12px'
           }}>
-            {['EN', 'FR', 'ES'].map(lang => (
+            {(['en', 'fr', 'es'] as const).map((l: Language) => (
               <button
-                key={lang}
+                key={l}
+                onClick={() => setLang(l)}
                 style={{
-                  background: 'transparent',
-                  border: '1px solid #2a2a2a',
-                  color: '#555',
+                  background: lang === l ? '#1a1a1a' : 'transparent',
+                  border: `1px solid ${lang === l ? '#F5C518' : '#2a2a2a'}`,
+                  color: lang === l ? '#F5C518' : '#555',
                   borderRadius: '99px',
                   padding: '6px 14px',
                   fontSize: '12px',
@@ -307,7 +380,7 @@ export function TopNav() {
                   fontFamily: 'Nunito, sans-serif'
                 }}
               >
-                {lang}
+                {l.toUpperCase()}
               </button>
             ))}
           </div>

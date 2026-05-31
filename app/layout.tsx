@@ -7,6 +7,7 @@ import { AuthProvider } from '@/lib/auth-context';
 import { ConditionalNav } from '@/components/ConditionalNav';
 import { Toaster } from 'react-hot-toast';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { LangProvider } from '@/lib/i18n/LangContext';
 import './globals.css';
 
 const nunito = Nunito({ subsets: ['latin'], variable: '--font-nunito' });
@@ -60,6 +61,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
       <body className="font-sans antialiased text-[#F0EDE8] bg-[#0A0A0A] selection:bg-[#FFD600] selection:text-[#0A0A0A] flex flex-col min-h-screen" suppressHydrationWarning>
         <Providers>
           <AuthProvider>
+            <LangProvider>
             <OfflineBanner />
             <ConditionalNav>
               {children}
@@ -90,6 +92,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
               }}
             />
             <SpeedInsights />
+            </LangProvider>
           </AuthProvider>
         </Providers>
       </body>
