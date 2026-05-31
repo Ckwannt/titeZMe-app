@@ -12,10 +12,12 @@ import Select from "react-select";
 import { userUpdateSchema, scheduleSchema, barberSchema } from "@/lib/schemas";
 import { sanitizeText } from '@/lib/sanitize';
 import { getLanguageOptions } from '@/lib/languages';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export default function BarberOnboarding() {
   const router = useRouter();
   const { user, appUser } = useAuth();
+  const { t } = useLang();
   const [step, setStep] = useState(1);
   const totalSteps = 4;
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -294,14 +296,14 @@ export default function BarberOnboarding() {
     }
   };
 
-  const stepTitles = ["Basic Info", "Your Vibe", "Services", "Go Live 🚀"];
+  const stepTitles = [t('onboarding.basicInfo'), t('onboarding.yourVibe'), t('booking.services'), t('onboarding.goLive')];
 
   return (
     <div className="max-w-[560px] mx-auto p-6 md:p-8">
       {/* Header */}
       <div className="animate-fadeUp text-center mb-9">
         <div className="text-3xl mb-2">💈</div>
-        <h1 className="text-2xl font-black">Set up your profile</h1>
+        <h1 className="text-2xl font-black">{t('onboarding.setupProfile')}</h1>
         <p className="text-brand-text-secondary text-sm mt-1.5">
           Step {step} of {totalSteps} — {stepTitles[step - 1]}
         </p>
@@ -318,7 +320,7 @@ export default function BarberOnboarding() {
         <div className="animate-fadeUp flex flex-col gap-3.5">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">FIRST NAME</label>
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.firstName').toUpperCase()}</label>
               <input
                 type="text"
                 value={firstName}
@@ -340,7 +342,7 @@ export default function BarberOnboarding() {
               />
             </div>
             <div>
-              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LAST NAME</label>
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.lastName').toUpperCase()}</label>
               <input
                 type="text"
                 value={lastName}
@@ -363,7 +365,7 @@ export default function BarberOnboarding() {
             </div>
           </div>
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">PHONE NUMBER</label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.phone').toUpperCase()}</label>
             <div className="flex gap-2">
               <div className="flex-none w-1/3">
                 <Select 
@@ -388,7 +390,7 @@ export default function BarberOnboarding() {
             </div>
           </div>
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LOCATION</label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('onboarding.location')}</label>
             <div className="grid grid-cols-2 gap-3">
               <Select 
                 options={countryOptions} 
@@ -417,11 +419,11 @@ export default function BarberOnboarding() {
             </div>
           </div>
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">BIO</label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.bio').toUpperCase()}</label>
             <textarea value={bio} onChange={e => setBio(e.target.value)} maxLength={2000} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] resize-y" rows={3} placeholder="Tell clients who you are, your style, your experience..." />
           </div>
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">LANGUAGES</label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">{t('forms.languages').toUpperCase()}</label>
             <Select 
               isMulti
               options={languageOptions} 
@@ -438,7 +440,7 @@ export default function BarberOnboarding() {
       {step === 2 && (
         <div className="animate-fadeUp">
           <p className="text-brand-text-secondary text-sm mb-5 leading-[1.7]">
-            Help clients know what kind of energy to expect. You can pick more than one.
+            {t('onboarding.vibeDesc')}
           </p>
           <div className="grid grid-cols-2 gap-2.5 mb-5">
             {[
@@ -464,7 +466,7 @@ export default function BarberOnboarding() {
             ))}
           </div>
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">SPECIALTIES</label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">{t('forms.specialties').toUpperCase()}</label>
             <div className="flex flex-wrap gap-2">
               {[
                 "Skin Fade / Bald Fade",
@@ -501,7 +503,7 @@ export default function BarberOnboarding() {
           </div>
 
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">WHO DO YOU WORK WITH?</label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">{t('forms.whoDoYouWorkWith').toUpperCase()}</label>
             <div className="flex flex-wrap gap-2">
               {[
                 "👶 Babies (0–2 years)",
@@ -542,7 +544,7 @@ export default function BarberOnboarding() {
           </div>
           
           <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 border-l-4 border-l-brand-yellow relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-brand-yellow text-[#0a0a0a] text-[9px] font-black px-2 py-0.5 rounded-bl-lg">REQUIRED</div>
+            <div className="absolute top-0 right-0 bg-brand-yellow text-[#0a0a0a] text-[9px] font-black px-2 py-0.5 rounded-bl-lg">{t('onboarding.requiredBadge')}</div>
             <div className="mb-2">
               <div className="font-black flex items-center gap-1.5 text-base">⚡ titeZMe Cut</div>
               <div className="text-[11px] text-brand-text-secondary mt-0.5 max-w-[240px]">The barber chooses the cut for you based on your vibe and budget.</div>
@@ -563,7 +565,7 @@ export default function BarberOnboarding() {
             <div key={i} className="bg-brand-surface border border-brand-border rounded-2xl p-5">
               <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2.5 items-end">
                 <div>
-                  <label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">SERVICE NAME</label>
+                  <label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">{t('onboarding.serviceName')}</label>
                   <input value={s.name} onChange={e => setServicesData(prev => prev.map((x, j) => j === i ? {...x, name: e.target.value} : x))} maxLength={100} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" />
                 </div>
                 <div>
@@ -579,7 +581,7 @@ export default function BarberOnboarding() {
             </div>
           ))}
           <button onClick={() => setServicesData(prev => [...prev, {name: '', duration: '30', price: '0'}])} className="bg-transparent border-2 border-dashed border-[#2a2a2a] text-brand-text-secondary rounded-[14px] p-3.5 cursor-pointer font-bold text-sm transition-all hover:border-brand-yellow hover:text-brand-yellow">
-            + Add service
+            {t('onboarding.addServiceBtn')}
           </button>
         </div>
       )}
@@ -588,10 +590,9 @@ export default function BarberOnboarding() {
       {step === 4 && (
         <div className="animate-fadeUp text-center">
           <div className="text-[56px] mb-4">🚀</div>
-          <h2 className="text-2xl font-black mb-2.5">You&apos;re ready to go live!</h2>
+          <h2 className="text-2xl font-black mb-2.5">{t('onboarding.readyToGoLive')}</h2>
           <p className="text-brand-text-secondary text-sm leading-[1.7] mb-7">
-            Your profile will be visible to clients searching in your city the moment you hit launch.
-            You can always come back and edit anything.
+            {t('onboarding.profileVisibleDesc')}
           </p>
           <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 text-left mb-6">
             {[
@@ -617,7 +618,7 @@ export default function BarberOnboarding() {
             onClick={handleLaunch} 
             className="bg-brand-yellow text-[#0a0a0a] w-full flex justify-center text-base px-7 py-4 rounded-full font-black transition-all hover:-translate-y-px disabled:opacity-50"
           >
-            {isSubmitting ? 'Launching... 🚀' : 'Launch My Profile 🚀'}
+            {isSubmitting ? t('onboarding.launching') : t('onboarding.launchProfile')}
           </button>
         </div>
       )}
@@ -626,10 +627,10 @@ export default function BarberOnboarding() {
       {step < 4 && (
         <div className="flex justify-between mt-7">
           {step > 1 ? (
-            <button className="bg-transparent text-white border-[1.5px] border-[#2a2a2a] px-6 py-3 rounded-full font-extrabold text-sm transition-all hover:border-[#555]" onClick={() => setStep(s => s - 1)}>← Back</button>
+            <button className="bg-transparent text-white border-[1.5px] border-[#2a2a2a] px-6 py-3 rounded-full font-extrabold text-sm transition-all hover:border-[#555]" onClick={() => setStep(s => s - 1)}>{t('booking.back')}</button>
           ) : <div />}
           <button className="bg-brand-yellow text-[#0a0a0a] px-7 py-3 rounded-full font-black text-sm transition-all hover:-translate-y-px" onClick={() => setStep(s => s + 1)}>
-            {step === 3 ? "Review & Launch →" : "Continue →"}
+            {step === 3 ? t('onboarding.reviewLaunch') : t('onboarding.continueStep')}
           </button>
         </div>
       )}
