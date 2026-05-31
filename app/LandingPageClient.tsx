@@ -185,7 +185,7 @@ export default function LandingPageClient({
                       )}
                       {/* Next slots inset box */}
                       <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-[10px] px-[14px] py-[12px] mb-3">
-                        <div className="text-[9px] font-black uppercase text-[#444] tracking-[0.08em] mb-2">NEXT AVAILABLE SLOTS</div>
+                        <div className="text-[9px] font-black uppercase text-[#444] tracking-[0.08em] mb-2">{t('landing.nextAvailableSlots')}</div>
                         <div className="flex gap-2 flex-wrap">
                           {mainBarber.nextSlots && mainBarber.nextSlots.length > 0 ? (
                             mainBarber.nextSlots.map((s: string) => (
@@ -281,7 +281,7 @@ export default function LandingPageClient({
                       </div>
                     </div>
                     <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-[10px] px-[14px] py-[12px] mb-3">
-                      <div className="text-[9px] font-black uppercase text-[#444] tracking-[0.08em] mb-2">SHOP DETAILS</div>
+                      <div className="text-[9px] font-black uppercase text-[#444] tracking-[0.08em] mb-2">{t('landing.shopDetails')}</div>
                       <div className="flex gap-6">
                         <div>
                           <div className="text-[13px] font-black text-white">{mainShop.barberCount}</div>
@@ -343,8 +343,8 @@ export default function LandingPageClient({
           <div className="grid lg:grid-cols-[1fr_2.5fr] gap-12">
             <div>
               <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{t('landing.socialProof')}</div>
-              <h2 className="text-5xl font-black leading-[1.1] mb-2">Real clients.</h2>
-              <h2 className="text-4xl font-bold text-gray-500 mb-8">Real talk.</h2>
+              <h2 className="text-5xl font-black leading-[1.1] mb-2">{t('landing.realClients')}</h2>
+              <h2 className="text-4xl font-bold text-gray-500 mb-8">{t('landing.realTalk')}</h2>
               <div className="bg-[#0f0f0f] p-6 rounded-3xl border border-[#1a1a1a] inline-block">
                 <div className="text-5xl font-black text-brand-yellow mb-1">4.9</div>
                 <div className="text-xs font-bold text-gray-500 uppercase tracking-wide">Overall Rating</div>
@@ -421,9 +421,7 @@ export default function LandingPageClient({
           <div>
             <div className="text-xs font-bold text-brand-orange uppercase tracking-widest mb-4">{t('landing.forBarbers')}</div>
             <h2 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-6">
-              Your chair. <br/>
-              <span className="text-brand-yellow">Your rules.</span> <br/>
-              <span className="text-brand-yellow">Your money.</span>
+              {t('landing.barberChairTitle')}
             </h2>
             <p className="text-lg font-bold text-gray-400 mb-10 max-w-[420px]">
               {t('landing.barberNoFees')}
@@ -440,10 +438,10 @@ export default function LandingPageClient({
             </div>
             <div className="flex flex-wrap gap-4">
               <Link href="/signup" className="bg-brand-yellow text-black font-black px-8 py-4 rounded-full transition-opacity hover:opacity-90">
-                Join free during beta →
+                {t('landing.joinFreeBeta')}
               </Link>
               <Link href="/how-it-works" className="border border-[#2a2a2a] text-white font-bold px-8 py-4 rounded-full hover:bg-[#1a1a1a] transition-colors">
-                See how it works
+                {t('landing.seeHowItWorks')}
               </Link>
             </div>
           </div>
@@ -474,9 +472,7 @@ export default function LandingPageClient({
           <div>
             <div className="text-xs font-bold text-brand-orange uppercase tracking-widest mb-4">{t('landing.forShops')}</div>
             <h2 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight mb-6">
-              Your shop. <br/>
-              <span className="text-brand-yellow">Your team.</span> <br/>
-              <span className="text-brand-yellow">Your reputation.</span>
+              {t('landing.shopTitle')}
             </h2>
             <p className="text-lg font-bold text-gray-400 mb-10 max-w-[420px]">
               {t('landing.shopDesc')}
@@ -493,10 +489,10 @@ export default function LandingPageClient({
             </div>
             <div className="flex flex-wrap gap-4">
               <Link href="/signup" className="bg-brand-yellow text-black font-black px-8 py-4 rounded-full transition-opacity hover:opacity-90">
-                Create your shop →
+                {t('landing.createYourShop')}
               </Link>
               <Link href="/how-it-works" className="border border-[#2a2a2a] text-white font-bold px-8 py-4 rounded-full hover:bg-[#1a1a1a] transition-colors">
-                See how it works
+                {t('landing.seeHowItWorks')}
               </Link>
             </div>
           </div>
@@ -556,7 +552,7 @@ export default function LandingPageClient({
         <div className="max-w-[800px] mx-auto">
           <div className="text-[11px] font-black uppercase tracking-widest mb-6 opacity-70">{t('landing.oneLastThing')}</div>
           <h2 className="text-5xl md:text-7xl font-black leading-[0.9] tracking-tight">
-            Your next cut is <br/> 30 seconds away.
+            {t('landing.nextCut')} <br/> {t('landing.nextCut2')}
           </h2>
         </div>
       </section>

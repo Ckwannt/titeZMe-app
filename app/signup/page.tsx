@@ -231,7 +231,7 @@ export default function SignupPage() {
           case 'auth/invalid-email':
             return t('errors.invalidCredentials');
           case 'auth/operation-not-allowed':
-            return 'Sign up is temporarily disabled. Try again later.';
+            return t('errors.signUpDisabled');
           case 'auth/too-many-requests':
             return t('errors.tooManyAttempts');
           case 'auth/network-request-failed':
@@ -257,7 +257,7 @@ export default function SignupPage() {
       {/* Role selection — must be visible BEFORE Google button so user's choice
           is honored by handleGoogleSignIn (which reads the `role` state). */}
       <div className="mb-3">
-        <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">I AM A...</label>
+        <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">{t('headings.iAmA')}</label>
         <div className="flex gap-2">
           {[
             { id: 'client', label: 'Client', icon: '👤' },
@@ -286,7 +286,7 @@ export default function SignupPage() {
         marginBottom: '16px',
         fontFamily: 'Nunito, sans-serif',
       }}>
-        Choose your role before signing up
+        {t('headings.joinSubtitle')}
       </div>
 
       <button
@@ -482,7 +482,7 @@ export default function SignupPage() {
           )}
           {password.length >= 8 && (
             <div style={{ fontSize: '11px', color: '#22C55E', marginTop: '4px' }}>
-              ✓ Password looks good
+              {t('misc.passwordLooksGood')}
             </div>
           )}
         </div>
@@ -556,7 +556,7 @@ export default function SignupPage() {
           disabled={isSubmitting || !!emailError || email.length === 0 || password.length < 8 || firstName.length === 0}
           className="bg-brand-yellow text-[#0a0a0a] w-full mt-4 px-7 py-3.5 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
         >
-          {isSubmitting ? 'Creating account...' : t('buttons.createAccount')}
+          {isSubmitting ? t('forms.creatingAccount') : t('buttons.createAccount')}
         </button>
 
         <div style={{
@@ -567,7 +567,7 @@ export default function SignupPage() {
           fontFamily: 'Nunito, sans-serif',
           marginTop: '12px'
         }}>
-          By creating an account you agree to our{' '}
+          {t('misc.byCreatingAccount')}{' '}
           <a
             href="/terms"
             target="_blank"
@@ -577,7 +577,7 @@ export default function SignupPage() {
               textUnderlineOffset: '2px'
             }}
           >
-            Terms of Service
+            {t('misc.termsOfService')}
           </a>
           {' '}and{' '}
           <a
@@ -589,7 +589,7 @@ export default function SignupPage() {
               textUnderlineOffset: '2px'
             }}
           >
-            Privacy Policy
+            {t('misc.privacyPolicy')}
           </a>
           .
         </div>

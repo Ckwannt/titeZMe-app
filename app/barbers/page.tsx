@@ -23,7 +23,6 @@ export type BarberCard = {
   currency?: string;
   barberCode: string;
   isOpenNow: boolean;
-  openLabel: string;
   openColor: string;
   hasSchedule: boolean;
   minPrice: number | null;
