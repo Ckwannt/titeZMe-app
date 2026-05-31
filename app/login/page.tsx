@@ -153,7 +153,7 @@ export default function LoginPage() {
     <div className="max-w-[400px] mx-auto p-6 mt-10 md:mt-24">
       <div className="animate-fadeUp mb-8 text-center">
         <h1 className="text-[32px] font-black tracking-tight mb-2">{t('headings.welcomeBack')}</h1>
-        <p className="text-brand-text-secondary text-[15px]">Log in to your titeZMe account.</p>
+        <p className="text-brand-text-secondary text-[15px]">{t('headings.loginSubtitle')}</p>
       </div>
 
       {barberCount && barberCount > 0 && (
@@ -330,7 +330,7 @@ export default function LoginPage() {
           disabled={isSubmitting}
           className="bg-brand-yellow text-[#0a0a0a] w-full mt-3 px-7 py-4 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
         >
-          {isSubmitting ? 'Logging in...' : t('buttons.logIn')}
+          {isSubmitting ? t('forms.loggingIn') : t('buttons.logIn')}
         </button>
 
         <div style={{
@@ -341,7 +341,7 @@ export default function LoginPage() {
           fontFamily: 'Nunito, sans-serif',
           marginTop: '12px'
         }}>
-          By logging in you agree to our{' '}
+          {t('misc.byLoggingIn')}{' '}
           <a
             href="/terms"
             target="_blank"
@@ -351,7 +351,7 @@ export default function LoginPage() {
               textUnderlineOffset: '2px'
             }}
           >
-            Terms of Service
+            {t('misc.termsOfService')}
           </a>
           {' '}and{' '}
           <a
@@ -363,7 +363,7 @@ export default function LoginPage() {
               textUnderlineOffset: '2px'
             }}
           >
-            Privacy Policy
+            {t('misc.privacyPolicy')}
           </a>
           .
         </div>

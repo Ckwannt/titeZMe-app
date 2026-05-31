@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
                 marginBottom: '24px'
               }}
             >
-              ← Back to login
+              {t('headings.backToLogin')}
             </a>
 
             <div style={{
@@ -81,7 +81,7 @@ export default function ForgotPasswordPage() {
               color: '#fff',
               marginBottom: '8px'
             }}>
-              Reset your password
+              {t('headings.resetPassword')}
             </div>
 
             <div style={{
@@ -144,7 +144,7 @@ export default function ForgotPasswordPage() {
                   width: '100%'
                 }}
               >
-                {loading ? 'Sending...' : 'Send reset link →'}
+                {loading ? t('forms.sending') : t('forms.sendResetLink')}
               </button>
             </div>
           </>
@@ -179,7 +179,7 @@ export default function ForgotPasswordPage() {
                 textDecoration: 'none'
               }}
             >
-              ← Back to login
+              {t('headings.backToLogin')}
             </a>
           </div>
         )}

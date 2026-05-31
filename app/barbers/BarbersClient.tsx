@@ -27,7 +27,6 @@ function computeOpenStatus(
   if (!weeklyDays || weeklyDays.length === 0) {
     return {
       isOpenNow:   false,
-      openLabel:   '',
       openColor:   '',
       hasSchedule: false,
     };
@@ -46,8 +45,7 @@ function computeOpenStatus(
     currentTime <= (closesAt || '23:59');
   return {
     isOpenNow,
-    openLabel:   isOpenNow ? 'Open now' : 'Closed',
-    openColor:   isOpenNow ? 'green'    : 'gray',
+    openColor:   isOpenNow ? 'green' : 'gray',
     hasSchedule: true,
   };
 }
@@ -302,9 +300,9 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
     <div className="bg-[#0a0a0a] text-white min-h-screen">
 
       <div className="max-w-[1400px] mx-auto px-6 pt-12 pb-8">
-        <h1 className="text-4xl md:text-5xl font-black mb-2">Find your barber</h1>
+        <h1 className="text-4xl md:text-5xl font-black mb-2">{t('forms.findYourBarber')}</h1>
         <p className="text-[#888] font-bold text-lg mb-4">
-          Browse barbers by city. Real availability. Book in seconds.
+          {t('forms.browseBarbersCity')}
         </p>
 
         {/* Geolocation banner */}
@@ -331,7 +329,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
             }}
               className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors"
             >
-              <option value="">Choose a country</option>
+              <option value="">{t('forms.chooseCountry')}</option>
               {countries.map((c: any) => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
             </select>
 
@@ -339,13 +337,13 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
               disabled={!countryCode}
               className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <option value="">Choose a city</option>
+              <option value="">{t('forms.chooseCity')}</option>
               {cities.map((c: any) => <option key={c.name} value={c.name}>{c.name}</option>)}
             </select>
 
             <button onClick={handleSearch} disabled={false}
               className="bg-brand-yellow text-[#0a0a0a] font-black px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-opacity whitespace-nowrap">
-              Search barbers →
+              {t('buttons.searchBarbers')}
             </button>
           </div>
 
@@ -370,7 +368,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
               </span>
             )}
             <button onClick={clearAll} className="text-xs text-[#555] hover:text-white transition-colors">
-              Clear all ✕
+              {t('buttons.clearAll')} ✕
             </button>
           </div>
         )}
@@ -445,9 +443,9 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
 
                     <div className="h-px bg-[#1e1e1e] my-[10px]" />
 
-                    {b.hasSchedule && b.openLabel && (
+                    {b.hasSchedule && (
                       <div className={`text-[10px] font-bold mb-[8px] ${b.openColor}`}>
-                        {b.openLabel}
+                        {b.isOpenNow ? t('status.openNow') : t('status.closed')}
                       </div>
                     )}
 
@@ -468,7 +466,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
 
                     <div className="flex justify-between items-center mt-auto">
                       <span className="text-[13px] font-bold text-white">
-                        {b.minPrice !== null ? `from ${sym}${b.minPrice}` : 'On request'}
+                        {b.minPrice !== null ? `from ${sym}${b.minPrice}` : t('buttons.onRequest')}
                       </span>
                       <span className="text-[12px] font-bold text-[#E8491D]">
                         {t('buttons.viewProfile')}
