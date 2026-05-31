@@ -12,11 +12,13 @@ import { userUpdateSchema, bookingUpdateSchema } from "@/lib/schemas";
 import { cleanupBookingLock } from '@/lib/booking-lock-utils';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import Image from 'next/image';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export default function ClientDashboard() {
   const { user, appUser, loading } = useAuth();
   const router = useRouter();
   
+  const { t } = useLang();
   const [activeTab, setActiveTab] = useState("Bookings");
   const [bookings, setBookings] = useState<any[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -98,10 +100,10 @@ export default function ClientDashboard() {
     const bDate = new Date(`${dateStr}T${timeStr}`);
     const now = new Date();
     if ((bDate.getTime() - now.getTime()) < 2 * 60 * 60 * 1000) {
-      toast.error("Cannot cancel within 2 hours of appointment time.");
+      toast.error(t('clientDash.cannotCancelSoon'));
       return;
     }
-    const loadingToast = toast.loading("Cancelling appointment...");
+    const loadingToast = toast.loading(t('clientDash.cancellingAppt'));
     try {
       const timeNow = Date.now();
       const bookingDoc = bookings.find(b => b.id === bId);
@@ -117,10 +119,10 @@ export default function ClientDashboard() {
         });
       }
       // onSnapshot listener above will auto-refresh the bookings list
-      toast.success("Appointment cancelled.", { id: loadingToast });
+      toast.success(t('clientDash.apptCancelled'), { id: loadingToast });
     } catch(e) {
       console.error(e);
-      toast.error("Failed to cancel.", { id: loadingToast });
+      toast.error(t('clientDash.failedToCancel'), { id: loadingToast });
     }
   }
 
@@ -159,7 +161,7 @@ export default function ClientDashboard() {
           )}
           <div>
             <div className="font-extrabold text-sm">{appUser?.firstName} {appUser?.lastName?.charAt(0)}.</div>
-            <div className="text-[11px] text-brand-text-secondary font-bold">Client</div>
+            <div className="text-[11px] text-brand-text-secondary font-bold">{t('clientDash.clientRole')}</div>
           </div>
         </div>
         
@@ -168,13 +170,13 @@ export default function ClientDashboard() {
             onClick={() => setActiveTab("Bookings")}
             className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 bg-[#1a1a1a] text-brand-yellow`}
           >
-            <span>📅</span> My Bookings
+            <span>📅</span> {t('clientDash.myBookings')}
           </button>
           <button 
             onClick={() => router.push('/dashboard/client/settings')}
             className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 text-[#888] hover:bg-[#1a1a1a] hover:text-white`}
           >
-            <span>⚙️</span> Settings
+            <span>⚙️</span> {t('clientDash.settings')}
           </button>
         </div>
 
@@ -186,11 +188,11 @@ export default function ClientDashboard() {
       <div className="flex-1 p-6 md:p-8 md:px-10 overflow-y-auto max-h-[calc(100vh-53px)]">
         {activeTab === "Bookings" && (
            <div className="animate-fadeUp max-w-[700px]">
-             <h2 className="text-2xl font-black mb-6">Upcoming Appointments</h2>
+             <h2 className="text-2xl font-black mb-6">{t('clientDash.upcomingAppointments')}</h2>
              <div className="flex flex-col gap-3.5 mb-10">
                {upcomingBookings.length === 0 ? (
                  <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 text-center text-sm font-bold text-brand-text-secondary">
-                   No upcoming bookings. <Link href="/barbers" className="text-brand-yellow font-bold no-underline">Find a barber</Link> · <Link href="/shops" className="text-brand-yellow font-bold no-underline">Find a barbershop</Link>
+                   {t('clientDash.noUpcomingBookings')} <Link href="/barbers" className="text-brand-yellow font-bold no-underline">{t('emptyStates.findABarber')}</Link> · <Link href="/shops" className="text-brand-yellow font-bold no-underline">{t('clientDash.findABarbershop')}</Link>
                  </div>
                ) : (
                  upcomingBookings.map(b => (
@@ -209,11 +211,11 @@ export default function ClientDashboard() {
                         <span className="text-[11px] font-extrabold text-[#555] uppercase tracking-wide">Status: {b.status}</span>
                         {b.status === 'completed' && (
                           b.hasReview
-                            ? <span className="text-[11px] font-black text-[#22C55E]">✓ Reviewed</span>
-                            : <button onClick={() => router.push(`/review/${b.id}`)} className="text-[11px] font-black text-brand-yellow border border-brand-yellow hover:bg-[#1a1500] px-3 py-1.5 rounded-lg transition-colors">Leave Review</button>
+                            ? <span className="text-[11px] font-black text-[#22C55E]">{t('clientDash.reviewed')}</span>
+                            : <button onClick={() => router.push(`/review/${b.id}`)} className="text-[11px] font-black text-brand-yellow border border-brand-yellow hover:bg-[#1a1500] px-3 py-1.5 rounded-lg transition-colors">{t('clientDash.leaveReview')}</button>
                         )}
                         {b.status === 'pending' || b.status === 'confirmed' ? (
-                          <button onClick={() => setConfirmCancel(b.id)} className="text-[11px] font-black text-brand-red hover:bg-[#1a0808] px-3 py-1.5 rounded-lg transition-colors">Cancel Booking</button>
+                          <button onClick={() => setConfirmCancel(b.id)} className="text-[11px] font-black text-brand-red hover:bg-[#1a0808] px-3 py-1.5 rounded-lg transition-colors">{t('clientDash.cancelBooking')}</button>
                         ) : null}
                       </div>
                    </div>
@@ -221,10 +223,10 @@ export default function ClientDashboard() {
                )}
              </div>
 
-             <h2 className="text-2xl font-black mb-6">Past & Cancelled</h2>
+             <h2 className="text-2xl font-black mb-6">{t('clientDash.pastCancelled')}</h2>
              <div className="flex flex-col gap-3.5 opacity-70">
                {pastBookings.length === 0 ? (
-                 <div className="text-sm font-bold text-[#555]">No past history.</div>
+                 <div className="text-sm font-bold text-[#555]">{t('clientDash.noPastHistory')}</div>
                ) : (
                  pastBookings.map(b => (
                    <div key={b.id} className="bg-transparent border border-[#2a2a2a] rounded-2xl p-4 flex justify-between items-center">
@@ -237,8 +239,8 @@ export default function ClientDashboard() {
                         <div className="text-[10px] font-black uppercase text-[#666] mb-1">{b.status}</div>
                         {b.status === 'completed' && (
                           b.hasReview
-                            ? <span className="text-[10px] font-extrabold text-[#22C55E]">✓ Reviewed</span>
-                            : <button onClick={() => router.push(`/review/${b.id}`)} className="text-[10px] font-extrabold text-brand-yellow hover:underline">Review</button>
+                            ? <span className="text-[10px] font-extrabold text-[#22C55E]">{t('clientDash.reviewed')}</span>
+                            : <button onClick={() => router.push(`/review/${b.id}`)} className="text-[10px] font-extrabold text-brand-yellow hover:underline">{t('clientDash.leaveReview')}</button>
                         )}
                       </div>
                    </div>
@@ -250,10 +252,10 @@ export default function ClientDashboard() {
       </div>
       <ConfirmDialog
         isOpen={!!confirmCancel}
-        title="Cancel booking?"
-        message="This will cancel your appointment. The barber will be notified."
-        confirmText="Yes, cancel"
-        cancelText="Keep booking"
+        title={t('clientDash.cancelBookingTitle')}
+        message={t('clientDash.cancelBookingMsg')}
+        confirmText={t('clientDash.yesCancel')}
+        cancelText={t('clientDash.keepBooking')}
         confirmColor="#EF4444"
         onCancel={() => setConfirmCancel(null)}
         onConfirm={async () => {

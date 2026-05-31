@@ -10,6 +10,7 @@ import { cleanupBookingLock } from '@/lib/booking-lock-utils';
 import { safeFirestore } from '@/lib/firebase-helpers';
 import { toast } from '@/lib/toast';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useLang } from '@/lib/i18n/LangContext';
 
 function getCurrencySymbol(c?: string) {
   const s: Record<string, string> = { 'EUR': '€', 'GBP': '£', 'USD': '$', 'MAD': 'MAD ', 'DZD': 'DA ', 'SAR': 'SAR ', 'AED': 'AED ', 'SEK': 'kr ', 'CHF': 'CHF ' };
@@ -54,6 +55,7 @@ const borderColorMap: Record<string, string> = {
 export default function BookingsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useLang();
   const [bookings, setBookings] = useState<any[]>([]);
   const [bookingsTab, setBookingsTab] = useState('today');
   const [bookingsStatusFilter, setBookingsStatusFilter] = useState('all');
@@ -222,16 +224,16 @@ export default function BookingsPage() {
   return (
     <div className="animate-fadeUp p-6 md:p-8 md:px-10">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-black">All Bookings</h2>
-        <button onClick={exportCSV} className="border border-[#2a2a2a] text-[#888] font-bold text-[11px] px-[14px] py-[6px] rounded-full hover:border-[#444] hover:text-white transition-colors">Export CSV ↓</button>
+        <h2 className="text-2xl font-black">{t('bookings.allBookings')}</h2>
+        <button onClick={exportCSV} className="border border-[#2a2a2a] text-[#888] font-bold text-[11px] px-[14px] py-[6px] rounded-full hover:border-[#444] hover:text-white transition-colors">{t('bookings.exportCSV')}</button>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'This month', val: booksThisMonth, color: 'text-brand-yellow' },
-          { label: 'Pending', val: booksPending, color: 'text-brand-orange' },
-          { label: 'Completed', val: booksCompleted, color: 'text-brand-green' },
-          { label: 'Cancelled', val: booksCancelled, color: 'text-[#555]' },
+          { label: t('bookings.thisMonthLabel'), val: booksThisMonth, color: 'text-brand-yellow' },
+          { label: t('status.pending'), val: booksPending, color: 'text-brand-orange' },
+          { label: t('status.completed'), val: booksCompleted, color: 'text-brand-green' },
+          { label: t('status.cancelled'), val: booksCancelled, color: 'text-[#555]' },
         ].map((s, i) => (
           <div key={i} className="bg-[#111] border border-[#1e1e1e] rounded-[12px] px-4 py-[14px] text-center">
             <div className={`text-2xl font-black leading-none mb-1 ${s.color}`}>{s.val}</div>
@@ -252,11 +254,11 @@ export default function BookingsPage() {
         ))}
       </div>
 
-      <input value={bookingsSearch} onChange={e => setBookingsSearch(e.target.value)} placeholder="Search by client name or date..." className="w-full bg-[#141414] border border-[#2a2a2a] rounded-full px-4 py-2 text-[12px] text-white outline-none focus:border-brand-yellow transition-colors placeholder:text-[#444] mb-4" />
+      <input value={bookingsSearch} onChange={e => setBookingsSearch(e.target.value)} placeholder={t('bookings.searchByClient')} className="w-full bg-[#141414] border border-[#2a2a2a] rounded-full px-4 py-2 text-[12px] text-white outline-none focus:border-brand-yellow transition-colors placeholder:text-[#444] mb-4" />
 
       <div className="flex flex-col gap-2">
         {filteredBookings.length === 0 ? (
-          <div className="text-center py-10 text-[#555] text-sm">No bookings found.</div>
+          <div className="text-center py-10 text-[#555] text-sm">{t('bookings.noBookingsFound')}</div>
         ) : paginatedBookings.map(b => (
           <div key={b.id} className={`flex flex-wrap sm:flex-nowrap items-center gap-3 bg-brand-surface border border-brand-border rounded-[14px] p-3.5 border-l-[4px] ${borderColorMap[b.status] || 'border-l-[#2a2a2a]'}`}>
             <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center text-[11px] font-black text-white shrink-0">{(b.clientName?.[0] || 'C').toUpperCase()}</div>
@@ -269,8 +271,8 @@ export default function BookingsPage() {
             <div className="font-black text-[14px] text-brand-yellow shrink-0">{currSym}{b.price}</div>
             {b.status === 'pending' && (
               <div className="flex gap-1.5 w-full sm:w-auto mt-1 sm:mt-0 justify-end">
-                <button onClick={() => updateBookingStatus(b.id, 'confirmed')} className="bg-[#0f2010] border border-brand-green/30 text-brand-green rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-green/20">✓ Accept</button>
-                <button onClick={() => setConfirmDecline(b.id)} className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-red/20">✕ Decline</button>
+                <button onClick={() => updateBookingStatus(b.id, 'confirmed')} className="bg-[#0f2010] border border-brand-green/30 text-brand-green rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-green/20">{t('bookings.acceptBtn')}</button>
+                <button onClick={() => setConfirmDecline(b.id)} className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-lg px-3 py-1.5 text-xs font-extrabold hover:bg-brand-red/20">{t('bookings.declineBtn')}</button>
               </div>
             )}
             {b.status === 'confirmed' && (
@@ -280,7 +282,7 @@ export default function BookingsPage() {
                   disabled={completing === b.id}
                   className="bg-brand-surface border border-brand-border text-white rounded-lg px-3 py-1.5 text-xs font-extrabold hover:border-[#444] disabled:opacity-60"
                 >
-                  {completing === b.id ? 'Completing...' : 'Mark Complete'}
+                  {completing === b.id ? t('bookings.completing') : t('bookings.markComplete')}
                 </button>
               </div>
             )}
@@ -300,7 +302,7 @@ export default function BookingsPage() {
               disabled={currentPage === 1}
               className="px-3 py-1.5 text-[12px] font-bold text-[#888] hover:text-white disabled:opacity-40 transition-colors"
             >
-              ← Previous
+              {t('bookings.previousPage')}
             </button>
             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
               const pageNum = Math.max(1, Math.min(currentPage - 2, totalPages - 4)) + i;
@@ -326,10 +328,10 @@ export default function BookingsPage() {
       )}
       <ConfirmDialog
         isOpen={!!confirmDecline}
-        title="Decline booking?"
-        message="The client will be notified that their booking was declined."
-        confirmText="Yes, decline"
-        cancelText="Keep"
+        title={t('bookings.declineTitle')}
+        message={t('bookings.declineMsg')}
+        confirmText={t('bookings.yesDecline')}
+        cancelText={t('buttons.keep')}
         confirmColor="#EF4444"
         onCancel={() => setConfirmDecline(null)}
         onConfirm={async () => {

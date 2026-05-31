@@ -14,6 +14,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BarberProfileSkeleton } from '@/components/skeletons';
 import { toast } from '@/lib/toast';
 import { getOpenStatus, getLocalDateString, getTimezoneFromLocation, getScheduleDocId } from '@/lib/schedule-utils';
+import { useLang } from '@/lib/i18n/LangContext';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -141,6 +142,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  const { t } = useLang();
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [bookingContext, setBookingContext] = useState<'solo' | 'shop'>('solo');
   const [visibleReviews, setVisibleReviews] = useState(5);
@@ -297,14 +299,14 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
   const handleBooking = (serviceId?: string) => {
     if (!user) { router.push(`/login?redirect=/barber/${barberId}`); return; }
-    if (!appUser?.role) { toast.error('Please log in to book'); return; }
-    if (appUser?.role === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
-    if (appUser?.uid === barberId) { toast.error('You cannot book yourself'); return; }
+    if (!appUser?.role) { toast.error(t('profile.pleaseLogin')); return; }
+    if (appUser?.role === 'admin') { toast.error(t('profile.adminCannotBook')); return; }
+    if (appUser?.uid === barberId) { toast.error(t('profile.cannotBookSelf')); return; }
     if (!appUser?.isOnboarded) {
       router.push(appUser?.role === 'barber' ? '/onboarding/barber' : '/onboarding/client');
       return;
     }
-    if (!profile?.isLive) { toast.error('This barber is not accepting bookings right now'); return; }
+    if (!profile?.isLive) { toast.error(t('profile.notAcceptingBookings')); return; }
     const qs = new URLSearchParams({ context: bookingContext });
     if (serviceId) qs.set('serviceId', serviceId);
     router.push(`/book/${barberId}?${qs.toString()}`);
@@ -312,7 +314,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
   const handleToggleFav = async () => {
     if (!user) { router.push('/login'); return; }
-    if (appUser?.role === 'admin') { toast.error('Admin accounts cannot save barbers'); return; }
+    if (appUser?.role === 'admin') { toast.error(t('profile.adminCannotSave')); return; }
     // Optimistic update — flip immediately
     const wasAlreadyFav = isFav;
     setOptimisticFav(!wasAlreadyFav);
@@ -320,16 +322,16 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
     try {
       if (wasAlreadyFav) {
         await updateDoc(doc(db, 'users', user.uid), { favoriteBarbers: arrayRemove(barberId) });
-        toast.success('Removed from saved');
+        toast.success(t('profile.removedFromSaved'));
       } else {
         await updateDoc(doc(db, 'users', user.uid), { favoriteBarbers: arrayUnion(barberId) });
-        toast.success('Saved ✓');
+        toast.success(t('profile.savedConfirm'));
       }
       queryClient.invalidateQueries({ queryKey: ['clientData', user.uid] });
     } catch (e) {
       // Revert on failure
       setOptimisticFav(wasAlreadyFav);
-      toast.error('Failed to update. Try again.');
+      toast.error(t('profile.failedToUpdate'));
       console.error(e);
     }
     setIsSaving(false);
@@ -338,7 +340,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
-    toast.success('Link copied! 📋');
+    toast.success(t('profile.linkCopiedToast'));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -351,9 +353,9 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
           <div className="text-5xl mb-4">💈</div>
-          <h1 className="text-2xl font-black mb-2">Barber not found</h1>
-          <p className="text-[#888] mb-6">This profile doesn&apos;t exist.</p>
-          <Link href="/barbers" className="bg-brand-yellow text-black font-black px-6 py-3 rounded-full">Find barbers →</Link>
+          <h1 className="text-2xl font-black mb-2">{t('profile.barberNotFound')}</h1>
+          <p className="text-[#888] mb-6">{t('profile.profileDoesntExist')}</p>
+          <Link href="/barbers" className="bg-brand-yellow text-black font-black px-6 py-3 rounded-full">{t('profile.findBarbers')}</Link>
         </div>
       </div>
     );
@@ -376,9 +378,9 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
       <div className="bg-[#0a0a0a] min-h-screen text-white">
         <div className="max-w-[1200px] mx-auto px-6 pt-6">
           <div className="text-xs font-bold text-[#444]">
-            <Link href="/" className="hover:text-white transition-colors">Home</Link>
+            <Link href="/" className="hover:text-white transition-colors">{t('nav.home')}</Link>
             <span className="mx-2">›</span>
-            <Link href="/barbers" className="hover:text-white transition-colors">Barbers</Link>
+            <Link href="/barbers" className="hover:text-white transition-colors">{t('nav.barbers')}</Link>
             <span className="mx-2">›</span>
             <span className="text-[#888]">{firstName} {lastName}</span>
           </div>
@@ -436,7 +438,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                     <span>📍 {userProfile?.city}{userProfile?.country ? `, ${userProfile.country}` : ''}</span>
                   )}
                 </div>
-                {shop && profile.isSolo && <div className="text-xs text-[#555] mt-0.5">Also available for solo bookings</div>}
+                {shop && profile.isSolo && <div className="text-xs text-[#555] mt-0.5">{t('profile.alsoSoloBookings')}</div>}
 
                 <div className="flex flex-wrap items-center gap-3 mt-2 text-sm font-bold">
                   {(profile.reviewCount || 0) > 0 ? (
@@ -445,7 +447,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                       <span>{typeof profile.rating === 'number' ? profile.rating.toFixed(1) : '—'}</span>
                       <span className="text-[#666]">({profile.reviewCount} reviews)</span>
                     </div>
-                  ) : <span className="text-[#888]">New barber ✨</span>}
+                  ) : <span className="text-[#888]">{t('profile.newBarber')}</span>}
                   {userProfile?.createdAt && (
                     <span className="text-[#555] text-xs">· Member since {formatMemberSince(userProfile.createdAt)}</span>
                   )}
@@ -504,7 +506,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
             {(profile.photos?.length || 0) > 0 && (
               <div className="mb-10">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-extrabold text-[11px] tracking-widest text-[#666] uppercase">Their work</h3>
+                  <h3 className="font-extrabold text-[11px] tracking-widest text-[#666] uppercase">{t('profile.theirWork')}</h3>
                   <span className="text-xs font-bold text-[#555]">See all {profile.photos!.length} →</span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
@@ -521,7 +523,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
             {/* SECTION 4 — Reviews */}
             <div className="mb-10">
-              <h3 className="font-extrabold text-[11px] tracking-widest text-[#666] uppercase mb-5">What clients say</h3>
+              <h3 className="font-extrabold text-[11px] tracking-widest text-[#666] uppercase mb-5">{t('profile.whatClientsSay')}</h3>
               {reviews.length > 0 ? (
                 <>
                   <div className="flex items-start gap-6 mb-6 bg-[#111] border border-[#222] rounded-2xl p-5">
@@ -571,13 +573,13 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                     <button onClick={() => setVisibleReviews(v => v + 5)}
                       className="w-full mt-4 py-3 border border-[#2a2a2a] rounded-2xl text-[#888] text-sm font-bold hover:text-white hover:border-[#444] transition-colors"
                     >
-                      Load more reviews
+                      {t('profile.loadMoreReviews')}
                     </button>
                   )}
                 </>
               ) : (
                 <div className="border border-[#2a2a2a] bg-[#111] rounded-2xl p-8 text-center">
-                  <div className="text-[#555] text-sm font-bold">No reviews yet.</div>
+                  <div className="text-[#555] text-sm font-bold">{t('profile.noReviewsYet')}</div>
                   <div className="text-[#444] text-xs mt-1">Book {firstName} to be the first.</div>
                 </div>
               )}
@@ -585,7 +587,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
             {/* SECTION 5 — Services */}
             <div>
-              <h3 className="font-extrabold text-[11px] tracking-widest text-[#666] uppercase mb-4">Services &amp; prices</h3>
+              <h3 className="font-extrabold text-[11px] tracking-widest text-[#666] uppercase mb-4">{t('profile.servicesAndPrices')}</h3>
 
               {profile.isSolo && profile.shopId && shop && (
                 <div className="flex gap-2 mb-4">
@@ -618,7 +620,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                 )}
 
                 {services.length === 0 && !profile.titeZMeCut && (
-                  <div className="text-sm font-bold text-[#555] border-2 border-dashed border-[#2a2a2a] rounded-2xl p-6 text-center">No services listed yet.</div>
+                  <div className="text-sm font-bold text-[#555] border-2 border-dashed border-[#2a2a2a] rounded-2xl p-6 text-center">{t('profile.noServicesListed')}</div>
                 )}
 
                 {services.map((s: ServiceDoc) => (
@@ -647,36 +649,36 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
             {/* CARD 1 — Booking */}
             <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-5">
-              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-1">Starting from</div>
+              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-1">{t('profile.startingFrom')}</div>
               <div className="text-3xl font-black text-brand-yellow mb-4">
-                {minPrice !== null ? `${currency}${minPrice}` : 'Prices on request'}
+                {minPrice !== null ? `${currency}${minPrice}` : t('profile.pricesOnRequest')}
               </div>
               <button onClick={() => handleBooking()} disabled={!profile.isLive} title={!profile.isLive ? 'Not accepting bookings right now' : undefined}
                 className={`w-full font-black py-3 rounded-full mb-2 text-sm transition-opacity ${!profile.isLive ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed' : 'bg-brand-yellow text-[#0a0a0a] hover:opacity-90'}`}
               >
-                Book Now →
+                {t('buttons.bookNow')}
               </button>
               <button onClick={handleToggleFav} disabled={isSaving}
                 className={`w-full py-3 rounded-full font-black text-sm mb-2 border transition-colors ${isFav ? 'bg-brand-yellow/10 border-brand-yellow text-brand-yellow' : 'border-[#2a2a2a] text-[#888] hover:border-white hover:text-white'}`}
               >
-                {isFav ? '💛 Saved' : '🤍 Save barber'}
+                {isFav ? t('profile.saved') : t('profile.saveBarber')}
               </button>
               <button onClick={handleShare}
                 className="w-full py-3 rounded-full font-black text-sm border border-[#2a2a2a] text-[#888] hover:text-white hover:border-[#444] transition-colors"
               >
-                {copied ? '✓ Copied!' : '🔗 Share profile'}
+                {copied ? t('profile.linkCopied') : t('profile.shareProfile')}
               </button>
               <div className="mt-4 pt-4 border-t border-[#222]">
-                <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-1.5">Next available slot</div>
+                <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-1.5">{t('profile.nextAvailableSlot')}</div>
                 <div className="text-sm font-bold text-white">
-                  {todaySlots.length > 0 ? `Today · ${todaySlots[0]}` : 'No slots available today'}
+                  {todaySlots.length > 0 ? `Today · ${todaySlots[0]}` : t('profile.noSlotsToday')}
                 </div>
               </div>
             </div>
 
             {/* CARD 2 — Availability */}
             <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-5">
-              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-3">Availability this week</div>
+              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-3">{t('profile.availabilityThisWeek')}</div>
               <div className="grid grid-cols-7 gap-1 mb-4">
                 {weekDays.map(day => (
                   <div key={day.dateStr} className="flex flex-col items-center gap-1">
@@ -695,7 +697,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
               </div>
               {todaySlots.length > 0 && (
                 <>
-                  <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">Today&apos;s slots</div>
+                  <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{t('profile.todaysSlots')}</div>
                   <div className="flex flex-wrap gap-1.5">
                     {todaySlots.map((slot: string) => (
                       <button key={slot} onClick={() => handleBooking()} disabled={!profile.isLive}
@@ -711,15 +713,15 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
             {/* CARD 3 — Track record */}
             <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-5">
-              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-3">Track record</div>
+              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-3">{t('profile.trackRecord')}</div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   <div className="text-xl font-black text-white">{profile.totalCuts || 0}</div>
-                  <div className="text-[10px] text-[#555] font-bold mt-0.5">Total cuts</div>
+                  <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('profile.totalCuts')}</div>
                 </div>
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   <div className="text-xl font-black text-[#22c55e]">98%</div>
-                  <div className="text-[10px] text-[#555] font-bold mt-0.5">Completion</div>
+                  <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('profile.completion')}</div>
                 </div>
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   <div className="text-xl font-black text-white">
@@ -742,14 +744,14 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                             ? `~${Math.round(profile.avgResponseMinutes / 60)}h`
                             : `~${profile.avgResponseMinutes}min`
                         }`
-                      : 'Avg response'}
+                      : t('profile.avgResponse')}
                   </div>
                 </div>
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   <div className="text-sm font-black text-white leading-tight">
                     {userProfile?.createdAt ? formatMemberSince(userProfile.createdAt) : 'New'}
                   </div>
-                  <div className="text-[10px] text-[#555] font-bold mt-0.5">Member since</div>
+                  <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('profile.memberSince')}</div>
                 </div>
               </div>
             </div>

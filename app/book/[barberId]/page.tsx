@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { sendEmailVerification } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { notificationSchema } from "@/lib/schemas";
+import { useLang } from '@/lib/i18n/LangContext';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -35,6 +36,7 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
   const { user, appUser } = useAuth();
   const router = useRouter();
 
+  const { t } = useLang();
   const [step, setStep] = useState(1);
   const [bookingContext, setBookingContext] = useState<'solo'|'shop'>('solo');
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
@@ -132,7 +134,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
     if (!user || !selectedDate || !selectedTime || selectedServices.length === 0) return;
     if (isSubmitting) return;
     if (user.uid === barberId) {
-      toast.error('You cannot book your own profile.');
+      toast.error(t('errors.cannotBookOwn'));
       return;
     }
     setIsSubmitting(true);
@@ -147,14 +149,14 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
       );
       const recentBookings = await getDocs(recentBookingsQuery);
       if (recentBookings.size >= 5) {
-        toast.error('Too many booking attempts. Please wait before trying again.');
+        toast.error(t('errors.tooManyBookingAttempts'));
         setIsSubmitting(false);
         return;
       }
 
       // ── Offline check ────────────────────────────────────────────────────────
       if (!navigator.onLine) {
-        toast.error('No internet connection. Please reconnect before booking.');
+        toast.error(t('booking.noInternetBooking'));
         setIsSubmitting(false);
         return;
       }
@@ -170,7 +172,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
       );
       const existing = await getDocs(existingQuery);
       if (!existing.empty) {
-        toast.error('You already have a booking at this time with this barber.');
+        toast.error(t('booking.alreadyHaveBooking'));
         setIsSubmitting(false);
         return;
       }
@@ -201,9 +203,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
             : bStart + ((bd.totalDuration || 30) * 60 * 1000);
 
           if (Math.max(reqStart, bStart) < Math.min(reqEnd, bEnd)) {
-            toast.error(
-              'You already have a booking that overlaps with this time slot.'
-            );
+            toast.error(t('booking.bookingOverlap'));
             setIsSubmitting(false);
             return;
           }
@@ -272,7 +272,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
     } catch (e: any) {
       console.error(e);
       if (e.message === "OVERLAP") {
-         toast.error("Oh no! This slot was just taken. Please choose another time.");
+         toast.error(t('booking.slotTaken'));
          setSelectedTime('');
          setSelectedEndTime('');
          setStep(3); // Go back to slots
@@ -281,15 +281,15 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
            const code = err?.code || '';
            const msg = (err?.message || '').toLowerCase();
            if (code === 'permission-denied' || msg.includes('permission')) {
-             return 'Unable to complete booking. Please try again.';
+             return t('booking.unableToBook');
            }
            if (msg.includes('overlap') || msg.includes('taken') || msg.includes('slot')) {
-             return 'This slot was just taken. Please choose another time.';
+             return t('booking.slotTaken');
            }
            if (code === 'unavailable' || msg.includes('network')) {
-             return 'Connection error. Check your internet and try again.';
+             return t('errors.connectionError');
            }
-           return 'Booking failed. Please try again.';
+           return t('booking.bookingFailed');
          };
          toast.error(getBookingError(e));
       }
@@ -321,7 +321,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
       console.error('Post-booking notifications failed:', notifErr);
     }
 
-    toast.success('🎉 Booking request sent! Check your dashboard.');
+    toast.success(t('booking.bookingSuccess'));
     await new Promise(resolve => setTimeout(resolve, 1000));
     router.push('/dashboard/client');
     setIsSubmitting(false);
@@ -351,16 +351,15 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
         }}>
           <div style={{ fontSize: '40px', marginBottom: '16px' }}>✉️</div>
           <div style={{ fontSize: '18px', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>
-            Verify your email first
+            {t('booking.verifyEmailFirst')}
           </div>
           <div style={{ fontSize: '12px', color: '#666', lineHeight: '1.7', marginBottom: '20px' }}>
-            You need to verify your email before booking a barber.
-            Check your inbox for the verification link.
+            {t('booking.verifyEmailDesc')}
           </div>
           <button
             onClick={async () => {
               await sendEmailVerification(user);
-              toast.success('Verification email sent ✓');
+              toast.success(t('booking.verificationEmailSent'));
             }}
             style={{
               background: '#F5C518',
@@ -376,13 +375,13 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
               marginBottom: '12px'
             }}
           >
-            Resend verification email
+            {t('buttons.resendVerification')}
           </button>
           <Link
             href="/dashboard/client"
             style={{ color: '#555', fontSize: '11px', textDecoration: 'none' }}
           >
-            ← Back to dashboard
+            {t('booking.backToDashboard')}
           </Link>
         </div>
       </div>
@@ -416,7 +415,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
           }}>
             <div style={{ fontSize: '40px', marginBottom: '16px' }}>⏳</div>
             <div style={{ fontSize: '18px', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>
-              Almost ready
+              {t('booking.almostReady')}
             </div>
             <div style={{ fontSize: '12px', color: '#666', lineHeight: '1.7' }}>
               New accounts can book after {waitMinutes} minute{waitMinutes !== 1 ? 's' : ''}.
@@ -441,15 +440,15 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
 
        {step === 1 && (
          <div className="animate-fadeUp">
-           <h1 className="text-3xl font-black mb-6">How do you want to book?</h1>
+           <h1 className="text-3xl font-black mb-6">{t('booking.howToBook')}</h1>
            <div className="flex flex-col gap-4">
              <button onClick={() => {setBookingContext('solo'); setStep(2)}} className="bg-brand-surface border border-brand-border hover:border-brand-yellow p-6 rounded-2xl text-left transition-all group">
                <div className="font-black text-xl mb-1 group-hover:text-brand-yellow transition-colors">Book {profile?.user?.firstName} Directly</div>
-               <div className="text-brand-text-secondary text-sm font-bold">Independent booking. Cash only.</div>
+               <div className="text-brand-text-secondary text-sm font-bold">{t('booking.independentBooking')}</div>
              </button>
              <button onClick={() => {setBookingContext('shop'); setStep(2)}} className="bg-brand-surface border border-brand-border hover:border-brand-yellow p-6 rounded-2xl text-left transition-all group">
-               <div className="font-black text-xl mb-1 group-hover:text-brand-yellow transition-colors">Book via Shop</div>
-               <div className="text-brand-text-secondary text-sm font-bold">Standard shop booking and pricing.</div>
+               <div className="font-black text-xl mb-1 group-hover:text-brand-yellow transition-colors">{t('booking.bookViaShop')}</div>
+               <div className="text-brand-text-secondary text-sm font-bold">{t('booking.shopBookingDesc')}</div>
              </button>
            </div>
          </div>
@@ -457,8 +456,8 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
 
        {step === 2 && (
          <div className="animate-fadeUp">
-           <h1 className="text-3xl font-black mb-2">Select Services</h1>
-           <p className="text-brand-text-secondary text-sm mb-6 font-bold">{bookingContext === 'solo' ? `${profile?.user?.firstName}'s direct services` : 'Shop services'}</p>
+           <h1 className="text-3xl font-black mb-2">{t('booking.selectServices')}</h1>
+           <p className="text-brand-text-secondary text-sm mb-6 font-bold">{bookingContext === 'solo' ? `${profile?.user?.firstName}'s direct services` : t('booking.shopServices')}</p>
            
            <div className="flex flex-col gap-3 mb-8">
              {services.map((svc: any) => {
@@ -483,7 +482,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
            
            <div className="flex justify-between items-center border-t border-[#2a2a2a] pt-6">
              <div>
-               <div className="text-[11px] font-extrabold text-brand-text-secondary tracking-widest uppercase mb-1">Total</div>
+               <div className="text-[11px] font-extrabold text-brand-text-secondary tracking-widest uppercase mb-1">{t('booking.total')}</div>
                <div className="text-2xl font-black text-white">€{totalPrice} <span className="text-sm text-[#666] font-extrabold">/ {totalDuration} min</span></div>
              </div>
              <button 
@@ -491,7 +490,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
                disabled={selectedServices.length === 0}
                className="bg-brand-yellow text-[#0a0a0a] px-8 py-3.5 rounded-full font-black text-sm transition-all hover:opacity-90 disabled:opacity-50"
              >
-               Next →
+               {t('booking.next')}
              </button>
            </div>
          </div>
@@ -499,7 +498,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
 
        {step === 3 && (
          <div className="animate-fadeUp w-full">
-           <h1 className="text-3xl font-black mb-2">Choose Date &amp; Time</h1>
+           <h1 className="text-3xl font-black mb-2">{t('booking.chooseDatetime')}</h1>
            <p className="text-brand-text-secondary text-sm font-bold mb-6">
              {totalDuration} min · {profile?.user?.firstName}
            </p>
@@ -529,21 +528,21 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
                  onClick={() => { setSelectedDate(''); setSelectedTime(''); setSelectedEndTime(''); }}
                  style={{ marginLeft: 'auto', fontSize: 11, color: '#555', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}
                >
-                 Clear ✕
+                 {t('booking.clearSlot')}
                </button>
              </div>
            )}
 
            <div className="flex justify-between mt-8">
              <button onClick={() => setStep(2)} className="text-[#888] font-bold text-sm hover:text-white transition-colors">
-               ← Back
+               {t('booking.back')}
              </button>
              <button
                onClick={() => setStep(4)}
                disabled={!selectedDate || !selectedTime}
                className="bg-brand-yellow text-[#0a0a0a] px-8 py-3.5 rounded-full font-black text-sm transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
              >
-               Review Booking →
+               {t('booking.reviewBookingBtn')}
              </button>
            </div>
          </div>
@@ -568,7 +567,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
              autoComplete="off"
              aria-hidden="true"
            />
-           <h1 className="text-3xl font-black mb-8">Review your booking</h1>
+           <h1 className="text-3xl font-black mb-8">{t('booking.reviewYourBooking')}</h1>
 
            <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl overflow-hidden mb-6">
 
@@ -577,13 +576,13 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
                <div className="w-11 h-11 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-xl shrink-0">✂️</div>
                <div>
                  <div className="font-black text-white text-[15px]">{profile?.user?.firstName} {profile?.user?.lastName}</div>
-                 <div className="text-xs font-bold text-[#555] mt-0.5">{bookingContext === 'solo' ? '👤 Independent booking' : '🏪 Shop booking'}</div>
+                 <div className="text-xs font-bold text-[#555] mt-0.5">{bookingContext === 'solo' ? t('booking.independentBookingLabel') : t('booking.shopBookingLabel')}</div>
                </div>
              </div>
 
              {/* Section 2 — Services */}
              <div className="p-5 border-b border-[#1e1e1e]">
-               <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">Services</div>
+               <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">{t('booking.services')}</div>
                <div className="flex flex-col gap-2">
                  {selectedServices.map(s => (
                    <div key={s.id} className="flex items-center justify-between">
@@ -605,7 +604,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
 
              {/* Section 3 — Date & Time */}
              <div className="p-5 border-b border-[#1e1e1e]">
-               <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">Date &amp; Time</div>
+               <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">{t('booking.dateAndTime')}</div>
                <div className="flex items-center gap-2 mb-1.5">
                  <span style={{ fontSize: 15 }}>📅</span>
                  <span className="font-bold text-white text-sm">{formatFullDate(selectedDate)}</span>
@@ -621,13 +620,13 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
 
              {/* Section 4 — Payment */}
              <div className="p-5">
-               <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">Payment</div>
+               <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">{t('booking.payment')}</div>
                <div className="flex items-start gap-3">
                  <span style={{ fontSize: 15 }}>💵</span>
                  <div>
                    <div className="font-black text-[#F5C518] text-lg">€{totalPrice}</div>
-                   <div className="text-xs font-bold text-[#555] mt-0.5">Cash only · No fees · No app needed</div>
-                   <div className="text-xs text-[#444] mt-0.5">Pay directly to the barber</div>
+                   <div className="text-xs font-bold text-[#555] mt-0.5">{t('booking.cashOnly')}</div>
+                   <div className="text-xs text-[#444] mt-0.5">{t('booking.payDirectly')}</div>
                  </div>
                </div>
              </div>
@@ -638,14 +637,14 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
              disabled={isSubmitting}
              className="w-full bg-brand-yellow text-[#0a0a0a] py-4 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
            >
-             {isSubmitting ? 'Confirming…' : 'Confirm Booking →'}
+             {isSubmitting ? t('booking.confirming') : t('booking.confirmBooking')}
            </button>
            <button
              disabled={isSubmitting}
              onClick={() => setStep(3)}
              className="w-full mt-4 text-[#888] font-bold text-sm hover:text-white transition-colors"
            >
-             ← Change time
+             {t('booking.changeTime')}
            </button>
          </div>
        )}

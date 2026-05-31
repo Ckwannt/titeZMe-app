@@ -13,6 +13,7 @@ import { getLocalDateString, getTimezoneFromLocation } from '@/lib/schedule-util
 import { cleanupBookingLock } from '@/lib/booking-lock-utils';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { Booking, Notification } from '@/lib/types';
+import { useLang } from '@/lib/i18n/LangContext';
 
 function getCurrencySymbol(currency?: string): string {
   const s: Record<string, string> = {
@@ -52,6 +53,7 @@ export default function BarberDashboardPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  const { t } = useLang();
   const [now, setNow] = useState(new Date());
   const [recentNotifs, setRecentNotifs] = useState<(Notification & { id: string })[]>([]);
   const [bookings, setBookings] = useState<(Booking & { id: string })[]>([]);
@@ -371,12 +373,12 @@ export default function BarberDashboardPage() {
       <div className="flex items-center justify-center min-h-[calc(100vh-120px)] p-6">
         <div className="max-w-[500px] w-full bg-[#111] border border-[#F5C51833] rounded-[16px] p-8 text-center">
           <div className="text-[40px] mb-4">⏳</div>
-          <h2 className="text-[18px] font-black mb-3">Your profile is under review</h2>
+          <h2 className="text-[18px] font-black mb-3">{t('barberDash.profileUnderReview')}</h2>
           <p className="text-[13px] text-[#666] leading-[1.7] mb-6">
-            We&apos;re reviewing your profile. This usually takes less than 24 hours. You&apos;ll get a notification when it&apos;s approved.
+            {t('barberDash.profileReviewDesc')}
           </p>
           <div className="h-px bg-[#1e1e1e] mb-5" />
-          <p className="text-[11px] text-[#555] font-extrabold uppercase tracking-wider mb-4">While you wait, complete your profile:</p>
+          <p className="text-[11px] text-[#555] font-extrabold uppercase tracking-wider mb-4">{t('barberDash.whileYouWait')}</p>
           <div className="flex flex-col gap-2 items-center">
             {[
               { label: '→ Add your services', href: '/dashboard/barber/services' },
@@ -410,7 +412,7 @@ export default function BarberDashboardPage() {
       <div className="flex items-center justify-center min-h-[calc(100vh-120px)] p-6">
         <div className="max-w-[500px] w-full bg-[#111] border border-[#EF444433] rounded-[16px] p-8 text-center">
           <div className="text-[40px] mb-4">❌</div>
-          <h2 className="text-[18px] font-black text-brand-red mb-3">Profile not approved</h2>
+          <h2 className="text-[18px] font-black text-brand-red mb-3">{t('barberDash.profileNotApproved')}</h2>
           {rejectionReason && (
             <p className="text-[13px] text-[#888] bg-[#1a0808] border border-[#3b1a1a] rounded-xl px-4 py-3 mb-5 text-left">
               <span className="font-extrabold text-[#aaa]">Reason: </span>{rejectionReason}
@@ -418,7 +420,7 @@ export default function BarberDashboardPage() {
           )}
           <p className="text-[13px] text-[#666] mb-6">Update your profile based on the feedback above, then resubmit for review.</p>
           <button onClick={handleResubmit} className="bg-brand-yellow text-black font-black px-6 py-3 rounded-full text-sm hover:opacity-90 transition-opacity">
-            Fix and resubmit ✓
+            {t('barberDash.fixAndResubmit')}
           </button>
         </div>
       </div>
@@ -431,14 +433,14 @@ export default function BarberDashboardPage() {
       {!hasAvailability && (
         <div className="flex items-center justify-between bg-[#1a1500] border border-[#F5C51844] rounded-[12px] px-[18px] py-[14px] mb-5">
           <div>
-            <div className="text-[13px] font-extrabold text-brand-yellow">⚠️ You haven&apos;t set your availability yet.</div>
-            <div className="text-[11px] text-[#888] font-bold mt-0.5">Clients cannot book you until you add your working hours.</div>
+            <div className="text-[13px] font-extrabold text-brand-yellow">{t('barberDash.availabilityWarning')}</div>
+            <div className="text-[11px] text-[#888] font-bold mt-0.5">{t('barberDash.availabilityWarningDesc')}</div>
           </div>
           <Link
             href="/dashboard/barber/availability"
             className="shrink-0 ml-4 bg-brand-yellow text-[#0a0a0a] font-extrabold text-[12px] px-4 py-2 rounded-full hover:opacity-90 transition-opacity"
           >
-            Set availability →
+            {t('barberDash.setAvailability')}
           </Link>
         </div>
       )}
@@ -454,10 +456,10 @@ export default function BarberDashboardPage() {
             target="_blank" rel="noopener noreferrer"
             className="border border-[#2a2a2a] text-[#888] hover:border-[#F5C518] hover:text-[#F5C518] rounded-full text-[13px] font-extrabold px-5 py-2.5 transition-colors inline-flex items-center"
           >
-            👁 View public profile
+            {t('barberDash.viewPublicProfile')}
           </a>
           <button onClick={() => setBlockModalOpen(true)} className="bg-brand-orange text-white px-7 py-3 rounded-full font-black text-sm transition-all hover:opacity-90 hover:-translate-y-px">
-            + Block time off
+            {t('barberDash.blockTimeOffBtn')}
           </button>
         </div>
         {/* Upcoming blocked days preview */}
@@ -476,7 +478,7 @@ export default function BarberDashboardPage() {
           const extra = upcoming.length - 3;
           return (
             <div className="mt-3">
-              <div className="text-[11px] font-extrabold text-[#555] uppercase tracking-wide mb-1.5">Upcoming days off</div>
+              <div className="text-[11px] font-extrabold text-[#555] uppercase tracking-wide mb-1.5">{t('barberDash.upcomingDaysOff')}</div>
               <div className="flex flex-col gap-1">
                 {shown.map((item: any, i: number) => {
                   const d = typeof item === 'string' ? item : item.date;
@@ -485,7 +487,7 @@ export default function BarberDashboardPage() {
                   return (
                     <div key={i} className="flex items-center justify-between text-[11px]">
                       <span className="text-[#888]">📅 {day}/{m}/{y}{reason ? ` · ${reason}` : ''}</span>
-                      <button onClick={() => handleUnblockDay(item)} className="text-brand-orange hover:underline font-bold text-[11px] ml-3">Remove</button>
+                      <button onClick={() => handleUnblockDay(item)} className="text-brand-orange hover:underline font-bold text-[11px] ml-3">{t('buttons.remove')}</button>
                     </div>
                   );
                 })}
@@ -504,7 +506,7 @@ export default function BarberDashboardPage() {
       {profilePct < 100 && (
         <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 900, color: '#fff' }}>Complete your profile</div>
+            <div style={{ fontSize: '13px', fontWeight: 900, color: '#fff' }}>{t('barberDash.completeProfile')}</div>
             <div style={{ fontSize: '12px', fontWeight: 800, color: '#F5C518' }}>{profilePct}%</div>
           </div>
           <div style={{ background: '#1e1e1e', borderRadius: '99px', height: '4px', marginBottom: '16px', overflow: 'hidden' }}>
@@ -528,8 +530,8 @@ export default function BarberDashboardPage() {
         <div style={{ background: '#0f2010', border: '1px solid #22C55E33', borderRadius: '12px', padding: '14px 16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '20px' }}>🎉</span>
           <div>
-            <div style={{ fontSize: '13px', fontWeight: 900, color: '#22C55E' }}>Profile complete!</div>
-            <div style={{ fontSize: '11px', color: '#555' }}>You&apos;re ready to receive bookings.</div>
+            <div style={{ fontSize: '13px', fontWeight: 900, color: '#22C55E' }}>{t('barberDash.profileComplete')}</div>
+            <div style={{ fontSize: '11px', color: '#555' }}>{t('barberDash.readyForBookings')}</div>
           </div>
         </div>
       )}
@@ -538,26 +540,26 @@ export default function BarberDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
           <div className="text-[28px] font-black leading-none text-brand-yellow">{currSym}{todayEarnings}</div>
-          <div className="text-xs text-brand-text-secondary font-bold">Today&apos;s earnings</div>
+          <div className="text-xs text-brand-text-secondary font-bold">{t('barberDash.todaysEarnings')}</div>
           <div className="text-[11px] font-extrabold text-[#444] mt-1">{todayCompletedBookings.length} cuts today</div>
         </div>
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
           <div className="text-[28px] font-black leading-none text-brand-orange">{profile?.totalCuts ?? 0}</div>
-          <div className="text-xs text-brand-text-secondary font-bold">Total cuts</div>
+          <div className="text-xs text-brand-text-secondary font-bold">{t('barberDash.totalCutsLabel')}</div>
           <div className="text-[11px] font-extrabold text-[#444] mt-1">This month: {thisMonthCompleted}</div>
         </div>
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
           <div className={`text-[28px] font-black leading-none ${(profile?.rating || 0) > 0 ? 'text-brand-yellow' : 'text-brand-green'}`}>
             {(profile?.rating || 0) > 0 ? `★ ${(profile!.rating as number).toFixed(1)}` : 'New ✨'}
           </div>
-          <div className="text-xs text-brand-text-secondary font-bold">Rating</div>
+          <div className="text-xs text-brand-text-secondary font-bold">{t('barberDash.ratingLabel')}</div>
           <div className="text-[11px] font-extrabold text-[#444] mt-1">
-            {(profile?.reviewCount || 0) > 0 ? `${profile!.reviewCount} reviews` : 'No reviews yet'}
+            {(profile?.reviewCount || 0) > 0 ? `${profile!.reviewCount} reviews` : t('barberDash.noReviewsYetShort')}
           </div>
         </div>
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
           <div className="text-[28px] font-black leading-none text-brand-green">{showRate}%</div>
-          <div className="text-xs text-brand-text-secondary font-bold">Show rate</div>
+          <div className="text-xs text-brand-text-secondary font-bold">{t('barberDash.showRate')}</div>
           <div className="text-[11px] font-extrabold text-[#444] mt-1">
             {totalFinished > 0 ? `${totalFinished} bookings total` : '0 no-shows'}
           </div>
@@ -568,9 +570,9 @@ export default function BarberDashboardPage() {
       {(services as any[]).length === 0 && (
         <div style={{ background: '#0d0d0d', border: '1px solid #1e1e1e', borderRadius: '12px', padding: '20px', textAlign: 'center', marginBottom: '20px' }}>
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>✂️</div>
-          <div style={{ fontSize: '13px', fontWeight: 800, color: '#fff', marginBottom: '4px' }}>No services yet</div>
-          <div style={{ fontSize: '11px', color: '#555', marginBottom: '12px' }}>Add your services so clients know what you offer.</div>
-          <Link href="/dashboard/barber/services" style={{ color: '#F5C518', fontSize: '11px', fontWeight: 800, textDecoration: 'none' }}>Add services →</Link>
+          <div style={{ fontSize: '13px', fontWeight: 800, color: '#fff', marginBottom: '4px' }}>{t('barberDash.noServicesYet')}</div>
+          <div style={{ fontSize: '11px', color: '#555', marginBottom: '12px' }}>{t('barberDash.addServicesDesc')}</div>
+          <Link href="/dashboard/barber/services" style={{ color: '#F5C518', fontSize: '11px', fontWeight: 800, textDecoration: 'none' }}>{t('barberDash.addServicesLink')}</Link>
         </div>
       )}
 
@@ -580,7 +582,7 @@ export default function BarberDashboardPage() {
         return (
           <div className="flex items-center justify-between bg-[#111] border border-[#1e1e1e] rounded-[12px] px-5 py-[14px] mb-5">
             <div>
-              <div className="text-[11px] font-bold text-[#555] mb-0.5">⏱ Next cut</div>
+              <div className="text-[11px] font-bold text-[#555] mb-0.5">{t('barberDash.nextCutLabel')}</div>
               <div className="font-extrabold text-[14px]">{nextBooking.clientName || 'Client'}{nextBooking.serviceNames?.[0] ? ` — ${nextBooking.serviceNames[0]}` : ''}</div>
             </div>
             <div className="text-right">
@@ -609,7 +611,7 @@ export default function BarberDashboardPage() {
             alignItems: 'center',
             gap: '8px'
           }}>
-            ✂️ My Appointments
+            {t('barberDash.myAppointments')}
             <span style={{
               background: '#F5C51822',
               color: '#F5C518',
@@ -665,7 +667,7 @@ export default function BarberDashboardPage() {
                   background: booking.status === 'confirmed' ? '#0f2010' : '#1a1400',
                   color: booking.status === 'confirmed' ? '#22C55E' : '#F5C518'
                 }}>
-                  {booking.status === 'confirmed' ? 'Confirmed ✓' : 'Pending'}
+                  {booking.status === 'confirmed' ? t('barberDash.confirmedCheck') : t('status.pending')}
                 </div>
               </div>
             ))}
@@ -683,7 +685,7 @@ export default function BarberDashboardPage() {
               marginTop: '12px'
             }}
           >
-            View full booking history →
+            {t('barberDash.viewBookingHistory')}
           </Link>
         </div>
       )}
@@ -691,15 +693,15 @@ export default function BarberDashboardPage() {
       {/* Today's schedule timeline */}
       <ErrorBoundary section="today's schedule">
       <div className="mb-8">
-        <div className="text-[13px] font-extrabold text-white mb-4">Today&apos;s schedule</div>
+        <div className="text-[13px] font-extrabold text-white mb-4">{t('barberDash.todaysSchedule')}</div>
         {todaySchedule.length === 0 ? (
           <div className="bg-brand-surface border border-brand-border rounded-2xl p-8 text-center">
             <div className="text-3xl mb-3">💈</div>
-            <div className="font-extrabold text-white mb-1">No cuts scheduled for today.</div>
-            <div className="text-[#555] text-sm mb-4">Your schedule is open! Share your profile to get bookings.</div>
+            <div className="font-extrabold text-white mb-1">{t('barberDash.noCutsToday')}</div>
+            <div className="text-[#555] text-sm mb-4">{t('barberDash.shareProfileToBook')}</div>
             <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/barber/${user?.uid}`); setToastMessage('Profile link copied!'); setTimeout(() => setToastMessage(''), 2000); }}
               className="text-brand-orange text-sm font-bold hover:underline">
-              Share profile →
+              {t('barberDash.shareProfileLink')}
             </button>
           </div>
         ) : (
@@ -720,7 +722,7 @@ export default function BarberDashboardPage() {
                   <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                     {b.status === 'pending' && <span className="text-[10px] font-extrabold text-brand-yellow bg-[#1a1500] border border-brand-yellow/30 px-2 py-0.5 rounded-full">Pending</span>}
                     {b.status === 'confirmed' && <span className="text-[10px] font-extrabold text-[#22C55E] bg-[#0f2010] border border-[#22C55E]/30 px-2 py-0.5 rounded-full">Confirmed</span>}
-                    {b.status === 'completed' && <span className="text-[10px] font-extrabold text-[#555] bg-[#141414] border border-[#222] px-2 py-0.5 rounded-full">Done</span>}
+                    {b.status === 'completed' && <span className="text-[10px] font-extrabold text-[#555] bg-[#141414] border border-[#222] px-2 py-0.5 rounded-full">{t('barberDash.doneStatus')}</span>}
                     <span className="font-black text-brand-yellow text-[13px]">{currSym}{b.price}</span>
                     {b.status === 'pending' && (
                       <>
@@ -729,7 +731,7 @@ export default function BarberDashboardPage() {
                       </>
                     )}
                     {b.status === 'confirmed' && (
-                      <button onClick={() => updateBookingStatus(b.id, 'completed')} className="bg-brand-surface border border-brand-border text-white rounded-lg px-2.5 py-1.5 text-xs font-extrabold hover:border-[#444]">Done</button>
+                      <button onClick={() => updateBookingStatus(b.id, 'completed')} className="bg-brand-surface border border-brand-border text-white rounded-lg px-2.5 py-1.5 text-xs font-extrabold hover:border-[#444]">{t('barberDash.doneStatus')}</button>
                     )}
                   </div>
                 </div>
@@ -743,9 +745,9 @@ export default function BarberDashboardPage() {
       {/* Recent activity feed */}
       <ErrorBoundary section="recent activity">
       <div className="mt-4">
-        <div className="text-[13px] font-extrabold mb-3">Recent activity</div>
+        <div className="text-[13px] font-extrabold mb-3">{t('barberDash.recentActivity')}</div>
         {recentActivity.length === 0 ? (
-          <div className="text-[#555] text-sm text-center py-6">No recent activity yet.<br/>Share your profile to get your first booking!</div>
+          <div className="text-[#555] text-sm text-center py-6">{t('barberDash.noRecentActivity')}</div>
         ) : (
           <div>
             {recentActivity.map((a, i) => (
@@ -763,7 +765,7 @@ export default function BarberDashboardPage() {
       {/* Reviews empty state */}
       {(profile?.reviewCount || 0) === 0 && (
         <div style={{ padding: '16px', textAlign: 'center', color: '#444', fontSize: '12px', marginTop: '8px' }}>
-          No reviews yet. Complete your first booking to start getting reviews.
+          {t('barberDash.noReviewsGetFirst')}
         </div>
       )}
 
@@ -771,7 +773,7 @@ export default function BarberDashboardPage() {
       <ErrorBoundary section="earnings chart">
       <div className="mt-8 bg-[#111] border border-[#1e1e1e] rounded-[12px] p-4">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-[13px] font-extrabold">This week&apos;s earnings</span>
+          <span className="text-[13px] font-extrabold">{t('barberDash.thisWeeksEarnings')}</span>
           <span className="text-[13px] font-black text-brand-yellow">{currSym}{weeklyTotal}</span>
         </div>
         <ResponsiveContainer width="100%" height={130}>
@@ -791,18 +793,18 @@ export default function BarberDashboardPage() {
       {blockModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.7)' }}>
           <div className="bg-[#111] border border-[#2a2a2a] rounded-[16px] p-6 w-full max-w-md animate-fadeUp overflow-y-auto max-h-[90vh]">
-            <h3 className="text-lg font-black mb-1">Block time off</h3>
-            <p className="text-xs text-[#888] font-bold mb-5">Clients cannot book you on blocked days.</p>
+            <h3 className="text-lg font-black mb-1">{t('barberDash.blockTimeOffModal')}</h3>
+            <p className="text-xs text-[#888] font-bold mb-5">{t('barberDash.blockTimeOffModalDesc')}</p>
 
             <div className="grid grid-cols-2 gap-3 mb-2">
               <div>
-                <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-1.5">From</label>
+                <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-1.5">{t('barberDash.fromLabel')}</label>
                 <input type="date" min={getLocalDateString(getTimezoneFromLocation(appUser?.city, appUser?.country))} value={blockFrom}
                   onChange={e => { setBlockFrom(e.target.value); setRangeError(''); }}
                   className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-brand-yellow transition-colors" />
               </div>
               <div>
-                <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-1.5">To (optional)</label>
+                <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-1.5">{t('barberDash.toOptional')}</label>
                 <input type="date" min={blockFrom || getLocalDateString(getTimezoneFromLocation(appUser?.city, appUser?.country))} value={blockTo}
                   onChange={e => { setBlockTo(e.target.value); setRangeError(''); }}
                   className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-brand-yellow transition-colors" />
@@ -824,7 +826,7 @@ export default function BarberDashboardPage() {
 
             <div className="mb-5">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-extrabold text-brand-text-secondary uppercase tracking-wider">🔄 Recurring block</span>
+                <span className="text-[11px] font-extrabold text-brand-text-secondary uppercase tracking-wider">{t('barberDash.recurringBlock')}</span>
                 <label className="relative w-10 h-5 cursor-pointer shrink-0">
                   <input type="checkbox" checked={blockRecurring} onChange={e => setBlockRecurring(e.target.checked)} className="peer sr-only" />
                   <span className="absolute inset-0 bg-[#2a2a2a] rounded-full transition-colors peer-checked:bg-brand-yellow" />
@@ -845,7 +847,7 @@ export default function BarberDashboardPage() {
 
             {(() => {
               const count = !blockFrom ? 0 : (!blockTo || blockTo === blockFrom) ? 1 : generateDateRange(blockFrom, blockTo).length;
-              const label = blockLoading ? '...' : count > 1 ? `Block ${count} days` : 'Block this day';
+              const label = blockLoading ? '...' : count > 1 ? `Block ${count} days` : t('barberDash.blockThisDay');
               return (
                 <button onClick={handleBlockDay} disabled={!blockFrom || blockLoading}
                   className="w-full bg-brand-yellow text-[#0a0a0a] font-black py-3 rounded-full text-sm hover:opacity-90 transition-opacity disabled:opacity-40 mb-5">
@@ -862,7 +864,7 @@ export default function BarberDashboardPage() {
               if (rawBlocked.length === 0 && rawRecurring.length === 0) return null;
               return (
                 <div className="mb-5">
-                  <div className="text-[11px] font-bold text-[#555] mb-2">Currently blocked days:</div>
+                  <div className="text-[11px] font-bold text-[#555] mb-2">{t('barberDash.currentlyBlockedDays')}</div>
                   <div className="flex flex-wrap gap-2">
                     {rawBlocked.map((item: any, i: number) => {
                       const d = typeof item === 'string' ? item : item.date;
@@ -888,7 +890,7 @@ export default function BarberDashboardPage() {
 
             <button onClick={closeBlockModal} disabled={blockLoading}
               className="w-full border border-[#2a2a2a] text-[#888] font-bold py-3 rounded-full text-sm hover:border-[#444] hover:text-white transition-colors">
-              Cancel
+              {t('buttons.cancel')}
             </button>
           </div>
         </div>

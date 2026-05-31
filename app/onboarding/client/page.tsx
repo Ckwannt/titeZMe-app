@@ -9,11 +9,13 @@ import Select from 'react-select';
 // country-state-city loaded dynamically to avoid bundling ~2 MB on initial load
 import { userUpdateSchema } from "@/lib/schemas";
 import { getLanguageOptions } from '@/lib/languages';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export default function ClientOnboarding() {
   const router = useRouter();
   const { user, appUser } = useAuth();
   
+  const { t } = useLang();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -159,16 +161,16 @@ export default function ClientOnboarding() {
       {/* Header */}
       <div className="animate-fadeUp text-center mb-9">
         <div className="text-3xl mb-2">👋</div>
-        <h1 className="text-2xl font-black">Just a few details</h1>
+        <h1 className="text-2xl font-black">{t('onboarding.justFewDetails')}</h1>
         <p className="text-brand-text-secondary text-sm mt-1.5">
-          Complete your profile to book haircuts
+          {t('onboarding.completeToBook')}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="animate-fadeUp flex flex-col gap-5">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">FIRST NAME <span className="text-brand-red">*</span></label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.firstName').toUpperCase()} <span className="text-brand-red">*</span></label>
             <input
               type="text"
               value={firstName}
@@ -189,11 +191,11 @@ export default function ClientOnboarding() {
               }}
             />
             {submitAttempted && !firstName.trim() && (
-              <span className="text-brand-red text-xs mt-1 block">Required</span>
+              <span className="text-brand-red text-xs mt-1 block">{t('onboarding.required')}</span>
             )}
           </div>
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LAST NAME <span className="text-brand-red">*</span></label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.lastName').toUpperCase()} <span className="text-brand-red">*</span></label>
             <input
               type="text"
               value={lastName}
@@ -214,13 +216,13 @@ export default function ClientOnboarding() {
               }}
             />
             {submitAttempted && !lastName.trim() && (
-              <span className="text-brand-red text-xs mt-1 block">Required</span>
+              <span className="text-brand-red text-xs mt-1 block">{t('onboarding.required')}</span>
             )}
           </div>
         </div>
 
         <div>
-          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">PHONE NUMBER <span className="text-brand-red">*</span></label>
+          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.phone').toUpperCase()} <span className="text-brand-red">*</span></label>
           <div className="flex gap-2">
             <div className="flex-none w-[120px]">
               <Select 
@@ -255,12 +257,12 @@ export default function ClientOnboarding() {
             </div>
           </div>
           {submitAttempted && (!phoneCode || !phoneNumberInput) && (
-            <span className="text-brand-red text-xs mt-1 block">Valid phone number is required</span>
+            <span className="text-brand-red text-xs mt-1 block">{t('onboarding.validPhone')}</span>
           )}
         </div>
 
         <div>
-          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LOCATION <span className="text-brand-red">*</span></label>
+          <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('onboarding.location')} <span className="text-brand-red">*</span></label>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Select 
@@ -285,7 +287,7 @@ export default function ClientOnboarding() {
                 placeholder="Country..."
               />
               {submitAttempted && !selectedCountry && (
-                <span className="text-brand-red text-xs mt-1 block">Required</span>
+                <span className="text-brand-red text-xs mt-1 block">{t('onboarding.required')}</span>
               )}
             </div>
             <div>
@@ -315,14 +317,14 @@ export default function ClientOnboarding() {
                 placeholder="City..."
               />
               {submitAttempted && !selectedCityOption && (
-                <span className="text-brand-red text-xs mt-1 block">Required</span>
+                <span className="text-brand-red text-xs mt-1 block">{t('onboarding.required')}</span>
               )}
             </div>
           </div>
         </div>
 
         <div>
-           <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LANGUAGES SPOKEN</label>
+           <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('onboarding.languagesSpoken')}</label>
            <Select 
               isMulti
               options={languageOptions} 
@@ -355,7 +357,7 @@ export default function ClientOnboarding() {
           disabled={isSubmitting}
           className="bg-brand-yellow text-black w-full mt-2 px-7 py-4 rounded-full font-black text-base transition-all hover:opacity-90 disabled:opacity-50"
         >
-          {isSubmitting ? 'Saving...' : "Let's find your barber 💈"}
+          {isSubmitting ? t('onboarding.saving') : t('onboarding.letsFind')}
         </button>
       </form>
     </div>
