@@ -9,9 +9,11 @@ import { toast } from '@/lib/toast';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getLocalDateString } from '@/lib/schedule-utils';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export function ShopTeamTab() {
   const { user, appUser } = useAuth();
+  const { t } = useLang();
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -98,7 +100,7 @@ export function ShopTeamTab() {
     const codePattern = /^TZB-[A-Z0-9]{6}$/;
     const normalised = inviteCode.trim().toUpperCase();
     if (!codePattern.test(normalised)) {
-      setErrorMsg('Barber codes start with TZB- followed by 6 characters (e.g. TZB-ABC123)');
+      setErrorMsg(t('errors.barberCodeFormat'));
       return;
     }
 
@@ -108,7 +110,7 @@ export function ShopTeamTab() {
     if (newAttempts >= 10) {
       setSearchBlockedUntil(Date.now() + (5 * 60 * 1000));
       setSearchAttempts(0);
-      toast.error('Too many search attempts. Blocked for 5 minutes.');
+      toast.error(t('settings.tooManySearches'));
       return;
     }
 
@@ -120,7 +122,7 @@ export function ShopTeamTab() {
     const snap = await getDocs(q);
 
     if (snap.empty) {
-      setErrorMsg('No barber found with this code. Check the code and try again.');
+      setErrorMsg(t('errors.noBarberFound'));
       setLoading(false);
       return;
     }
@@ -154,12 +156,12 @@ export function ShopTeamTab() {
       );
       const inviteSnap = await getDocs(inviteQ);
       if (!inviteSnap.empty) {
-        setErrorMsg('Invite already sent');
+        setErrorMsg(t('errors.inviteAlreadySent'));
         setLoading(false);
         return;
       }
       if (foundBarber.shopId === user.uid) {
-        setErrorMsg('This barber already works with you');
+        setErrorMsg(t('errors.barberAlreadyOnTeam'));
         setLoading(false);
         return;
       }
@@ -187,10 +189,10 @@ export function ShopTeamTab() {
 
       setFoundBarber(null);
       setInviteCode('');
-      toast.success('Invite sent!');
+      toast.success(t('success.inviteSent'));
     } catch (e: any) {
       console.error(e);
-      setErrorMsg('Failed to send invite.');
+      setErrorMsg(t('settings.failedSendInvite'));
     }
     setLoading(false);
   };
@@ -221,7 +223,7 @@ export function ShopTeamTab() {
       toast.success(`${barberName} removed from team`);
     } catch (e) {
       console.error(e);
-      toast.error('Failed to remove barber.');
+      toast.error(t('errors.failedRemoveBarber'));
     }
     setRemoving(false);
   };
@@ -249,12 +251,12 @@ export function ShopTeamTab() {
 
   return (
     <div className="animate-fadeUp max-w-2xl">
-      <h1 className="text-2xl font-black mb-6">Team 👥</h1>
+      <h1 className="text-2xl font-black mb-6">{t('headings.team')}</h1>
 
       {/* ── INVITE A BARBER ─────────────────────────────────────────────── */}
       <div className="bg-brand-surface border border-brand-border rounded-3xl p-6 mb-8">
-        <h2 className="text-lg font-black mb-1">Invite a Barber</h2>
-        <p className="text-xs text-[#888] mb-5">Enter the barber&apos;s titeZMe code to find and invite them.</p>
+        <h2 className="text-lg font-black mb-1">{t('headings.inviteBarber')}</h2>
+        <p className="text-xs text-[#888] mb-5">{t('settings.inviteBarberDesc')}</p>
         <div className="flex gap-3">
           <input
             type="text"
@@ -269,7 +271,7 @@ export function ShopTeamTab() {
             disabled={loading || !inviteCode}
             className="bg-brand-yellow text-black px-6 py-3 rounded-xl font-black text-sm hover:bg-yellow-400 disabled:opacity-50 transition-colors"
           >
-            {loading ? '...' : 'Search'}
+            {loading ? '...' : t('buttons.search')}
           </button>
         </div>
 
@@ -328,14 +330,14 @@ export function ShopTeamTab() {
                     disabled={loading}
                     className="bg-brand-yellow text-black px-6 py-2.5 rounded-xl font-black text-sm hover:bg-yellow-400 disabled:opacity-50 transition-colors"
                   >
-                    {loading ? 'Sending...' : 'Send Invite'}
+                    {loading ? t('forms.sending') : t('buttons.sendInvite')}
                   </button>
                 )}
                 <button
                   onClick={() => { setFoundBarber(null); setInviteCode(''); }}
                   className="text-[#888] hover:text-white text-sm font-bold px-4 py-2.5 transition-colors"
                 >
-                  Cancel
+                  {t('buttons.cancel')}
                 </button>
               </div>
             </div>
@@ -344,9 +346,9 @@ export function ShopTeamTab() {
       </div>
 
       {/* ── PENDING INVITES ──────────────────────────────────────────────────── */}
-      <h2 className="font-extrabold text-base mb-3">Pending Invites</h2>
+      <h2 className="font-extrabold text-base mb-3">{t('headings.pendingInvites')}</h2>
       {pendingInvites.length === 0 ? (
-        <div className="text-[#555] text-sm mb-8">No pending invites.</div>
+        <div className="text-[#555] text-sm mb-8">{t('emptyStates.noPendingInvites')}</div>
       ) : (
         <div className="flex flex-col gap-3 mb-8">
           {pendingInvites.map(inv => (
@@ -357,10 +359,10 @@ export function ShopTeamTab() {
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-[10px] font-black tracking-wider text-brand-yellow bg-brand-yellow/10 px-2.5 py-1 rounded-md uppercase">
-                  Pending
+                  {t('status.pending')}
                 </span>
                 <button onClick={() => handleCancelInvite(inv.id)} className="text-xs font-bold text-[#888] hover:text-white transition-colors">
-                  Cancel
+                  {t('buttons.cancel')}
                 </button>
               </div>
             </div>
@@ -371,7 +373,7 @@ export function ShopTeamTab() {
       {/* ── ACTIVE TEAM ──────────────────────────────────────────────────────── */}
       <h2 className="font-extrabold text-base mb-3">Your Team ({activeBarbers.length} barbers)</h2>
       {activeBarbers.length === 0 ? (
-        <div className="text-[#555] text-sm">No barbers yet. Invite your first barber above.</div>
+        <div className="text-[#555] text-sm">{t('emptyStates.noBarbers')}</div>
       ) : (
         <div className="flex flex-col gap-3">
           {activeBarbers.map((barber: any) => {
@@ -399,7 +401,7 @@ export function ShopTeamTab() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-extrabold text-[15px]">{name}</span>
                       <span className={`text-[10px] font-bold ${working ? 'text-brand-green' : 'text-[#555]'}`}>
-                        ● {working ? 'Working today' : 'Off today'}
+                        ● {working ? t('status.workingToday') : t('status.offToday')}
                       </span>
                     </div>
                     {(barber.rating > 0 || barber.reviewCount > 0) && (
@@ -419,13 +421,13 @@ export function ShopTeamTab() {
                   {/* Actions */}
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <Link href={`/barber/${barberId}`} className="text-[11px] font-bold text-brand-yellow hover:underline">
-                      View profile →
+                      {t('buttons.viewProfile')}
                     </Link>
                     <button
                       onClick={() => setRemoveConfirmId(isConfirming ? null : barberId)}
                       className="text-[11px] font-bold text-brand-red hover:underline"
                     >
-                      {isConfirming ? 'Keep' : 'Remove'}
+                      {isConfirming ? t('buttons.keep') : t('buttons.remove')}
                     </button>
                   </div>
                 </div>
@@ -442,13 +444,13 @@ export function ShopTeamTab() {
                         disabled={removing}
                         className="bg-brand-red text-white text-xs font-black px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
                       >
-                        {removing ? 'Removing...' : 'Yes, Remove'}
+                        {removing ? t('settings.removing') : t('buttons.yesRemove')}
                       </button>
                       <button
                         onClick={() => setRemoveConfirmId(null)}
                         className="text-[#888] text-xs font-bold px-4 py-2 hover:text-white transition-colors"
                       >
-                        Cancel
+                        {t('buttons.cancel')}
                       </button>
                     </div>
                   </div>

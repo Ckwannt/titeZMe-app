@@ -24,10 +24,12 @@ import { userUpdateSchema } from "@/lib/schemas";
 import { sanitizeText } from '@/lib/sanitize';
 import { getLanguageOptions } from '@/lib/languages';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useLang } from '@/lib/i18n/LangContext';
 import Image from 'next/image';
 
 export default function ClientSettings() {
   const { user, appUser, loading, refreshUser } = useAuth();
+  const { t } = useLang();
   const router = useRouter();
   
   const [firstName, setFirstName] = useState('');
@@ -164,7 +166,7 @@ export default function ClientSettings() {
     if (!user || !appUser) return;
     
     if (!firstName.trim() || !lastName.trim()) {
-      setErrorMsg("First name and last name are required.");
+      setErrorMsg(t('settings.firstLastRequired'));
       return;
     }
     
@@ -189,10 +191,10 @@ export default function ClientSettings() {
 
       await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse(updateData));
       await refreshUser();
-      toast.success("Profile updated ✓");
+      toast.success(t('settings.profileUpdated'));
     } catch (err: any) {
       console.error(err);
-      toast.error("Failed to save changes.");
+      toast.error(t('settings.failedToSave'));
     } finally {
       setIsSubmitting(false);
     }
@@ -204,16 +206,16 @@ export default function ClientSettings() {
     
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      toast.error('Only JPG, PNG and WEBP formats are allowed.');
+      toast.error(t('settings.invalidImageClient'));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size must be less than 5MB.');
+      toast.error(t('settings.fileSizeLimit'));
       return;
     }
 
     setIsUploading(true);
-    const toastId = toast.loading("Uploading photo...");
+    const toastId = toast.loading(t('settings.uploadingPhoto'));
 
     try {
       const storage = getStorage();
@@ -223,10 +225,10 @@ export default function ClientSettings() {
       
       await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({ photoUrl: url }));
       await refreshUser();
-      toast.success("Photo uploaded successfully ✓", { id: toastId });
+      toast.success(t('settings.photoUploaded'), { id: toastId });
     } catch (err) {
       console.error(err);
-      toast.error("Upload failed", { id: toastId });
+      toast.error(t('errors.uploadFailed'), { id: toastId });
     } finally {
       setIsUploading(false);
     }
@@ -254,7 +256,7 @@ export default function ClientSettings() {
           )}
           <div>
             <div className="font-extrabold text-sm">{appUser?.firstName} {appUser?.lastName?.charAt(0)}.</div>
-            <div className="text-[11px] text-brand-text-secondary font-bold">Client</div>
+            <div className="text-[11px] text-brand-text-secondary font-bold">{t('clientDash.clientRole')}</div>
           </div>
         </div>
         
@@ -263,12 +265,12 @@ export default function ClientSettings() {
             onClick={() => router.push('/dashboard/client')}
             className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 text-[#888] hover:bg-[#1a1a1a] hover:text-white`}
           >
-            <span>📅</span> My Bookings
+            <span>📅</span> {t('clientDash.myBookings')}
           </button>
           <button 
             className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 bg-[#1a1a1a] text-brand-yellow`}
           >
-            <span>⚙️</span> Settings
+            <span>⚙️</span> {t('clientDash.settings')}
           </button>
         </div>
 
@@ -279,10 +281,10 @@ export default function ClientSettings() {
 
       <div className="flex-1 p-6 md:p-8 md:px-10 overflow-y-auto max-h-[calc(100vh-53px)]">
         <div className="animate-fadeUp max-w-[700px]">
-          <h2 className="text-2xl font-black mb-6">Settings</h2>
+          <h2 className="text-2xl font-black mb-6">{t('clientDash.settings')}</h2>
 
           <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 mb-8">
-            <h3 className="font-bold text-lg mb-4">Profile Photo</h3>
+            <h3 className="font-bold text-lg mb-4">{t('forms.profilePhoto')}</h3>
             <div className="flex items-center gap-6">
               {appUser?.photoUrl ? (
                 <Image 
@@ -312,19 +314,19 @@ export default function ClientSettings() {
                   onClick={() => fileInputRef.current?.click()}
                   className="bg-[#1a1a1a] text-white px-4 py-2 rounded-xl text-sm font-bold border border-[#2a2a2a] hover:border-brand-yellow transition-colors"
                 >
-                  {isUploading ? 'Uploading...' : 'Upload new photo'}
+                  {isUploading ? t('settings.uploading') : t('buttons.uploadNewPhoto')}
                 </button>
-                <div className="text-xs text-[#888] mt-2 font-bold">JPG, PNG, WEBP. Max 5MB.</div>
+                <div className="text-xs text-[#888] mt-2 font-bold">{t('settings.fileTypeHint')}</div>
               </div>
             </div>
           </div>
 
           <form onSubmit={handleSave} className="bg-brand-surface border border-brand-border rounded-2xl p-6 mb-8 flex flex-col gap-5">
-            <h3 className="font-bold text-lg mb-2">Personal Info</h3>
+            <h3 className="font-bold text-lg mb-2">{t('headings.personalInfo')}</h3>
             
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">FIRST NAME <span className="text-brand-red">*</span></label>
+                <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.firstName').toUpperCase()} <span className="text-brand-red">*</span></label>
                 <input 
                   type="text"
                   value={firstName}
@@ -334,7 +336,7 @@ export default function ClientSettings() {
                 />
               </div>
               <div>
-                <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LAST NAME <span className="text-brand-red">*</span></label>
+                <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.lastName').toUpperCase()} <span className="text-brand-red">*</span></label>
                 <input 
                   type="text"
                   value={lastName}
@@ -346,7 +348,7 @@ export default function ClientSettings() {
             </div>
 
             <div>
-              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">PHONE NUMBER</label>
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.phone').toUpperCase()}</label>
               <div className="flex gap-2">
                 <div className="flex-none w-[120px]">
                   <Select 
@@ -384,7 +386,7 @@ export default function ClientSettings() {
             </div>
 
             <div>
-              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LOCATION</label>
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('onboarding.location')}</label>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Select
@@ -440,7 +442,7 @@ export default function ClientSettings() {
             </div>
 
             <div>
-               <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">LANGUAGES SPOKEN</label>
+               <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('onboarding.languagesSpoken')}</label>
                <Select 
                   isMulti
                   options={languageOptions} 
@@ -473,14 +475,14 @@ export default function ClientSettings() {
               disabled={isSubmitting}
               className="bg-brand-yellow text-black mt-2 px-7 py-3.5 rounded-full font-black text-sm transition-all hover:opacity-90 disabled:opacity-50 self-start"
             >
-              {isSubmitting ? 'Saving...' : "Save changes"}
+              {isSubmitting ? t('settings.saving') : t('settings.saveChanges')}
             </button>
           </form>
 
           <div className="bg-[#1a0808] border border-brand-red/30 rounded-2xl p-6">
-            <h3 className="font-bold text-lg text-brand-red mb-2">Delete Account</h3>
+            <h3 className="font-bold text-lg text-brand-red mb-2">{t('headings.deleteAccount')}</h3>
             <p className="text-[#888] text-sm mb-6 max-w-sm font-bold">
-              This permanently deletes your account, all your bookings, reviews and data. Cannot be undone.
+              {t('settings.deleteClientDesc')}
             </p>
             <div className="inline-block">
               {/* Wrapping inside a container to stylize identically to DeleteAccountButton if necessary or let DeleteAccountButton handle itself */}

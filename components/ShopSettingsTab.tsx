@@ -22,6 +22,7 @@ import Image from "next/image";
 import imageCompression from "browser-image-compression";
 import { barbershopUpdateSchema } from "@/lib/schemas";
 import { sanitizeText, sanitizeHandle, sanitizeUrl } from '@/lib/sanitize';
+import { useLang } from '@/lib/i18n/LangContext';
 
 interface ShopSettingsTabProps {
   shop: any;
@@ -30,6 +31,7 @@ interface ShopSettingsTabProps {
 
 export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   const { user } = useAuth();
+  const { t } = useLang();
   const router = useRouter();
   const [photoLoading, setPhotoLoading] = useState(false);
   const [savingGlobal, setSavingGlobal] = useState(false);
@@ -158,7 +160,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     if (!file || !user) return;
     
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setErrorMsg('Only jpg, png, and webp images are allowed.');
+      setErrorMsg(t('errors.invalidImageType'));
       return;
     }
 
@@ -182,7 +184,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
         null, 
         (error) => {
           setPhotoLoading(false);
-          setErrorMsg('Upload failed. Please try again.');
+          setErrorMsg(t('errors.uploadFailed'));
           console.error("Upload Error:", error);
         }, 
         async () => {
@@ -191,17 +193,17 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
             await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ coverPhotoUrl: downloadURL }));
             setLocalPhotoUrl(downloadURL);
             mutateShop();
-            setSuccessMsg('Shop photo updated!');
+            setSuccessMsg(t('success.shopPhotoUpdated'));
           } catch (err) {
              console.error("Database Update Error:", err);
-             setErrorMsg('Failed to update shop photo URL in database.');
+             setErrorMsg(t('errors.failedUpdatePhoto'));
           }
           setPhotoLoading(false);
         }
       );
     } catch (error) {
       console.error(error);
-      setErrorMsg('Image compression failed.');
+      setErrorMsg(t('errors.imageCompressionFailed'));
       setPhotoLoading(false);
     }
   };
@@ -209,7 +211,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   const handleSaveInfo = async () => {
     if (!user) return;
     if (!formData.name || !formData.street || !formData.buildingNumber || !formData.postalCode) {
-      setErrorMsg("Please fill in all required fields marked with *");
+      setErrorMsg(t('errors.fillRequiredFields'));
       return;
     }
 
@@ -236,10 +238,10 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
               description: sanitizeText(formData.description, 300),
             }));
       mutateShop();
-      setSuccessMsg('Shop info saved!');
+      setSuccessMsg(t('success.shopInfoSaved'));
     } catch (e) {
       console.error(e);
-      setErrorMsg('Failed to save shop info.');
+      setErrorMsg(t('errors.failedSaveShopInfo'));
     }
     setSavingGlobal(false);
   };
@@ -256,10 +258,10 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
               tiktok: sanitizeHandle(socialData.tiktok),
             }));
       mutateShop();
-      setSuccessMsg('Social links saved!');
+      setSuccessMsg(t('success.socialLinksSaved'));
     } catch (e) {
       console.error(e);
-      setErrorMsg('Failed to save social links.');
+      setErrorMsg(t('errors.failedSaveSocialLinks'));
     }
     setSavingSocial(false);
   };
@@ -271,10 +273,10 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     try {
       await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ googleMapsUrl: sanitizeUrl(googleMapsUrl) }));
       mutateShop();
-      setSuccessMsg('Maps link saved!');
+      setSuccessMsg(t('success.mapsLinkSaved'));
     } catch (e) {
       console.error(e);
-      setErrorMsg('Failed to save maps link.');
+      setErrorMsg(t('errors.failedSaveMapsLink'));
     }
     setSavingMaps(false);
   };
@@ -339,8 +341,8 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
 
   return (
     <div className="animate-fadeUp max-w-2xl">
-      <h1 className="text-2xl font-black mb-2">Shop Settings ⚙️</h1>
-      <p className="text-brand-text-secondary text-sm mb-8">Manage your shop&apos;s public profile and preferences.</p>
+      <h1 className="text-2xl font-black mb-2">{t('headings.shopSettings')}</h1>
+      <p className="text-brand-text-secondary text-sm mb-8">{t('settings.manageShopDesc')}</p>
 
       {errorMsg && (
         <div className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-xl px-4 py-3 text-sm font-bold mb-6">
@@ -355,7 +357,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
 
       {/* SECTION B: SHOP PHOTO */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">Shop Photo</h2>
+        <h2 className="text-lg font-black mb-4">{t('headings.shopPhoto')}</h2>
         <div className="flex items-center gap-6">
           <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] shrink-0">
             {currentPhoto ? (
@@ -368,7 +370,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
           </div>
           <div>
             <label className={`bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full font-bold text-sm cursor-pointer hover:bg-[#2a2a2a] transition-colors inline-block ${photoLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-              {photoLoading ? 'Uploading...' : 'Upload New Photo'}
+              {photoLoading ? t('settings.uploading') : t('buttons.uploadNewPhoto')}
               <input 
                 type="file" 
                 accept="image/jpeg,image/png,image/webp" 
@@ -377,17 +379,17 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
                 disabled={photoLoading}
               />
             </label>
-            <p className="text-xs text-[#888] mt-3">JPG, PNG, or WEBP. Max 5MB.</p>
+            <p className="text-xs text-[#888] mt-3">{t('settings.fileTypeHint')}</p>
           </div>
         </div>
       </section>
 
       {/* SECTION A: SHOP INFO */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">Shop Info</h2>
+        <h2 className="text-lg font-black mb-4">{t('headings.shopInfo')}</h2>
         
         <div className="mb-4">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Shop Name *</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.shopName')} *</label>
           <input 
             type="text" 
             value={formData.name}
@@ -398,7 +400,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
         </div>
 
         <div className="mb-4">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Phone Number</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.phone')}</label>
           <div className="flex gap-2">
             <div className="flex-[0.8] sm:flex-[0.6] min-w-[120px]">
               <Select 
@@ -425,7 +427,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Country</label>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.country')}</label>
             <Select 
               options={countryOptions} 
               value={selectedCountry}
@@ -438,7 +440,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">City</label>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.city')}</label>
             <Select 
               options={selectedCountry && csc ?
                 (csc.City.getCitiesOfCountry(selectedCountry.value) ?? []).map((c: any) => ({
@@ -458,7 +460,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Street Name *</label>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.streetName')} *</label>
             <input 
               type="text" 
               value={formData.street}
@@ -468,7 +470,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Building Number *</label>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.buildingNumber')} *</label>
             <input 
               type="text" 
               value={formData.buildingNumber}
@@ -481,7 +483,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Postal Code *</label>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.postalCode')} *</label>
             <input 
               type="text" 
               value={formData.postalCode}
@@ -491,7 +493,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Floor / Suite (Optional)</label>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.floorSuite')}</label>
             <input 
               type="text" 
               value={formData.floorSuite}
@@ -503,7 +505,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
         </div>
 
         <div className="mb-6">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Description</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.description')}</label>
           <textarea 
             value={formData.description}
             onChange={e => setFormData({...formData, description: e.target.value})}
@@ -518,16 +520,16 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
           disabled={savingGlobal}
           className="bg-brand-yellow text-black px-6 py-3 rounded-xl font-bold text-sm hover:bg-yellow-500 disabled:opacity-50"
         >
-          {savingGlobal ? 'Saving...' : 'Save Shop Info'}
+          {savingGlobal ? t('settings.saving') : t('buttons.saveShopInfo')}
         </button>
       </section>
 
       {/* SECTION C: SOCIAL MEDIA */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">Social Media</h2>
+        <h2 className="text-lg font-black mb-4">{t('headings.socialMedia')}</h2>
         
         <div className="mb-4">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Instagram Username</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.instagram')}</label>
           <input 
             type="text" 
             value={socialData.instagram}
@@ -538,7 +540,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
         </div>
 
         <div className="mb-4">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Facebook Profile Name</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.facebook')}</label>
           <input 
             type="text" 
             value={socialData.facebook}
@@ -549,7 +551,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
         </div>
 
         <div className="mb-6">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">TikTok Username</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.tiktok')}</label>
           <input 
             type="text" 
             value={socialData.tiktok}
@@ -564,32 +566,32 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
           disabled={savingSocial}
           className="bg-[#1a1a1a] text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#2a2a2a] disabled:opacity-50"
         >
-          {savingSocial ? 'Saving...' : 'Save Social Links'}
+          {savingSocial ? t('settings.saving') : t('buttons.saveSocialLinks')}
         </button>
       </section>
 
       {/* SECTION D: GOOGLE MAPS */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-1">Google Maps link</h2>
-        <p className="text-[#888] text-xs mb-5">Help clients find your exact location.</p>
+        <h2 className="text-lg font-black mb-1">{t('headings.googleMapsLink')}</h2>
+        <p className="text-[#888] text-xs mb-5">{t('settings.helpFindLocation')}</p>
 
         {/* Auto-generated link from address */}
         {shop?.address?.street && (
           <div className="mb-4">
-            <div className="text-[10px] font-bold text-[#555] uppercase mb-1.5">Auto-generated from your address</div>
+            <div className="text-[10px] font-bold text-[#555] uppercase mb-1.5">{t('settings.autoGeneratedLink')}</div>
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([shop.address.street, shop.address.buildingNumber, shop.address.city, shop.address.country].filter(Boolean).join(' '))}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[12px] text-brand-yellow hover:underline break-all"
             >
-              🗺️ Preview auto-generated map link →
+              {t('settings.previewAutoLink')}
             </a>
           </div>
         )}
 
         <div className="mb-4">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Or paste your own Google Maps URL</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('settings.customMapsLabel')}</label>
           <input
             type="url"
             value={googleMapsUrl}
@@ -603,22 +605,22 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
           disabled={savingMaps}
           className="bg-brand-yellow text-black px-6 py-3 rounded-xl font-bold text-sm hover:bg-yellow-400 disabled:opacity-50"
         >
-          {savingMaps ? 'Saving...' : 'Save Maps link'}
+          {savingMaps ? t('settings.saving') : t('buttons.saveMapsLink')}
         </button>
       </section>
 
       {/* SECTION E: NOTIFICATIONS */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-5">Notification preferences</h2>
+        <h2 className="text-lg font-black mb-5">{t('headings.notifications')}</h2>
         {[
           {
             field: 'notifyInviteResponse' as const,
-            label: 'Email me when a barber accepts or declines an invite',
+            label: t('settings.shopNotifyInvite'),
             value: notifyInviteResponse,
           },
           {
             field: 'notifyNewBooking' as const,
-            label: 'Email me when a new booking is made at my shop',
+            label: t('settings.shopNotifyBooking'),
             value: notifyNewBooking,
           },
         ].map(({ field, label, value }) => (
@@ -636,15 +638,15 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
 
       {/* SECTION F: DANGER ZONE */}
       <section className="bg-[#1a0808] border border-brand-red/30 rounded-3xl p-6">
-        <h2 className="text-lg font-black text-brand-red mb-2">Delete Shop Profile</h2>
-        <p className="text-[#888] text-sm mb-6">This permanently deletes your shop profile, removes all barbers from your team, and deletes all shop data. Your personal barber account will NOT be deleted.</p>
+        <h2 className="text-lg font-black text-brand-red mb-2">{t('headings.deleteShopProfile')}</h2>
+        <p className="text-[#888] text-sm mb-6">{t('settings.deleteShopProfileDesc')}</p>
         <div className="w-max">
            <button 
              onClick={handleDeleteShop}
              disabled={deleting}
              className="bg-brand-red text-white px-6 py-3 rounded-xl font-bold text-[13px] tracking-wide transition-colors hover:bg-red-700 disabled:opacity-50"
            >
-             {deleting ? 'Deleting...' : 'Delete Shop Profile'}
+             {deleting ? t('shop.deleting') : t('shop.deleteShopBtn')}
            </button>
         </div>
       </section>

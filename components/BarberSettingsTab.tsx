@@ -25,6 +25,7 @@ import { userUpdateSchema, barberUpdateSchema } from "@/lib/schemas";
 import { sanitizeText, sanitizeHandle } from '@/lib/sanitize';
 import { invalidateBarber } from '@/lib/invalidate';
 import { getLanguageOptions } from '@/lib/languages';
+import { useLang } from '@/lib/i18n/LangContext';
 
 interface BarberSettingsTabProps {
   profile: any;
@@ -33,6 +34,7 @@ interface BarberSettingsTabProps {
 
 export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabProps) {
   const { user, appUser } = useAuth();
+  const { t } = useLang();
   const [photoLoading, setPhotoLoading] = useState(false);
   const [localPhotoUrl, setLocalPhotoUrl] = useState('');
   const [savingGlobal, setSavingGlobal] = useState(false);
@@ -198,7 +200,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     if (!file || !user) return;
     
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setErrorMsg('Only jpg, png, and webp images are allowed.');
+      setErrorMsg(t('errors.invalidImageType'));
       return;
     }
 
@@ -222,7 +224,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         null, 
         (error) => {
           setPhotoLoading(false);
-          setErrorMsg('Upload failed. Please try again.');
+          setErrorMsg(t('errors.uploadFailed'));
           console.error("Upload Error:", error);
         }, 
         async () => {
@@ -233,17 +235,17 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
             setLocalPhotoUrl(downloadURL);
             mutateProfile();
             invalidateBarber(user.uid);
-            setSuccessMsg('Profile photo updated!');
+            setSuccessMsg(t('success.profilePhotoUpdated'));
           } catch (err) {
              console.error("Database Update Error:", err);
-             setErrorMsg('Failed to update profile photo URL in database.');
+             setErrorMsg(t('errors.failedUpdatePhoto'));
           }
           setPhotoLoading(false);
         }
       );
     } catch (error) {
       console.error(error);
-      setErrorMsg('Image compression failed.');
+      setErrorMsg(t('errors.imageCompressionFailed'));
       setPhotoLoading(false);
     }
   };
@@ -277,10 +279,10 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
             }));
       mutateProfile();
       invalidateBarber(user.uid);
-      setSuccessMsg('Personal info saved!');
+      setSuccessMsg(t('success.personalInfoSaved'));
     } catch (e) {
       console.error(e);
-      setErrorMsg('Failed to save personal info.');
+      setErrorMsg(t('errors.failedSavePersonalInfo'));
     }
     setSavingGlobal(false);
   };
@@ -298,10 +300,10 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
             }));
       mutateProfile();
       invalidateBarber(user.uid);
-      setSuccessMsg('Social links saved!');
+      setSuccessMsg(t('success.socialLinksSaved'));
     } catch (e) {
       console.error(e);
-      setErrorMsg('Failed to save social links.');
+      setErrorMsg(t('errors.failedSaveSocialLinks'));
     }
     setSavingSocial(false);
   };
@@ -314,8 +316,8 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       await updateDoc(doc(db, 'barberProfiles', user.uid), { specialties, vibes: vibe, clientele });
       mutateProfile();
       invalidateBarber(user.uid);
-      setSuccessMsg('Barber profile updated ✓');
-    } catch (e) { console.error(e); setErrorMsg('Failed to save barber profile.'); }
+      setSuccessMsg(t('success.barberProfileUpdated'));
+    } catch (e) { console.error(e); setErrorMsg(t('errors.failedSaveBarberProfile')); }
     setSavingProfile(false);
   };
 
@@ -342,16 +344,16 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     try {
       await sendPasswordResetEmail(auth, user.email);
       setPwResetSent(true);
-      setSuccessMsg('Password reset email sent ✓ Check your inbox.');
-    } catch (e) { console.error(e); setErrorMsg('Failed to send reset email.'); }
+      setSuccessMsg(t('success.passwordResetSent'));
+    } catch (e) { console.error(e); setErrorMsg(t('errors.failedSendReset')); }
   };
 
   const currentPhoto = localPhotoUrl || profile?.profilePhotoUrl || appUser?.photoUrl;
 
   return (
     <div className="animate-fadeUp max-w-2xl">
-      <h1 className="text-2xl font-black mb-2">Settings ⚙️</h1>
-      <p className="text-brand-text-secondary text-sm mb-8">Manage your public profile and preferences.</p>
+      <h1 className="text-2xl font-black mb-2">{t('headings.settings')}</h1>
+      <p className="text-brand-text-secondary text-sm mb-8">{t('settings.manageBarberDesc')}</p>
 
       {errorMsg && (
         <div className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-xl px-4 py-3 text-sm font-bold mb-6">
@@ -366,7 +368,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
       {/* SECTION B: PROFILE PHOTO */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">Profile Photo</h2>
+        <h2 className="text-lg font-black mb-4">{t('forms.profilePhoto')}</h2>
         <div className="flex items-center gap-6">
           <div className="relative w-24 h-24 rounded-full overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] shrink-0">
             {currentPhoto ? (
@@ -381,7 +383,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
           </div>
           <div>
             <label className={`bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full font-bold text-sm cursor-pointer hover:bg-[#2a2a2a] transition-colors inline-block ${photoLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-              {photoLoading ? 'Uploading...' : 'Upload New Photo'}
+              {photoLoading ? t('settings.uploading') : t('buttons.uploadNewPhoto')}
               <input 
                 type="file" 
                 accept="image/jpeg,image/png,image/webp" 
@@ -390,18 +392,18 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
                 disabled={photoLoading}
               />
             </label>
-            <p className="text-xs text-[#888] mt-3">JPG, PNG, or WEBP. Max 5MB.</p>
+            <p className="text-xs text-[#888] mt-3">{t('settings.fileTypeHint')}</p>
           </div>
         </div>
       </section>
 
       {/* SECTION A: PERSONAL INFO */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">Personal Info</h2>
+        <h2 className="text-lg font-black mb-4">{t('headings.personalInfo')}</h2>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">First Name</label>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.firstName')}</label>
             <input 
               type="text" 
               value={formData.firstName}
@@ -411,7 +413,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Last Name</label>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.lastName')}</label>
             <input 
               type="text" 
               value={formData.lastName}
@@ -423,7 +425,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         </div>
 
         <div className="mb-4">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Phone Number</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.phone')}</label>
           <div className="flex gap-2">
             <div className="flex-[0.8] sm:flex-[0.6] min-w-[120px]">
               <Select 
@@ -450,7 +452,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Country</label>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.country')}</label>
             <Select 
               options={countryOptions} 
               value={selectedCountry}
@@ -463,7 +465,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">City</label>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.city')}</label>
             <Select 
               options={selectedCountry && csc ?
                 (csc.City.getCitiesOfCountry(selectedCountry.value) ?? []).map((c: any) => ({
@@ -482,7 +484,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         </div>
 
         <div className="mb-4">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Bio</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.bio')}</label>
           <textarea 
             value={formData.bio}
             onChange={e => setFormData({...formData, bio: e.target.value})}
@@ -493,7 +495,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         </div>
 
         <div className="mb-6">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Languages</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.languages')}</label>
           <Select 
               isMulti
               options={languageOptions} 
@@ -509,17 +511,17 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
           disabled={savingGlobal}
           className="bg-brand-yellow text-black px-6 py-3 rounded-xl font-bold text-sm hover:bg-yellow-500 disabled:opacity-50"
         >
-          {savingGlobal ? 'Saving...' : 'Save Personal Info'}
+          {savingGlobal ? t('settings.saving') : t('buttons.savePersonalInfo')}
         </button>
       </section>
 
       {/* SECTION C: BARBER PROFILE */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">Barber Profile</h2>
+        <h2 className="text-lg font-black mb-4">{t('headings.barberProfile')}</h2>
 
         {/* Specialties */}
         <div className="mb-5">
-          <label className="text-xs font-bold text-[#888] block mb-2 uppercase">Specialties</label>
+          <label className="text-xs font-bold text-[#888] block mb-2 uppercase">{t('forms.specialties')}</label>
           <div className="flex flex-wrap gap-2">
             {['Skin Fade / Bald Fade','Low Fade','Mid Fade','High Fade','Taper','Classic Cut / Scissor Cut','Textured Crop','Buzz Cut','Line Up / Edge Up','Beard Trim & Shape','Hot Towel Shave / Straight Razor','Locs / Dreadlocks','Curly Hair / Afro','Kids Cut','Design / Pattern Cut','Colour & Bleach','Hair & Beard Combo'].map(s => (
               <button key={s} onClick={() => setSpecialties(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])}
@@ -532,7 +534,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
         {/* Vibe */}
         <div className="mb-5">
-          <label className="text-xs font-bold text-[#888] block mb-2 uppercase">Vibe</label>
+          <label className="text-xs font-bold text-[#888] block mb-2 uppercase">{t('forms.vibe')}</label>
           <div className="flex flex-wrap gap-2">
             {['😶 Silent','💬 Chatty','😎 Cool & chill','⚡ Hype','🎯 Professional','🤝 Friendly'].map(v => (
               <button key={v} onClick={() => setVibe(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])}
@@ -545,7 +547,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
         {/* Clientele */}
         <div className="mb-6">
-          <label className="text-xs font-bold text-[#888] block mb-2 uppercase">Who do you work with?</label>
+          <label className="text-xs font-bold text-[#888] block mb-2 uppercase">{t('forms.whoDoYouWorkWith')}</label>
           <div className="flex flex-wrap gap-2">
             {['👶 Babies (0–2 years)','🧒 Kids (3–12 years)','🧑 Teenagers','🧔 Adults','🧓 Elderly','♿ People with disabilities','😰 Anxious clients (extra patience)','🧠 Autism-friendly','🧏 Deaf / Hard of hearing','💺 Wheelchair accessible cuts','🏠 Home visits available'].map(c => (
               <button key={c} onClick={() => setClientele(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])}
@@ -558,16 +560,16 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
         <button onClick={handleSaveBarberProfile} disabled={savingProfile}
           className="bg-brand-yellow text-black px-6 py-3 rounded-xl font-bold text-sm hover:bg-yellow-500 disabled:opacity-50">
-          {savingProfile ? 'Saving...' : 'Save Barber Profile'}
+          {savingProfile ? t('settings.saving') : t('buttons.saveBarberProfile')}
         </button>
       </section>
 
       {/* SECTION C: SOCIAL MEDIA */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">Social Media</h2>
+        <h2 className="text-lg font-black mb-4">{t('headings.socialMedia')}</h2>
         
         <div className="mb-4">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Instagram Username</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.instagram')}</label>
           <input 
             type="text" 
             value={socialData.instagram}
@@ -578,7 +580,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         </div>
 
         <div className="mb-4">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Facebook Profile Name</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.facebook')}</label>
           <input 
             type="text" 
             value={socialData.facebook}
@@ -589,7 +591,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         </div>
 
         <div className="mb-6">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">TikTok Username</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.tiktok')}</label>
           <input 
             type="text" 
             value={socialData.tiktok}
@@ -604,19 +606,19 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
           disabled={savingSocial}
           className="bg-[#1a1a1a] text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#2a2a2a] disabled:opacity-50"
         >
-          {savingSocial ? 'Saving...' : 'Save Social Links'}
+          {savingSocial ? t('settings.saving') : t('buttons.saveSocialLinks')}
         </button>
       </section>
 
       {/* SECTION D: SHOP & SOLO BOOKINGS */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6 relative">
-        <h2 className="text-lg font-black mb-4">Shop & Solo Bookings</h2>
+        <h2 className="text-lg font-black mb-4">{t('headings.shopAndSolo')}</h2>
         
         {profile?.shopId ? (
           <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-4 rounded-2xl mb-6 flex justify-between items-center flex-col sm:flex-row gap-4">
             <div>
-              <div className="font-bold text-white mb-1">Assigned to a Shop</div>
-              <div className="text-xs text-[#888]">You receive bookings through your shop.</div>
+              <div className="font-bold text-white mb-1">{t('settings.assignedToShop')}</div>
+              <div className="text-xs text-[#888]">{t('settings.assignedToShopDesc')}</div>
             </div>
             <button
               onClick={async () => {
@@ -697,21 +699,21 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
               }}
               className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#3b1a1a] transition-colors whitespace-nowrap"
             >
-              Leave Shop
+              {t('buttons.leaveShop')}
             </button>
           </div>
         ) : (
           <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-4 rounded-2xl mb-6">
-            <div className="font-bold text-white mb-1">Independent Barber</div>
-            <div className="text-xs text-[#888]">You are working independently. Provide your code to a shop owner if you want to join them.</div>
+            <div className="font-bold text-white mb-1">{t('settings.independentBarber')}</div>
+            <div className="text-xs text-[#888]">{t('settings.independentBarberDesc')}</div>
           </div>
         )}
 
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-5 rounded-2xl flex items-start justify-between gap-4">
           <div>
-            <div className="font-bold text-white mb-1">Accept solo bookings</div>
+            <div className="font-bold text-white mb-1">{t('settings.acceptSoloBookings')}</div>
             <div className="text-xs text-[#888] leading-relaxed max-w-sm">
-              When ON, you appear in barber search for direct bookings. When OFF, you only receive bookings through your shop.
+              {t('settings.acceptSoloDesc')}
             </div>
           </div>
           <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
@@ -759,10 +761,10 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
       {/* SECTION E: NOTIFICATION PREFERENCES */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">Notification Preferences</h2>
+        <h2 className="text-lg font-black mb-4">{t('headings.notifications')}</h2>
         {[
-          { label: 'Email me when I get a new booking', val: notifyEmail, fn: handleToggleNotifEmail },
-          { label: 'Email me when a booking is cancelled', val: notifyCancel, fn: handleToggleNotifCancel },
+          { label: t('settings.notifyNewBooking'), val: notifyEmail, fn: handleToggleNotifEmail },
+          { label: t('settings.notifyCancellation'), val: notifyCancel, fn: handleToggleNotifCancel },
         ].map((item, i) => (
           <div key={i} className="flex items-center justify-between py-3 border-b border-[#1e1e1e] last:border-0">
             <span className="text-sm font-bold text-white">{item.label}</span>
@@ -777,11 +779,11 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
       {/* SECTION F: PRIVACY */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">Privacy</h2>
+        <h2 className="text-lg font-black mb-4">{t('headings.privacy')}</h2>
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-bold text-white">Show my phone number on my public profile</div>
-            <div className="text-xs text-[#555] mt-0.5">When off, clients won&apos;t see your phone on your profile page.</div>
+            <div className="text-sm font-bold text-white">{t('settings.showPhone')}</div>
+            <div className="text-xs text-[#555] mt-0.5">{t('settings.showPhoneDesc')}</div>
           </div>
           <label className="relative w-11 h-6 cursor-pointer shrink-0 ml-4">
             <input type="checkbox" checked={showPhone} onChange={e => handleToggleShowPhone(e.target.checked)} className="peer sr-only" />
@@ -793,22 +795,22 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
       {/* SECTION G: ACCOUNT */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">Account</h2>
+        <h2 className="text-lg font-black mb-4">{t('headings.account')}</h2>
         <div className="mb-5">
-          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Your login email</label>
+          <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.loginEmail')}</label>
           <input value={user?.email || ''} readOnly className="w-full bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl px-4 py-3 text-[#555] text-sm cursor-not-allowed" />
-          <p className="text-[11px] text-[#444] mt-1.5">To change your email, contact support.</p>
+          <p className="text-[11px] text-[#444] mt-1.5">{t('settings.changeEmailNote')}</p>
         </div>
         <button onClick={handlePasswordReset} disabled={pwResetSent}
           className="text-sm font-bold text-[#888] hover:text-white transition-colors underline disabled:text-[#555] disabled:cursor-default disabled:no-underline">
-          {pwResetSent ? '✓ Reset email sent — check your inbox' : 'Change password →'}
+          {pwResetSent ? t('success.resetEmailSent') : t('buttons.changePassword')}
         </button>
       </section>
 
       {/* SECTION E: DANGER ZONE */}
       <section className="bg-[#1a0808] border border-brand-red/30 rounded-3xl p-6">
-        <h2 className="text-lg font-black text-brand-red mb-2">Delete Account</h2>
-        <p className="text-[#888] text-sm mb-6">This permanently deletes your profile, services, bookings and all your data. This cannot be undone.</p>
+        <h2 className="text-lg font-black text-brand-red mb-2">{t('headings.deleteAccount')}</h2>
+        <p className="text-[#888] text-sm mb-6">{t('settings.deleteBarberAccountDesc')}</p>
         <div className="w-max">
           <DeleteAccountButton role="barber" />
         </div>

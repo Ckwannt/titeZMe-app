@@ -8,6 +8,7 @@ import { ref, deleteObject } from 'firebase/storage';
 import Image from 'next/image';
 import { barberUpdateSchema } from "@/lib/schemas";
 import { toast } from '@/lib/toast';
+import { useLang } from '@/lib/i18n/LangContext';
 
 interface BarberPortfolioTabProps {
   profile: any;
@@ -16,6 +17,7 @@ interface BarberPortfolioTabProps {
 
 export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTabProps) {
   const { user } = useAuth();
+  const { t } = useLang();
   const [notifyPhotoDone, setNotifyPhotoDone] = useState(false);
   const [notifyVideoDone, setNotifyVideoDone] = useState(false);
 
@@ -59,7 +61,7 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
       });
       if (feature === 'photos') setNotifyPhotoDone(true);
       else setNotifyVideoDone(true);
-      toast.success("We'll notify you when portfolio is ready! 📸");
+      toast.success(t('success.portfolioNotify'));
     } catch (e) {
       console.error(e);
     }
@@ -67,34 +69,34 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
 
   return (
     <div className="animate-fadeUp">
-      <h1 className="text-2xl font-black mb-2">Portfolio 📸</h1>
-      <p className="text-brand-text-secondary text-sm mb-8">Showcase your best haircuts to attract more clients.</p>
+      <h1 className="text-2xl font-black mb-2">{t('headings.portfolio')}</h1>
+      <p className="text-brand-text-secondary text-sm mb-8">{t('settings.portfolioShowcase')}</p>
 
       {/* SECTION A: PHOTOS */}
       <section className="mb-12">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-lg font-black">Photos</h2>
-            <p className="text-xs text-[#888]">Max 20 photos.</p>
+            <h2 className="text-lg font-black">{t('forms.photos')}</h2>
+            <p className="text-xs text-[#888]">{t('settings.maxPhotos')}</p>
           </div>
           {/* Change 1 — Coming soon badge (replaces + Add Photo button) */}
           <span className="bg-[#141414] border border-[#2a2a2a] text-[#555] rounded-full px-4 py-[6px] text-[11px] font-extrabold cursor-default select-none">
-            Coming soon
+            {t('status.comingSoon')}
           </span>
         </div>
 
         {photos.length === 0 ? (
           <div className="border border-dashed border-[#333] rounded-3xl p-8 text-center bg-[#0a0a0a]">
-            <div className="text-[#888] mb-3">No photos yet. Add some to show off your skills!</div>
+            <div className="text-[#888] mb-3">{t('emptyStates.noPhotosYet')}</div>
             <p className="text-[11px] text-[#444] italic mb-3">
-              We&apos;re working on the best way to host your portfolio. This feature will be available very soon.
+              {t('emptyStates.portfolioComingSoon')}
             </p>
             <button
               onClick={() => handleNotify('photos')}
               disabled={notifyPhotoDone}
               className="text-brand-yellow text-[11px] font-bold hover:underline disabled:cursor-default disabled:text-[#555]"
             >
-              {notifyPhotoDone ? '✓ You\'re on the list' : 'Notify me when ready'}
+              {notifyPhotoDone ? t('buttons.onTheList') : t('buttons.notifyMe')}
             </button>
           </div>
         ) : (
@@ -118,27 +120,27 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
       <section>
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-lg font-black">Videos</h2>
-            <p className="text-xs text-[#888]">Max 5 videos.</p>
+            <h2 className="text-lg font-black">{t('forms.videos')}</h2>
+            <p className="text-xs text-[#888]">{t('settings.maxVideos')}</p>
           </div>
           {/* Change 1 — Coming soon badge (replaces + Add Video button) */}
           <span className="bg-[#141414] border border-[#2a2a2a] text-[#555] rounded-full px-4 py-[6px] text-[11px] font-extrabold cursor-default select-none">
-            Coming soon
+            {t('status.comingSoon')}
           </span>
         </div>
 
         {videos.length === 0 ? (
           <div className="border border-dashed border-[#333] rounded-3xl p-8 text-center bg-[#0a0a0a]">
-            <div className="text-[#888] mb-3">No videos yet. Action shots are great for engagement!</div>
+            <div className="text-[#888] mb-3">{t('emptyStates.noVideosYet')}</div>
             <p className="text-[11px] text-[#444] italic mb-3">
-              We&apos;re working on the best way to host your portfolio. This feature will be available very soon.
+              {t('emptyStates.portfolioComingSoon')}
             </p>
             <button
               onClick={() => handleNotify('videos')}
               disabled={notifyVideoDone}
               className="text-brand-yellow text-[11px] font-bold hover:underline disabled:cursor-default disabled:text-[#555]"
             >
-              {notifyVideoDone ? '✓ You\'re on the list' : 'Notify me when ready'}
+              {notifyVideoDone ? t('buttons.onTheList') : t('buttons.notifyMe')}
             </button>
           </div>
         ) : (
