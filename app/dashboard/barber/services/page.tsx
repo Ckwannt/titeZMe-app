@@ -9,6 +9,7 @@ import { barberUpdateSchema } from "@/lib/schemas";
 import { safeFirestore } from '@/lib/firebase-helpers';
 import { sanitizeText } from '@/lib/sanitize';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useLang } from "@/lib/i18n/LangContext";
 
 function getCurrencySymbol(c?: string) {
   const s: Record<string, string> = { 'EUR': '€', 'GBP': '£', 'USD': '$', 'MAD': 'MAD ', 'DZD': 'DA ', 'SAR': 'SAR ', 'AED': 'AED ', 'SEK': 'kr ', 'CHF': 'CHF ' };
@@ -31,6 +32,7 @@ const QUICK_CHIPS = [
 export default function ServicesPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useLang();
   const [newServiceName, setNewServiceName] = useState('');
   const [newServicePrice, setNewServicePrice] = useState('');
   const [newServiceDuration, setNewServiceDuration] = useState('');
@@ -132,29 +134,32 @@ export default function ServicesPage() {
 
   return (
     <div className="animate-fadeUp p-6 md:p-8 max-w-[600px]">
-      <h2 className="text-2xl font-black mb-6">Manage Services</h2>
+      <h2 className="text-2xl font-black mb-6">{t('barberLayout.manageServicesTitle')}</h2>
 
       <div className="flex flex-col gap-3 mb-8">
         <div className="text-[11px] text-[#555] font-bold mb-1">
-          {svcActiveList.length === 0 ? 'No services added yet' : `${svcActiveList.length} active service${svcActiveList.length !== 1 ? 's' : ''} · from ${svcSym}${svcMin} to ${svcSym}${svcMax}`}
+          {svcActiveList.length === 0
+            ? t('emptyStates.noServicesAdded')
+            : `${svcActiveList.length} ${svcActiveList.length !== 1 ? t('barberLayout.activeServices') : t('barberLayout.activeService')} · ${t('barberLayout.from')} ${svcSym}${svcMin} ${t('barberLayout.to')} ${svcSym}${svcMax}`
+          }
         </div>
 
         {/* titeZMe Cut */}
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 border-l-4 border-l-brand-yellow">
           <div className="flex-1">
             <div className="font-black flex items-center gap-1.5">⚡ titeZMe Cut</div>
-            <div className="text-[11px] text-brand-text-secondary mt-1 max-w-[220px]">The barber chooses the cut for you based on your vibe and your budget.</div>
+            <div className="text-[11px] text-brand-text-secondary mt-1 max-w-[220px]">{t('barberLayout.titzCutDesc')}</div>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl overflow-hidden focus-within:border-brand-yellow transition-colors">
               <input value={titzData.duration} onChange={e => setTitzData(p => ({ ...p, duration: e.target.value }))} className="w-14 bg-transparent px-2 py-2 text-white text-xs outline-none text-center border-r-[1.5px] border-[#2a2a2a]" type="number" />
-              <span className="text-[10px] font-extrabold text-[#888] self-center px-1.5">MIN</span>
+              <span className="text-[10px] font-extrabold text-[#888] self-center px-1.5">{t('barberLayout.minLabel')}</span>
             </div>
             <div className="flex bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl overflow-hidden focus-within:border-brand-yellow transition-colors">
               <span className="text-[#888] self-center pl-2 text-xs font-extrabold">{svcSym}</span>
               <input value={titzData.price} onChange={e => setTitzData(p => ({ ...p, price: e.target.value }))} className="w-12 bg-transparent px-1 py-2 text-white text-xs outline-none text-center" type="number" />
             </div>
-            <button onClick={saveTitzCut} disabled={isSavingTitz} className="text-[10px] font-black bg-brand-yellow text-[#0a0a0a] px-3 py-2 rounded-xl ml-1 disabled:opacity-50 hover:opacity-90">{isSavingTitz ? '...' : 'Save'}</button>
+            <button onClick={saveTitzCut} disabled={isSavingTitz} className="text-[10px] font-black bg-brand-yellow text-[#0a0a0a] px-3 py-2 rounded-xl ml-1 disabled:opacity-50 hover:opacity-90">{isSavingTitz ? '...' : t('buttons.save')}</button>
             <span className="text-[#555] text-sm ml-2">🔒</span>
           </div>
         </div>
@@ -163,14 +168,14 @@ export default function ServicesPage() {
           editingServiceId === svc.id ? (
             <div key={svc.id} className="bg-brand-surface border border-brand-border rounded-2xl p-4">
               <div className="grid grid-cols-[2fr_1fr_1fr] gap-2 mb-2">
-                <input value={editSvcData.name} onChange={e => setEditSvcData(p => ({ ...p, name: e.target.value }))} className="bg-[#141414] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-brand-yellow" placeholder="Name" />
-                <input value={editSvcData.duration} onChange={e => setEditSvcData(p => ({ ...p, duration: e.target.value }))} className="bg-[#141414] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-brand-yellow" type="number" placeholder="Mins" />
-                <input value={editSvcData.price} onChange={e => setEditSvcData(p => ({ ...p, price: e.target.value }))} className="bg-[#141414] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-brand-yellow" type="number" placeholder="Price" />
+                <input value={editSvcData.name} onChange={e => setEditSvcData(p => ({ ...p, name: e.target.value }))} className="bg-[#141414] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-brand-yellow" placeholder={t('barberLayout.serviceNameInputPlaceholder')} />
+                <input value={editSvcData.duration} onChange={e => setEditSvcData(p => ({ ...p, duration: e.target.value }))} className="bg-[#141414] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-brand-yellow" type="number" placeholder={t('forms.minPlaceholder')} />
+                <input value={editSvcData.price} onChange={e => setEditSvcData(p => ({ ...p, price: e.target.value }))} className="bg-[#141414] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-brand-yellow" type="number" placeholder={t('forms.pricePlaceholder')} />
               </div>
-              <textarea value={editSvcData.description} onChange={e => setEditSvcData(p => ({ ...p, description: e.target.value }))} maxLength={150} rows={2} placeholder="Description (optional)" className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-brand-yellow resize-none mb-3" />
+              <textarea value={editSvcData.description} onChange={e => setEditSvcData(p => ({ ...p, description: e.target.value }))} maxLength={150} rows={2} placeholder={t('barberLayout.descOptional')} className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-brand-yellow resize-none mb-3" />
               <div className="flex gap-2 justify-end">
-                <button onClick={() => setEditingServiceId(null)} className="text-[#555] hover:text-white text-xs font-bold px-3 py-1.5">Cancel</button>
-                <button onClick={() => saveEditService(svc.id)} disabled={savingService} className="bg-brand-yellow text-[#0a0a0a] text-xs font-black px-4 py-1.5 rounded-lg hover:opacity-90 disabled:opacity-60">{savingService ? 'Saving...' : 'Save'}</button>
+                <button onClick={() => setEditingServiceId(null)} className="text-[#555] hover:text-white text-xs font-bold px-3 py-1.5">{t('buttons.cancel')}</button>
+                <button onClick={() => saveEditService(svc.id)} disabled={savingService} className="bg-brand-yellow text-[#0a0a0a] text-xs font-black px-4 py-1.5 rounded-lg hover:opacity-90 disabled:opacity-60">{savingService ? t('settings.saving') : t('buttons.save')}</button>
               </div>
             </div>
           ) : (
@@ -187,9 +192,9 @@ export default function ServicesPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <div className="font-bold text-sm truncate">{svc.name}</div>
-                  {svc.isActive === false && <span className="text-[9px] font-extrabold text-[#555] bg-[#1a1a1a] px-1.5 py-0.5 rounded">Hidden</span>}
+                  {svc.isActive === false && <span className="text-[9px] font-extrabold text-[#555] bg-[#1a1a1a] px-1.5 py-0.5 rounded">{t('barberLayout.hidden')}</span>}
                 </div>
-                <div className="text-xs text-brand-text-secondary">{svc.duration} mins</div>
+                <div className="text-xs text-brand-text-secondary">{svc.duration} {t('barberLayout.minsUnit')}</div>
                 {svc.description && <div className="text-[11px] text-[#555] mt-0.5 truncate">{svc.description}</div>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -203,25 +208,25 @@ export default function ServicesPage() {
       </div>
 
       <div id="add-service-form">
-        <h3 className="font-extrabold text-sm mb-3">Add New Service</h3>
+        <h3 className="font-extrabold text-sm mb-3">{t('buttons.addNewService')}</h3>
         <div className="grid grid-cols-[2fr_1fr_1fr] gap-2.5 items-end mb-2">
-          <div><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">NAME</label><input value={newServiceName} onChange={e => setNewServiceName(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" placeholder="E.g. Buzz Cut" /></div>
-          <div><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">MINS</label><input value={newServiceDuration} onChange={e => setNewServiceDuration(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" type="number" placeholder="30" /></div>
-          <div><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">PRICE {svcSym}</label><input value={newServicePrice} onChange={e => setNewServicePrice(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" type="number" placeholder="0" /></div>
+          <div><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">{t('barberLayout.nameLabel')}</label><input value={newServiceName} onChange={e => setNewServiceName(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" placeholder="E.g. Buzz Cut" /></div>
+          <div><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">{t('onboarding.mins')}</label><input value={newServiceDuration} onChange={e => setNewServiceDuration(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" type="number" placeholder="30" /></div>
+          <div><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">{t('barberLayout.priceLabel')} {svcSym}</label><input value={newServicePrice} onChange={e => setNewServicePrice(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" type="number" placeholder="0" /></div>
         </div>
-        <div className="mb-2"><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">DESCRIPTION (optional)</label><textarea value={newServiceDescription} onChange={e => setNewServiceDescription(e.target.value)} maxLength={150} rows={2} placeholder="What does this service include?" className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow resize-none" /><div className="text-[10px] text-[#444] text-right mt-0.5">{newServiceDescription.length}/150</div></div>
-        <div className="flex items-center gap-2 mb-3"><label className="text-[10px] font-extrabold text-brand-text-secondary uppercase">Currency:</label><select value={serviceCurrency} onChange={e => updateServiceCurrency(e.target.value)} className="bg-[#141414] border border-[#2a2a2a] text-white text-xs rounded-lg px-3 py-1.5 outline-none focus:border-brand-yellow transition-colors">{CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}</select></div>
-        <button onClick={addService} disabled={addingService} className="bg-brand-yellow text-[#0a0a0a] w-full mt-2 px-7 py-3 rounded-xl font-black text-sm transition-all hover:opacity-90 disabled:opacity-60">{addingService ? 'Adding...' : 'Add Service'}</button>
-        <div className="mt-4"><div className="text-[10px] text-[#555] font-bold mb-2">Quick add:</div><div className="flex flex-wrap gap-2">{QUICK_CHIPS.map(chip => { const exists = (services as any[]).some((s: any) => s.name.toLowerCase() === chip.name.toLowerCase()); return (<button key={chip.name} disabled={exists} onClick={() => { setNewServiceName(chip.name); setNewServiceDuration(String(chip.duration)); setNewServicePrice(''); document.getElementById('add-service-form')?.scrollIntoView({ behavior: 'smooth' }); }} className={`inline-flex items-center gap-1 text-[11px] font-bold rounded-full px-3 py-1 border transition-colors ${exists ? 'border-[#1e1e1e] text-[#444] bg-[#111] cursor-not-allowed' : 'bg-[#141414] border-dashed border-[#2a2a2a] text-[#666] hover:border-brand-yellow hover:text-brand-yellow cursor-pointer'}`}>{exists ? '✓' : '+'} {chip.name}</button>); })}</div></div>
+        <div className="mb-2"><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">{t('barberLayout.descOptional')}</label><textarea value={newServiceDescription} onChange={e => setNewServiceDescription(e.target.value)} maxLength={150} rows={2} placeholder={t('barberLayout.serviceDescPlaceholder')} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow resize-none" /><div className="text-[10px] text-[#444] text-right mt-0.5">{newServiceDescription.length}/150</div></div>
+        <div className="flex items-center gap-2 mb-3"><label className="text-[10px] font-extrabold text-brand-text-secondary uppercase">{t('barberLayout.currencyLabel')}</label><select value={serviceCurrency} onChange={e => updateServiceCurrency(e.target.value)} className="bg-[#141414] border border-[#2a2a2a] text-white text-xs rounded-lg px-3 py-1.5 outline-none focus:border-brand-yellow transition-colors">{CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}</select></div>
+        <button onClick={addService} disabled={addingService} className="bg-brand-yellow text-[#0a0a0a] w-full mt-2 px-7 py-3 rounded-xl font-black text-sm transition-all hover:opacity-90 disabled:opacity-60">{addingService ? t('barberLayout.adding') : t('buttons.addService')}</button>
+        <div className="mt-4"><div className="text-[10px] text-[#555] font-bold mb-2">{t('barberLayout.quickAdd')}</div><div className="flex flex-wrap gap-2">{QUICK_CHIPS.map(chip => { const exists = (services as any[]).some((s: any) => s.name.toLowerCase() === chip.name.toLowerCase()); return (<button key={chip.name} disabled={exists} onClick={() => { setNewServiceName(chip.name); setNewServiceDuration(String(chip.duration)); setNewServicePrice(''); document.getElementById('add-service-form')?.scrollIntoView({ behavior: 'smooth' }); }} className={`inline-flex items-center gap-1 text-[11px] font-bold rounded-full px-3 py-1 border transition-colors ${exists ? 'border-[#1e1e1e] text-[#444] bg-[#111] cursor-not-allowed' : 'bg-[#141414] border-dashed border-[#2a2a2a] text-[#666] hover:border-brand-yellow hover:text-brand-yellow cursor-pointer'}`}>{exists ? '✓' : '+'} {chip.name}</button>); })}</div></div>
       </div>
 
       {toastMessage && <div className="fixed bottom-6 right-6 bg-[#1a0808] border border-brand-yellow/30 text-brand-yellow px-6 py-3 rounded-full font-bold text-sm shadow-xl animate-fadeUp z-50">{toastMessage}</div>}
       <ConfirmDialog
         isOpen={!!confirmDelete}
-        title="Delete service?"
-        message="Clients won't be able to book this service anymore. This cannot be undone."
-        confirmText="Delete"
-        cancelText="Keep"
+        title={t('barberLayout.deleteServiceTitle')}
+        message={t('barberLayout.deleteServiceMsg')}
+        confirmText={t('barberLayout.deleteConfirm')}
+        cancelText={t('buttons.keep')}
         confirmColor="#EF4444"
         onCancel={() => setConfirmDelete(null)}
         onConfirm={async () => {
