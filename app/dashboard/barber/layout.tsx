@@ -63,12 +63,11 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
     }));
 
   const profileItems = [
-    { label: t('barberLayout.profileItemPhoto'), path: '/dashboard/barber/settings', done: !!(profile?.profilePhotoUrl || appUser?.photoUrl), pct: 10 },
+    { label: t('barberLayout.profileItemPhoto'), path: '/dashboard/barber/settings', done: !!(profile?.profilePhotoUrl || appUser?.photoUrl), pct: 15 },
     { label: t('barberLayout.profileItemBio'), path: '/dashboard/barber/settings', done: (profile?.bio?.length || 0) > 20, pct: 10 },
-    { label: t('barberLayout.profileItemServices'), path: '/dashboard/barber/services', done: (services as any[]).length > 0, pct: 10 },
+    { label: t('barberLayout.profileItemServices'), path: '/dashboard/barber/services', done: (services as any[]).length > 0, pct: 15 },
     { label: t('barberLayout.profileItemTitzCut'), path: '/dashboard/barber/services', done: !!(profile?.titeZMeCut?.price), pct: 10 },
     { label: t('barberLayout.profileItemAvailability'), path: '/dashboard/barber/availability', done: hasAvailability, pct: 15 },
-    { label: t('barberLayout.profileItemPortfolio'), path: '/dashboard/barber/portfolio', done: (profile?.photos?.length || 0) > 0, pct: 10 },
     { label: t('barberLayout.profileItemLanguages'), path: '/dashboard/barber/settings', done: (profile?.languages?.length || 0) > 0, pct: 10 },
     { label: t('barberLayout.profileItemSpecialties'), path: '/dashboard/barber/settings', done: (profile?.specialties?.length || 0) > 0, pct: 10 },
     { label: t('barberLayout.profileItemVibe'), path: '/dashboard/barber/settings', done: (profile?.vibes?.length || 0) > 0, pct: 10 },
