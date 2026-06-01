@@ -336,23 +336,32 @@ export function TopNav() {
                 </a>
               </>
             ) : (
-              <a
-                href={appUser?.role === 'barber' ? '/dashboard/barber' : '/dashboard/client'}
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  background: '#F5C518',
-                  color: '#0a0a0a',
-                  borderRadius: '99px',
-                  padding: '14px',
-                  fontSize: '15px',
-                  fontWeight: 900,
-                  textDecoration: 'none',
-                  textAlign: 'center',
-                  fontFamily: 'Nunito, sans-serif'
-                }}
-              >
-                My dashboard →
-              </a>
+              <>
+                <a
+                  href={appUser?.role === 'barber' ? '/dashboard/barber' : '/dashboard/client'}
+                  onClick={() => setMenuOpen(false)}
+                  style={{
+                    background: '#F5C518',
+                    color: '#0a0a0a',
+                    borderRadius: '99px',
+                    padding: '14px',
+                    fontSize: '15px',
+                    fontWeight: 900,
+                    textDecoration: 'none',
+                    textAlign: 'center',
+                    fontFamily: 'Nunito, sans-serif'
+                  }}
+                >
+                  My dashboard →
+                </a>
+                <button
+                  onClick={() => { handleLogout(); setMenuOpen(false); }}
+                  className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-red-400 border border-red-400/20 hover:bg-red-400/10 transition-colors"
+                  style={{ fontFamily: 'Nunito, sans-serif' }}
+                >
+                  Log out
+                </button>
+              </>
             )}
           </div>
 

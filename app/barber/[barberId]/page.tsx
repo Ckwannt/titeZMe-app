@@ -37,7 +37,7 @@ export async function generateMetadata({
 
     const p = profileDoc.data() || {};
     const u = userDoc.data() || {};
-    const name = `${(u as any).firstName || ''} ${(u as any).lastName || ''}`.trim() || 'Barber';
+    const name = `${(p as any).firstName || (u as any).firstName || ''} ${(p as any).lastName || (u as any).lastName || ''}`.trim() || 'Barber';
     const city = (u as any).city || '';
     const spec = ((p as any).specialties || [])[0] || 'Barber';
 
@@ -75,6 +75,13 @@ export default async function BarberProfilePage({
 
     const profileData = profileDoc.data() || {};
     const userData = userDoc.exists ? userDoc.data() || {} : {};
+    const pData = profileData as any;
+    const uData = userData as any;
+    const mergedUserProfile = {
+      ...userData,
+      firstName: pData.firstName || uData.firstName,
+      lastName: pData.lastName || uData.lastName,
+    };
 
     // Fetch shop if barber belongs to one
     let shopData: any = null;
@@ -120,7 +127,7 @@ export default async function BarberProfilePage({
 
     const initialData: BarberProfileInitialData = {
       profile: { id: barberId, ...profileData } as any,
-      userProfile: userData as any,
+      userProfile: mergedUserProfile as any,
       shop: shopData,
       services: services as any[],
       reviews: reviews as any[],
