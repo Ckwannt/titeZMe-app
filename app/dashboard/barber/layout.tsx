@@ -214,7 +214,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
           )}
         </div>
 
-        <div className="hidden md:block mt-auto pt-6 border-t border-brand-border">
+        <div className="mt-auto pt-6 border-t border-brand-border">
           <div className="flex items-center justify-between px-2 mb-4">
             <span className="text-xs font-bold text-brand-text-secondary">{t('barberLayout.acceptBookings')}</span>
             <label className="relative w-11 h-6 shrink-0 group cursor-pointer">
