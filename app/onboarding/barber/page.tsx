@@ -216,6 +216,10 @@ export default function BarberOnboarding() {
             ...profileData,
             approvalStatus: existingApprovalStatus,
             isLive: existingIsLive,
+            firstName: firstName.trim() || appUser?.firstName || '',
+            lastName: lastName.trim() || appUser?.lastName || '',
+            photoUrl: appUser?.photoUrl || '',
+            createdAt: appUser?.createdAt || Date.now(),
           },
           { merge: true }
         );

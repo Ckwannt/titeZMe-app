@@ -167,13 +167,10 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   const { data, isLoading } = useQuery({
     queryKey: ['barberPublicProfile', barberId],
     queryFn: async () => {
-      const [pSnap, uSnap] = await Promise.all([
-        getDoc(doc(db, 'barberProfiles', barberId)),
-        getDoc(doc(db, 'users', barberId)),
-      ]);
+      const pSnap = await getDoc(doc(db, 'barberProfiles', barberId));
       if (!pSnap.exists()) return null;
       const profile = { id: pSnap.id, ...pSnap.data() } as BarberDoc;
-      const userProfile = (uSnap.exists() ? uSnap.data() : {}) as UserDoc;
+      const userProfile = (pSnap.data() ?? {}) as UserDoc;
       let shop: ShopDoc | null = null;
       if (profile.shopId) {
         const shopSnap = await getDoc(doc(db, 'barbershops', profile.shopId));
