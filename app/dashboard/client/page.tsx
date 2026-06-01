@@ -230,9 +230,9 @@ export default function ClientDashboard() {
                ) : (
                  pastBookings.map(b => (
                    <div key={b.id} className="bg-transparent border border-[#2a2a2a] rounded-2xl p-4 flex justify-between items-center">
-                      <div>
+                      <div className="min-w-0">
                         <div className="text-xs font-bold text-brand-text-secondary mb-0.5">{b.date} • {b.startTime}</div>
-                        <div className="text-sm font-extrabold text-white">{b.barberName} - {b.serviceName}</div>
+                        <div className="text-sm font-extrabold text-white truncate">{b.barberName} - {b.serviceName}</div>
                       </div>
                       <div className="text-right">
                         <div className="font-extrabold text-white text-sm mb-0.5">€{b.price}</div>

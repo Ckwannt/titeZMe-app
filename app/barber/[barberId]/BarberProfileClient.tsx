@@ -506,7 +506,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                   <h3 className="font-extrabold text-[11px] tracking-widest text-[#666] uppercase">{t('profile.theirWork')}</h3>
                   <span className="text-xs font-bold text-[#555]">See all {profile.photos!.length} →</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {profile.photos!.slice(0, 8).map((photo: string, i: number) => (
                     <button key={i} onClick={() => setLightboxPhoto(photo)}
                       className="aspect-square rounded-[10px] overflow-hidden relative border border-[#2a2a2a] hover:border-brand-yellow transition-colors"

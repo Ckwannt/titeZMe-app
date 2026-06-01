@@ -260,12 +260,15 @@ export function TopNav() {
           style={{
             position: 'fixed',
             inset: 0,
-            top: '105px', // below both nav rows (approx 60px row1 + 45px ticker)
+            top: 0,
             background: '#0A0A0A',
             zIndex: 9998,
             display: 'flex',
             flexDirection: 'column',
-            padding: '24px',
+            paddingTop: '105px',
+            paddingLeft: '24px',
+            paddingRight: '24px',
+            paddingBottom: 'env(safe-area-inset-bottom, 24px)',
             overflowY: 'auto'
           }}
         >
@@ -356,8 +359,19 @@ export function TopNav() {
                 </a>
                 <button
                   onClick={() => { handleLogout(); setMenuOpen(false); }}
-                  className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-red-400 border border-red-400/20 hover:bg-red-400/10 transition-colors"
-                  style={{ fontFamily: 'Nunito, sans-serif' }}
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: 900,
+                    textAlign: 'center',
+                    padding: '14px',
+                    borderRadius: '12px',
+                    width: '100%',
+                    color: '#ef4444',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    fontFamily: 'Nunito, sans-serif',
+                  }}
                 >
                   Log out
                 </button>

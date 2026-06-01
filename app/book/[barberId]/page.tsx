@@ -471,7 +471,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
                        <div>
                          <div className={`font-black flex items-center gap-1.5 ${isSelected ? 'text-brand-yellow' : 'text-white'}`}>{svc.isTitz && <span>⚡</span>} {svc.name}</div>
                          <div className="text-xs text-brand-text-secondary font-bold">{svc.duration} mins</div>
-                         {svc.description && <div className="text-[11px] text-[#888] mt-1 pr-2 max-w-[240px] leading-tight">{svc.description}</div>}
+                         {svc.description && <div className="text-[11px] text-[#888] mt-1 pr-2 leading-tight">{svc.description}</div>}
                        </div>
                     </div>
                     <div className="font-black text-lg self-center">€{svc.price}</div>

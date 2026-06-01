@@ -71,7 +71,7 @@ export default function LandingPageClient({
   const smallShops = featuredShops.slice(1, 3) as any[];
 
   return (
-    <div className="bg-[#0A0A0A] text-white pt-24 min-h-screen font-sans">
+    <div className="bg-[#0A0A0A] text-white pt-16 md:pt-24 min-h-screen font-sans">
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
       <section className="max-w-[1200px] mx-auto px-6 pt-8 pb-32">

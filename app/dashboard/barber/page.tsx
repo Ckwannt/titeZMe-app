@@ -450,7 +450,7 @@ export default function BarberDashboardPage() {
           <h1 className="text-2xl font-black">Good morning, {appUser?.firstName} ✂️</h1>
           <p className="text-brand-text-secondary text-sm mt-1">{new Date().toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'})} · {motivatingText}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <a
             href={`/barber/${user?.uid}`}
             target="_blank" rel="noopener noreferrer"
@@ -709,7 +709,7 @@ export default function BarberDashboardPage() {
             {todaySchedule.map((b, i) => {
               const dotColor = b.status === 'pending' ? '#F5C518' : b.status === 'confirmed' ? '#22C55E' : '#555';
               return (
-                <div key={b.id} className={`flex items-center gap-4 px-5 py-3.5 ${i < todaySchedule.length - 1 ? 'border-b border-[#141414]' : ''}`}>
+                <div key={b.id} className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 px-5 py-3.5 ${i < todaySchedule.length - 1 ? 'border-b border-[#141414]' : ''}`}>
                   <div className="w-12 shrink-0 text-right">
                     <div className="text-[12px] font-bold text-white">{b.startTime}</div>
                     {b.endTime && <div className="text-[11px] text-[#555]">{b.endTime}</div>}
@@ -719,7 +719,7 @@ export default function BarberDashboardPage() {
                     <div className="font-extrabold text-[14px] text-white truncate">{b.clientName || 'Client'}</div>
                     <div className="text-[12px] text-[#666] truncate">{b.serviceNames?.join(', ') || b.serviceName || 'Service'}</div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
                     {b.status === 'pending' && <span className="text-[10px] font-extrabold text-brand-yellow bg-[#1a1500] border border-brand-yellow/30 px-2 py-0.5 rounded-full">Pending</span>}
                     {b.status === 'confirmed' && <span className="text-[10px] font-extrabold text-[#22C55E] bg-[#0f2010] border border-[#22C55E]/30 px-2 py-0.5 rounded-full">Confirmed</span>}
                     {b.status === 'completed' && <span className="text-[10px] font-extrabold text-[#555] bg-[#141414] border border-[#222] px-2 py-0.5 rounded-full">{t('barberDash.doneStatus')}</span>}
