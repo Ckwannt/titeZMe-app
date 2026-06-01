@@ -1,7 +1,11 @@
+'use client';
+
 import Link from 'next/link';
 import { Wordmark } from './Wordmark';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export function Footer() {
+  const { t } = useLang();
   return (
     <footer className="bg-[#050505] py-12 px-6">
        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6 pb-12 border-b border-[#1E1E1E] mb-8">
@@ -9,18 +13,18 @@ export function Footer() {
              <div className="mb-2">
                <Wordmark height={20} />
              </div>
-             <div className="text-xs font-bold text-[#888580]">Keeping you sharp.</div>
+             <div className="text-xs font-bold text-[#888580]">{t('footer.tagline')}</div>
           </div>
-          
+
           <div className="flex gap-6 sm:gap-8 flex-wrap justify-center">
-             <Link href="/about" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">About</Link>
-             <Link href="/for-barbers" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">For Barbers</Link>
-             <Link href="/for-shops" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">For Shops</Link>
-             <Link href="/cities" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Cities</Link>
-             <Link href="/privacy" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Privacy</Link>
-             <Link href="/terms" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Terms</Link>
-             <Link href="/contact" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Contact</Link>
-             <Link href="/cookies" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">Cookie settings</Link>
+             <Link href="/about" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">{t('footer.about')}</Link>
+             <Link href="/for-barbers" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">{t('footer.forBarbers')}</Link>
+             <Link href="/for-shops" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">{t('footer.forShops')}</Link>
+             <Link href="/cities" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">{t('footer.cities')}</Link>
+             <Link href="/privacy" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">{t('footer.privacy')}</Link>
+             <Link href="/terms" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">{t('footer.terms')}</Link>
+             <Link href="/contact" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">{t('footer.contact')}</Link>
+             <Link href="/cookies" className="text-xs font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors">{t('footer.cookieSettings')}</Link>
           </div>
           
           <div className="flex gap-4">
@@ -43,10 +47,10 @@ export function Footer() {
            <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
            <line x1="12" y1="18" x2="12.01" y2="18" />
          </svg>
-         iOS &amp; Android app coming soon
+         {t('footer.appComingSoon')}
        </div>
        <div className="text-center text-[10px] font-bold text-[#888580]">
-          © 2026 titeZMe. All rights reserved.
+          {t('footer.copyright')}
        </div>
     </footer>
   );
