@@ -45,7 +45,7 @@ service cloud.firestore {
       return data.keys().hasAll(['uid', 'email', 'role', 'firstName', 'lastName', 'createdAt', 'isOnboarded'])
         && data.uid is string && data.uid.size() <= 128
         && data.email is string && data.email.size() <= 256
-        && data.role in ['client', 'barber', 'shop_owner', 'admin']
+        && data.role in ['client', 'barber']
         && data.firstName is string && data.firstName.size() <= 100
         && data.lastName is string && data.lastName.size() <= 100
         && data.createdAt is number
@@ -174,7 +174,8 @@ service cloud.firestore {
           )
           ||
           (
-            incoming().diff(existing())
+            request.auth.uid == userId
+            && incoming().diff(existing())
               .affectedKeys()
               .hasOnly(['unreadCount'])
             && incoming().unreadCount is number
@@ -543,7 +544,9 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && isValidNotification(incoming());
+      allow create: if isSignedIn()
+        && isValidNotification(incoming())
+        && incoming().userId == request.auth.uid;
 
       allow update: if isSignedIn()
         && request.auth.uid == existing().userId
