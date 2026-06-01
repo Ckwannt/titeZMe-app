@@ -29,7 +29,20 @@ const securityHeaders = [
   {
     key: 'Strict-Transport-Security',
     value: 'max-age=63072000; includeSubDomains; preload'
-  }
+  },
+  {
+    key: 'Content-Security-Policy',
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
+      "font-src 'self' fonts.gstatic.com",
+      "img-src 'self' data: blob: firebasestorage.googleapis.com storage.googleapis.com lh3.googleusercontent.com *.firebasestorage.app picsum.photos",
+      "connect-src 'self' *.firebaseapp.com *.googleapis.com *.firebasestorage.app *.ingest.sentry.io va.vercel-insights.com nominatim.openstreetmap.org *.algolia.net *.algolianet.com *.algolia.io wss://*.firebaseio.com",
+      "frame-src 'self' *.firebaseapp.com",
+      "worker-src 'self' blob:",
+    ].join('; '),
+  },
 ];
 
 const nextConfig: NextConfig = {
