@@ -328,9 +328,9 @@ export default function BarberDashboardPage() {
   const weeklyTotal = weeklyChartData.reduce((s, d) => s + d.earnings, 0);
 
   const profileItems = [
-    { label: '📸 Add a profile photo', tab: 'Settings', done: !!(profile?.profilePhotoUrl || appUser?.photoUrl), pct: 10 },
+    { label: '📸 Add a profile photo', tab: 'Settings', done: !!(profile?.profilePhotoUrl || appUser?.photoUrl), pct: 15 },
     { label: '📝 Fill your bio', tab: 'Settings', done: (profile?.bio?.length || 0) > 20, pct: 10 },
-    { label: '✂️ Add your services', tab: 'Services', done: (services as any[]).length > 0, pct: 10 },
+    { label: '✂️ Add your services', tab: 'Services', done: (services as any[]).length > 0, pct: 15 },
     { label: '⚡ Set titeZMe Cut price', tab: 'Services', done: !!(profile?.titeZMeCut?.price), pct: 10 },
     { label: '⏰ Set your availability', tab: 'Availability', done: hasAvailability, pct: 15 },
     { label: '🗣 Add your languages', tab: 'Settings', done: (profile?.languages?.length || 0) > 0, pct: 10 },

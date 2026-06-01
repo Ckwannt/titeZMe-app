@@ -308,14 +308,9 @@ export default function ClientSettings() {
                   ref={fileInputRef}
                   onChange={handlePhotoUpload}
                 />
-                <button 
-                  type="button"
-                  disabled={isUploading}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="bg-[#1a1a1a] text-white px-4 py-2 rounded-xl text-sm font-bold border border-[#2a2a2a] hover:border-brand-yellow transition-colors"
-                >
-                  {isUploading ? t('settings.uploading') : t('buttons.uploadNewPhoto')}
-                </button>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-[#1a1a1a] border border-[#2a2a2a] text-[#555] cursor-not-allowed select-none">
+                  {t('status.comingSoon')}
+                </div>
                 <div className="text-xs text-[#888] mt-2 font-bold">{t('settings.fileTypeHint')}</div>
               </div>
             </div>
