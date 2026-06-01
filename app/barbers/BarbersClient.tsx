@@ -127,18 +127,18 @@ function Pagination({ page, total, onChange }: {
         ← Prev
       </button>
       {start > 1 && <>
-        <button onClick={() => onChange(1)} className="w-8 h-8 rounded-lg text-sm font-bold text-[#888] hover:text-white">1</button>
+        <button onClick={() => onChange(1)} className="w-11 h-11 rounded-lg text-sm font-bold text-[#888] hover:text-white">1</button>
         {start > 2 && <span className="text-[#555]">…</span>}
       </>}
       {pages.map(p => (
         <button key={p} onClick={() => onChange(p)}
-          className={`w-8 h-8 rounded-lg text-sm font-bold transition-colors ${p === page ? 'bg-brand-yellow text-[#0a0a0a]' : 'text-[#888] hover:text-white'}`}>
+          className={`w-11 h-11 rounded-lg text-sm font-bold transition-colors ${p === page ? 'bg-brand-yellow text-[#0a0a0a]' : 'text-[#888] hover:text-white'}`}>
           {p}
         </button>
       ))}
       {end < totalPages && <>
         {end < totalPages - 1 && <span className="text-[#555]">…</span>}
-        <button onClick={() => onChange(totalPages)} className="w-8 h-8 rounded-lg text-sm font-bold text-[#888] hover:text-white">{totalPages}</button>
+        <button onClick={() => onChange(totalPages)} className="w-11 h-11 rounded-lg text-sm font-bold text-[#888] hover:text-white">{totalPages}</button>
       </>}
       <button onClick={() => onChange(page + 1)} disabled={page === totalPages}
         className="px-3 py-2 text-sm font-bold text-[#888] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
