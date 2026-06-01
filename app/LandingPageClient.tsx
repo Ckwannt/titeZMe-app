@@ -446,20 +446,20 @@ export default function LandingPageClient({
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
-              <div className="text-5xl font-black text-brand-yellow mb-2">0%</div>
+            <div className="bg-[#1a1a1a] p-4 md:p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
+              <div className="text-3xl md:text-5xl font-black text-brand-yellow mb-2">0%</div>
               <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">commission</div>
             </div>
-            <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
-              <div className="text-5xl font-black text-white mb-2">10 min</div>
+            <div className="bg-[#1a1a1a] p-4 md:p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
+              <div className="text-3xl md:text-5xl font-black text-white mb-2">10 min</div>
               <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">to set up your profile</div>
             </div>
-            <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px] border border-brand-yellow/20">
-              <div className="text-5xl font-black text-white mb-2">400+</div>
+            <div className="bg-[#1a1a1a] p-4 md:p-8 rounded-3xl flex flex-col justify-center min-h-[180px] border border-brand-yellow/20">
+              <div className="text-3xl md:text-5xl font-black text-white mb-2">400+</div>
               <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">barbers already joined</div>
             </div>
-            <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
-              <div className="text-3xl font-black text-brand-orange mb-2">Beta = Free</div>
+            <div className="bg-[#1a1a1a] p-4 md:p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
+              <div className="text-xl md:text-3xl font-black text-brand-orange mb-2">Beta = Free</div>
               <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Join now, pay nothing during beta</div>
             </div>
           </div>
@@ -497,20 +497,20 @@ export default function LandingPageClient({
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
-              <div className="text-5xl font-black text-brand-yellow mb-2">Free</div>
+            <div className="bg-[#1a1a1a] p-4 md:p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
+              <div className="text-3xl md:text-5xl font-black text-brand-yellow mb-2">Free</div>
               <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">during beta</div>
             </div>
-            <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
-              <div className="text-5xl font-black text-white mb-2">4</div>
+            <div className="bg-[#1a1a1a] p-4 md:p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
+              <div className="text-3xl md:text-5xl font-black text-white mb-2">4</div>
               <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">steps to set up</div>
             </div>
-            <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px] border border-brand-yellow/20">
-              <div className="text-5xl font-black text-white mb-2">100%</div>
+            <div className="bg-[#1a1a1a] p-4 md:p-8 rounded-3xl flex flex-col justify-center min-h-[180px] border border-brand-yellow/20">
+              <div className="text-3xl md:text-5xl font-black text-white mb-2">100%</div>
               <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">data visibility</div>
             </div>
-            <div className="bg-[#1a1a1a] p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
-              <div className="text-3xl font-black text-brand-orange mb-2">24/7</div>
+            <div className="bg-[#1a1a1a] p-4 md:p-8 rounded-3xl flex flex-col justify-center min-h-[180px]">
+              <div className="text-xl md:text-3xl font-black text-brand-orange mb-2">24/7</div>
               <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">booking management</div>
             </div>
           </div>

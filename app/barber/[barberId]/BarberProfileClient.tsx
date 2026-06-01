@@ -372,7 +372,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
         </div>
       )}
 
-      <div className="bg-[#0a0a0a] min-h-screen text-white">
+      <div className="bg-[#0a0a0a] min-h-screen text-white pb-24 lg:pb-0">
         <div className="max-w-[1200px] mx-auto px-6 pt-6">
           <div className="text-xs font-bold text-[#444]">
             <Link href="/" className="hover:text-white transition-colors">{t('nav.home')}</Link>
@@ -756,6 +756,17 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
           </div>
 
         </div>
+      </div>
+
+      {/* Mobile sticky booking bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-[#0A0A0A] border-t border-[#1A1A1A]">
+        <button
+          onClick={() => handleBooking()}
+          disabled={!profile?.isLive}
+          className="w-full py-4 rounded-2xl text-sm font-black tracking-wide bg-[#F5C518] text-black hover:bg-[#e6b800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {t('buttons.bookNow')}
+        </button>
       </div>
     </>
   );
