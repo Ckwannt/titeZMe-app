@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Nunito } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from "@vercel/analytics/next";
 import { CookieBanner } from '@/components/CookieBanner';
 import Providers from '@/lib/query-provider';
 import { AuthProvider } from '@/lib/auth-context';
