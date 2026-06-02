@@ -26,4 +26,4 @@ function getAdminApp(): App {
 }
 
 const adminApp = getAdminApp();
-export const adminDb = getFirestore(adminApp);
+export const adminDb = getFirestore(adminApp, 'ai-studio-a8aba99a-6d28-4780-b075-b9829cce70f1');
