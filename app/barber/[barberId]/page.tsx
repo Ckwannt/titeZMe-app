@@ -4,7 +4,8 @@ import { adminDb } from '@/lib/firebase-admin';
 import BarberProfileClient, { type BarberProfileInitialData } from './BarberProfileClient';
 import { getScheduleDocId } from '@/lib/schedule-utils';
 
-export const revalidate = 60;
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
 
 /** Pre-build the top 20 rated barbers at deploy time for instant load. */
 export async function generateStaticParams() {
