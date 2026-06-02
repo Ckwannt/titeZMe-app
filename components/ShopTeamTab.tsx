@@ -40,9 +40,9 @@ export function ShopTeamTab() {
     const unsub = onSnapshot(q, async (snap) => {
       const invitesData = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
       const invitesWithNames = await Promise.all(invitesData.map(async (inv: any) => {
-        const bSnap = await getDocs(query(collection(db, 'users'), where('uid', '==', inv.barberId)));
-        if (!bSnap.empty) {
-          const u = bSnap.docs[0].data();
+        const bSnap = await getDoc(doc(db, 'users', inv.barberId));
+        if (bSnap.exists()) {
+          const u = bSnap.data();
           return { ...inv, barberName: `${u.firstName} ${u.lastName}` };
         }
         return inv;
@@ -118,27 +118,33 @@ export function ShopTeamTab() {
     setErrorMsg('');
     setFoundBarber(null);
 
-    const q = query(collection(db, 'barberProfiles'), where('barberCode', '==', normalised));
-    const snap = await getDocs(q);
+    try {
+      const q = query(collection(db, 'barberProfiles'), where('barberCode', '==', normalised));
+      const snap = await getDocs(q);
 
-    if (snap.empty) {
-      setErrorMsg(t('errors.noBarberFound'));
+      if (snap.empty) {
+        setErrorMsg(t('errors.noBarberFound'));
+        return;
+      }
+
+      const barberData = snap.docs[0].data();
+      const barberId = snap.docs[0].id;
+      const targetUid = barberData.userId || barberId;
+      const bUserSnap = await getDoc(doc(db, 'users', targetUid));
+      const bUserData = bUserSnap.exists() ? bUserSnap.data() : {};
+
+      setFoundBarber({
+        ...barberData,
+        id: barberId,
+        name: `${bUserData.firstName || ''} ${bUserData.lastName || ''}`.trim() || 'Unknown Barber',
+        userId: barberData.userId || barberId,
+      });
+    } catch (err) {
+      console.error('handleSearch error:', err);
+      setErrorMsg('Something went wrong. Please try again.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const barberData = snap.docs[0].data();
-    const barberId = snap.docs[0].id;
-    const bUserSnap = await getDocs(query(collection(db, 'users'), where('uid', '==', (barberData.userId || barberId))));
-    const bUserData = !bUserSnap.empty ? bUserSnap.docs[0].data() : {};
-
-    setFoundBarber({
-      ...barberData,
-      id: barberId,
-      name: `${bUserData.firstName || ''} ${bUserData.lastName || ''}`.trim() || 'Unknown Barber',
-      userId: barberData.userId || barberId,
-    });
-    setLoading(false);
   };
 
   // ── Send invite ────────────────────────────────────────────────────────────
