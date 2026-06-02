@@ -91,14 +91,19 @@ export default async function BarberProfilePage({
       if (!pData.country   && uData.country)   healData.country   = uData.country;
 
       if (Object.keys(healData).length > 0) {
-        await adminDb
-          .collection('barberProfiles')
-          .doc(barberId)
-          .update(healData);
-
-        // Update pData in memory so mergedUserProfile below uses healed values
-        // immediately without a second page load.
-        Object.assign(pData, healData);
+        try {
+          await adminDb
+            .collection('barberProfiles')
+            .doc(barberId)
+            .update(healData);
+          Object.assign(pData, healData);
+          console.log('[heal] barberProfiles healed for:', barberId, healData);
+        } catch (healErr) {
+          console.error('[heal] FAILED for:', barberId, healErr);
+          // Apply in memory even if Firestore write failed so the name
+          // shows correctly on this page load regardless.
+          Object.assign(pData, healData);
+        }
       }
     }
 
