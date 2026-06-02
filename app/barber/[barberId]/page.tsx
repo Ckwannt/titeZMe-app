@@ -77,6 +77,31 @@ export default async function BarberProfilePage({
     const userData = userDoc.exists ? userDoc.data() || {} : {};
     const pData = profileData as any;
     const uData = userData as any;
+
+    // Heal: if barberProfiles is missing public display fields, copy them
+    // from users doc automatically. Fixes existing barbers who completed
+    // onboarding before the security migration.
+    if (!pData.firstName && uData.firstName) {
+      const healData: Record<string, any> = {};
+      if (!pData.firstName && uData.firstName) healData.firstName = uData.firstName;
+      if (!pData.lastName  && uData.lastName)  healData.lastName  = uData.lastName;
+      if (!pData.photoUrl  && uData.photoUrl)  healData.photoUrl  = uData.photoUrl;
+      if (!pData.createdAt && uData.createdAt) healData.createdAt = uData.createdAt;
+      if (!pData.city      && uData.city)      healData.city      = uData.city;
+      if (!pData.country   && uData.country)   healData.country   = uData.country;
+
+      if (Object.keys(healData).length > 0) {
+        await adminDb
+          .collection('barberProfiles')
+          .doc(barberId)
+          .update(healData);
+
+        // Update pData in memory so mergedUserProfile below uses healed values
+        // immediately without a second page load.
+        Object.assign(pData, healData);
+      }
+    }
+
     const mergedUserProfile = {
       ...userData,
       firstName: pData.firstName || uData.firstName,
