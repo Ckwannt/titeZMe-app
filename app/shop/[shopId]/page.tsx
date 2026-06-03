@@ -27,6 +27,7 @@ type ShopData = {
   };
   photos?: string[];
   videos?: string[];
+  logoUrl?: string;
   coverPhotoUrl?: string;
   status?: string;
   instagram?: string;
@@ -367,75 +368,89 @@ export default function ShopProfilePage() {
           {/* ── LEFT COLUMN ──────────────────────────────────────────────── */}
           <div className="flex-1 min-w-0">
 
-            {/* Shop Header */}
-            <div className="flex gap-5 items-start mb-8">
-              <div className="relative w-20 h-20 rounded-[18px] overflow-hidden shrink-0 border border-[#2a2a2a] bg-[#1a1a1a]">
+            {/* Shop Header — Banner + Logo */}
+            <div className="relative mb-8">
+              {/* Cover banner */}
+              <div className="relative w-full h-[200px] md:h-[260px] rounded-2xl overflow-hidden"
+                style={!shop.coverPhotoUrl ? { background: 'linear-gradient(135deg, #E8491D, #F5C518)' } : {}}>
                 {shop.coverPhotoUrl ? (
                   <Image src={shop.coverPhotoUrl} alt={shop.name ?? ''} fill className="object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[56px] font-black" style={{ color: 'rgba(0,0,0,0.3)' }}>
+                    {shopInitials}
+                  </div>
+                )}
+              </div>
+
+              {/* Logo overlaid bottom-left */}
+              <div className="absolute bottom-[-32px] left-[20px] z-10 w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden border-[3px] border-[#0A0A0A] bg-[#1a1a1a]">
+                {shop.logoUrl ? (
+                  <Image src={shop.logoUrl} alt={shop.name ?? ''} fill className="object-cover" referrerPolicy="no-referrer" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-2xl font-black text-white bg-[#E8491D]">
                     {shopInitials}
                   </div>
                 )}
               </div>
+            </div>
 
-              <div className="flex-1 min-w-0">
-                <h1 className="text-[22px] font-black leading-tight mb-1">{shop.name}</h1>
+            {/* Text content below banner */}
+            <div className="pt-10 md:pt-12 mb-8">
+              <h1 className="text-[22px] font-black leading-tight mb-1">{shop.name}</h1>
 
-                {openBadge && (
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border mb-2 ${openBadge.isOpen ? 'bg-[#0f2010] border-[#22c55e]/30 text-[#22c55e]' : 'bg-[#1a0808] border-[#ef4444]/30 text-[#ef4444]'}`}>
-                    {openBadge.label}
+              {openBadge && (
+                <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border mb-2 ${openBadge.isOpen ? 'bg-[#0f2010] border-[#22c55e]/30 text-[#22c55e]' : 'bg-[#1a0808] border-[#ef4444]/30 text-[#ef4444]'}`}>
+                  {openBadge.label}
+                </span>
+              )}
+
+              {address && (
+                <div className="text-sm font-bold text-[#888] flex flex-wrap items-center gap-1.5 mt-1">
+                  <span>
+                    📍 {[address.street, address.number].filter(Boolean).join(' ')}
+                    {address.city ? `, ${address.city}` : ''}
+                    {address.country ? `, ${address.country}` : ''}
                   </span>
-                )}
+                  <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-brand-yellow hover:underline text-xs font-black">
+                    → Get directions
+                  </a>
+                </div>
+              )}
 
-                {address && (
-                  <div className="text-sm font-bold text-[#888] flex flex-wrap items-center gap-1.5 mt-1">
-                    <span>
-                      📍 {[address.street, address.number].filter(Boolean).join(' ')}
-                      {address.city ? `, ${address.city}` : ''}
-                      {address.country ? `, ${address.country}` : ''}
-                    </span>
-                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-                      className="text-brand-yellow hover:underline text-xs font-black">
-                      → Get directions
-                    </a>
-                  </div>
-                )}
-
-                {shop.description && (
-                  <div className="mt-2">
-                    <p className={`text-[#aaa] text-sm leading-relaxed ${expandDesc ? '' : 'line-clamp-3'}`}>
-                      {shop.description}
-                    </p>
-                    {shop.description.length > 160 && (
-                      <button onClick={() => setExpandDesc(e => !e)} className="text-xs font-bold text-[#555] hover:text-white mt-1">
-                        {expandDesc ? 'Show less' : 'Read more'}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Social links */}
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  {shop.instagram && (
-                    <a href={`https://instagram.com/${shop.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-                      className="bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] hover:text-white text-xs font-bold px-3 py-1 rounded-full transition-colors">
-                      📸 @{shop.instagram.replace('@', '')}
-                    </a>
-                  )}
-                  {shop.tiktok && (
-                    <a href={`https://tiktok.com/@${shop.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-                      className="bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] hover:text-white text-xs font-bold px-3 py-1 rounded-full transition-colors">
-                      🎵 @{shop.tiktok.replace('@', '')}
-                    </a>
-                  )}
-                  {shop.facebook && (
-                    <a href={`https://facebook.com/${shop.facebook}`} target="_blank" rel="noopener noreferrer"
-                      className="bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] hover:text-white text-xs font-bold px-3 py-1 rounded-full transition-colors">
-                      👤 {shop.facebook}
-                    </a>
+              {shop.description && (
+                <div className="mt-2">
+                  <p className={`text-[#aaa] text-sm leading-relaxed ${expandDesc ? '' : 'line-clamp-3'}`}>
+                    {shop.description}
+                  </p>
+                  {shop.description.length > 160 && (
+                    <button onClick={() => setExpandDesc(e => !e)} className="text-xs font-bold text-[#555] hover:text-white mt-1">
+                      {expandDesc ? 'Show less' : 'Read more'}
+                    </button>
                   )}
                 </div>
+              )}
+
+              {/* Social links */}
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {shop.instagram && (
+                  <a href={`https://instagram.com/${shop.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
+                    className="bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] hover:text-white text-xs font-bold px-3 py-1 rounded-full transition-colors">
+                    📸 @{shop.instagram.replace('@', '')}
+                  </a>
+                )}
+                {shop.tiktok && (
+                  <a href={`https://tiktok.com/@${shop.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
+                    className="bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] hover:text-white text-xs font-bold px-3 py-1 rounded-full transition-colors">
+                    🎵 @{shop.tiktok.replace('@', '')}
+                  </a>
+                )}
+                {shop.facebook && (
+                  <a href={`https://facebook.com/${shop.facebook}`} target="_blank" rel="noopener noreferrer"
+                    className="bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] hover:text-white text-xs font-bold px-3 py-1 rounded-full transition-colors">
+                    👤 {shop.facebook}
+                  </a>
+                )}
               </div>
             </div>
 
