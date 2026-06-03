@@ -2,9 +2,9 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteField } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import dynamic from 'next/dynamic';
 const Select = dynamic(
@@ -34,12 +34,14 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   const { t } = useLang();
   const router = useRouter();
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [logoLoading, setLogoLoading] = useState(false);
   const [savingGlobal, setSavingGlobal] = useState(false);
   const [savingSocial, setSavingSocial] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [localPhotoUrl, setLocalPhotoUrl] = useState('');
+  const [localLogoUrl, setLocalLogoUrl] = useState('');
 
   const [formData, setFormData] = useState({
     name: shop?.name || '',
@@ -208,6 +210,84 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     }
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setErrorMsg(t('errors.invalidImageType'));
+      return;
+    }
+
+    setLogoLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+      };
+
+      const compressedFile = await imageCompression(file, options);
+      const storageRef = ref(storage, `shop-profile/${user.uid}/logo.jpg`);
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile, { cacheControl: 'public, max-age=31536000' });
+
+      uploadTask.on('state_changed',
+        null,
+        (error) => {
+          setLogoLoading(false);
+          setErrorMsg(t('errors.uploadFailed'));
+          console.error("Logo Upload Error:", error);
+        },
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ logoUrl: downloadURL }));
+            setLocalLogoUrl(downloadURL);
+            mutateShop();
+            setSuccessMsg(t('success.shopPhotoUpdated'));
+          } catch (err) {
+            console.error("Logo DB Update Error:", err);
+            setErrorMsg(t('errors.failedUpdatePhoto'));
+          }
+          setLogoLoading(false);
+        }
+      );
+    } catch (error) {
+      console.error(error);
+      setErrorMsg(t('errors.imageCompressionFailed'));
+      setLogoLoading(false);
+    }
+  };
+
+  const handleDeleteCover = async () => {
+    if (!user) return;
+    try {
+      await deleteObject(ref(storage, `shop-profile/${user.uid}/cover.jpg`));
+    } catch {
+      // ignore if file doesn't exist in storage
+    }
+    await updateDoc(doc(db, 'barbershops', user.uid), { coverPhotoUrl: deleteField() });
+    setLocalPhotoUrl('');
+    mutateShop();
+    setSuccessMsg(t('success.shopPhotoUpdated'));
+  };
+
+  const handleDeleteLogo = async () => {
+    if (!user) return;
+    try {
+      await deleteObject(ref(storage, `shop-profile/${user.uid}/logo.jpg`));
+    } catch {
+      // ignore if file doesn't exist in storage
+    }
+    await updateDoc(doc(db, 'barbershops', user.uid), { logoUrl: deleteField() });
+    setLocalLogoUrl('');
+    mutateShop();
+    setSuccessMsg(t('success.shopPhotoUpdated'));
+  };
+
   const handleSaveInfo = async () => {
     if (!user) return;
     if (!formData.name || !formData.street || !formData.buildingNumber || !formData.postalCode) {
@@ -338,6 +418,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   }
 
   const currentPhoto = localPhotoUrl || shop?.coverPhotoUrl;
+  const currentLogo = localLogoUrl || shop?.logoUrl;
 
   return (
     <div className="animate-fadeUp max-w-2xl">
@@ -355,33 +436,79 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
         </div>
       )}
 
-      {/* SECTION B: SHOP PHOTO */}
-      <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">{t('headings.shopPhoto')}</h2>
+      {/* SECTION B1: SHOP LOGO */}
+      <section className="mb-6 bg-brand-surface border border-brand-border rounded-3xl p-6">
+        <h2 className="text-lg font-black mb-4">{t('settings.shopLogo')}</h2>
         <div className="flex items-center gap-6">
           <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] shrink-0">
-            {currentPhoto ? (
-              <Image src={currentPhoto} alt={shop?.name || 'Shop'} fill className="object-cover" referrerPolicy="no-referrer" />
+            {currentLogo ? (
+              <Image src={currentLogo} alt={shop?.name || 'Shop'} fill className="object-cover" referrerPolicy="no-referrer" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-3xl font-black text-[#555] uppercase">
+              <div className="w-full h-full flex items-center justify-center text-3xl font-black text-white bg-[#E8491D] uppercase">
                 {shop?.name?.[0] || 'S'}
               </div>
             )}
           </div>
           <div>
-            <label className={`bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full font-bold text-sm cursor-pointer hover:bg-[#2a2a2a] transition-colors inline-block ${photoLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-              {photoLoading ? t('settings.uploading') : t('buttons.uploadNewPhoto')}
-              <input 
-                type="file" 
-                accept="image/jpeg,image/png,image/webp" 
-                onChange={handlePhotoUpload} 
-                className="hidden" 
-                disabled={photoLoading}
-              />
-            </label>
-            <p className="text-xs text-[#888] mt-3">{t('settings.fileTypeHint')}</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className={`bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full font-bold text-sm cursor-pointer hover:bg-[#2a2a2a] transition-colors inline-block ${logoLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+                {logoLoading ? t('settings.uploading') : t('settings.uploadLogo')}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                  disabled={logoLoading}
+                />
+              </label>
+              {currentLogo && (
+                <button
+                  onClick={handleDeleteLogo}
+                  className="text-sm font-bold text-brand-red hover:underline"
+                >
+                  {t('settings.removePhoto')}
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-[#888] mt-3">{t('settings.logoHint')}</p>
           </div>
         </div>
+      </section>
+
+      {/* SECTION B2: COVER PHOTO */}
+      <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
+        <h2 className="text-lg font-black mb-4">{t('settings.coverPhoto')}</h2>
+        <div className="relative w-full h-[140px] rounded-2xl overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] mb-4"
+          style={!currentPhoto ? { background: 'linear-gradient(135deg, #E8491D, #F5C518)' } : {}}>
+          {currentPhoto ? (
+            <Image src={currentPhoto} alt={shop?.name || 'Shop'} fill className="object-cover" referrerPolicy="no-referrer" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-4xl font-black" style={{ color: 'rgba(0,0,0,0.3)' }}>
+              {(shop?.name ?? 'S').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase() || 'S'}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <label className={`bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full font-bold text-sm cursor-pointer hover:bg-[#2a2a2a] transition-colors inline-block ${photoLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+            {photoLoading ? t('settings.uploading') : t('settings.uploadCover')}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoUpload}
+              className="hidden"
+              disabled={photoLoading}
+            />
+          </label>
+          {currentPhoto && (
+            <button
+              onClick={handleDeleteCover}
+              className="text-sm font-bold text-brand-red hover:underline"
+            >
+              {t('settings.removePhoto')}
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-[#888] mt-3">{t('settings.coverHint')}</p>
       </section>
 
       {/* SECTION A: SHOP INFO */}
