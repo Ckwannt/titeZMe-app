@@ -82,9 +82,9 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
       {/* Sidebar */}
       <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
         <div className="flex items-center gap-3 mb-6 px-2">
-          {(shop as any)?.coverPhotoUrl ? (
+          {((shop as any)?.logoUrl || (shop as any)?.coverPhotoUrl) ? (
             <div className="relative w-10 h-10 rounded-xl overflow-hidden shrink-0">
-              <Image src={(shop as any).coverPhotoUrl} alt="Shop" fill className="object-cover" referrerPolicy="no-referrer" />
+              <Image src={(shop as any).logoUrl || (shop as any).coverPhotoUrl} alt="Shop" fill className="object-cover" referrerPolicy="no-referrer" />
             </div>
           ) : (
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-orange to-brand-yellow flex items-center justify-center font-black text-base text-[#0a0a0a]">
