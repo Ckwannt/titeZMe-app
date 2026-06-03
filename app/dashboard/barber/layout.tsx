@@ -75,6 +75,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
   ];
   const profilePct = profileItems.filter(item => item.done).reduce((s, item) => s + item.pct, 0);
   const missingItems = profileItems.filter(item => !item.done).slice(0, 3);
+  const completedOver24hAgo = !!profile?.profileCompletedAt && Date.now() - (profile.profileCompletedAt as number) > 86400000;
 
   const handleCopyCode = () => {
     if (profile?.barberCode) {
@@ -183,18 +184,18 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
             >
               <span>🏪</span> {t('barberLayout.manageMyShop')}
             </Link>
-          ) : (
+          ) : !profile?.shopId ? (
             <Link
               href="/dashboard/barber/create-shop"
               className="flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors text-white bg-[#1a1a1a] hover:bg-[#2a2a2a]"
             >
               <span>🏪</span> {t('barberLayout.createShopProfile')}
             </Link>
-          )}
+          ) : null}
         </div>
 
         {/* Profile completion — desktop only */}
-        <div className="hidden md:block mt-4 px-2">
+        <div className={`${completedOver24hAgo ? 'hidden' : 'hidden md:block'} mt-4 px-2`}>
           <div className="text-[10px] font-extrabold text-[#555] uppercase tracking-wider mb-2">{t('barberLayout.profileCompletion')}</div>
           <div className="h-1.5 bg-[#1e1e1e] rounded-full overflow-hidden mb-1">
             <div className={`h-full rounded-full transition-all ${profilePct === 100 ? 'bg-[#22C55E]' : 'bg-brand-yellow'}`} style={{ width: `${profilePct}%` }} />
