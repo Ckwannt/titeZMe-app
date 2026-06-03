@@ -20,6 +20,7 @@ const Select = dynamic(
 // country-state-city loaded dynamically to avoid bundling ~2 MB on initial load
 // iso-639-1 is loaded via the @/lib/languages wrapper (handles CJS class interop)
 import Image from "next/image";
+import Link from "next/link";
 import imageCompression from "browser-image-compression";
 import { userUpdateSchema, barberUpdateSchema } from "@/lib/schemas";
 import { sanitizeText, sanitizeHandle } from '@/lib/sanitize';
@@ -365,6 +366,89 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
           {successMsg}
         </div>
       )}
+
+      {/* Mobile-only shop navigation */}
+      <div className="md:hidden mb-4">
+        {appUser?.ownsShop ? (
+          <Link
+            href="/dashboard/shop"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '16px',
+              background: '#1a1a1a',
+              borderRadius: '16px',
+              border: '1px solid #2a2a2a',
+              color: '#F5C518',
+              fontWeight: 900,
+              fontSize: '14px',
+              textDecoration: 'none',
+            }}
+          >
+            <span style={{ fontSize: '20px' }}>🏪</span>
+            <div>
+              <div>{t('barberLayout.manageShop')}</div>
+              <div style={{ fontSize: '11px', color: '#888', fontWeight: 600, marginTop: '2px' }}>
+                {t('barberLayout.shopDashboard')}
+              </div>
+            </div>
+            <span style={{ marginLeft: 'auto', color: '#555' }}>→</span>
+          </Link>
+        ) : profile?.shopId ? (
+          <Link
+            href={`/shop/${profile.shopId}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '16px',
+              background: '#1a1a1a',
+              borderRadius: '16px',
+              border: '1px solid #2a2a2a',
+              color: '#fff',
+              fontWeight: 900,
+              fontSize: '14px',
+              textDecoration: 'none',
+            }}
+          >
+            <span style={{ fontSize: '20px' }}>🏪</span>
+            <div>
+              <div>{t('barberLayout.myShop')}</div>
+              <div style={{ fontSize: '11px', color: '#888', fontWeight: 600, marginTop: '2px' }}>
+                {t('barberLayout.viewShopProfile')}
+              </div>
+            </div>
+            <span style={{ marginLeft: 'auto', color: '#555' }}>→</span>
+          </Link>
+        ) : (
+          <Link
+            href="/dashboard/barber/create-shop"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '16px',
+              background: '#1a1a1a',
+              borderRadius: '16px',
+              border: '1px solid #2a2a2a',
+              color: '#fff',
+              fontWeight: 900,
+              fontSize: '14px',
+              textDecoration: 'none',
+            }}
+          >
+            <span style={{ fontSize: '20px' }}>🏪</span>
+            <div>
+              <div>{t('barberLayout.createShop')}</div>
+              <div style={{ fontSize: '11px', color: '#888', fontWeight: 600, marginTop: '2px' }}>
+                {t('barberLayout.createShopSub')}
+              </div>
+            </div>
+            <span style={{ marginLeft: 'auto', color: '#555' }}>→</span>
+          </Link>
+        )}
+      </div>
 
       {/* SECTION B: PROFILE PHOTO */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
