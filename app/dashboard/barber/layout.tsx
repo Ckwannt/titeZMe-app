@@ -191,7 +191,14 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
             >
               <span>🏪</span> {t('barberLayout.createShopProfile')}
             </Link>
-          ) : null}
+          ) : (
+            <Link
+              href={`/shop/${profile?.shopId}`}
+              className="flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors text-white bg-[#1a1a1a] hover:bg-[#2a2a2a]"
+            >
+              <span>🏪</span> My Shop
+            </Link>
+          )}
         </div>
 
         {/* Profile completion — desktop only */}
