@@ -340,6 +340,12 @@ export default function BarberDashboardPage() {
   ];
   const profilePct = profileItems.filter(item => item.done).reduce((s, item) => s + item.pct, 0);
   const missingItems = profileItems.filter(item => !item.done).slice(0, 3);
+  const completedOver24hAgo = !!profile?.profileCompletedAt && Date.now() - (profile.profileCompletedAt as number) > 86400000;
+
+  useEffect(() => {
+    if (!user?.uid || !profile || profilePct < 100 || profile.profileCompletedAt) return;
+    updateDoc(doc(db, 'barberProfiles', user.uid), { profileCompletedAt: Date.now() }).catch(console.error);
+  }, [user?.uid, profile, profilePct]);
 
   const tabPaths: Record<string, string> = {
     'Settings': '/dashboard/barber/settings',
@@ -503,7 +509,7 @@ export default function BarberDashboardPage() {
       </div>
 
       {/* Profile completion checklist */}
-      {profilePct < 100 && (
+      {profilePct < 100 && !completedOver24hAgo && (
         <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <div style={{ fontSize: '13px', fontWeight: 900, color: '#fff' }}>{t('barberDash.completeProfile')}</div>
@@ -526,7 +532,7 @@ export default function BarberDashboardPage() {
           </div>
         </div>
       )}
-      {profilePct === 100 && (
+      {profilePct === 100 && !completedOver24hAgo && (
         <div style={{ background: '#0f2010', border: '1px solid #22C55E33', borderRadius: '12px', padding: '14px 16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '20px' }}>🎉</span>
           <div>
