@@ -213,7 +213,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       const options = {
         maxSizeMB: 0.5,
         maxWidthOrHeight: 800,
-        useWebWorker: true,
+        useWebWorker: false,
       };
 
       const compressedFile = await imageCompression(file, options);

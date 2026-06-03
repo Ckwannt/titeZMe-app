@@ -174,7 +174,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       const options = {
         maxSizeMB: 1, // Shop profile max 1MB
         maxWidthOrHeight: 1200, // Shop profile max 1200px
-        useWebWorker: true,
+        useWebWorker: false,
       };
       
       const compressedFile = await imageCompression(file, options);
@@ -227,7 +227,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       const options = {
         maxSizeMB: 1,
         maxWidthOrHeight: 1200,
-        useWebWorker: true,
+        useWebWorker: false,
       };
 
       const compressedFile = await imageCompression(file, options);
