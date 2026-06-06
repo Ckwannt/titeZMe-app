@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import translations, { Language } from './translations';
 
 const STORAGE_KEY = 'titezme_lang';
@@ -28,11 +28,10 @@ const LangContext = createContext<LangContextType>({
 });
 
 export function LangProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Language>('en');
-
-  useEffect(() => {
-    setLangState(detectLanguage());
-  }, []);
+  const [lang, setLangState] = useState<Language>(() => {
+    if (typeof window === 'undefined') return 'en';
+    return detectLanguage();
+  });
 
   const setLang = (l: Language) => {
     setLangState(l);
