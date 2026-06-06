@@ -10,34 +10,41 @@
  */
 
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-
-function getAdmin() {
-  if (getApps().length === 0) {
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-  }
-  return getFirestore();
-}
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const db = getAdmin();
+    const admin = await import('firebase-admin');
+    if (!admin.apps.length) {
+      admin.initializeApp();
+    }
+    const adminAuth = admin.auth();
+    const adminDb = admin.firestore();
 
-    const snap = await db
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    try {
+      const decoded = await adminAuth.verifyIdToken(token);
+      const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
+
+      if (userDoc.data()?.role !== 'admin') {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } catch {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const snap = await adminDb
       .collection('barberProfiles')
       .where('isLive', '==', true)
       .get();
 
     let updated = 0;
     let skipped = 0;
-    const batch = db.batch();
+    const batch = adminDb.batch();
 
     for (const docSnap of snap.docs) {
       const data = docSnap.data();

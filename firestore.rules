@@ -204,9 +204,12 @@ service cloud.firestore {
           isSignedIn()
           && (existing().get('barberCode', '') == '' || incoming().get('barberCode', '') == existing().get('barberCode', ''))
           && (
-            (request.auth.uid == existing().userId && isValidBarberProfile(incoming()) && incoming().userId == existing().userId)
-            ||
-            (incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalCuts']) && isValidBarberProfile(incoming()))
+            request.auth.uid == existing().userId
+            && isValidBarberProfile(incoming())
+            && incoming().userId == existing().userId
+            && incoming().approvalStatus == existing().approvalStatus
+            && incoming().isLive == existing().isLive
+            && !incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalCuts'])
           )
         )
         // Shop owner setting a former team member solo during shop deletion.
@@ -317,7 +320,8 @@ service cloud.firestore {
         && incoming().shopId is string
         && incoming().barberId is string
         && incoming().status == 'pending'
-        && incoming().shopId == request.auth.uid;
+        && incoming().shopId == request.auth.uid
+        && exists(/databases/$(database)/documents/barbershops/$(request.auth.uid));
 
       allow update: if isSignedIn()
         && (
@@ -467,11 +471,13 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isSignedIn()
         && request.auth.uid == incoming().clientId
+        && incoming().providerId != request.auth.uid
         && isValidReview(incoming())
         && exists(/databases/$(database)/documents/barberProfiles/$(incoming().providerId))
         && exists(/databases/$(database)/documents/bookings/$(incoming().bookingId))
         && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.clientId == request.auth.uid
-        && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.status == 'completed';
+        && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.status == 'completed'
+        && !exists(/databases/$(database)/documents/reviews/$(incoming().bookingId + '_' + request.auth.uid));
       allow update: if (
         isAdmin()
         || (

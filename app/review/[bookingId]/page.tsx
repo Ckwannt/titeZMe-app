@@ -64,12 +64,21 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
     if (!user || rating === 0) return;
     setIsSubmitting(true);
     try {
+      const reviewId = `${bookingId}_${user.uid}`;
+
+      const existingReviewSnap = await getDoc(doc(db, 'reviews', reviewId));
+      if (existingReviewSnap.exists()) {
+         toast.error("You have already reviewed this booking.");
+         router.push('/dashboard/client');
+         return;
+      }
+
       // 1. Create Review
-      const newReviewRef = doc(collection(db, 'reviews'));
+      const newReviewRef = doc(db, 'reviews', reviewId);
       await setDoc(newReviewRef, {
-         bookingId,
-         providerId: booking.bookingContext === 'shop' && booking.shopId ? booking.shopId : booking.barberId,
-         providerType: booking.bookingContext === 'shop' ? 'shop' : 'barber',
+          bookingId,
+          providerId: booking.bookingContext === 'shop' && booking.shopId ? booking.shopId : booking.barberId,
+          providerType: booking.bookingContext === 'shop' ? 'shop' : 'barber',
          clientId: user.uid,
          rating,
          comment: sanitizeText(comment, 1000),
