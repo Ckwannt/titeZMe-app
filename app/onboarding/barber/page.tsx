@@ -207,8 +207,6 @@ export default function BarberOnboarding() {
         isOnboarded: true,
         approvalStatus: 'pending'
       });
-      console.log('STEP 1 ATTEMPTING WRITE:', JSON.stringify(profileData));
-      console.log('STEP 1 auth.uid:', user.uid, 'profileRef.path:', profileRef.path);
       try {
         await setDoc(
           profileRef,
@@ -224,10 +222,7 @@ export default function BarberOnboarding() {
           { merge: true }
         );
       } catch (e: any) {
-        console.error('STEP 1 FULL ERROR:', e);
-        console.error('STEP 1 ERROR CODE:', e?.code);
-        console.error('STEP 1 ERROR MESSAGE:', e?.message);
-        console.error('STEP 1 ERROR DETAILS:', JSON.stringify(e, Object.getOwnPropertyNames(e)));
+        console.error('Barber onboarding failed');
         throw new Error("Step 1: Profile creation failed - " + e.message);
       }
 
