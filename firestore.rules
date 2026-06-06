@@ -553,7 +553,22 @@ service cloud.firestore {
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn()
         && isValidNotification(incoming())
-        && incoming().userId == request.auth.uid;
+        && (
+          incoming().userId == request.auth.uid
+          || (
+            incoming().type == 'shop_deleted'
+            && exists(/databases/$(database)/documents/barbershops/$(request.auth.uid))
+            && get(/databases/$(database)/documents/barbershops/$(request.auth.uid)).data.ownerId == request.auth.uid
+            && incoming().userId in get(/databases/$(database)/documents/barbershops/$(request.auth.uid)).data.get('barbers', [])
+          )
+          || (
+            incoming().type == 'booking_cancelled'
+            && incoming().bookingId is string
+            && exists(/databases/$(database)/documents/bookings/$(incoming().bookingId))
+            && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.shopId == request.auth.uid
+            && incoming().userId == get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.clientId
+          )
+        );
 
       allow update: if isSignedIn()
         && request.auth.uid == existing().userId
