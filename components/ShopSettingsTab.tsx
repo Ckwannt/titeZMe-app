@@ -387,7 +387,22 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       
       // 1. Update all barbers
       const barbersSnap = await getDocs(query(collection(db, 'barberProfiles'), where('shopId', '==', user?.uid)));
-      barbersSnap.docs.forEach(d => batch.update(d.ref, { shopId: null, isSolo: true }));
+      for (const d of barbersSnap.docs) {
+        batch.update(d.ref, {
+          shopId: null,
+          isSolo: true
+        });
+        const notifRef = doc(
+          collection(db, 'notifications')
+        );
+        batch.set(notifRef, {
+          userId: d.id,
+          type: 'shop_deleted',
+          message: 'The shop you were part of has been deleted. Your barber profile is safe. You are now a solo barber.',
+          read: false,
+          createdAt: Date.now(),
+        });
+      }
 
       // 2. Delete services
       const servicesSnap = await getDocs(query(collection(db, 'services'), where('providerId', '==', user?.uid), where('providerType', '==', 'shop')));
@@ -396,6 +411,53 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       // 3. Delete invites
       const invitesSnap = await getDocs(query(collection(db, 'invites'), where('shopId', '==', user?.uid)));
       invitesSnap.docs.forEach(d => batch.delete(d.ref));
+
+      // Cancel future shop bookings + notify clients
+      const futureBookingsSnap = await getDocs(
+        query(
+          collection(db, 'bookings'),
+          where('shopId', '==', user!.uid),
+          where('status', 'in', ['pending', 'confirmed'])
+        )
+      );
+
+      for (const booking of futureBookingsSnap.docs) {
+        batch.update(booking.ref, {
+          status: 'cancelled',
+          updatedAt: Date.now(),
+          cancellationReason: 'shop_deleted',
+        });
+        const notifRef = doc(collection(db, 'notifications'));
+        batch.set(notifRef, {
+          userId: booking.data().clientId,
+          type: 'booking_cancelled',
+          message: 'The barbershop you booked has closed. Your booking was cancelled.',
+          bookingId: booking.id,
+          read: false,
+          createdAt: Date.now(),
+        });
+      }
+
+      // Anonymize past shop bookings
+      const pastBookingsSnap = await getDocs(
+        query(
+          collection(db, 'bookings'),
+          where('shopId', '==', user!.uid),
+          where('status', 'in', [
+            'completed',
+            'cancelled',
+            'cancelled_by_client',
+            'cancelled_by_barber'
+          ])
+        )
+      );
+
+      for (const booking of pastBookingsSnap.docs) {
+        batch.update(booking.ref, {
+          shopId: 'deleted_shop',
+          shopName: 'Deleted Shop',
+        });
+      }
 
       // 4. Delete schedule
       batch.delete(doc(db, 'schedules', `${user!.uid}_shard_0`));
