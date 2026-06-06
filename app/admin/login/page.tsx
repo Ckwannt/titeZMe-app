@@ -27,15 +27,12 @@ export default function AdminLoginPage() {
       // ── Step 1: Firebase Auth ─────────────────────────────────────────────
       console.log('[AdminLogin] Step 1: signing in with email/password...');
       const credential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('[AdminLogin] Step 2: auth success, uid =', credential.user.uid);
 
       // ── Step 2: Firestore read ────────────────────────────────────────────
       const uid = credential.user.uid;
       const ref = doc(db, 'users', uid);
-      console.log('[AdminLogin] Step 3: reading Firestore doc users/' + uid);
 
       const snap = await getDoc(ref);
-      console.log('[AdminLogin] Step 4: doc exists =', snap.exists(), '| data =', snap.data());
 
       if (!snap.exists()) {
         console.error('[AdminLogin] ERROR: users/' + uid + ' document does not exist in Firestore');
@@ -50,7 +47,6 @@ export default function AdminLoginPage() {
 
       const userData = snap.data();
       const isAdminUser = userData?.isAdmin === true || userData?.role === 'admin';
-      console.log('[AdminLogin] Step 5: isAdmin =', userData?.isAdmin, '| role =', userData?.role, '| isAdminUser =', isAdminUser);
 
       if (!isAdminUser) {
         console.warn('[AdminLogin] Step 6: access denied — not an admin account');
@@ -72,7 +68,7 @@ export default function AdminLoginPage() {
       router.replace('/admin');
 
     } catch (err: any) {
-      console.error('[AdminLogin] CAUGHT ERROR — code:', err?.code, '| message:', err?.message, '| full:', err);
+      console.error('Admin login failed');
       setLoading(false);
       const code = err?.code || '';
       if (

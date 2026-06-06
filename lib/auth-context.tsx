@@ -103,7 +103,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const profileRef = doc(db, 'barberProfiles', firebaseUser.uid);
               const profileSnap = await getDoc(profileRef);
               if (profileSnap.exists()) {
-                console.log("Healing Incomplete State: Barber profile exists. Setting isOnboarded to true.");
                 try {
                   const { updateDoc } = await import('firebase/firestore');
                   await updateDoc(docRef, userUpdateSchema.parse({ isOnboarded: true }));
@@ -135,7 +134,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     const { updateDoc } = await import('firebase/firestore');
                     await updateDoc(docRef, updates);
                     Object.assign(userData, updates);
-                    console.log("Healing Incomplete State: Copied phone/city/country from barberProfile to users doc.", updates);
                   } catch (e) {
                     console.error("Failed to heal phone/city/country from barberProfile", e);
                   }
