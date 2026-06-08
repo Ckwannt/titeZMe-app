@@ -802,6 +802,14 @@ const translations = {
       serviceNameInputPlaceholder: 'Name',
       serviceDescPlaceholder: 'What does this service include?',
     },
+    shopSettings: {
+      chairsCount: 'Number of Chairs',
+      establishedYear: 'Established Year',
+    },
+    shopPublic: {
+      chairs: '{count} chairs',
+      established: 'Established {year}',
+    },
   },
 
   fr: {
@@ -1605,6 +1613,14 @@ const translations = {
       serviceNameInputPlaceholder: 'Nom',
       serviceDescPlaceholder: 'Que comprend ce service ?',
     },
+    shopSettings: {
+      chairsCount: 'Nombre de fauteuils',
+      establishedYear: 'Année de création',
+    },
+    shopPublic: {
+      chairs: '{count} fauteuils',
+      established: 'Fondé en {year}',
+    },
   },
 
   es: {
@@ -2407,6 +2423,14 @@ const translations = {
       deleteConfirm: 'Eliminar',
       serviceNameInputPlaceholder: 'Nombre',
       serviceDescPlaceholder: '¿Qué incluye este servicio?',
+    },
+    shopSettings: {
+      chairsCount: 'Número de sillones',
+      establishedYear: 'Año de apertura',
+    },
+    shopPublic: {
+      chairs: '{count} sillones',
+      established: 'Fundado en {year}',
     },
   },
 } as const;

@@ -50,6 +50,8 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     postalCode: shop?.address?.postalCode || '',
     floorSuite: shop?.address?.floorSuite || '',
     description: shop?.description || '',
+    chairsCount: shop?.chairsCount ?? '',
+    establishedYear: shop?.establishedYear ?? '',
   });
 
   const existingPhoneParts = (shop?.contactPhone || '').split(' ');
@@ -316,6 +318,8 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
                 floorSuite: formData.floorSuite
               },
               description: sanitizeText(formData.description, 300),
+              chairsCount: formData.chairsCount ? Number(formData.chairsCount) : undefined,
+              establishedYear: formData.establishedYear ? Number(formData.establishedYear) : undefined,
             }));
       mutateShop();
       setSuccessMsg(t('success.shopInfoSaved'));
@@ -693,9 +697,36 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('shopSettings.chairsCount')}</label>
+            <input
+              type="number"
+              min={1}
+              max={99}
+              value={formData.chairsCount}
+              onChange={e => setFormData({...formData, chairsCount: e.target.value})}
+              className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
+              placeholder="e.g. 4"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('shopSettings.establishedYear')}</label>
+            <input
+              type="number"
+              min={1900}
+              max={new Date().getFullYear()}
+              value={formData.establishedYear}
+              onChange={e => setFormData({...formData, establishedYear: e.target.value})}
+              className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
+              placeholder="e.g. 2018"
+            />
+          </div>
+        </div>
+
         <div className="mb-6">
           <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.description')}</label>
-          <textarea 
+          <textarea
             value={formData.description}
             onChange={e => setFormData({...formData, description: e.target.value})}
             maxLength={2000}
