@@ -16,7 +16,7 @@ import Image from 'next/image';
 
 const PER_PAGE = 20;
 
-type Tab = 'pending' | 'live' | 'rejected' | 'suspended' | 'all';
+type Tab = 'pending' | 'live' | 'rejected' | 'suspended' | 'all' | 'experience_pending';
 
 interface EnrichedBarber {
   id: string;
@@ -34,6 +34,9 @@ interface EnrichedBarber {
   photos?: string[];
   rating?: number;
   reviewCount?: number;
+  experienceLocked?: boolean;
+  experienceVerified?: boolean;
+  experienceStartYear?: number;
 }
 
 interface Counts {
@@ -42,6 +45,7 @@ interface Counts {
   rejected: number;
   suspended: number;
   all: number;
+  experiencePending: number;
 }
 
 function daysAgo(ts?: number): string {
@@ -103,7 +107,7 @@ export default function AdminBarbersPage() {
   // Initialise tab from URL query param so links like /admin/barbers?tab=suspended work
   const [tab, setTab] = useState<Tab>(() => {
     const urlTab = searchParams.get('tab');
-    const valid: Tab[] = ['pending', 'live', 'rejected', 'suspended', 'all'];
+    const valid: Tab[] = ['pending', 'live', 'rejected', 'suspended', 'all', 'experience_pending'];
     return valid.includes(urlTab as Tab) ? (urlTab as Tab) : 'pending';
   });
   const [search, setSearch] = useState('');
@@ -114,6 +118,7 @@ export default function AdminBarbersPage() {
     rejected: 0,
     suspended: 0,
     all: 0,
+    experiencePending: 0,
   });
 
   const debouncedSearch = useDebounce(search, 300);
@@ -154,6 +159,9 @@ export default function AdminBarbersPage() {
               photos: data.photos as string[] | undefined,
               rating: data.rating as number | undefined,
               reviewCount: data.reviewCount as number | undefined,
+              experienceLocked: data.experienceLocked as boolean | undefined,
+              experienceVerified: data.experienceVerified as boolean | undefined,
+              experienceStartYear: data.experienceStartYear as number | undefined,
               firstName,
               lastName,
               email,
@@ -168,6 +176,9 @@ export default function AdminBarbersPage() {
           rejected: enriched.filter((b) => b.approvalStatus === 'rejected').length,
           suspended: enriched.filter((b) => b.approvalStatus === 'suspended').length,
           all: enriched.length,
+          experiencePending: enriched.filter(
+            (b) => b.experienceLocked === true && b.experienceVerified !== true
+          ).length,
         });
       } catch (err) {
         console.error('Barbers fetch error:', err);
@@ -187,6 +198,10 @@ export default function AdminBarbersPage() {
     else if (tab === 'live') list = list.filter((b) => b.isLive);
     else if (tab === 'rejected') list = list.filter((b) => b.approvalStatus === 'rejected');
     else if (tab === 'suspended') list = list.filter((b) => b.approvalStatus === 'suspended');
+    else if (tab === 'experience_pending')
+      list = list.filter(
+        (b) => b.experienceLocked === true && b.experienceVerified !== true
+      );
 
     // Search filter
     if (debouncedSearch.trim()) {
@@ -209,6 +224,7 @@ export default function AdminBarbersPage() {
     { key: 'live', label: `Live (${counts.live})` },
     { key: 'rejected', label: `Rejected (${counts.rejected})` },
     { key: 'suspended', label: `Suspended (${counts.suspended})` },
+    { key: 'experience_pending', label: `Experience (${counts.experiencePending})` },
     { key: 'all', label: `All (${counts.all})` },
   ];
 
