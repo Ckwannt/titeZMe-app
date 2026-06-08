@@ -8,3 +8,8 @@ coverage/
 package-lock.json
 next-env.d.ts
 .claude/
+scripts/backfill-algolia.ts
+functions/scripts/backfill-algolia.ts
+functions/scripts/cleanup-ghosts.ts
+service-account.json
+service-account.json.json
