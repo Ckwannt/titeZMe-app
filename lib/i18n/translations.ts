@@ -810,6 +810,20 @@ const translations = {
       chairs: '{count} chairs',
       established: 'Established {year}',
     },
+    barberSettings: {
+      dateOfBirth: 'Date of Birth',
+      dobHint: 'Used for verification only · Not shown publicly',
+      experienceStartYear: 'Year you started cutting',
+      experienceHint: 'Cannot be changed after saving',
+      saveExperience: 'Save Experience',
+      experienceLocked: 'Your experience info is locked. Contact support to appeal.',
+      verified: 'Verified',
+      pendingVerification: 'Pending verification',
+    },
+    barberPublic: {
+      yearsExperience: 'yrs experience',
+      totalCuts: 'Total cuts',
+    },
   },
 
   fr: {
@@ -1621,6 +1635,20 @@ const translations = {
       chairs: '{count} fauteuils',
       established: 'Fondé en {year}',
     },
+    barberSettings: {
+      dateOfBirth: 'Date de naissance',
+      dobHint: 'Utilisé pour vérification uniquement · Non public',
+      experienceStartYear: 'Année de début',
+      experienceHint: 'Ne peut pas être modifié après sauvegarde',
+      saveExperience: "Enregistrer l'expérience",
+      experienceLocked: "Vos informations d'expérience sont verrouillées.",
+      verified: 'Vérifié',
+      pendingVerification: 'En attente de vérification',
+    },
+    barberPublic: {
+      yearsExperience: "ans d'expérience",
+      totalCuts: 'Coupes totales',
+    },
   },
 
   es: {
@@ -2431,6 +2459,20 @@ const translations = {
     shopPublic: {
       chairs: '{count} sillones',
       established: 'Fundado en {year}',
+    },
+    barberSettings: {
+      dateOfBirth: 'Fecha de nacimiento',
+      dobHint: 'Solo para verificación · No visible públicamente',
+      experienceStartYear: 'Año en que empezaste',
+      experienceHint: 'No se puede cambiar después de guardar',
+      saveExperience: 'Guardar experiencia',
+      experienceLocked: 'Tu información de experiencia está bloqueada.',
+      verified: 'Verificado',
+      pendingVerification: 'Pendiente de verificación',
+    },
+    barberPublic: {
+      yearsExperience: 'años de experiencia',
+      totalCuts: 'Cortes totales',
     },
   },
 } as const;

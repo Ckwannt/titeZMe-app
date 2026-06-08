@@ -40,6 +40,10 @@ export const barberSchema = z.object({
   instagram: z.string().optional(),
   facebook: z.string().optional(),
   tiktok: z.string().optional(),
+  experienceStartYear: z.number().int().min(1950).max(new Date().getFullYear()).optional(),
+  dateOfBirth: z.string().optional(),
+  experienceLocked: z.boolean().optional(),
+  experienceVerified: z.boolean().optional(),
   createdAt: z.number().optional(),
 }).passthrough();
 

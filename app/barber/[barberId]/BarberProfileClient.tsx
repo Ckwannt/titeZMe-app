@@ -45,6 +45,8 @@ type BarberDoc = {
   ownsShop?: boolean;
   avgResponseMinutes?: number;
   city?: string;
+  experienceStartYear?: number;
+  experienceVerified?: boolean;
 };
 
 type UserDoc = {
@@ -266,6 +268,14 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   const todayDate = getLocalDateString(
     getTimezoneFromLocation(userProfile?.city, userProfile?.country)
   );
+  const currentYear = new Date().getFullYear();
+  const yearsExperience = profile?.experienceStartYear
+    ? currentYear - profile.experienceStartYear
+    : null;
+  const estimatedTotalCuts = profile?.experienceStartYear && yearsExperience !== null
+    ? (yearsExperience * 240 * 10) + (profile.totalCuts || 0)
+    : (profile?.totalCuts || 0);
+  const cutsLabel = estimatedTotalCuts.toLocaleString();
   const minPrice = services.length > 0 ? Math.min(...services.map(s => s.price || 0)) : null;
   const currency = profile?.currency || '€';
   const isFav = optimisticFav !== null ? optimisticFav : !!(appUser?.favoriteBarbers?.includes(barberId));
@@ -712,10 +722,27 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
             <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-5">
               <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-3">{t('profile.trackRecord')}</div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
-                  <div className="text-xl font-black text-white">{profile.totalCuts || 0}</div>
-                  <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('profile.totalCuts')}</div>
+                <div
+                  className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]"
+                  title={profile.experienceStartYear ? `Includes estimated cuts from ${yearsExperience} years of experience` : undefined}
+                >
+                  <div className="text-xl font-black text-white">{cutsLabel}</div>
+                  <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('barberPublic.totalCuts')}</div>
                 </div>
+                {yearsExperience !== null && (
+                  <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
+                    <div className="text-xl font-black text-white flex items-center gap-1.5">
+                      {yearsExperience}
+                      {profile.experienceVerified && (
+                        <span
+                          className="inline-block w-2 h-2 rounded-full bg-[#22c55e]"
+                          title="Verified"
+                        />
+                      )}
+                    </div>
+                    <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('barberPublic.yearsExperience')}</div>
+                  </div>
+                )}
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   <div className="text-xl font-black text-[#22c55e]">98%</div>
                   <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('profile.completion')}</div>

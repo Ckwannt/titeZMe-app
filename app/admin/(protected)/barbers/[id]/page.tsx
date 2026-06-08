@@ -45,6 +45,10 @@ interface BarberProfile {
   approvedAt?: number;
   rejectedAt?: number;
   suspendedAt?: number;
+  experienceStartYear?: number;
+  dateOfBirth?: string;
+  experienceLocked?: boolean;
+  experienceVerified?: boolean;
 }
 
 interface UserData {
@@ -392,6 +396,61 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
     } catch (err) {
       console.error('Reactivate error:', err);
       toast.error('Failed to reactivate');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleVerifyExperience() {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, 'barberProfiles', id), {
+        experienceVerified: true,
+      });
+      await addDoc(collection(db, 'adminLogs'), {
+        action: 'verified_barber_experience',
+        targetId: id,
+        adminId: user.uid,
+        timestamp: Date.now(),
+      });
+      toast.success('Experience verified ✓');
+      await loadData();
+    } catch (err) {
+      console.error('Verify experience error:', err);
+      toast.error('Failed to verify experience');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleRejectExperience() {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, 'barberProfiles', id), {
+        experienceVerified: false,
+        experienceLocked: false,
+      });
+      await addDoc(collection(db, 'notifications'), {
+        userId: id,
+        type: 'experience_rejected',
+        message: 'Your experience was not validated. Please resubmit.',
+        read: false,
+        linkTo: '/dashboard/barber/settings',
+        createdAt: Date.now(),
+      });
+      await addDoc(collection(db, 'adminLogs'), {
+        action: 'rejected_barber_experience',
+        targetId: id,
+        adminId: user.uid,
+        timestamp: Date.now(),
+      });
+      toast.success('Experience rejected — barber can resubmit');
+      await loadData();
+    } catch (err) {
+      console.error('Reject experience error:', err);
+      toast.error('Failed to reject experience');
     } finally {
       setSaving(false);
     }
@@ -904,6 +963,89 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
               </div>
             )}
           </div>
+
+          {/* Experience Verification Card */}
+          {profile.experienceStartYear && (() => {
+            const currentYear = new Date().getFullYear();
+            const yearsExp = currentYear - profile.experienceStartYear;
+            const estCuts = (yearsExp * 240 * 10) + (profile.totalCuts || 0);
+            const birthYear = profile.dateOfBirth ? new Date(profile.dateOfBirth).getFullYear() : null;
+            const ageAtStart = birthYear ? profile.experienceStartYear - birthYear : null;
+            let ageFlag = '';
+            let ageColor = '#888';
+            if (ageAtStart !== null) {
+              if (ageAtStart < 14) { ageFlag = '🚨'; ageColor = '#EF4444'; }
+              else if (ageAtStart < 16) { ageFlag = '⚠️'; ageColor = '#F5C518'; }
+              else { ageFlag = '✅'; ageColor = '#22C55E'; }
+            }
+            const dobReadable = profile.dateOfBirth
+              ? new Date(profile.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+              : 'Not provided';
+
+            return (
+              <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-5 mb-4">
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: '#fff', marginBottom: 14 }}>
+                  Experience Verification
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <span style={{ fontSize: 12, color: '#555', minWidth: 110, flexShrink: 0 }}>Date of birth</span>
+                    <span style={{ fontSize: 12, color: '#ccc', fontWeight: 600 }}>{dobReadable}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <span style={{ fontSize: 12, color: '#555', minWidth: 110, flexShrink: 0 }}>Started cutting</span>
+                    <span style={{ fontSize: 12, color: '#ccc', fontWeight: 600 }}>{profile.experienceStartYear}</span>
+                  </div>
+                  {ageAtStart !== null && (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <span style={{ fontSize: 12, color: '#555', minWidth: 110, flexShrink: 0 }}>Age when started</span>
+                      <span style={{ fontSize: 12, color: ageColor, fontWeight: 800 }}>
+                        {ageFlag} {ageAtStart} yrs
+                      </span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <span style={{ fontSize: 12, color: '#555', minWidth: 110, flexShrink: 0 }}>Years experience</span>
+                    <span style={{ fontSize: 12, color: '#ccc', fontWeight: 600 }}>{yearsExp}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <span style={{ fontSize: 12, color: '#555', minWidth: 110, flexShrink: 0 }}>Estimated cuts</span>
+                    <span style={{ fontSize: 12, color: '#ccc', fontWeight: 600 }}>{estCuts.toLocaleString()}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, color: '#555', minWidth: 110, flexShrink: 0 }}>Status</span>
+                    {profile.experienceVerified ? (
+                      <span className="bg-[#0f2010] text-[#22C55E] px-2.5 py-1 rounded-full text-[11px] font-black">Verified</span>
+                    ) : (
+                      <span className="bg-[#1a1500] text-[#F5C518] px-2.5 py-1 rounded-full text-[11px] font-black">Pending</span>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {!profile.experienceVerified && (
+                    <button
+                      onClick={handleVerifyExperience}
+                      disabled={saving}
+                      className="bg-[#22C55E] text-black font-black px-4 py-2.5 rounded-xl text-sm hover:opacity-90"
+                      style={{ flex: 1, border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}
+                    >
+                      ✓ Verify
+                    </button>
+                  )}
+                  {profile.experienceLocked === true && (
+                    <button
+                      onClick={handleRejectExperience}
+                      disabled={saving}
+                      className="border border-[#EF4444] text-[#EF4444] font-black px-4 py-2.5 rounded-xl text-sm hover:bg-[#1a0808]"
+                      style={{ flex: 1, background: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}
+                    >
+                      ✗ Reject & unlock
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Profile Info Card */}
           <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-5 mb-4">
