@@ -20,6 +20,7 @@ function AdminSidebar() {
     { label: '🏪 Shops', href: '/admin/shops', perm: p?.canApproveShops },
     { label: '👤 Clients', href: '/admin/clients', perm: p?.canManageUsers },
     { label: '📅 Bookings', href: '/admin/bookings', perm: p?.canManageBookings },
+    { label: '👥 Users', href: '/admin/users', perm: p?.canManageUsers },
     { label: '⭐ Reviews', href: '/admin/reviews', perm: p?.canManageReviews },
     { label: '🌟 Featured', href: '/admin/featured', perm: p?.canManageFeatured },
     { label: '👥 Team', href: '/admin/team', superAdminOnly: true },
