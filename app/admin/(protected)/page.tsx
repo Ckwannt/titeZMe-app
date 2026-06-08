@@ -51,6 +51,7 @@ interface Stats {
   bookingsMonth: number;
   bookingsTotal: number;
   suspendedAccounts: number;
+  experiencePending: number;
 }
 
 interface ActivityItem {
@@ -117,6 +118,7 @@ export default function AdminOverviewPage() {
     bookingsMonth: 0,
     bookingsTotal: 0,
     suspendedAccounts: 0,
+    experiencePending: 0,
   });
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,6 +146,13 @@ export default function AdminOverviewPage() {
     const unsubSuspended = onSnapshot(
       query(collection(db, 'barberProfiles'), where('approvalStatus', '==', 'suspended')),
       (snap) => setStats((prev) => ({ ...prev, suspendedAccounts: snap.size }))
+    );
+    const unsubExperience = onSnapshot(
+      query(collection(db, 'barberProfiles'), where('experienceLocked', '==', true)),
+      (snap) => {
+        const count = snap.docs.filter((d) => d.data().experienceVerified !== true).length;
+        setStats((prev) => ({ ...prev, experiencePending: count }));
+      }
     );
 
     // ── One-time getDocs for the rest (change infrequently) ──────────────────
@@ -199,6 +208,7 @@ export default function AdminOverviewPage() {
       unsubLive();
       unsubShops();
       unsubSuspended();
+      unsubExperience();
     };
   }, []);
 
@@ -253,6 +263,12 @@ export default function AdminOverviewPage() {
       color: stats.suspendedAccounts > 0 ? '#EF4444' : '#555',
       emoji: '🚫',
     },
+    {
+      label: 'Experience Pending',
+      value: stats.experiencePending,
+      color: '#F5C518',
+      emoji: '🎓',
+    },
   ];
 
   return (
@@ -275,7 +291,7 @@ export default function AdminOverviewPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
               gap: 12,
               marginBottom: 28,
             }}
@@ -304,7 +320,7 @@ export default function AdminOverviewPage() {
           </div>
 
           {/* Alerts */}
-          {(stats.pendingBarbers > 0 || stats.suspendedAccounts > 0) && (
+          {(stats.pendingBarbers > 0 || stats.suspendedAccounts > 0 || stats.experiencePending > 0) && (
             <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-5 mb-4">
               <h2
                 style={{
@@ -374,6 +390,38 @@ export default function AdminOverviewPage() {
                         fontSize: 12,
                         fontWeight: 800,
                         color: '#EF4444',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Review →
+                    </Link>
+                  </div>
+                )}
+                {stats.experiencePending > 0 && (
+                  <div
+                    style={{
+                      background: '#1a1400',
+                      border: '1px solid #F5C518',
+                      borderRadius: 12,
+                      padding: '12px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 18 }}>🎓</span>
+                      <span style={{ fontSize: 13, color: '#F5C518', fontWeight: 700 }}>
+                        {stats.experiencePending} barber
+                        {stats.experiencePending !== 1 ? 's' : ''} waiting for experience verification
+                      </span>
+                    </div>
+                    <Link
+                      href="/admin/barbers?tab=experience_pending"
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 800,
+                        color: '#F5C518',
                         textDecoration: 'none',
                       }}
                     >
