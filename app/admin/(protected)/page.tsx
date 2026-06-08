@@ -52,6 +52,7 @@ interface Stats {
   bookingsTotal: number;
   suspendedAccounts: number;
   experiencePending: number;
+  onlineUsers: number;
 }
 
 interface ActivityItem {
@@ -119,6 +120,7 @@ export default function AdminOverviewPage() {
     bookingsTotal: 0,
     suspendedAccounts: 0,
     experiencePending: 0,
+    onlineUsers: 0,
   });
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,6 +155,11 @@ export default function AdminOverviewPage() {
         const count = snap.docs.filter((d) => d.data().experienceVerified !== true).length;
         setStats((prev) => ({ ...prev, experiencePending: count }));
       }
+    );
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    const unsubOnline = onSnapshot(
+      query(collection(db, 'users'), where('lastSeenAt', '>=', fiveMinutesAgo)),
+      (snap) => setStats((prev) => ({ ...prev, onlineUsers: snap.size }))
     );
 
     // ── One-time getDocs for the rest (change infrequently) ──────────────────
@@ -209,6 +216,7 @@ export default function AdminOverviewPage() {
       unsubShops();
       unsubSuspended();
       unsubExperience();
+      unsubOnline();
     };
   }, []);
 
@@ -269,6 +277,12 @@ export default function AdminOverviewPage() {
       color: '#F5C518',
       emoji: '🎓',
     },
+    {
+      label: 'Online Now',
+      value: stats.onlineUsers,
+      color: '#22C55E',
+      emoji: '🟢',
+    },
   ];
 
   return (
@@ -320,7 +334,7 @@ export default function AdminOverviewPage() {
           </div>
 
           {/* Alerts */}
-          {(stats.pendingBarbers > 0 || stats.suspendedAccounts > 0 || stats.experiencePending > 0) && (
+          {(stats.pendingBarbers > 0 || stats.suspendedAccounts > 0 || stats.experiencePending > 0 || stats.onlineUsers > 0) && (
             <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-5 mb-4">
               <h2
                 style={{
@@ -427,6 +441,28 @@ export default function AdminOverviewPage() {
                     >
                       Review →
                     </Link>
+                  </div>
+                )}
+                {stats.onlineUsers > 0 && (
+                  <div style={{
+                    background: '#0a1f0a',
+                    border: '1px solid #22C55E',
+                    borderRadius: 12,
+                    padding: '12px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}>
+                    <span style={{ fontSize: 18 }}>🟢</span>
+                    <span style={{
+                      fontSize: 13,
+                      color: '#22C55E',
+                      fontWeight: 700,
+                    }}>
+                      {stats.onlineUsers} user
+                      {stats.onlineUsers !== 1 ? 's' : ''}
+                      {' '}online right now
+                    </span>
                   </div>
                 )}
               </div>
