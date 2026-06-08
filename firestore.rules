@@ -210,6 +210,13 @@ service cloud.firestore {
             && incoming().approvalStatus == existing().approvalStatus
             && incoming().isLive == existing().isLive
             && !incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalCuts'])
+            && (
+              existing().get('experienceLocked', false) == false
+              || (
+                incoming().get('experienceStartYear', null) == existing().get('experienceStartYear', null)
+                && incoming().get('dateOfBirth', null) == existing().get('dateOfBirth', null)
+              )
+            )
           )
         )
         // Shop owner setting a former team member solo during shop deletion.

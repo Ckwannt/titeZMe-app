@@ -175,6 +175,13 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     tiktok: profile?.tiktok || ''
   });
 
+  // Experience section state
+  const [experienceStartYear, setExperienceStartYear] = useState<string>(
+    profile?.experienceStartYear != null ? String(profile.experienceStartYear) : ''
+  );
+  const [dateOfBirth, setDateOfBirth] = useState<string>(profile?.dateOfBirth ?? '');
+  const [savingExperience, setSavingExperience] = useState(false);
+
   // Section C — Barber profile chips
   const [specialties, setSpecialties] = useState<string[]>(profile?.specialties || []);
   const [vibe, setVibe] = useState<string[]>(profile?.vibes || []);
@@ -194,6 +201,8 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     setNotifyEmail(profile?.notifyEmail !== false);
     setNotifyCancel(profile?.notifyCancel !== false);
     setShowPhone(profile?.showPhone === true);
+    setExperienceStartYear(profile?.experienceStartYear != null ? String(profile.experienceStartYear) : '');
+    setDateOfBirth(profile?.dateOfBirth ?? '');
   }, [profile]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -320,6 +329,29 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       setSuccessMsg(t('success.barberProfileUpdated'));
     } catch (e) { console.error(e); setErrorMsg(t('errors.failedSaveBarberProfile')); }
     setSavingProfile(false);
+  };
+
+  // Experience save — locks fields once saved
+  const handleSaveExperience = async () => {
+    if (!user || profile?.experienceLocked) return;
+    if (!experienceStartYear || !dateOfBirth) return;
+    setSavingExperience(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({
+        experienceStartYear: Number(experienceStartYear),
+        dateOfBirth,
+        experienceLocked: true,
+      }));
+      mutateProfile();
+      invalidateBarber(user.uid);
+      setSuccessMsg('Experience saved.');
+    } catch (e) {
+      console.error(e);
+      setErrorMsg('Failed to save experience.');
+    }
+    setSavingExperience(false);
   };
 
   // Sections E, F — toggle handlers (auto-save)
@@ -597,6 +629,78 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         >
           {savingGlobal ? t('settings.saving') : t('buttons.savePersonalInfo')}
         </button>
+      </section>
+
+      {/* SECTION A2: EXPERIENCE */}
+      <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
+        <h2 className="text-lg font-black mb-4">Experience</h2>
+
+        {profile?.experienceLocked ? (
+          <>
+            <div className="bg-[#1a1500] border border-brand-yellow/30 text-brand-yellow rounded-xl px-4 py-3 text-xs font-bold mb-5">
+              {t('barberSettings.experienceLocked')}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
+              <div>
+                <div className="text-xs font-bold text-[#888] mb-1.5 uppercase">{t('barberSettings.experienceStartYear')}</div>
+                <div className="text-white text-sm font-bold">{profile.experienceStartYear}</div>
+              </div>
+              <div>
+                <div className="text-xs font-bold text-[#888] mb-1.5 uppercase">Experience</div>
+                <div className="text-white text-sm font-bold">
+                  {new Date().getFullYear() - Number(profile.experienceStartYear)} years
+                </div>
+              </div>
+            </div>
+            <div className="mt-4">
+              {profile?.experienceVerified ? (
+                <span className="inline-block bg-[#0f2010] border border-[#1b3b1c] text-brand-green px-3 py-1 rounded-full text-xs font-black">
+                  ✓ {t('barberSettings.verified')}
+                </span>
+              ) : (
+                <span className="inline-block bg-[#1a1500] border border-brand-yellow/30 text-brand-yellow px-3 py-1 rounded-full text-xs font-black">
+                  ⏳ {t('barberSettings.pendingVerification')}
+                </span>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('barberSettings.dateOfBirth')}</label>
+                <input
+                  type="date"
+                  value={dateOfBirth}
+                  max={(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 18); return d.toISOString().slice(0, 10); })()}
+                  onChange={e => setDateOfBirth(e.target.value)}
+                  className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
+                />
+                <p className="text-[11px] text-[#555] mt-1.5">{t('barberSettings.dobHint')}</p>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('barberSettings.experienceStartYear')}</label>
+                <input
+                  type="number"
+                  min={1950}
+                  max={new Date().getFullYear()}
+                  placeholder="e.g. 2015"
+                  value={experienceStartYear}
+                  onChange={e => setExperienceStartYear(e.target.value)}
+                  className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
+                />
+                <p className="text-[11px] text-[#555] mt-1.5">{t('barberSettings.experienceHint')}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleSaveExperience}
+              disabled={savingExperience || !experienceStartYear || !dateOfBirth}
+              className="bg-brand-yellow text-black px-6 py-3 rounded-xl font-bold text-sm hover:bg-yellow-500 disabled:opacity-50"
+            >
+              {savingExperience ? t('settings.saving') : t('barberSettings.saveExperience')}
+            </button>
+          </>
+        )}
       </section>
 
       {/* SECTION C: BARBER PROFILE */}
