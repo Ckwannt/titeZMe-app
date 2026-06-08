@@ -13,6 +13,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
+import { useLang } from '@/lib/i18n/LangContext';
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,8 @@ type ShopData = {
   titeZMeCut?: { durationMinutes?: number; price?: number; currency?: string };
   createdAt?: number;
   ownerId?: string;
+  chairsCount?: number;
+  establishedYear?: number;
 };
 
 type BarberInShop = {
@@ -109,6 +112,7 @@ export default function ShopProfilePage() {
   const params = useParams();
   const shopId = params.shopId as string;
   const { user, appUser } = useAuth();
+  const { t } = useLang();
   const router = useRouter();
 
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
@@ -701,6 +705,22 @@ export default function ShopProfilePage() {
                   <span className="text-sm shrink-0">👥</span>
                   <div className="text-xs font-bold text-white">{barbers.length} active barbers</div>
                 </div>
+                {shop.chairsCount && (
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-sm shrink-0">💈</span>
+                    <div className="text-xs font-bold text-white">
+                      {t('shopPublic.chairs').replace('{count}', String(shop.chairsCount))}
+                    </div>
+                  </div>
+                )}
+                {shop.establishedYear && (
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-sm shrink-0">📅</span>
+                    <div className="text-xs font-bold text-white">
+                      {t('shopPublic.established').replace('{year}', String(shop.establishedYear))}
+                    </div>
+                  </div>
+                )}
                 {allLanguages.length > 0 && (
                   <div className="flex items-start gap-2.5">
                     <span className="text-sm shrink-0 mt-0.5">🗣</span>

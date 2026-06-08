@@ -62,6 +62,8 @@ export const barbershopSchema = z.object({
   photos: z.array(z.string()).optional(),
   videos: z.array(z.string()).optional(),
   amenities: z.array(z.string()).optional(),
+  chairsCount: z.number().int().min(1).max(99).optional(),
+  establishedYear: z.number().int().min(1900).max(new Date().getFullYear()).optional(),
   createdAt: z.number().optional(),
 }).passthrough();
 
