@@ -182,6 +182,14 @@ service cloud.firestore {
             && incoming().unreadCount is number
             && incoming().unreadCount >= 0
           )
+          ||
+          (
+            request.auth.uid == userId
+            && incoming().diff(existing())
+              .affectedKeys()
+              .hasOnly(['lastSeenAt'])
+            && incoming().lastSeenAt is number
+          )
         );
 
       allow delete: if (
