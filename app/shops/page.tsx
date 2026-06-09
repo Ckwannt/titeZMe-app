@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getOpenStatus, getTimezoneFromLocation, getLocalDateString } from '@/lib/schedule-utils';
 import { locationsMatch } from '@/lib/location-utils';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useAuth } from '@/lib/auth-context';
 
 const PER_PAGE = 12;
 
@@ -55,6 +56,7 @@ type ShopCard = {
   hasSchedule: boolean;
   minPrice: number | null;
   currency?: string;
+  isFeatured?: boolean;
 };
 
 // ─── data fetcher ─────────────────────────────────────────────────────────────
@@ -115,6 +117,7 @@ async function fetchShops(): Promise<ShopCard[]> {
       hasSchedule: sched !== null,
       minPrice: prices.length > 0 ? Math.min(...prices) : null,
       currency: 'EUR',
+      isFeatured: Boolean(s.isFeatured),
     };
   });
 }
@@ -163,6 +166,8 @@ function Pagination({ page, total, onChange }: {
 
 export default function ShopsPage() {
   const router = useRouter();
+  const { user, authLoading } = useAuth();
+  const shouldBlur = !authLoading && !user;
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -261,10 +266,11 @@ export default function ShopsPage() {
       list = list.filter(s => s.name.toLowerCase().includes(q));
     }
 
-    return [
-      ...fisherYates(list.filter(s => s.isOpenNow)),
-      ...fisherYates(list.filter(s => !s.isOpenNow)),
-    ];
+    const featured = list.filter(s => s.isFeatured);
+    const nonFeatured = list.filter(s => !s.isFeatured);
+    const openNow = fisherYates(nonFeatured.filter(s => s.isOpenNow));
+    const closed = fisherYates(nonFeatured.filter(s => !s.isOpenNow));
+    return [...featured, ...openNow, ...closed];
   }, [allShops, activeFilter, debouncedNameSearch]);
 
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -402,68 +408,117 @@ export default function ShopsPage() {
               {filtered.length} shop{filtered.length !== 1 ? 's' : ''} found
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full items-stretch">
-              {paged.map(s => {
+              {(() => {
+                const firstBlurredIndex = paged.findIndex(
+                  ss => shouldBlur && !ss.isFeatured
+                );
+                return paged.map(s => {
+                const isFeaturedCard = s.isFeatured === true;
+                const applyBlur = shouldBlur && !isFeaturedCard;
+                const showOverlay = applyBlur && paged.indexOf(s) === firstBlurredIndex;
                 const initials = s.name.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
 
                 return (
-                  <Link key={s.id} href={`/shop/${s.id}`}
-                    prefetch={false}
-                    onMouseEnter={() => router.prefetch(`/shop/${s.id}`)}
-                    className="bg-[#141414] border border-[#222] rounded-[12px] overflow-hidden cursor-pointer flex flex-col">
+                  <div key={s.id} className="relative h-full">
+                    <div
+                      className="h-full"
+                      style={{
+                        filter: applyBlur ? 'blur(5px)' : 'none',
+                        pointerEvents: applyBlur ? 'none' : 'auto',
+                        userSelect: applyBlur ? 'none' : 'auto',
+                        transition: 'filter 0.2s',
+                      }}
+                    >
+                      <Link href={`/shop/${s.id}`}
+                        prefetch={false}
+                        onMouseEnter={() => router.prefetch(`/shop/${s.id}`)}
+                        className="bg-[#141414] border border-[#222] rounded-[12px] overflow-hidden cursor-pointer flex flex-col h-full">
 
-                    {/* TOP — Cover / gradient area */}
-                    <div className="relative h-[140px] flex items-center justify-center shrink-0"
-                      style={{ background: 'linear-gradient(135deg, #E8491D, #F5C518)' }}>
-                      {s.coverPhotoUrl ? (
-                        <Image src={s.coverPhotoUrl} alt={s.name} fill className="object-cover" referrerPolicy="no-referrer" />
-                      ) : (
-                        <span className="text-[40px] font-black" style={{ color: 'rgba(0,0,0,0.3)' }}>
-                          {initials}
-                        </span>
-                      )}
+                        {/* TOP — Cover / gradient area */}
+                        <div className="relative h-[140px] flex items-center justify-center shrink-0"
+                          style={{ background: 'linear-gradient(135deg, #E8491D, #F5C518)' }}>
+                          {s.coverPhotoUrl ? (
+                            <Image src={s.coverPhotoUrl} alt={s.name} fill className="object-cover" referrerPolicy="no-referrer" />
+                          ) : (
+                            <span className="text-[40px] font-black" style={{ color: 'rgba(0,0,0,0.3)' }}>
+                              {initials}
+                            </span>
+                          )}
 
-                      {/* Status badge */}
-                      {s.hasSchedule && (
-                        <span className={`absolute top-[10px] left-[10px] text-[10px] font-extrabold px-[10px] py-[3px] rounded-full ${
-                          s.isOpenNow
-                            ? 'bg-[#0f2010] text-[#22C55E]'
-                            : 'bg-[#1a0808] text-[#EF4444]'
-                        }`}>
-                          ● {s.isOpenNow ? 'Open now' : 'Closed today'}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* BOTTOM — Info area */}
-                    <div className="flex flex-col flex-1 px-[14px] py-[12px]">
-                      {/* Shop name */}
-                      <div className="text-[13px] font-extrabold text-white mb-1 truncate">
-                        {s.name}
-                      </div>
-
-                      {/* Street address */}
-                      {s.street && (
-                        <div className="text-[11px] text-[#666] mb-0.5 truncate">
-                          📍 {s.street}
+                          {/* Status badge */}
+                          {s.hasSchedule && (
+                            <span className={`absolute top-[10px] left-[10px] text-[10px] font-extrabold px-[10px] py-[3px] rounded-full ${
+                              s.isOpenNow
+                                ? 'bg-[#0f2010] text-[#22C55E]'
+                                : 'bg-[#1a0808] text-[#EF4444]'
+                            }`}>
+                              ● {s.isOpenNow ? 'Open now' : 'Closed today'}
+                            </span>
+                          )}
                         </div>
-                      )}
 
-                      {/* City, Country */}
-                      {(s.city || s.country) && (
-                        <div className="text-[11px] text-[#555] mb-[10px] truncate">
-                          {[s.city, s.country].filter(Boolean).join(', ')}
+                        {/* BOTTOM — Info area */}
+                        <div className="flex flex-col flex-1 px-[14px] py-[12px]">
+                          {/* Shop name */}
+                          <div className="text-[13px] font-extrabold text-white mb-1 truncate">
+                            {s.name}
+                          </div>
+
+                          {/* Street address */}
+                          {s.street && (
+                            <div className="text-[11px] text-[#666] mb-0.5 truncate">
+                              📍 {s.street}
+                            </div>
+                          )}
+
+                          {/* City, Country */}
+                          {(s.city || s.country) && (
+                            <div className="text-[11px] text-[#555] mb-[10px] truncate">
+                              {[s.city, s.country].filter(Boolean).join(', ')}
+                            </div>
+                          )}
+
+                          {/* Bottom row */}
+                          <div className="flex justify-between items-center mt-auto">
+                            <span className="text-[11px] text-[#555]">New shop ✨</span>
+                            <span className="text-[12px] font-bold text-[#E8491D]">View shop →</span>
+                          </div>
                         </div>
-                      )}
-
-                      {/* Bottom row */}
-                      <div className="flex justify-between items-center mt-auto">
-                        <span className="text-[11px] text-[#555]">New shop ✨</span>
-                        <span className="text-[12px] font-bold text-[#E8491D]">View shop →</span>
-                      </div>
+                      </Link>
                     </div>
-                  </Link>
+                    {showOverlay && (
+                      <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 10,
+                        zIndex: 10,
+                        borderRadius: 12,
+                        background: 'rgba(10,10,10,0.5)',
+                        padding: 16,
+                      }}>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: '#fff', textAlign: 'center' }}>
+                          Sign up to see all shops
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                          <a href="/signup" style={{
+                            background: '#F5C518', color: '#0a0a0a', fontWeight: 900, fontSize: 12,
+                            padding: '8px 16px', borderRadius: 8, textDecoration: 'none',
+                          }}>Create Account →</a>
+                          <a href="/login" style={{
+                            background: '#1a1a1a', color: '#fff', fontWeight: 900, fontSize: 12,
+                            padding: '8px 16px', borderRadius: 8, border: '1px solid #333', textDecoration: 'none',
+                          }}>Log in</a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
-              })}
+                });
+              })()}
             </div>
             <Pagination page={page} total={filtered.length} onChange={setPage} />
           </>
