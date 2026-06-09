@@ -91,7 +91,8 @@ async function fetchFeaturedBarbers() {
         maxPrice: prices.length > 0 ? Math.max(...prices) : null,
       };
     });
-  } catch {
+  } catch (err) {
+    console.error('[fetchFeaturedBarbers]', err);
     return [];
   }
 }
