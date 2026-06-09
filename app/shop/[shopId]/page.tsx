@@ -251,29 +251,27 @@ export default function ShopProfilePage() {
 
   // ─── actions ─────────────────────────────────────────────────────────────
 
-  const handleServiceBook = (serviceId: string) => {
-    if (!user) { router.push(`/login?redirect=/shop/${shopId}`); return; }
-    if (!appUser?.role) { toast.error('Please log in to book'); return; }
-    if (appUser?.role === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
-    if (!appUser?.isOnboarded) {
-      router.push(appUser?.role === 'barber' ? '/onboarding/barber' : '/onboarding/client');
+  const handleBookService = (serviceId?: string) => {
+    if (!user) {
+      router.push(`/login?redirect=/shop/${shopId}`);
       return;
     }
-    const firstAvailable = barbers.find(b => b.availableToday && b.isLive);
-    if (!firstAvailable) { toast.error('No barbers available right now'); return; }
-    router.push(`/book/${firstAvailable.id}?context=shop&serviceId=${serviceId}`);
-  };
-
-  const handleBarberBook = (barberId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!user) { router.push(`/login?redirect=/shop/${shopId}`); return; }
-    if (!appUser?.role) { toast.error('Please log in to book'); return; }
-    if (appUser?.role === 'admin') { toast.error('Admin accounts cannot make bookings'); return; }
-    if (!appUser?.isOnboarded) {
-      router.push(appUser?.role === 'barber' ? '/onboarding/barber' : '/onboarding/client');
+    if (appUser?.role === 'admin') {
+      toast.error('Admin accounts cannot make bookings');
       return;
     }
-    router.push(`/book/${barberId}?context=shop`);
+    if (!appUser?.isOnboarded) {
+      router.push(
+        appUser?.role === 'barber'
+          ? '/onboarding/barber'
+          : '/onboarding/client'
+      );
+      return;
+    }
+    const url = serviceId
+      ? `/book/shop/${shopId}?serviceId=${serviceId}`
+      : `/book/shop/${shopId}`;
+    router.push(url);
   };
 
   const handleShare = () => {
@@ -547,13 +545,9 @@ export default function ShopProfilePage() {
                         )}
 
                         {/* Book button */}
-                        <button
-                          onClick={e => isAvailable ? handleBarberBook(b.id, e) : e.preventDefault()}
-                          disabled={!isAvailable}
-                          className={`w-full py-2.5 rounded-xl font-black text-sm transition-colors ${isAvailable ? 'bg-white text-[#0a0a0a] hover:bg-brand-yellow' : 'bg-[#1a1a1a] text-[#444] cursor-not-allowed'}`}
-                        >
-                          {isAvailable ? `Book ${b.firstName ?? 'Barber'} →` : 'Unavailable'}
-                        </button>
+                        <div className="w-full py-2.5 rounded-xl font-black text-sm text-center bg-[#1a1a1a] text-[#888] border border-[#2a2a2a] mt-1">
+                          View Profile →
+                        </div>
                       </Link>
                     );
                   })}
@@ -586,7 +580,7 @@ export default function ShopProfilePage() {
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="font-black text-brand-yellow">{currency}{shop.titeZMeCut.price}</div>
                       <button
-                        onClick={() => handleServiceBook('titeZMeCut')}
+                        onClick={() => handleBookService('titeZMeCut')}
                         className="bg-[#1a1a1a] text-white border border-[#333] hover:bg-brand-yellow hover:text-[#0a0a0a] hover:border-brand-yellow px-4 py-2 rounded-xl text-xs font-bold transition-colors"
                       >
                         Book
@@ -613,7 +607,7 @@ export default function ShopProfilePage() {
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="font-black text-brand-yellow">{currency}{s.price}</div>
                       <button
-                        onClick={() => handleServiceBook(s.id)}
+                        onClick={() => handleBookService(s.id)}
                         className="bg-[#1a1a1a] text-white border border-[#333] group-hover:bg-brand-yellow group-hover:text-[#0a0a0a] group-hover:border-brand-yellow px-4 py-2 rounded-xl text-xs font-bold transition-colors"
                       >
                         Book
