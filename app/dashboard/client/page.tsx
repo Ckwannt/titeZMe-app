@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { query, where, orderBy, doc, getDoc, updateDoc, onSnapshot, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -14,15 +14,28 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import Image from 'next/image';
 import { useLang } from '@/lib/i18n/LangContext';
 
+type ShopCache = {
+  name?: string;
+  logoUrl?: string;
+  googleMapsUrl?: string;
+  address?: {
+    street?: string;
+    number?: string;
+    city?: string;
+    country?: string;
+  };
+};
+
 export default function ClientDashboard() {
   const { user, appUser, loading } = useAuth();
   const router = useRouter();
-  
+
   const { t } = useLang();
   const [activeTab, setActiveTab] = useState("Bookings");
   const [bookings, setBookings] = useState<any[]>([]);
   const [fetching, setFetching] = useState(true);
   const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+  const shopCacheRef = useRef<Record<string, ShopCache>>({});
 
   useEffect(() => { document.title = 'My Bookings — titeZMe'; }, []);
 
@@ -83,6 +96,29 @@ export default function ClientDashboard() {
             return b;
           })
         );
+
+        for (const b of enriched) {
+          if (b.bookingContext === 'shop' && b.shopId) {
+            if (!shopCacheRef.current[b.shopId]) {
+              try {
+                const shopSnap = await getDoc(doc(db, 'barbershops', b.shopId));
+                if (shopSnap.exists()) {
+                  shopCacheRef.current[b.shopId] = shopSnap.data() as ShopCache;
+                }
+              } catch {
+                // silent fail
+              }
+            }
+            const shopData = shopCacheRef.current[b.shopId];
+            if (shopData) {
+              b.shopName = shopData.name;
+              b.shopLogoUrl = shopData.logoUrl;
+              b.shopGoogleMapsUrl = shopData.googleMapsUrl;
+              b.shopAddress = shopData.address;
+            }
+          }
+        }
+
         setBookings(enriched);
         setFetching(false);
       },
@@ -196,28 +232,99 @@ export default function ClientDashboard() {
                  </div>
                ) : (
                  upcomingBookings.map(b => (
-                   <div key={b.id} className="bg-brand-surface border border-brand-border rounded-2xl p-5 border-l-[4px] border-l-brand-yellow">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                           <div className="font-black text-lg text-brand-yellow mb-1">{new Date(b.date).toLocaleDateString()} at {b.startTime}</div>
-                           <div className="text-sm font-extrabold text-white">{b.barberName}</div>
-                           <div className="text-xs text-brand-text-secondary font-bold">{b.serviceName}</div>
-                        </div>
-                        <div className="font-black text-white bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-[#2a2a2a]">
+                   <div
+                     key={b.id}
+                     className="bg-brand-surface border border-brand-border rounded-2xl p-5 border-l-[4px] border-l-brand-yellow"
+                   >
+                     {/* Header row — date/time + price */}
+                     <div className="flex justify-between items-start mb-3">
+                       <div className="font-black text-lg text-brand-yellow">
+                         {new Date(b.date).toLocaleDateString()} at {b.startTime}
+                       </div>
+                       <div className="text-right">
+                         <div className="font-black text-white bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-[#2a2a2a]">
                            €{b.price}
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center mt-4 pt-4 border-t border-[#2a2a2a]">
-                        <span className="text-[11px] font-extrabold text-[#555] uppercase tracking-wide">Status: {b.status}</span>
-                        {b.status === 'completed' && (
-                          b.hasReview
-                            ? <span className="text-[11px] font-black text-[#22C55E]">{t('clientDash.reviewed')}</span>
-                            : <button onClick={() => router.push(`/review/${b.id}`)} className="text-[11px] font-black text-brand-yellow border border-brand-yellow hover:bg-[#1a1500] px-3 py-1.5 rounded-lg transition-colors">{t('clientDash.leaveReview')}</button>
-                        )}
-                        {b.status === 'pending' || b.status === 'confirmed' ? (
-                          <button onClick={() => setConfirmCancel(b.id)} className="text-[11px] font-black text-brand-red hover:bg-[#1a0808] px-3 py-1.5 rounded-lg transition-colors">{t('clientDash.cancelBooking')}</button>
-                        ) : null}
-                      </div>
+                         </div>
+                         <div className="text-[10px] text-[#555] font-bold mt-1">
+                           💵 Cash
+                         </div>
+                       </div>
+                     </div>
+
+                     {/* Shop context block */}
+                     {b.bookingContext === 'shop' && b.shopName ? (
+                       <div className="mb-3">
+                         <div className="flex items-center gap-2 mb-1">
+                           <span className="text-[10px] font-black text-[#F5C518] bg-[#1a1400] border border-[#F5C51830] px-2 py-0.5 rounded-full uppercase tracking-wide">
+                             🏪 Shop
+                           </span>
+                           <span className="font-black text-sm text-white">
+                             {b.shopName}
+                           </span>
+                         </div>
+                         <div className="text-xs text-[#666] font-bold mb-1">
+                           ✂️ with {b.barberName}
+                         </div>
+                         <div className="text-xs font-bold text-[#888]">
+                           {b.serviceName}
+                         </div>
+                         {b.shopAddress && (
+                           <div className="text-[11px] text-[#555] mt-1.5">
+                             📍 {[
+                               b.shopAddress.street,
+                               b.shopAddress.number,
+                               b.shopAddress.city,
+                             ].filter(Boolean).join(', ')}
+                           </div>
+                         )}
+                         {b.shopGoogleMapsUrl && (
+                           <a
+                             href={b.shopGoogleMapsUrl}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="inline-flex items-center gap-1 text-[11px] font-black text-[#F5C518] hover:underline mt-1.5"
+                           >
+                             🗺 Open in Google Maps →
+                           </a>
+                         )}
+                       </div>
+                     ) : (
+                       <div className="mb-3">
+                         <div className="font-black text-sm text-white mb-0.5">
+                           {b.barberName}
+                         </div>
+                         <div className="text-xs text-brand-text-secondary font-bold">
+                           {b.serviceName}
+                         </div>
+                       </div>
+                     )}
+
+                     {/* Status + actions row */}
+                     <div className="flex justify-between items-center mt-4 pt-4 border-t border-[#2a2a2a]">
+                       <span className="text-[11px] font-extrabold text-[#555] uppercase tracking-wide">
+                         Status: {b.status}
+                       </span>
+                       {b.status === 'completed' && (
+                         b.hasReview
+                           ? <span className="text-[11px] font-black text-[#22C55E]">
+                               {t('clientDash.reviewed')}
+                             </span>
+                           : <button
+                               onClick={() => router.push(`/review/${b.id}`)}
+                               className="text-[11px] font-black text-brand-yellow border border-brand-yellow hover:bg-[#1a1500] px-3 py-1.5 rounded-lg transition-colors"
+                             >
+                               {t('clientDash.leaveReview')}
+                             </button>
+                       )}
+                       {(b.status === 'pending' || b.status === 'confirmed') && (
+                         <button
+                           onClick={() => setConfirmCancel(b.id)}
+                           className="text-[11px] font-black text-brand-red hover:bg-[#1a0808] px-3 py-1.5 rounded-lg transition-colors"
+                         >
+                           {t('clientDash.cancelBooking')}
+                         </button>
+                       )}
+                     </div>
                    </div>
                  ))
                )}
@@ -232,7 +339,20 @@ export default function ClientDashboard() {
                    <div key={b.id} className="bg-transparent border border-[#2a2a2a] rounded-2xl p-4 flex justify-between items-center">
                       <div className="min-w-0">
                         <div className="text-xs font-bold text-brand-text-secondary mb-0.5">{b.date} • {b.startTime}</div>
-                        <div className="text-sm font-extrabold text-white truncate">{b.barberName} - {b.serviceName}</div>
+                        {b.bookingContext === 'shop' && b.shopName ? (
+                          <div>
+                            <div className="font-extrabold text-sm text-white">
+                              {b.shopName}
+                            </div>
+                            <div className="text-xs text-[#555] font-bold">
+                              {b.barberName} · {b.serviceName}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="font-extrabold text-sm text-white">
+                            {b.barberName} · {b.serviceName}
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
                         <div className="font-extrabold text-white text-sm mb-0.5">€{b.price}</div>
