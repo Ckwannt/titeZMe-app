@@ -359,7 +359,7 @@ export default function ShopBookingPage() {
 
       toast.success(t('booking.bookingSuccess') || 'Booking confirmed!');
       await new Promise(r => setTimeout(r, 800));
-      router.push(appUser?.role === 'barber' ? '/dashboard/barber/bookings' : '/dashboard/client/bookings');
+      router.push(appUser?.role === 'barber' ? '/dashboard/barber/bookings' : '/dashboard/client');
     } catch (e: any) {
       console.error(e);
       if (e?.message === 'OVERLAP') {
