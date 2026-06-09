@@ -11,11 +11,16 @@ import { locationsMatch } from '@/lib/location-utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { BarberCard } from './page';
 import { useLang } from '@/lib/i18n/LangContext';
+import { collection, query as firestoreQuery, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/lib/auth-context';
 
 const algoliaClient = algoliasearch(
   process.env.NEXT_PUBLIC_ALGOLIA_APP_ID!,
   process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY!
 );
+
+type BarberCardItem = BarberCard & { isFeatured?: boolean };
 
 // ─── open status helper ───────────────────────────────────────────────────────
 
@@ -52,18 +57,26 @@ function computeOpenStatus(
 
 // ─── client-side data fetcher ─────────────────────────────────────────────────
 
-async function fetchBarbers(): Promise<BarberCard[]> {
-  const response = await algoliaClient.search({
-    requests: [{
-      indexName: 'barbers',
-      query:     '',
-      filters:
-        'isLive:true AND ' +
-        'approvalStatus:approved AND ' +
-        'isSolo:true',
-      hitsPerPage: 1000,
-    }],
-  });
+async function fetchBarbers(): Promise<BarberCardItem[]> {
+  const [response, featuredSnap] = await Promise.all([
+    algoliaClient.search({
+      requests: [{
+        indexName: 'barbers',
+        query:     '',
+        filters:
+          'isLive:true AND ' +
+          'approvalStatus:approved AND ' +
+          'isSolo:true',
+        hitsPerPage: 1000,
+      }],
+    }),
+    getDocs(firestoreQuery(
+      collection(db, 'barberProfiles'),
+      where('isFeatured', '==', true),
+    )),
+  ]);
+
+  const featuredIds = new Set<string>(featuredSnap.docs.map(d => d.id));
 
   const hits =
     (response.results[0] as any).hits as any[];
@@ -82,6 +95,7 @@ async function fetchBarbers(): Promise<BarberCard[]> {
     barberCode:     hit.barberCode     || '',
     street:         '',
     minPrice:       hit.minPrice       || 0,
+    isFeatured:     featuredIds.has(hit.objectID),
     ...computeOpenStatus(
       hit.weeklyDays || [],
       hit.opensAt    || '09:00',
@@ -149,11 +163,13 @@ function Pagination({ page, total, onChange }: {
 }
 
 interface BarbersClientProps {
-  initialBarbers?: BarberCard[];
+  initialBarbers?: BarberCardItem[];
 }
 
 export default function BarbersClient({ initialBarbers }: BarbersClientProps = {}) {
   const router = useRouter();
+  const { user, authLoading } = useAuth();
+  const shouldBlur = !authLoading && !user;
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -263,10 +279,11 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
       );
     }
 
-    return [
-      ...fisherYates(list.filter(b => b.isOpenNow)),
-      ...fisherYates(list.filter(b => !b.isOpenNow)),
-    ];
+    const featured = list.filter(b => b.isFeatured);
+    const nonFeatured = list.filter(b => !b.isFeatured);
+    const openNow = fisherYates(nonFeatured.filter(b => b.isOpenNow));
+    const closed = fisherYates(nonFeatured.filter(b => !b.isOpenNow));
+    return [...featured, ...openNow, ...closed];
   }, [allBarbers, activeFilter, debouncedNameSearch]);
 
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -408,7 +425,14 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
               {filtered.length} barber{filtered.length !== 1 ? 's' : ''} found
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full items-stretch">
-              {paged.map(b => {
+              {(() => {
+                const firstBlurredIndex = paged.findIndex(
+                  bb => shouldBlur && !bb.isFeatured
+                );
+                return paged.map(b => {
+                const isFeaturedCard = b.isFeatured === true;
+                const applyBlur = shouldBlur && !isFeaturedCard;
+                const showOverlay = applyBlur && paged.indexOf(b) === firstBlurredIndex;
                 const name = `${b.firstName} ${b.lastName}`.trim() || 'Barber';
                 const photo = b.profilePhotoUrl || b.photoUrl;
                 const sym = currencySymbol(b.currency);
@@ -416,65 +440,107 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
                 const extraLangs = b.languages.length > 2 ? b.languages.length - 2 : 0;
 
                 return (
-                  <Link key={b.id} href={`/barber/${b.id}`}
-                    prefetch={false}
-                    onMouseEnter={() => router.prefetch(`/barber/${b.id}`)}
-                    className="bg-[#141414] border border-[#222] rounded-[12px] p-[14px] cursor-pointer flex flex-col">
+                  <div key={b.id} className="relative h-full">
+                    <div
+                      className="h-full"
+                      style={{
+                        filter: applyBlur ? 'blur(5px)' : 'none',
+                        pointerEvents: applyBlur ? 'none' : 'auto',
+                        userSelect: applyBlur ? 'none' : 'auto',
+                        transition: 'filter 0.2s',
+                      }}
+                    >
+                      <Link href={`/barber/${b.id}`}
+                        prefetch={false}
+                        onMouseEnter={() => router.prefetch(`/barber/${b.id}`)}
+                        className="bg-[#141414] border border-[#222] rounded-[12px] p-[14px] cursor-pointer flex flex-col h-full">
 
-                    <div className="flex items-start gap-[10px]">
-                      <div className="relative w-11 h-11 rounded-[10px] overflow-hidden bg-[#E8491D] shrink-0 flex items-center justify-center">
-                        {photo ? (
-                          <Image src={photo} alt={name} fill className="object-cover" referrerPolicy="no-referrer" />
-                        ) : (
-                          <span className="text-[20px] font-black text-white leading-none">{name[0]?.toUpperCase()}</span>
-                        )}
-                      </div>
+                        <div className="flex items-start gap-[10px]">
+                          <div className="relative w-11 h-11 rounded-[10px] overflow-hidden bg-[#E8491D] shrink-0 flex items-center justify-center">
+                            {photo ? (
+                              <Image src={photo} alt={name} fill className="object-cover" referrerPolicy="no-referrer" />
+                            ) : (
+                              <span className="text-[20px] font-black text-white leading-none">{name[0]?.toUpperCase()}</span>
+                            )}
+                          </div>
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="font-extrabold text-[13px] text-white truncate">{name}</span>
-                          <span className="text-[10px] text-[#555] font-semibold whitespace-nowrap shrink-0">New ✨</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-extrabold text-[13px] text-white truncate">{name}</span>
+                              <span className="text-[10px] text-[#555] font-semibold whitespace-nowrap shrink-0">New ✨</span>
+                            </div>
+                            {b.city && (
+                              <div className="text-[11px] text-[#666] mt-[3px]">📍 {b.city}</div>
+                            )}
+                          </div>
                         </div>
-                        {b.city && (
-                          <div className="text-[11px] text-[#666] mt-[3px]">📍 {b.city}</div>
+
+                        <div className="h-px bg-[#1e1e1e] my-[10px]" />
+
+                        {b.hasSchedule && (
+                          <div className={`text-[10px] font-bold mb-[8px] ${b.openColor}`}>
+                            {b.isOpenNow ? t('status.openNow') : t('status.closed')}
+                          </div>
                         )}
-                      </div>
-                    </div>
 
-                    <div className="h-px bg-[#1e1e1e] my-[10px]" />
+                        {b.languages.length > 0 && (
+                          <div className="flex items-center gap-1.5 flex-wrap mb-[10px]">
+                            {displayLangs.map((lang: string, i: number) => (
+                              <span key={lang} className="flex items-center gap-1 text-[11px] text-[#888]">
+                                {i > 0 && <span className="text-[#444]">·</span>}
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#60a5fa] inline-block shrink-0" />
+                                {lang}
+                              </span>
+                            ))}
+                            {extraLangs > 0 && (
+                              <span className="text-[11px] text-[#555]">+{extraLangs}</span>
+                            )}
+                          </div>
+                        )}
 
-                    {b.hasSchedule && (
-                      <div className={`text-[10px] font-bold mb-[8px] ${b.openColor}`}>
-                        {b.isOpenNow ? t('status.openNow') : t('status.closed')}
-                      </div>
-                    )}
-
-                    {b.languages.length > 0 && (
-                      <div className="flex items-center gap-1.5 flex-wrap mb-[10px]">
-                        {displayLangs.map((lang: string, i: number) => (
-                          <span key={lang} className="flex items-center gap-1 text-[11px] text-[#888]">
-                            {i > 0 && <span className="text-[#444]">·</span>}
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#60a5fa] inline-block shrink-0" />
-                            {lang}
+                        <div className="flex justify-between items-center mt-auto">
+                          <span className="text-[13px] font-bold text-white">
+                            {b.minPrice !== null ? `from ${sym}${b.minPrice}` : t('buttons.onRequest')}
                           </span>
-                        ))}
-                        {extraLangs > 0 && (
-                          <span className="text-[11px] text-[#555]">+{extraLangs}</span>
-                        )}
+                          <span className="text-[12px] font-bold text-[#E8491D]">
+                            {t('buttons.viewProfile')}
+                          </span>
+                        </div>
+                      </Link>
+                    </div>
+                    {showOverlay && (
+                      <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 10,
+                        zIndex: 10,
+                        borderRadius: 12,
+                        background: 'rgba(10,10,10,0.5)',
+                        padding: 16,
+                      }}>
+                        <div style={{ fontSize: 13, fontWeight: 900, color: '#fff', textAlign: 'center' }}>
+                          Sign up to see all barbers
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                          <a href="/signup" style={{
+                            background: '#F5C518', color: '#0a0a0a', fontWeight: 900, fontSize: 12,
+                            padding: '8px 16px', borderRadius: 8, textDecoration: 'none',
+                          }}>Create Account →</a>
+                          <a href="/login" style={{
+                            background: '#1a1a1a', color: '#fff', fontWeight: 900, fontSize: 12,
+                            padding: '8px 16px', borderRadius: 8, border: '1px solid #333', textDecoration: 'none',
+                          }}>Log in</a>
+                        </div>
                       </div>
                     )}
-
-                    <div className="flex justify-between items-center mt-auto">
-                      <span className="text-[13px] font-bold text-white">
-                        {b.minPrice !== null ? `from ${sym}${b.minPrice}` : t('buttons.onRequest')}
-                      </span>
-                      <span className="text-[12px] font-bold text-[#E8491D]">
-                        {t('buttons.viewProfile')}
-                      </span>
-                    </div>
-                  </Link>
+                  </div>
                 );
-              })}
+                });
+              })()}
             </div>
             <Pagination page={page} total={filtered.length} onChange={setPage} />
           </>
