@@ -86,8 +86,8 @@ async function fetchFeaturedBarbers() {
       const prices = servicesPriceMap.get(p.id) || [];
       return {
         ...p,
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
+        firstName: p.firstName || user.firstName || '',
+        lastName: p.lastName || user.lastName || '',
         userCity: p.city || user.city || '',
         photoUrl: p.profilePhotoUrl || user.photoUrl,
         minPrice: prices.length > 0 ? Math.min(...prices) : null,
