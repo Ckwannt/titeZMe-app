@@ -9,6 +9,7 @@ const INITIAL_FORM = {
   name: '',
   email: '',
   role: 'client',
+  subject: 'bug',
   message: '',
   honeypot: '',
 };
@@ -31,6 +32,7 @@ export default function ContactPage() {
         name: form.name.trim().slice(0, 100),
         email: form.email.trim().slice(0, 200),
         role: form.role,
+        subject: form.subject,
         message: form.message.trim().slice(0, 2000),
         createdAt: serverTimestamp(),
         read: false,
@@ -38,7 +40,7 @@ export default function ContactPage() {
       setIsSubmitted(true);
     } catch (err) {
       console.error('Contact form error:', err);
-      setError('Something went wrong. Please try again.');
+      setError(t('contactPage.errorGeneric'));
     } finally {
       setIsSending(false);
     }
@@ -50,6 +52,9 @@ export default function ContactPage() {
         <div className="max-w-[1200px] mx-auto mb-16 text-center">
           <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6">{t('contactPage.title')}</h1>
           <p className="text-xl font-bold text-gray-400">{t('contactPage.subtitle')}<br/>{t('contactPage.respond')}</p>
+          <p style={{ fontSize: 13, color: '#888', marginTop: 8, fontWeight: 600 }}>
+            {t('contactPage.socialProof')}
+          </p>
         </div>
 
         <div className="max-w-[1000px] mx-auto grid md:grid-cols-[1.2fr_1fr] gap-12 lg:gap-24">
@@ -103,7 +108,29 @@ export default function ContactPage() {
                       <option value="client">{t('contactPage.roleClient')}</option>
                       <option value="barber">{t('contactPage.roleBarber')}</option>
                       <option value="shop_owner">{t('contactPage.roleShopOwner')}</option>
+                      <option value="barber_school">{t('contactPage.roleBarberSchool')}</option>
+                      <option value="brand_sponsor">{t('contactPage.roleBrandSponsor')}</option>
+                      <option value="city_partner">{t('contactPage.roleCityPartner')}</option>
+                      <option value="investor">{t('contactPage.roleInvestor')}</option>
+                      <option value="press">{t('contactPage.rolePress')}</option>
                       <option value="other">{t('contactPage.roleOther')}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">{t('contactPage.subjectLabel')}</label>
+                    <select
+                      required
+                      value={form.subject}
+                      onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
+                      className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-4 py-3.5 text-white font-bold outline-none focus:border-brand-yellow transition-colors appearance-none cursor-pointer"
+                    >
+                      <option value="bug">{t('contactPage.subjectBug')}</option>
+                      <option value="booking">{t('contactPage.subjectBookingHelp')}</option>
+                      <option value="partnership">{t('contactPage.subjectPartnership')}</option>
+                      <option value="press">{t('contactPage.subjectPress')}</option>
+                      <option value="demo">{t('contactPage.subjectDemo')}</option>
+                      <option value="billing">{t('contactPage.subjectBilling')}</option>
+                      <option value="other">{t('contactPage.subjectOther')}</option>
                     </select>
                   </div>
                   <div>
@@ -150,22 +177,6 @@ export default function ContactPage() {
                 <div>
                   <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{t('contactPage.emailUs')}</div>
                   <a href="mailto:hello@titezme.com" className="text-lg font-black text-brand-yellow hover:underline">hello@titezme.com</a>
-                </div>
-              </div>
-
-              <div className="flex gap-4 items-start">
-                <div className="w-12 h-12 rounded-2xl bg-[#111] border border-[#2a2a2a] flex items-center justify-center shrink-0 text-xl">📸</div>
-                <div>
-                  <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{t('contactPage.instagram')}</div>
-                  <a href="https://instagram.com/titezme" target="_blank" rel="noopener noreferrer" className="text-lg font-black text-brand-yellow hover:underline">@titezme</a>
-                </div>
-              </div>
-
-              <div className="flex gap-4 items-start">
-                <div className="w-12 h-12 rounded-2xl bg-[#111] border border-[#2a2a2a] flex items-center justify-center shrink-0 text-xl">🕐</div>
-                <div>
-                  <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{t('contactPage.responseTime')}</div>
-                  <div className="text-lg font-black text-white">{t('contactPage.responseValue')}</div>
                 </div>
               </div>
 
