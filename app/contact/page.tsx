@@ -50,7 +50,7 @@ export default function ContactPage() {
     <div className="bg-[#0A0A0A] text-white pt-24 min-h-screen font-sans">
       <section className="bg-[#0A0A0A] py-24 px-6">
         <div className="max-w-[1200px] mx-auto mb-16 text-center">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6">{t('contactPage.title')}</h1>
+          <h1 className="text-3xl md:text-7xl font-black tracking-tight mb-6">{t('contactPage.title')}</h1>
           <p className="text-xl font-bold text-gray-400">{t('contactPage.subtitle')}<br/>{t('contactPage.respond')}</p>
           <p style={{ fontSize: 13, color: '#888', marginTop: 8, fontWeight: 600 }}>
             {t('contactPage.socialProof')}
@@ -144,16 +144,18 @@ export default function ContactPage() {
                       placeholder={t('contactPage.messagePlaceholder')}
                     ></textarea>
                   </div>
-                  <input
-                    type="text"
-                    name="website"
-                    value={form.honeypot}
-                    onChange={e => setForm(f => ({ ...f, honeypot: e.target.value }))}
-                    style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, width: 0 }}
-                    tabIndex={-1}
-                    autoComplete="off"
-                    aria-hidden="true"
-                  />
+                  <div style={{ position: 'relative', overflow: 'hidden', height: 0 }}>
+                    <input
+                      type="text"
+                      name="website"
+                      value={form.honeypot}
+                      onChange={e => setForm(f => ({ ...f, honeypot: e.target.value }))}
+                      style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, width: 0 }}
+                      tabIndex={-1}
+                      autoComplete="off"
+                      aria-hidden="true"
+                    />
+                  </div>
                   <button
                     type="submit"
                     disabled={isSending}
