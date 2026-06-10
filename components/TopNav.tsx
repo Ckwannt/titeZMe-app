@@ -59,6 +59,18 @@ export function TopNav() {
 
   return (
     <div className="sticky top-0 left-0 right-0 z-50 flex flex-col w-full">
+      <style>{`
+        @keyframes langDropIn {
+          from {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.96);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
       {/* ROW 1: Main Nav */}
       <div className="bg-[#0A0A0A] border-b border-[#1E1E1E] px-6 py-4 flex items-center relative">
 
@@ -84,61 +96,192 @@ export function TopNav() {
         <div className="flex items-center gap-3 ml-auto flex-shrink-0 z-10">
 
           {/* Desktop: language dropdown */}
-          <div ref={langMenuRef} className="relative hidden md:flex items-center">
+          {/* ── GLASS PANEL LANGUAGE SWITCHER ── */}
+          <div
+            ref={langMenuRef}
+            className="hidden md:block"
+            style={{ position: 'relative' }}
+          >
+            {/* TRIGGER */}
             <button
               onClick={() => setShowLangMenu(v => !v)}
               style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
-                fontSize: '13px',
-                fontWeight: 800,
-                color: '#888580',
-                fontFamily: 'Nunito, sans-serif',
-                padding: '4px 8px',
-                borderRadius: '99px',
+                gap: 5,
+                padding: '6px 10px 6px 8px',
+                borderRadius: 10,
+                background: showLangMenu
+                  ? 'rgba(245,197,24,0.06)'
+                  : 'rgba(255,255,255,0.03)',
+                border: showLangMenu
+                  ? '1px solid rgba(245,197,24,0.35)'
+                  : '1px solid rgba(255,255,255,0.07)',
+                cursor: 'pointer',
+                boxShadow: showLangMenu
+                  ? '0 0 20px rgba(245,197,24,0.12)'
+                  : 'none',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden',
               }}
             >
-              🌍 {lang.toUpperCase()}
+              {/* Flag */}
+              <span style={{ fontSize: 16, lineHeight: 1 }}>
+                {lang === 'en' ? '🇬🇧'
+                 : lang === 'fr' ? '🇫🇷'
+                 : '🇪🇸'}
+              </span>
+              {/* Code */}
+              <span style={{
+                fontSize: 11,
+                fontWeight: 800,
+                color: showLangMenu ? '#F5C518' : '#aaa',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                transition: 'color 0.3s ease',
+              }}>
+                {lang.toUpperCase()}
+              </span>
+              {/* Chevron */}
+              <svg
+                width="8" height="6"
+                viewBox="0 0 10 6"
+                fill="none"
+                style={{
+                  stroke: showLangMenu ? '#F5C518' : '#444',
+                  strokeWidth: 2.5,
+                  strokeLinecap: 'round',
+                  strokeLinejoin: 'round',
+                  transform: showLangMenu
+                    ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.35s cubic-bezier(0.34,1.2,0.64,1), stroke 0.3s ease',
+                }}
+              >
+                <polyline points="1,1 5,5 9,1"/>
+              </svg>
             </button>
+
+            {/* DROPDOWN */}
             {showLangMenu && (
               <div style={{
                 position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: 0,
-                background: '#111111',
-                border: '1px solid #2a2a2a',
-                borderRadius: '12px',
-                padding: '6px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2px',
-                zIndex: 9999,
-                minWidth: '110px',
+                top: 'calc(100% + 10px)',
+                left: 0,
+                width: 210,
+                background: 'rgba(14,14,14,0.97)',
+                backdropFilter: 'blur(40px) saturate(1.8)',
+                WebkitBackdropFilter: 'blur(40px) saturate(1.8)',
+                border: '1px solid rgba(245,197,24,0.1)',
+                borderRadius: 18,
+                padding: 8,
+                boxShadow: '0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03)',
+                zIndex: 999,
+                animation: 'langDropIn 0.35s cubic-bezier(0.34,1.2,0.64,1) forwards',
               }}>
-                {(['en', 'fr', 'es'] as const).map(l => (
-                  <button
-                    key={l}
-                    onClick={() => { setLang(l); setShowLangMenu(false); }}
-                    style={{
-                      background: lang === l ? '#1a1a1a' : 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: lang === l ? 900 : 600,
-                      color: lang === l ? '#F5C518' : '#888580',
-                      fontFamily: 'Nunito, sans-serif',
-                      textAlign: 'left',
-                      width: '100%',
-                    }}
-                  >
-                    {l === 'en' ? '🇬🇧  EN — English' : l === 'fr' ? '🇫🇷  FR — Français' : '🇪🇸  ES — Español'}
-                  </button>
+                {([
+                  { code: 'en', flag: '🇬🇧', name: 'English' },
+                  { code: 'es', flag: '🇪🇸', name: 'Español' },
+                  { code: 'fr', flag: '🇫🇷', name: 'Français' },
+                ] as { code: 'en'|'fr'|'es', flag: string, name: string }[]).map((l, i) => (
+                  <div key={l.code}>
+                    {i > 0 && (
+                      <div style={{
+                        height: 1,
+                        margin: '2px 10px',
+                        background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)',
+                      }}/>
+                    )}
+                    <div
+                      onClick={() => {
+                        setLang(l.code);
+                        setShowLangMenu(false);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        padding: '11px 12px',
+                        borderRadius: 12,
+                        cursor: 'pointer',
+                        background: lang === l.code
+                          ? 'rgba(245,197,24,0.05)'
+                          : 'transparent',
+                        transition: 'background 0.2s ease',
+                        animationDelay: `${i * 0.06}s`,
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLDivElement)
+                          .style.background =
+                            lang === l.code
+                              ? 'rgba(245,197,24,0.08)'
+                              : 'rgba(255,255,255,0.03)';
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLDivElement)
+                          .style.background =
+                            lang === l.code
+                              ? 'rgba(245,197,24,0.05)'
+                              : 'transparent';
+                      }}
+                    >
+                      {/* Flag */}
+                      <span style={{ fontSize: 22 }}>{l.flag}</span>
+                      {/* Name + code */}
+                      <div style={{ flex: 1 }}>
+                        <div style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: lang === l.code
+                            ? '#F5C518' : '#ddd',
+                          transition: 'color 0.2s ease',
+                        }}>
+                          {l.name}
+                        </div>
+                        <div style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: lang === l.code
+                            ? 'rgba(245,197,24,0.5)' : '#444',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1.5px',
+                          marginTop: 1,
+                        }}>
+                          {l.code.toUpperCase()}
+                        </div>
+                      </div>
+                      {/* Check */}
+                      <div style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: '50%',
+                        border: lang === l.code
+                          ? 'none'
+                          : '1.5px solid #252525',
+                        background: lang === l.code
+                          ? '#F5C518' : 'transparent',
+                        boxShadow: lang === l.code
+                          ? '0 0 14px rgba(245,197,24,0.35)'
+                          : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        transition: 'all 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+                      }}>
+                        {lang === l.code && (
+                          <svg width="10" height="8"
+                            viewBox="0 0 10 8" fill="none">
+                            <path d="M1 4l3 3 5-6"
+                              stroke="#0a0a0a"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -161,7 +304,6 @@ export function TopNav() {
             </div>
           ) : (
             <div className="hidden md:flex items-center gap-4">
-              <span className="text-sm font-bold text-[#888580]">Guest</span>
               <Link href="/login" className="text-sm font-bold text-[#F0EDE8] hover:text-[#888580] transition-colors border border-[#1E1E1E] px-4 py-2 rounded-full">
                 Log in
               </Link>
@@ -383,30 +525,91 @@ export function TopNav() {
 
           {/* Language switcher */}
           <div style={{
-            marginTop: 'auto',
-            paddingTop: '24px',
-            borderTop: '1px solid #141414',
             display: 'flex',
-            gap: '12px'
+            flexDirection: 'column',
+            gap: 4,
+            padding: '8px 0',
+            borderTop: '1px solid #1a1a1a',
+            marginTop: 'auto',
+            paddingTop: 16,
           }}>
-            {(['en', 'fr', 'es'] as const).map((l: Language) => (
-              <button
-                key={l}
-                onClick={() => setLang(l)}
+            {([
+              { code: 'en', flag: '🇬🇧', name: 'English' },
+              { code: 'es', flag: '🇪🇸', name: 'Español' },
+              { code: 'fr', flag: '🇫🇷', name: 'Français' },
+            ] as { code: 'en'|'fr'|'es', flag: string, name: string }[]).map(l => (
+              <div
+                key={l.code}
+                onClick={() => {
+                  setLang(l.code);
+                  setMenuOpen(false);
+                }}
                 style={{
-                  background: lang === l ? '#1a1a1a' : 'transparent',
-                  border: `1px solid ${lang === l ? '#F5C518' : '#2a2a2a'}`,
-                  color: lang === l ? '#F5C518' : '#555',
-                  borderRadius: '99px',
-                  padding: '6px 14px',
-                  fontSize: '12px',
-                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '10px 12px',
+                  borderRadius: 12,
                   cursor: 'pointer',
-                  fontFamily: 'Nunito, sans-serif'
+                  background: lang === l.code
+                    ? 'rgba(245,197,24,0.06)'
+                    : 'transparent',
+                  border: lang === l.code
+                    ? '1px solid rgba(245,197,24,0.15)'
+                    : '1px solid transparent',
+                  transition: 'all 0.2s ease',
                 }}
               >
-                {l.toUpperCase()}
-              </button>
+                <span style={{ fontSize: 22 }}>{l.flag}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: lang === l.code ? '#F5C518' : '#ddd',
+                  }}>
+                    {l.name}
+                  </div>
+                  <div style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: lang === l.code
+                      ? 'rgba(245,197,24,0.5)' : '#444',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1.5px',
+                    marginTop: 1,
+                  }}>
+                    {l.code.toUpperCase()}
+                  </div>
+                </div>
+                <div style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  border: lang === l.code
+                    ? 'none' : '1.5px solid #252525',
+                  background: lang === l.code
+                    ? '#F5C518' : 'transparent',
+                  boxShadow: lang === l.code
+                    ? '0 0 10px rgba(245,197,24,0.3)'
+                    : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'all 0.3s ease',
+                }}>
+                  {lang === l.code && (
+                    <svg width="9" height="7"
+                      viewBox="0 0 10 8" fill="none">
+                      <path d="M1 4l3 3 5-6"
+                        stroke="#0a0a0a"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         </div>
