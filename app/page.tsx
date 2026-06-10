@@ -56,7 +56,7 @@ async function fetchFeaturedBarbers() {
 
     const selectedIds = selected.map((p: any) => p.id);
     const [userSnaps, servicesSnap] = await Promise.all([
-      Promise.all(selectedIds.map(id => getDoc(doc(db, 'users', id)))),
+      Promise.allSettled(selectedIds.map(id => getDoc(doc(db, 'users', id)))),
       selectedIds.length > 0
         ? getDocs(query(
             collection(db, 'services'),
@@ -79,7 +79,10 @@ async function fetchFeaturedBarbers() {
     });
 
     return selected.map((p: any, i: number) => {
-      const user = userSnaps[i].exists() ? (userSnaps[i].data() as any) : {};
+      const snap = userSnaps[i];
+      const user = snap.status === 'fulfilled' && snap.value.exists()
+        ? (snap.value.data() as any)
+        : {};
       const prices = servicesPriceMap.get(p.id) || [];
       return {
         ...p,
