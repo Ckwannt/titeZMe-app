@@ -12,7 +12,7 @@ import type { Language } from '@/lib/i18n/translations';
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, appUser, logout } = useAuth();
+  const { user, appUser, authLoading, logout } = useAuth();
   const { lang, setLang } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
@@ -143,7 +143,9 @@ export function TopNav() {
               </div>
             )}
           </div>
-          {user ? (
+          {authLoading ? (
+            <div className="hidden md:flex items-center gap-4" style={{ minWidth: 200 }} />
+          ) : user ? (
             <div className="hidden md:flex items-center gap-4 border-l border-[#1E1E1E] pl-4">
               <NotificationBell />
               <div>
@@ -170,12 +172,12 @@ export function TopNav() {
           )}
 
           {/* Mobile: notification bell (if logged in) + Login button + hamburger */}
-          {user && (
+          {!authLoading && user && (
             <div className="show-mobile-only flex items-center gap-3">
               <NotificationBell />
             </div>
           )}
-          {!user && (
+          {!authLoading && !user && (
             <a
               href="/login"
               className="show-mobile-only"
@@ -300,7 +302,7 @@ export function TopNav() {
 
           {/* Auth buttons */}
           <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {!user ? (
+            {authLoading ? null : !user ? (
               <>
                 <a
                   href="/signup"
