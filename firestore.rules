@@ -597,5 +597,23 @@ service cloud.firestore {
         || isAdmin()
       );
     }
+
+    // Contact form submissions — public create with shape validation,
+    // admin-only read/update/delete.
+    match /contactMessages/{msgId} {
+      allow create: if
+        request.resource.data.keys()
+          .hasOnly(['name','email','role','message','createdAt','read']) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() <= 100 &&
+        request.resource.data.email is string &&
+        request.resource.data.email.size() <= 200 &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() <= 2000 &&
+        request.resource.data.role is string &&
+        request.resource.data.read == false;
+
+      allow read, update, delete: if isAdmin();
+    }
   }
 }

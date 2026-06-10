@@ -22,6 +22,7 @@ function AdminSidebar() {
     { label: '📅 Bookings', href: '/admin/bookings', perm: p?.canManageBookings },
     { label: '👥 Users', href: '/admin/users', perm: p?.canManageUsers },
     { label: '⭐ Reviews', href: '/admin/reviews', perm: p?.canManageReviews },
+    { label: '✉️ Messages', href: '/admin/messages', always: true },
     { label: '🌟 Featured', href: '/admin/featured', perm: p?.canManageFeatured },
     { label: '👥 Team', href: '/admin/team', superAdminOnly: true },
   ];
