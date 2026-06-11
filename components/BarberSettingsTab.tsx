@@ -194,6 +194,11 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
   const [showPhone, setShowPhone] = useState(profile?.showPhone === true);
   const [pwResetSent, setPwResetSent] = useState(false);
 
+  // Layer 1 — equipment & chair-rental seeking
+  const [hasEquipment, setHasEquipment] = useState<boolean>(profile?.hasEquipment ?? false);
+  const [lookingForChair, setLookingForChair] = useState<boolean>(profile?.lookingForChair ?? false);
+  const [savingSetup, setSavingSetup] = useState(false);
+
   useEffect(() => {
     setSpecialties(profile?.specialties || []);
     setVibe(profile?.vibes || []);
@@ -203,6 +208,8 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     setShowPhone(profile?.showPhone === true);
     setExperienceStartYear(profile?.experienceStartYear != null ? String(profile.experienceStartYear) : '');
     setDateOfBirth(profile?.dateOfBirth ?? '');
+    setHasEquipment(profile?.hasEquipment ?? false);
+    setLookingForChair(profile?.lookingForChair ?? false);
   }, [profile]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -352,6 +359,24 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       setErrorMsg('Failed to save experience.');
     }
     setSavingExperience(false);
+  };
+
+  // Layer 1 — save equipment & chair-rental seeking
+  const handleSaveSetup = async () => {
+    if (!user) return;
+    setSavingSetup(true);
+    setErrorMsg(''); setSuccessMsg('');
+    try {
+      await updateDoc(doc(db, 'barberProfiles', user.uid), { hasEquipment, lookingForChair });
+      mutateProfile();
+      invalidateBarber(user.uid);
+      setSuccessMsg(t('success.barberProfileUpdated'));
+    } catch (e) {
+      console.error(e);
+      setErrorMsg(t('errors.failedSaveBarberProfile'));
+    } finally {
+      setSavingSetup(false);
+    }
   };
 
   // Sections E, F — toggle handlers (auto-save)
@@ -946,6 +971,149 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
           </label>
         </div>
       </section>
+
+      {/* SECTION D2: YOUR SETUP (equipment + chair-rental seeking) */}
+      {(profile?.isSolo ?? true) && (
+        <div style={{
+          background: '#111',
+          border: '1px solid #2a2a2a',
+          borderRadius: 16,
+          padding: 24,
+          marginBottom: 24,
+        }}>
+          <div style={{
+            fontSize: 13,
+            fontWeight: 800,
+            color: '#F5C518',
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase',
+            marginBottom: 20,
+          }}>
+            {t('barberSettings.equipmentTitle')}
+          </div>
+
+          {/* hasEquipment toggle */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: 20,
+          }}>
+            <div>
+              <div style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: '#fff',
+                marginBottom: 4,
+              }}>
+                {t('barberSettings.hasEquipment')}
+              </div>
+              <div style={{
+                fontSize: 12,
+                color: '#666',
+              }}>
+                {t('barberSettings.hasEquipmentHint')}
+              </div>
+            </div>
+            <button
+              onClick={() => setHasEquipment(v => !v)}
+              style={{
+                width: 44,
+                height: 24,
+                borderRadius: 12,
+                background: hasEquipment ? '#F5C518' : '#2a2a2a',
+                border: 'none',
+                cursor: 'pointer',
+                position: 'relative',
+                flexShrink: 0,
+                marginLeft: 16,
+                transition: 'background 0.2s',
+              }}
+            >
+              <div style={{
+                position: 'absolute',
+                top: 2,
+                left: hasEquipment ? 22 : 2,
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 0.2s',
+              }} />
+            </button>
+          </div>
+
+          {/* lookingForChair toggle */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: 24,
+          }}>
+            <div>
+              <div style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: '#fff',
+                marginBottom: 4,
+              }}>
+                {t('barberSettings.lookingForChair')}
+              </div>
+              <div style={{
+                fontSize: 12,
+                color: '#666',
+              }}>
+                {t('barberSettings.lookingForChairHint')}
+              </div>
+            </div>
+            <button
+              onClick={() => setLookingForChair(v => !v)}
+              style={{
+                width: 44,
+                height: 24,
+                borderRadius: 12,
+                background: lookingForChair ? '#F5C518' : '#2a2a2a',
+                border: 'none',
+                cursor: 'pointer',
+                position: 'relative',
+                flexShrink: 0,
+                marginLeft: 16,
+                transition: 'background 0.2s',
+              }}
+            >
+              <div style={{
+                position: 'absolute',
+                top: 2,
+                left: lookingForChair ? 22 : 2,
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 0.2s',
+              }} />
+            </button>
+          </div>
+
+          {/* Save button */}
+          <button
+            onClick={handleSaveSetup}
+            disabled={savingSetup}
+            style={{
+              background: '#F5C518',
+              color: '#0a0a0a',
+              fontWeight: 900,
+              fontSize: 13,
+              padding: '10px 20px',
+              borderRadius: 10,
+              border: 'none',
+              cursor: savingSetup ? 'not-allowed' : 'pointer',
+              opacity: savingSetup ? 0.6 : 1,
+            }}
+          >
+            {savingSetup ? '...' : t('barberSettings.saveSetup')}
+          </button>
+        </div>
+      )}
 
       {/* SECTION E: NOTIFICATION PREFERENCES */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">

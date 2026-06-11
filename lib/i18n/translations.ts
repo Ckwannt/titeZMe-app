@@ -848,6 +848,10 @@ const translations = {
     shopSettings: {
       chairsCount: 'Number of Chairs',
       establishedYear: 'Established Year',
+      chairRentalTitle: 'Chair Rental',
+      rentsChairs: 'I rent chairs to independent barbers',
+      availableChairsForRent: 'Number of chairs available for rent',
+      saveChairRental: 'Save',
     },
     shopPublic: {
       chairs: '{count} chairs',
@@ -862,6 +866,12 @@ const translations = {
       experienceLocked: 'Your experience info is locked. Contact support to appeal.',
       verified: 'Verified',
       pendingVerification: 'Pending verification',
+      equipmentTitle: 'Your Setup',
+      hasEquipment: 'I have my own professional equipment',
+      hasEquipmentHint: 'Scissors, clippers, cape and basic tools',
+      lookingForChair: 'I am looking for a chair to rent',
+      lookingForChairHint: 'We will match you with shops that have availability',
+      saveSetup: 'Save Setup',
     },
     barberPublic: {
       yearsExperience: 'yrs experience',
@@ -1716,6 +1726,10 @@ const translations = {
     shopSettings: {
       chairsCount: 'Nombre de fauteuils',
       establishedYear: 'Année de création',
+      chairRentalTitle: 'Location de chaise',
+      rentsChairs: 'Je loue des chaises à des barbiers indépendants',
+      availableChairsForRent: 'Nombre de chaises disponibles à la location',
+      saveChairRental: 'Enregistrer',
     },
     shopPublic: {
       chairs: '{count} fauteuils',
@@ -1730,6 +1744,12 @@ const translations = {
       experienceLocked: "Vos informations d'expérience sont verrouillées.",
       verified: 'Vérifié',
       pendingVerification: 'En attente de vérification',
+      equipmentTitle: 'Votre équipement',
+      hasEquipment: "J'ai mon propre matériel professionnel",
+      hasEquipmentHint: 'Ciseaux, tondeuse, cape et outils de base',
+      lookingForChair: 'Je cherche une chaise à louer',
+      lookingForChairHint: 'Nous vous mettrons en relation avec des salons disponibles',
+      saveSetup: 'Enregistrer',
     },
     barberPublic: {
       yearsExperience: "ans d'expérience",
@@ -2584,6 +2604,10 @@ const translations = {
     shopSettings: {
       chairsCount: 'Número de sillones',
       establishedYear: 'Año de apertura',
+      chairRentalTitle: 'Alquiler de silla',
+      rentsChairs: 'Alquilo sillas a barberos independientes',
+      availableChairsForRent: 'Número de sillas disponibles para alquilar',
+      saveChairRental: 'Guardar',
     },
     shopPublic: {
       chairs: '{count} sillones',
@@ -2598,6 +2622,12 @@ const translations = {
       experienceLocked: 'Tu información de experiencia está bloqueada.',
       verified: 'Verificado',
       pendingVerification: 'Pendiente de verificación',
+      equipmentTitle: 'Tu equipamiento',
+      hasEquipment: 'Tengo mi propio material profesional',
+      hasEquipmentHint: 'Tijeras, maquinilla, capa y herramientas básicas',
+      lookingForChair: 'Busco una silla para alquilar',
+      lookingForChairHint: 'Te conectaremos con salones que tengan disponibilidad',
+      saveSetup: 'Guardar',
     },
     barberPublic: {
       yearsExperience: 'años de experiencia',
