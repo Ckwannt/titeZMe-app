@@ -51,8 +51,14 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      // Retry once after 1s — same pattern as auth-context (Firestore cold start)
+      let userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (!userDoc.exists()) {
+        await new Promise(r => setTimeout(r, 1000));
+        userDoc = await getDoc(doc(db, 'users', user.uid));
+      }
 
+      // Still no doc after retry — this Google account has no titeZMe account.
       if (!userDoc.exists()) {
         await signOut(auth);
         setErrorStatus(t('errors.noAccountFound'));
@@ -70,11 +76,15 @@ export default function LoginPage() {
       if (userData.role === 'admin') {
         router.replace('/admin');
       } else if (userData.role === 'barber') {
-        router.replace('/dashboard/barber');
+        router.replace(userData.isOnboarded ? '/dashboard/barber' : '/onboarding/barber');
       } else {
-        router.replace('/dashboard/client');
+        router.replace(userData.isOnboarded ? '/dashboard/client' : '/onboarding/client');
       }
     } catch (error: any) {
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        setErrorStatus(t('errors.accountExistsWithEmail'));
+        return;
+      }
       if (error.code !== 'auth/popup-closed-by-user') {
         setErrorStatus(t('errors.googleSignInFailed'));
       }

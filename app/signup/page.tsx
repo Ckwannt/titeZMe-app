@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { userSchema } from '@/lib/schemas';
 import { auth, db } from '@/lib/firebase';
@@ -140,31 +140,41 @@ export default function SignupPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
 
-      if (!userDoc.exists()) {
-        await setDoc(doc(db, 'users', user.uid), {
-          uid: user.uid,
-          email: user.email,
-          firstName: user.displayName?.split(' ')[0] || '',
-          lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
-          profilePhotoUrl: user.photoURL || '',
-          role: role,
-          isOnboarded: false,
-          createdAt: Date.now()
-        });
+      // Account already exists — do NOT overwrite. Send to login.
+      if (userDoc.exists()) {
+        await signOut(auth);
+        setErrorStatus(t('errors.accountAlreadyExists'));
+        setTimeout(() => { router.replace('/login'); }, 2000);
+        return;
       }
 
-      const userData = userDoc.exists() ? userDoc.data() : { role: role };
+      // New user — create users doc
+      await setDoc(userDocRef, {
+        uid: user.uid,
+        email: user.email,
+        firstName: user.displayName?.split(' ')[0] || '',
+        lastName: user.displayName?.split(' ').slice(1).join(' ') || '',
+        profilePhotoUrl: user.photoURL || '',
+        role: role,
+        isOnboarded: false,
+        createdAt: Date.now(),
+      });
 
-      if (userData.role === 'admin') {
-        router.replace('/admin');
-      } else if (userData.role === 'barber') {
-        router.replace('/dashboard/barber');
+      // Route straight to onboarding — never to dashboard
+      if (role === 'barber') {
+        router.replace('/onboarding/barber');
       } else {
-        router.replace('/dashboard/client');
+        router.replace('/onboarding/client');
       }
     } catch (error: any) {
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        setErrorStatus(t('errors.accountExistsWithEmail'));
+        setTimeout(() => { router.replace('/login'); }, 2000);
+        return;
+      }
       if (error.code !== 'auth/popup-closed-by-user') {
         setErrorStatus(t('errors.googleSignInFailed'));
       }
