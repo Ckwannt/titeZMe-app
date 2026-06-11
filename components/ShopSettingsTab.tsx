@@ -158,6 +158,10 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   const [savingMaps, setSavingMaps] = useState(false);
   const [notifyInviteResponse, setNotifyInviteResponse] = useState(shop?.notifyInviteResponse !== false);
   const [notifyNewBooking, setNotifyNewBooking] = useState(shop?.notifyNewBooking !== false);
+  // Layer 1 — chair rental
+  const [rentsChairs, setRentsChairs] = useState<boolean>(shop?.rentsChairs ?? false);
+  const [availableChairsForRent, setAvailableChairsForRent] = useState<number>(shop?.availableChairsForRent ?? 0);
+  const [savingChairRental, setSavingChairRental] = useState(false);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -363,6 +367,23 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       setErrorMsg(t('errors.failedSaveMapsLink'));
     }
     setSavingMaps(false);
+  };
+
+  const handleSaveChairRental = async () => {
+    if (!user) return;
+    setSavingChairRental(true);
+    setErrorMsg(''); setSuccessMsg('');
+    try {
+      await updateDoc(doc(db, 'barbershops', user.uid), {
+        rentsChairs,
+        availableChairsForRent: rentsChairs ? availableChairsForRent : 0,
+      });
+      mutateShop();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingChairRental(false);
+    }
   };
 
   const handleToggleNotif = async (field: 'notifyInviteResponse' | 'notifyNewBooking', value: boolean) => {
@@ -828,6 +849,119 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
           {savingMaps ? t('settings.saving') : t('buttons.saveMapsLink')}
         </button>
       </section>
+
+      {/* SECTION D2: CHAIR RENTAL */}
+      <div style={{
+        background: '#111',
+        border: '1px solid #2a2a2a',
+        borderRadius: 16,
+        padding: 24,
+        marginBottom: 24,
+      }}>
+        <div style={{
+          fontSize: 13,
+          fontWeight: 800,
+          color: '#F5C518',
+          letterSpacing: '0.5px',
+          textTransform: 'uppercase',
+          marginBottom: 20,
+        }}>
+          {t('shopSettings.chairRentalTitle')}
+        </div>
+
+        {/* rentsChairs toggle */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          marginBottom: rentsChairs ? 20 : 24,
+        }}>
+          <div style={{
+            fontSize: 14,
+            fontWeight: 700,
+            color: '#fff',
+          }}>
+            {t('shopSettings.rentsChairs')}
+          </div>
+          <button
+            onClick={() => setRentsChairs(v => !v)}
+            style={{
+              width: 44,
+              height: 24,
+              borderRadius: 12,
+              background: rentsChairs ? '#F5C518' : '#2a2a2a',
+              border: 'none',
+              cursor: 'pointer',
+              position: 'relative',
+              flexShrink: 0,
+              marginLeft: 16,
+              transition: 'background 0.2s',
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 2,
+              left: rentsChairs ? 22 : 2,
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: '#fff',
+              transition: 'left 0.2s',
+            }} />
+          </button>
+        </div>
+
+        {/* availableChairsForRent — only shown when rentsChairs is true */}
+        {rentsChairs && (
+          <div style={{ marginBottom: 24 }}>
+            <label style={{
+              display: 'block',
+              fontSize: 13,
+              fontWeight: 700,
+              color: '#aaa',
+              marginBottom: 8,
+            }}>
+              {t('shopSettings.availableChairsForRent')}
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={availableChairsForRent}
+              onChange={e => setAvailableChairsForRent(Math.max(0, parseInt(e.target.value) || 0))}
+              style={{
+                background: '#1a1a1a',
+                border: '1px solid #2a2a2a',
+                borderRadius: 10,
+                color: '#fff',
+                fontSize: 14,
+                padding: '10px 14px',
+                width: 100,
+                outline: 'none',
+              }}
+            />
+          </div>
+        )}
+
+        {/* Save button */}
+        <button
+          onClick={handleSaveChairRental}
+          disabled={savingChairRental}
+          style={{
+            background: '#F5C518',
+            color: '#0a0a0a',
+            fontWeight: 900,
+            fontSize: 13,
+            padding: '10px 20px',
+            borderRadius: 10,
+            border: 'none',
+            cursor: savingChairRental ? 'not-allowed' : 'pointer',
+            opacity: savingChairRental ? 0.6 : 1,
+          }}
+        >
+          {savingChairRental ? '...' : t('shopSettings.saveChairRental')}
+        </button>
+      </div>
 
       {/* SECTION E: NOTIFICATIONS */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
