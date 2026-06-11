@@ -162,6 +162,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   const [rentsChairs, setRentsChairs] = useState<boolean>(shop?.rentsChairs ?? false);
   const [availableChairsForRent, setAvailableChairsForRent] = useState<number>(shop?.availableChairsForRent ?? 0);
   const [savingChairRental, setSavingChairRental] = useState(false);
+  const maxRentableChairs = Number(formData.chairsCount) > 0 ? Number(formData.chairsCount) : 99;
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -376,7 +377,12 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     try {
       await updateDoc(doc(db, 'barbershops', user.uid), {
         rentsChairs,
-        availableChairsForRent: rentsChairs ? availableChairsForRent : 0,
+        availableChairsForRent: rentsChairs
+          ? Math.min(
+              availableChairsForRent,
+              Number(formData.chairsCount) > 0 ? Number(formData.chairsCount) : availableChairsForRent
+            )
+          : 0,
       });
       mutateShop();
     } catch (e) {
@@ -926,9 +932,12 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
             <input
               type="number"
               min={1}
-              max={20}
+              max={maxRentableChairs}
               value={availableChairsForRent}
-              onChange={e => setAvailableChairsForRent(Math.max(0, parseInt(e.target.value) || 0))}
+              onChange={e => {
+                const val = parseInt(e.target.value) || 0;
+                setAvailableChairsForRent(Math.min(Math.max(1, val), maxRentableChairs));
+              }}
               style={{
                 background: '#1a1a1a',
                 border: '1px solid #2a2a2a',
