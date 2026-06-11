@@ -198,6 +198,8 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
   const [hasEquipment, setHasEquipment] = useState<boolean>(profile?.hasEquipment ?? false);
   const [lookingForChair, setLookingForChair] = useState<boolean>(profile?.lookingForChair ?? false);
   const [savingSetup, setSavingSetup] = useState(false);
+  const [isSolo, setIsSolo] = useState<boolean>(profile?.isSolo ?? true);
+  const [savingIsSolo, setSavingIsSolo] = useState(false);
 
   useEffect(() => {
     setSpecialties(profile?.specialties || []);
@@ -210,6 +212,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     setDateOfBirth(profile?.dateOfBirth ?? '');
     setHasEquipment(profile?.hasEquipment ?? false);
     setLookingForChair(profile?.lookingForChair ?? false);
+    setIsSolo(profile?.isSolo ?? true);
   }, [profile]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -930,40 +933,65 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
             </div>
           </div>
           <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
-            <input 
-              type="checkbox" 
-              className="sr-only peer" 
-              checked={profile?.isSolo ?? true}
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={isSolo}
+              disabled={savingIsSolo}
               onChange={async (e) => {
+                if (savingIsSolo || !user) return;
                 const checked = e.target.checked;
+
                 if (!checked) {
-                  // Count pending solo bookings
+                  // Count pending solo bookings first
                   try {
                     const { collection, query, where, getDocs } = await import('firebase/firestore');
                     const q = query(
-                      collection(db, 'bookings'), 
-                      where('barberId', '==', user!.uid),
+                      collection(db, 'bookings'),
+                      where('barberId', '==', user.uid),
                       where('bookingContext', '==', 'solo'),
                       where('status', 'in', ['pending', 'confirmed'])
                     );
                     const snap = await getDocs(q);
                     const count = snap.size;
-                    
-                    if (confirm(`Are you sure? You have ${count} pending solo bookings that will still be honoured. New solo bookings will stop coming in.`)) {
-                       const { updateDoc, doc } = await import('firebase/firestore');
-                       await updateDoc(doc(db, 'barberProfiles', user!.uid), { isSolo: false });
-                       window.alert('Solo bookings turned off');
-                       window.location.reload();
+
+                    const confirmed = window.confirm(
+                      `Are you sure? You have ${count} pending solo bookings that will still be honoured. New solo bookings will stop coming in.`
+                    );
+                    if (!confirmed) return;
+
+                    // Optimistic update
+                    setIsSolo(false);
+                    setSavingIsSolo(true);
+                    try {
+                      const { updateDoc, doc } = await import('firebase/firestore');
+                      await updateDoc(doc(db, 'barberProfiles', user.uid), { isSolo: false });
+                      mutateProfile();
+                    } catch (err) {
+                      console.error(err);
+                      // Revert on failure
+                      setIsSolo(true);
+                    } finally {
+                      setSavingIsSolo(false);
                     }
                   } catch (err) {
                     console.error(err);
                   }
                 } else {
-                  // Turn ON
-                  const { updateDoc, doc } = await import('firebase/firestore');
-                  await updateDoc(doc(db, 'barberProfiles', user!.uid), { isSolo: true });
-                  window.alert('Solo bookings turned on');
-                  window.location.reload();
+                  // Turn ON — optimistic update
+                  setIsSolo(true);
+                  setSavingIsSolo(true);
+                  try {
+                    const { updateDoc, doc } = await import('firebase/firestore');
+                    await updateDoc(doc(db, 'barberProfiles', user.uid), { isSolo: true });
+                    mutateProfile();
+                  } catch (err) {
+                    console.error(err);
+                    // Revert on failure
+                    setIsSolo(false);
+                  } finally {
+                    setSavingIsSolo(false);
+                  }
                 }
               }}
             />
@@ -973,7 +1001,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       </section>
 
       {/* SECTION D2: YOUR SETUP (equipment + chair-rental seeking) */}
-      {(profile?.isSolo ?? true) && (
+      {isSolo && (
         <div style={{
           background: '#111',
           border: '1px solid #2a2a2a',
