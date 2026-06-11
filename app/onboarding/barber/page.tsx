@@ -278,8 +278,8 @@ export default function BarberOnboarding() {
           isOnboarded: true,
           firstName: firstName.trim() || appUser?.firstName || '',
           lastName: lastName.trim() || appUser?.lastName || '',
-          phone: phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null,
-          phoneCountryCode: phoneCode?.value || null,
+          phone: phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : undefined,
+          phoneCountryCode: phoneCode?.value || undefined,
           city: selectedCityOption?.value || 'Unknown',
           country: selectedCountry?.value || 'Unknown',
         }));
