@@ -569,7 +569,8 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && isValidNotification(incoming())
         && (
-          incoming().userId == request.auth.uid
+          isAdmin()
+          || incoming().userId == request.auth.uid
           || (
             incoming().type == 'shop_deleted'
             && exists(/databases/$(database)/documents/barbershops/$(request.auth.uid))
