@@ -17,9 +17,9 @@ export default function ForShopsPage() {
 
       {/* HERO */}
       <div style={{
-        maxWidth: '900px',
+        maxWidth: '1200px',
         margin: '0 auto',
-        padding: '100px 24px 80px',
+        padding: '120px 48px 100px',
         textAlign: 'center'
       }}>
         <div style={{
@@ -40,7 +40,7 @@ export default function ForShopsPage() {
         </h1>
         <p style={{
           fontSize: '18px', color: '#666', lineHeight: 1.8,
-          maxWidth: '600px', margin: '0 auto 40px'
+          maxWidth: '720px', margin: '0 auto 40px'
         }}>
           titeZMe gives your barbershop a professional online presence, a complete team management
           system, and a steady flow of new clients. All in one place.
@@ -68,9 +68,9 @@ export default function ForShopsPage() {
         background: '#0d0d0d',
         borderTop: '1px solid #141414',
         borderBottom: '1px solid #141414',
-        padding: '80px 24px'
+        padding: '80px 48px'
       }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
             <div style={{
               fontSize: '11px', fontWeight: 800, color: '#555',
@@ -135,7 +135,7 @@ export default function ForShopsPage() {
       </div>
 
       {/* HOW IT WORKS */}
-      <div style={{ maxWidth: '700px', margin: '0 auto', padding: '80px 24px' }}>
+      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '80px 48px' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <div style={{
             fontSize: '11px', fontWeight: 800, color: '#555',
@@ -191,9 +191,9 @@ export default function ForShopsPage() {
         background: '#0d0d0d',
         borderTop: '1px solid #141414',
         borderBottom: '1px solid #141414',
-        padding: '80px 24px'
+        padding: '80px 48px'
       }}>
-        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '860px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
             <div style={{
               fontSize: '11px', fontWeight: 800, color: '#555',
@@ -236,7 +236,7 @@ export default function ForShopsPage() {
       </div>
 
       {/* FAQ */}
-      <div style={{ maxWidth: '700px', margin: '0 auto', padding: '80px 24px' }}>
+      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '80px 48px' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <div style={{
             fontSize: '11px', fontWeight: 800, color: '#555',
@@ -286,7 +286,7 @@ export default function ForShopsPage() {
       <div style={{
         background: '#111',
         borderTop: '1px solid #1e1e1e',
-        padding: '80px 24px',
+        padding: '80px 48px',
         textAlign: 'center'
       }}>
         <h2 style={{ fontSize: '36px', fontWeight: 900, marginBottom: '16px' }}>
