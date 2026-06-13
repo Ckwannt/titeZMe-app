@@ -8,18 +8,32 @@ export default function ForShopsPage() {
   }, [])
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0A0A0A',
-      fontFamily: 'Nunito, sans-serif',
-      color: '#fff'
-    }}>
+    <>
+      <style>{`
+  .fs-section {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+  @media (max-width: 768px) {
+    .fs-section {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+  }
+`}</style>
+      <div style={{
+        minHeight: '100vh',
+        background: '#0A0A0A',
+        fontFamily: 'Nunito, sans-serif',
+        color: '#fff'
+      }}>
 
       {/* HERO */}
-      <div style={{
+      <div className="fs-section" style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '120px 48px 100px',
+        paddingTop: '120px',
+        paddingBottom: '100px',
         textAlign: 'center'
       }}>
         <div style={{
@@ -64,11 +78,12 @@ export default function ForShopsPage() {
       </div>
 
       {/* BENEFITS */}
-      <div style={{
+      <div className="fs-section" style={{
         background: '#0d0d0d',
         borderTop: '1px solid #141414',
         borderBottom: '1px solid #141414',
-        padding: '80px 48px'
+        paddingTop: '80px',
+        paddingBottom: '80px'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
@@ -135,7 +150,7 @@ export default function ForShopsPage() {
       </div>
 
       {/* HOW IT WORKS */}
-      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '80px 48px' }}>
+      <div className="fs-section" style={{ maxWidth: '860px', margin: '0 auto', paddingTop: '80px', paddingBottom: '80px' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <div style={{
             fontSize: '11px', fontWeight: 800, color: '#555',
@@ -187,11 +202,12 @@ export default function ForShopsPage() {
       </div>
 
       {/* WHAT YOU GET */}
-      <div style={{
+      <div className="fs-section" style={{
         background: '#0d0d0d',
         borderTop: '1px solid #141414',
         borderBottom: '1px solid #141414',
-        padding: '80px 48px'
+        paddingTop: '80px',
+        paddingBottom: '80px'
       }}>
         <div style={{ maxWidth: '860px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
@@ -236,7 +252,7 @@ export default function ForShopsPage() {
       </div>
 
       {/* FAQ */}
-      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '80px 48px' }}>
+      <div className="fs-section" style={{ maxWidth: '860px', margin: '0 auto', paddingTop: '80px', paddingBottom: '80px' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <div style={{
             fontSize: '11px', fontWeight: 800, color: '#555',
@@ -283,10 +299,11 @@ export default function ForShopsPage() {
       </div>
 
       {/* CTA */}
-      <div style={{
+      <div className="fs-section" style={{
         background: '#111',
         borderTop: '1px solid #1e1e1e',
-        padding: '80px 48px',
+        paddingTop: '80px',
+        paddingBottom: '80px',
         textAlign: 'center'
       }}>
         <h2 style={{ fontSize: '36px', fontWeight: 900, marginBottom: '16px' }}>
@@ -326,6 +343,7 @@ export default function ForShopsPage() {
         </div>
       </div>
 
-    </div>
+      </div>
+    </>
   )
 }
