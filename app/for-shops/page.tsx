@@ -413,6 +413,46 @@ export default function ForShopsPage() {
         .section-title.visible::after {
           width: 100%;
         }
+
+        /* No commission cards */
+        .commission-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+        }
+        @media (max-width: 768px) {
+          .commission-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        /* Commission highlight box */
+        .commission-box {
+          background: #0d0d0d;
+          border: 1px solid #F5C518;
+          border-radius: 16px;
+          padding: 28px 32px;
+          text-align: center;
+          margin-top: 40px;
+          font-size: 15px;
+          font-weight: 800;
+          color: #fff;
+          line-height: 1.7;
+        }
+
+        /* Recruit grid */
+        .recruit-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 80px;
+          align-items: center;
+        }
+        @media (max-width: 768px) {
+          .recruit-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+        }
       `}</style>
 
       {/* WHATSAPP FIXED BUTTON */}
@@ -603,6 +643,108 @@ export default function ForShopsPage() {
           </div>
         </div>
 
+        {/* ZERO COMMISSION */}
+        <div className="fs-section" style={{
+          background: '#0d0d0d',
+          borderTop: '1px solid #141414',
+          borderBottom: '1px solid #141414',
+          paddingTop: '120px',
+          paddingBottom: '120px',
+        }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{
+              fontSize: '11px', fontWeight: 800,
+              color: '#22C55E', letterSpacing: '0.2em',
+              textTransform: 'uppercase', marginBottom: '24px',
+              textAlign: 'center'
+            }}>
+              {t('forShops.noCommissionKicker')}
+            </div>
+            <h2 className="reveal" style={{
+              fontSize: 'clamp(32px, 4vw, 56px)',
+              fontWeight: 900, textAlign: 'center',
+              marginBottom: '16px', letterSpacing: '-1px',
+              color: '#22C55E'
+            }}>
+              <span className="section-title">
+                {t('forShops.noCommissionTitle')}
+              </span>
+            </h2>
+            <p className="reveal" style={{
+              fontSize: '18px', color: '#555',
+              textAlign: 'center', maxWidth: '560px',
+              margin: '0 auto 64px', lineHeight: 1.7
+            }}>
+              {t('forShops.noCommissionSub')}
+            </p>
+            <div className="commission-grid">
+              {[
+                {
+                  icon: t('forShops.noCommissionCard1Icon'),
+                  title: t('forShops.noCommissionCard1Title'),
+                  desc: t('forShops.noCommissionCard1Desc'),
+                },
+                {
+                  icon: t('forShops.noCommissionCard2Icon'),
+                  title: t('forShops.noCommissionCard2Title'),
+                  desc: t('forShops.noCommissionCard2Desc'),
+                },
+                {
+                  icon: t('forShops.noCommissionCard3Icon'),
+                  title: t('forShops.noCommissionCard3Title'),
+                  desc: t('forShops.noCommissionCard3Desc'),
+                },
+              ].map((card, i) => (
+                <div
+                  key={card.title}
+                  className={`card-hover reveal delay-${i + 1}`}
+                  style={{
+                    background: '#111',
+                    border: '1px solid #1e1e1e',
+                    borderRadius: '16px',
+                    padding: '36px 28px',
+                    textAlign: 'center',
+                  }}
+                >
+                  <div style={{
+                    fontSize: '40px', marginBottom: '20px'
+                  }}>
+                    {card.icon}
+                  </div>
+                  <div style={{
+                    fontSize: '15px', fontWeight: 900,
+                    color: '#fff', marginBottom: '10px'
+                  }}>
+                    {card.title}
+                  </div>
+                  <div style={{
+                    fontSize: '28px', fontWeight: 900,
+                    color: '#22C55E', marginBottom: '12px'
+                  }}>
+                    100%
+                  </div>
+                  <div style={{
+                    fontSize: '13px', color: '#555',
+                    lineHeight: 1.7
+                  }}>
+                    {card.desc}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="commission-box reveal">
+              {t('forShops.noCommissionBox')}
+            </div>
+            <p className="reveal" style={{
+              textAlign: 'center', marginTop: '24px',
+              fontSize: '14px', color: '#444',
+              fontStyle: 'italic'
+            }}>
+              {t('forShops.noCommissionFooter')}
+            </p>
+          </div>
+        </div>
+
         {/* ── CHAIR RENTAL ── */}
         <div className="fs-section" style={{
           background: '#0d0d0d',
@@ -675,6 +817,100 @@ export default function ForShopsPage() {
                 <a href="/dashboard/barber" className="chair-btn">
                   {t('forShops.chairBadge')}
                 </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* BARBER RECRUITMENT */}
+        <div className="fs-section" style={{
+          paddingTop: '120px',
+          paddingBottom: '120px',
+        }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div className="recruit-grid">
+              <div>
+                <div style={{
+                  fontSize: '11px', fontWeight: 800,
+                  color: '#F5C518', letterSpacing: '0.2em',
+                  textTransform: 'uppercase', marginBottom: '24px'
+                }}>
+                  {t('forShops.recruitKicker')}
+                </div>
+                <h2 style={{
+                  fontSize: 'clamp(32px, 3vw, 52px)',
+                  fontWeight: 900, lineHeight: 1.1,
+                  marginBottom: '24px', letterSpacing: '-1px'
+                }}>
+                  <span className="section-title">
+                    {t('forShops.recruitTitle')}
+                  </span>
+                  <br />
+                  <span style={{ color: '#F5C518' }}>
+                    {t('forShops.recruitLine2')}
+                  </span>
+                </h2>
+                <p style={{
+                  fontSize: '16px', color: '#555',
+                  lineHeight: 1.8, marginBottom: '32px'
+                }}>
+                  {t('forShops.recruitSub')}
+                </p>
+                {[
+                  t('forShops.recruitBullet1'),
+                  t('forShops.recruitBullet2'),
+                  t('forShops.recruitBullet3'),
+                  t('forShops.recruitBullet4'),
+                  t('forShops.recruitBullet5'),
+                ].map((bullet) => (
+                  <div key={bullet} style={{
+                    display: 'flex', alignItems: 'center',
+                    gap: '12px', marginBottom: '14px',
+                    fontSize: '14px', color: '#888'
+                  }}>
+                    <span style={{ color: '#F5C518' }}>✓</span>
+                    {bullet}
+                  </div>
+                ))}
+              </div>
+              <div style={{
+                background: '#111',
+                border: '1px solid #1e1e1e',
+                borderRadius: '20px',
+                padding: '48px',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  fontSize: '72px', marginBottom: '24px'
+                }}>
+                  🔍
+                </div>
+                <div style={{
+                  fontSize: '15px', fontWeight: 900,
+                  color: '#fff', marginBottom: '12px'
+                }}>
+                  {t('forShops.recruitCardTitle')}
+                </div>
+                <div style={{
+                  fontSize: '13px', color: '#555',
+                  lineHeight: 1.7, marginBottom: '24px'
+                }}>
+                  {t('forShops.recruitCardDesc')}
+                </div>
+                <div style={{
+                  display: 'inline-block',
+                  background: '#1a1a1a',
+                  border: '1px solid #2a2a2a',
+                  borderRadius: '99px',
+                  padding: '10px 24px',
+                  fontSize: '12px',
+                  color: '#F5C518',
+                  fontWeight: 800,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase'
+                }}>
+                  {t('forShops.recruitBadge')}
+                </div>
               </div>
             </div>
           </div>
