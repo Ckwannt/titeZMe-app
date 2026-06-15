@@ -171,6 +171,128 @@ export default function ForShopsPage() {
           animation: pulse 3s ease-in-out infinite;
           display: inline-block;
         }
+
+        /* Hero text fade + slide up */
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .hero-kicker {
+          animation: fadeSlideUp 0.5s ease forwards;
+          animation-delay: 0.1s;
+          opacity: 0;
+        }
+        .hero-h1 {
+          animation: fadeSlideUp 0.5s ease forwards;
+          animation-delay: 0.3s;
+          opacity: 0;
+        }
+        .hero-sub {
+          animation: fadeSlideUp 0.5s ease forwards;
+          animation-delay: 0.5s;
+          opacity: 0;
+        }
+        .hero-cta {
+          animation: fadeSlideUp 0.5s ease forwards;
+          animation-delay: 0.7s;
+          opacity: 0;
+        }
+
+        /* Chair rental slow zoom */
+        @keyframes slowZoom {
+          0% { transform: scale(1); }
+          100% { transform: scale(1.04); }
+        }
+        .chair-icon {
+          animation: slowZoom 8s ease-in-out infinite alternate;
+          display: inline-block;
+        }
+
+        /* Chair rental text slide in from left */
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-24px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        .chair-text {
+          animation: slideInLeft 0.6s ease forwards;
+          animation-delay: 0.2s;
+          opacity: 0;
+        }
+
+        /* Chair rental button underline hover */
+        .chair-btn {
+          position: relative;
+          display: inline-block;
+          text-decoration: none;
+          color: #F5C518;
+          font-weight: 800;
+          font-size: 14px;
+        }
+        .chair-btn::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 50%;
+          width: 0;
+          height: 2px;
+          background: #F5C518;
+          transition: width 0.3s ease, left 0.3s ease;
+        }
+        .chair-btn:hover::after {
+          width: 100%;
+          left: 0;
+        }
+
+        /* Card hover — lift + glow */
+        .card-hover {
+          transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+          cursor: default;
+        }
+        .card-hover:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 32px rgba(245, 197, 24, 0.08);
+          border-color: #2a2a2a !important;
+        }
+
+        /* Pricing card hover */
+        .pricing-card {
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .pricing-card:hover {
+          transform: translateY(-6px) rotateX(1deg);
+          box-shadow: 0 12px 40px rgba(245, 197, 24, 0.1);
+        }
+
+        /* Final CTA text fade + slide up */
+        .cta-final-text {
+          animation: fadeSlideUp 0.6s ease forwards;
+          animation-delay: 0.2s;
+          opacity: 0;
+        }
+
+        /* Final CTA button aggressive pulse */
+        @keyframes pulseFast {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        .btn-pulse-fast {
+          animation: pulseFast 2s ease-in-out infinite;
+          display: inline-block;
+        }
+
+        /* Chair rental mobile fix */
+        .chair-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 80px;
+          align-items: center;
+        }
+        @media (max-width: 768px) {
+          .chair-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+        }
       `}</style>
 
       {/* WHATSAPP FIXED BUTTON */}
@@ -206,14 +328,14 @@ export default function ForShopsPage() {
           <div className="hero-poster" />
           <div className="hero-overlay" />
           <div className="hero-content">
-            <div style={{
+            <div className="hero-kicker" style={{
               fontSize: '11px', fontWeight: 800,
               color: '#F5C518', letterSpacing: '0.2em',
               textTransform: 'uppercase', marginBottom: '28px'
             }}>
               Para barberías — Nacido en Madrid
             </div>
-            <h1 style={{
+            <h1 className="hero-h1" style={{
               fontSize: 'clamp(44px, 7vw, 88px)',
               fontWeight: 900,
               lineHeight: 1.0,
@@ -223,7 +345,7 @@ export default function ForShopsPage() {
               Tu barbería está<br />
               <span style={{ color: '#F5C518' }}>perdiendo dinero.</span>
             </h1>
-            <p style={{
+            <p className="hero-sub" style={{
               fontSize: '18px', color: '#888',
               lineHeight: 1.8, maxWidth: '520px',
               margin: '0 auto 48px'
@@ -231,7 +353,7 @@ export default function ForShopsPage() {
               No-shows. Sillas vacías. WhatsApp a las 11 de la noche.
               Nosotros tapamos cada agujero.
             </p>
-            <div className="btn-pulse">
+            <div className="btn-pulse hero-cta">
               <a href="/dashboard/barber" style={{
                 background: '#F5C518',
                 color: '#0a0a0a',
@@ -311,7 +433,7 @@ export default function ForShopsPage() {
               Antes y después de titeZMe
             </h2>
             <div className="compare-grid">
-              <div style={{
+              <div className="card-hover" style={{
                 background: '#0d0d0d',
                 padding: '48px'
               }}>
@@ -344,7 +466,7 @@ export default function ForShopsPage() {
                   </div>
                 ))}
               </div>
-              <div style={{
+              <div className="card-hover" style={{
                 background: '#111',
                 border: '1px solid #1e1e1e',
                 padding: '48px'
@@ -390,13 +512,8 @@ export default function ForShopsPage() {
           paddingBottom: '120px'
         }}>
           <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '80px',
-              alignItems: 'center'
-            }}>
-              <div>
+            <div className="chair-grid">
+              <div className="chair-text">
                 <div style={{
                   fontSize: '11px', fontWeight: 800,
                   color: '#F5C518', letterSpacing: '0.2em',
@@ -448,7 +565,7 @@ export default function ForShopsPage() {
                 <div style={{
                   fontSize: '72px', marginBottom: '24px'
                 }}>
-                  ✂️
+                  <span className="chair-icon">✂️</span>
                 </div>
                 <div style={{
                   fontSize: '15px', fontWeight: 900,
@@ -464,20 +581,9 @@ export default function ForShopsPage() {
                   con barberías que tienen sillas libres.
                   Todo gestionado desde titeZMe.
                 </div>
-                <div style={{
-                  display: 'inline-block',
-                  background: '#1a1a1a',
-                  border: '1px solid #2a2a2a',
-                  borderRadius: '99px',
-                  padding: '10px 24px',
-                  fontSize: '12px',
-                  color: '#F5C518',
-                  fontWeight: 800,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase'
-                }}>
-                  Próximamente — Agosto 2026
-                </div>
+                <a href="/dashboard/barber" className="chair-btn">
+                  Próximamente — Agosto 2026 →
+                </a>
               </div>
             </div>
           </div>
@@ -521,7 +627,7 @@ export default function ForShopsPage() {
                   desc: 'Los clientes te encuentran en titeZMe y reservan directamente. Todo en tiempo real.'
                 }
               ].map(item => (
-                <div key={item.step} style={{
+                <div key={item.step} className="card-hover" style={{
                   padding: '48px 40px',
                   background: '#0d0d0d',
                   border: '1px solid #1a1a1a'
@@ -619,7 +725,7 @@ export default function ForShopsPage() {
                   highlight: false
                 }
               ].map(card => (
-                <div key={card.label} style={{
+                <div key={card.label} className="pricing-card" style={{
                   background: card.highlight ? '#F5C518' : '#111',
                   border: card.highlight ? 'none' : '1px solid #1e1e1e',
                   borderRadius: '16px',
@@ -774,7 +880,7 @@ export default function ForShopsPage() {
             background: 'radial-gradient(ellipse 600px 400px at 50% 50%, rgba(245,197,24,0.05) 0%, transparent 70%)',
             pointerEvents: 'none'
           }} />
-          <div style={{ position: 'relative', zIndex: 1 }}>
+          <div className="cta-final-text" style={{ position: 'relative', zIndex: 1 }}>
             <h2 style={{
               fontSize: 'clamp(36px, 6vw, 76px)',
               fontWeight: 900, lineHeight: 1.0,
@@ -793,7 +899,7 @@ export default function ForShopsPage() {
               Empieza tu prueba de 6 días.
               Ve la diferencia antes que ellos.
             </p>
-            <div className="btn-pulse">
+            <div className="btn-pulse-fast">
               <a href="/dashboard/barber" style={{
                 background: '#F5C518',
                 color: '#0a0a0a',
