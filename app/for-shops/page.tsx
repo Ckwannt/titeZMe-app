@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react'
 import { useLang } from '@/lib/i18n/LangContext'
 
 export default function ForShopsPage() {
+  const { t } = useLang()
+
   useEffect(() => {
     document.title = t('forShops.pageTitle')
-  }, [])
+  }, [t])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -27,8 +29,6 @@ export default function ForShopsPage() {
   }, [])
 
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-
-  const { t } = useLang()
 
   const stats = [
     { number: t('forShops.stat1Number'), label: t('forShops.stat1Label') },
