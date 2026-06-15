@@ -48,6 +48,25 @@ export default function ForShopsPage() {
           opacity: 0.18;
           z-index: 0;
         }
+        .hero-poster {
+          display: none;
+        }
+        @media (max-width: 768px) {
+          .hero-video {
+            display: none;
+          }
+          .hero-poster {
+            display: block;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url('https://firebasestorage.googleapis.com/v0/b/gen-lang-client-0539007834.firebasestorage.app/o/videos%2FScreenshot%202026-06-15%20053753.png?alt=media&token=de0e3317-4c59-423a-a3b1-6c3d7c72c686');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.18;
+            z-index: 0;
+          }
+        }
         .hero-overlay {
           position: absolute;
           top: 0; left: 0; right: 0; bottom: 0;
@@ -184,6 +203,7 @@ export default function ForShopsPage() {
             loop
             playsInline
           />
+          <div className="hero-poster" />
           <div className="hero-overlay" />
           <div className="hero-content">
             <div style={{
