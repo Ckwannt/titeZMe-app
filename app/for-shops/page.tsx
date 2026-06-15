@@ -177,6 +177,8 @@ export default function ForShopsPage() {
           <video
             className="hero-video"
             src="https://firebasestorage.googleapis.com/v0/b/gen-lang-client-0539007834.firebasestorage.app/o/videos%2F4177973-hd_1920_1080_30fps.mp4?alt=media&token=aeb725ff-2f17-44bc-9740-0b0e3d47509b"
+            poster="https://firebasestorage.googleapis.com/v0/b/gen-lang-client-0539007834.firebasestorage.app/o/videos%2FScreenshot%202026-06-15%20053753.png?alt=media&token=de0e3317-4c59-423a-a3b1-6c3d7c72c686"
+            preload="auto"
             autoPlay
             muted
             loop
