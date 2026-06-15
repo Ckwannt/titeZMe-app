@@ -38,6 +38,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
       "font-src 'self' fonts.gstatic.com",
       "img-src 'self' data: blob: firebasestorage.googleapis.com storage.googleapis.com lh3.googleusercontent.com *.firebasestorage.app picsum.photos",
+      "media-src 'self' firebasestorage.googleapis.com *.firebasestorage.app",
       "connect-src 'self' *.firebaseapp.com *.googleapis.com *.firebasestorage.app *.ingest.sentry.io va.vercel-insights.com nominatim.openstreetmap.org *.algolia.net *.algolianet.com *.algolia.io wss://*.firebaseio.com https://accounts.google.com https://apis.google.com",
       "frame-src 'self' *.firebaseapp.com https://accounts.google.com https://apis.google.com",
       "worker-src 'self' blob:",
