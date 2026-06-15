@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useLang } from '@/lib/i18n/LangContext'
 
 export default function ForShopsPage() {
   useEffect(() => {
-    document.title = 'Para Barberías — titeZMe'
+    document.title = t('forShops.pageTitle')
   }, [])
 
   useEffect(() => {
@@ -26,6 +27,60 @@ export default function ForShopsPage() {
   }, [])
 
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+
+  const { t } = useLang()
+
+  const stats = [
+    { number: t('forShops.stat1Number'), label: t('forShops.stat1Label') },
+    { number: t('forShops.stat2Number'), label: t('forShops.stat2Label') },
+    { number: t('forShops.stat3Number'), label: t('forShops.stat3Label') },
+    { number: t('forShops.stat4Number'), label: t('forShops.stat4Label') },
+  ]
+
+  const beforeItems = [
+    t('forShops.before1'),
+    t('forShops.before2'),
+    t('forShops.before3'),
+    t('forShops.before4'),
+    t('forShops.before5'),
+    t('forShops.before6'),
+  ]
+
+  const afterItems = [
+    t('forShops.after1'),
+    t('forShops.after2'),
+    t('forShops.after3'),
+    t('forShops.after4'),
+    t('forShops.after5'),
+    t('forShops.after6'),
+  ]
+
+  const chairBullets = [
+    t('forShops.chairBullet1'),
+    t('forShops.chairBullet2'),
+    t('forShops.chairBullet3'),
+    t('forShops.chairBullet4'),
+  ]
+
+  const howSteps = [
+    { step: '01', title: t('forShops.step1Title'), desc: t('forShops.step1Desc') },
+    { step: '02', title: t('forShops.step2Title'), desc: t('forShops.step2Desc') },
+    { step: '03', title: t('forShops.step3Title'), desc: t('forShops.step3Desc') },
+  ]
+
+  const pricingCards = [
+    { label: t('forShops.card1Label'), price: t('forShops.card1Price'), desc: t('forShops.card1Desc'), highlight: false },
+    { label: t('forShops.card2Label'), price: t('forShops.card2Price'), desc: t('forShops.card2Desc'), highlight: true },
+    { label: t('forShops.card3Label'), price: t('forShops.card3Price'), desc: t('forShops.card3Desc'), highlight: false },
+  ]
+
+  const faqItems = [
+    { q: t('forShops.faq1Q'), a: t('forShops.faq1A') },
+    { q: t('forShops.faq2Q'), a: t('forShops.faq2A') },
+    { q: t('forShops.faq3Q'), a: t('forShops.faq3A') },
+    { q: t('forShops.faq4Q'), a: t('forShops.faq4A') },
+    { q: t('forShops.faq5Q'), a: t('forShops.faq5A') },
+  ]
 
   return (
     <>
@@ -398,7 +453,7 @@ export default function ForShopsPage() {
               color: '#F5C518', letterSpacing: '0.2em',
               textTransform: 'uppercase', marginBottom: '28px'
             }}>
-              Para barberías — Nacido en Madrid
+              {t('forShops.kicker')}
             </div>
             <h1 className="hero-h1" style={{
               fontSize: 'clamp(44px, 7vw, 88px)',
@@ -407,16 +462,15 @@ export default function ForShopsPage() {
               margin: '0 0 28px',
               letterSpacing: '-2px'
             }}>
-              Tu barbería está<br />
-              <span style={{ color: '#F5C518' }}>perdiendo dinero.</span>
+              {t('forShops.heroLine1')}<br />
+              <span style={{ color: '#F5C518' }}>{t('forShops.heroLine2')}</span>
             </h1>
             <p className="hero-sub" style={{
               fontSize: '18px', color: '#888',
               lineHeight: 1.8, maxWidth: '520px',
               margin: '0 auto 48px'
             }}>
-              No-shows. Sillas vacías. WhatsApp a las 11 de la noche.
-              Nosotros tapamos cada agujero.
+              {t('forShops.heroSub')}
             </p>
             <div className="btn-pulse hero-cta">
               <a href="/dashboard/barber" style={{
@@ -429,14 +483,14 @@ export default function ForShopsPage() {
                 textDecoration: 'none',
                 display: 'inline-block'
               }}>
-                Empieza gratis — 6 días →
+                {t('forShops.heroCta')}
               </a>
             </div>
             <div style={{
               fontSize: '12px', color: '#444',
               marginTop: '16px'
             }}>
-              Sin tarjeta de crédito. Sin compromisos.
+              {t('forShops.heroFootnote')}
             </div>
           </div>
         </div>
@@ -450,12 +504,7 @@ export default function ForShopsPage() {
           paddingBottom: '48px'
         }}>
           <div className="stats-bar">
-            {[
-              { number: '30s', label: 'Para reservar una cita' },
-              { number: '0€', label: 'Cuota mensual' },
-              { number: '24/7', label: 'Tu perfil visible' },
-              { number: '∞', label: 'Barberos en tu equipo' },
-            ].map((s, i) => (
+            {stats.map((s, i) => (
               <div key={s.label} className={`reveal delay-${i + 1}`} style={{ textAlign: 'center' }}>
                 <div style={{
                   fontSize: '42px', fontWeight: 900,
@@ -487,7 +536,7 @@ export default function ForShopsPage() {
               letterSpacing: '0.2em', textTransform: 'uppercase',
               marginBottom: '24px', textAlign: 'center'
             }}>
-              La realidad
+              {t('forShops.compareKicker')}
             </div>
             <h2 className="reveal" style={{
               fontSize: 'clamp(32px, 4vw, 52px)',
@@ -495,7 +544,7 @@ export default function ForShopsPage() {
               marginBottom: '64px', letterSpacing: '-1px',
               margin: '0 0 64px'
             }}>
-              <span className="section-title">Antes y después de titeZMe</span>
+              <span className="section-title">{t('forShops.compareTitle')}</span>
             </h2>
             <div className="compare-grid reveal delay-2">
               <div className="card-hover" style={{
@@ -507,16 +556,9 @@ export default function ForShopsPage() {
                   letterSpacing: '0.15em', textTransform: 'uppercase',
                   color: '#333', marginBottom: '32px'
                 }}>
-                  Sin titeZMe
+                  {t('forShops.beforeTitle')}
                 </div>
-                {[
-                  'Clientes llamando mientras estás cortando',
-                  'WhatsApp a las 11 de la noche para pedir cita',
-                  'No-shows que te hacen perder €80/mes',
-                  'Cada barbero gestiona sus propias reservas',
-                  'Sin presencia online — invisible para nuevos clientes',
-                  'No sabes cuánto gana cada barbero',
-                ].map(item => (
+                {beforeItems.map(item => (
                   <div key={item} style={{
                     display: 'flex', alignItems: 'flex-start',
                     gap: '14px', marginBottom: '18px',
@@ -541,16 +583,9 @@ export default function ForShopsPage() {
                   letterSpacing: '0.15em', textTransform: 'uppercase',
                   color: '#F5C518', marginBottom: '32px'
                 }}>
-                  Con titeZMe
+                  {t('forShops.afterTitle')}
                 </div>
-                {[
-                  'Clientes reservan solos — tú cortas tranquilo',
-                  'Reservas online 24/7, incluso mientras duermes',
-                  'Recordatorios automáticos — no-shows reducidos un 80%',
-                  'Todo el equipo en un solo dashboard',
-                  'Perfil profesional visible en Madrid y más allá',
-                  'Ingresos por barbero, servicio y hora del día',
-                ].map(item => (
+                {afterItems.map(item => (
                   <div key={item} style={{
                     display: 'flex', alignItems: 'flex-start',
                     gap: '14px', marginBottom: '18px',
@@ -584,32 +619,25 @@ export default function ForShopsPage() {
                   color: '#F5C518', letterSpacing: '0.2em',
                   textTransform: 'uppercase', marginBottom: '24px'
                 }}>
-                  Disponible agosto 2026
+                  {t('forShops.chairKicker')}
                 </div>
                 <h2 style={{
                   fontSize: 'clamp(32px, 3vw, 48px)',
                   fontWeight: 900, lineHeight: 1.1,
                   marginBottom: '24px', letterSpacing: '-1px'
                 }}>
-                  <span className="section-title">Silla vacía.</span><br />
+                  <span className="section-title">{t('forShops.chairLine1')}</span><br />
                   <span style={{ color: '#F5C518' }}>
-                    Nosotros la llenamos.
+                    {t('forShops.chairLine2')}
                   </span>
                 </h2>
                 <p style={{
                   fontSize: '16px', color: '#555',
                   lineHeight: 1.8, marginBottom: '32px'
                 }}>
-                  Barberos independientes alquilan tu silla.
-                  Nosotros les enviamos clientes.
-                  Tu silla nunca está vacía.
+                  {t('forShops.chairSub')}
                 </p>
-                {[
-                  'Cero esfuerzo de tu parte',
-                  'Nosotros gestionamos reservas y comunicación',
-                  'Tú recibes tu parte de cada corte',
-                  'Tu silla genera dinero incluso cuando descansas',
-                ].map(item => (
+                {chairBullets.map(item => (
                   <div key={item} style={{
                     display: 'flex', alignItems: 'center',
                     gap: '12px', marginBottom: '14px',
@@ -636,18 +664,16 @@ export default function ForShopsPage() {
                   fontSize: '15px', fontWeight: 900,
                   color: '#fff', marginBottom: '12px'
                 }}>
-                  Alquiler de sillas
+                  {t('forShops.chairCardTitle')}
                 </div>
                 <div style={{
                   fontSize: '13px', color: '#555',
                   lineHeight: 1.7, marginBottom: '24px'
                 }}>
-                  Conectamos barberos independientes
-                  con barberías que tienen sillas libres.
-                  Todo gestionado desde titeZMe.
+                  {t('forShops.chairCardDesc')}
                 </div>
                 <a href="/dashboard/barber" className="chair-btn">
-                  Próximamente — Agosto 2026 →
+                  {t('forShops.chairBadge')}
                 </a>
               </div>
             </div>
@@ -665,33 +691,17 @@ export default function ForShopsPage() {
               letterSpacing: '0.2em', textTransform: 'uppercase',
               marginBottom: '24px', textAlign: 'center'
             }}>
-              Cómo funciona
+              {t('forShops.howKicker')}
             </div>
             <h2 className="reveal" style={{
               fontSize: 'clamp(32px, 4vw, 52px)',
               fontWeight: 900, textAlign: 'center',
               marginBottom: '80px', letterSpacing: '-1px'
             }}>
-              <span className="section-title">Tu barbería online en minutos</span>
+              <span className="section-title">{t('forShops.howTitle')}</span>
             </h2>
             <div className="how-steps">
-              {[
-                {
-                  step: '01',
-                  title: 'Crea tu perfil',
-                  desc: 'Regístrate como barbero y crea tu barbería desde el dashboard. Nombre, dirección, servicios y fotos.'
-                },
-                {
-                  step: '02',
-                  title: 'Añade tu equipo',
-                  desc: 'Invita a tus barberos con su código titeZMe. Cada uno mantiene su perfil propio.'
-                },
-                {
-                  step: '03',
-                  title: 'Llena tus sillas',
-                  desc: 'Los clientes te encuentran en titeZMe y reservan directamente. Todo en tiempo real.'
-                }
-              ].map((item, i) => (
+              {howSteps.map((item, i) => (
                 <div key={item.step} className={`card-hover reveal delay-${i + 1}`} style={{
                   padding: '48px 40px',
                   background: '#0d0d0d',
@@ -724,7 +734,7 @@ export default function ForShopsPage() {
               fontSize: '14px', color: '#333',
               fontWeight: 700
             }}>
-              Sin código. Sin reuniones. Sin complicaciones.
+              {t('forShops.howTagline')}
             </div>
           </div>
         </div>
@@ -743,26 +753,22 @@ export default function ForShopsPage() {
               letterSpacing: '0.2em', textTransform: 'uppercase',
               marginBottom: '24px'
             }}>
-              Precio
+              {t('forShops.pricingKicker')}
             </div>
             <h2 className="reveal" style={{
               fontSize: 'clamp(32px, 4vw, 52px)',
               fontWeight: 900, marginBottom: '24px',
               letterSpacing: '-1px'
             }}>
-              <span className="section-title">Primeras 100 barberías.</span><br />
-              <span style={{ color: '#F5C518' }}>Precio VIP. Sin trampa.</span>
+              <span className="section-title">{t('forShops.pricingLine1')}</span><br />
+              <span style={{ color: '#F5C518' }}>{t('forShops.pricingLine2')}</span>
             </h2>
             <p style={{
               fontSize: '16px', color: '#555',
               lineHeight: 1.8, maxWidth: '560px',
               margin: '0 auto 64px'
             }}>
-              6 días gratis. Sin tarjeta de crédito.
-              El precio exacto aparece en tu dashboard
-              después de crear tu barbería.
-              No ocultamos números — solo queremos
-              que lo veas tú mismo.
+              {t('forShops.pricingSub')}
             </p>
             <div style={{
               display: 'grid',
@@ -770,26 +776,7 @@ export default function ForShopsPage() {
               gap: '16px',
               marginBottom: '48px'
             }}>
-              {[
-                {
-                  label: '6 días',
-                  price: '0€',
-                  desc: 'Prueba completa. Sin tarjeta.',
-                  highlight: false
-                },
-                {
-                  label: 'Primeras 100 barberías',
-                  price: 'VIP',
-                  desc: 'Precio especial por 12 meses. Ver en tu dashboard.',
-                  highlight: true
-                },
-                {
-                  label: 'Después de 100',
-                  price: 'STD',
-                  desc: 'Precio estándar. Ver en tu dashboard.',
-                  highlight: false
-                }
-              ].map((card, i) => (
+              {pricingCards.map((card, i) => (
                 <div key={card.label} className={`pricing-card reveal delay-${i + 1}`} style={{
                   background: card.highlight ? '#F5C518' : '#111',
                   border: card.highlight ? 'none' : '1px solid #1e1e1e',
@@ -833,7 +820,7 @@ export default function ForShopsPage() {
                 textDecoration: 'none',
                 display: 'inline-block'
               }}>
-                Crear mi barbería gratis →
+                {t('forShops.pricingCta')}
               </a>
             </div>
           </div>
@@ -851,37 +838,16 @@ export default function ForShopsPage() {
             letterSpacing: '0.2em', textTransform: 'uppercase',
             marginBottom: '24px', textAlign: 'center'
           }}>
-            FAQ
+            {t('forShops.faqKicker')}
           </div>
           <h2 className="reveal" style={{
             fontSize: 'clamp(28px, 3vw, 42px)',
             fontWeight: 900, textAlign: 'center',
             marginBottom: '64px', letterSpacing: '-1px'
           }}>
-            <span className="section-title">Preguntas frecuentes</span>
+            <span className="section-title">{t('forShops.faqTitle')}</span>
           </h2>
-          {[
-            {
-              q: '¿Qué pasa si no consigo más reservas?',
-              a: '6 días gratis. Si no ves resultados, no pagas. ¿Justo?'
-            },
-            {
-              q: '¿Puedo cancelar cuando quiera?',
-              a: 'Sí. Un clic. Sin preguntas. Tus datos te esperan 90 días.'
-            },
-            {
-              q: '¿Mis barberos necesitan su propia cuenta?',
-              a: 'Sí. Cada barbero tiene su propio perfil en titeZMe. Siguen siendo independientes y tú ves todo desde tu dashboard.'
-            },
-            {
-              q: '¿Cuántos barberos puedo añadir?',
-              a: 'Sin límite. Añade a todo tu equipo. Cada uno gestiona su agenda y tú ves todas las reservas en un lugar.'
-            },
-            {
-              q: '¿Hay algún coste de configuración?',
-              a: 'No. Cero. Nada. Gratis para publicar.'
-            }
-          ].map((item, i) => (
+          {faqItems.map((item, i) => (
             <div key={item.q} style={{
               borderBottom: '1px solid #141414'
             }}>
@@ -952,17 +918,16 @@ export default function ForShopsPage() {
               letterSpacing: '-2px', marginBottom: '24px',
               maxWidth: '800px', margin: '0 auto 24px'
             }}>
-              <span className="section-title">Cada día que esperas,</span><br />
+              <span className="section-title">{t('forShops.ctaLine1')}</span><br />
               <span style={{ color: '#F5C518' }}>
-                alguien llena sus sillas.
+                {t('forShops.ctaLine2')}
               </span>
             </h2>
             <p style={{
               fontSize: '16px', color: '#444',
               marginBottom: '48px'
             }}>
-              Empieza tu prueba de 6 días.
-              Ve la diferencia antes que ellos.
+              {t('forShops.ctaSub')}
             </p>
             <div className="btn-pulse-fast">
               <a href="/dashboard/barber" style={{
@@ -975,14 +940,14 @@ export default function ForShopsPage() {
                 textDecoration: 'none',
                 display: 'inline-block'
               }}>
-                Crear mi barbería gratis →
+                {t('forShops.ctaBtn')}
               </a>
             </div>
             <div style={{
               fontSize: '12px', color: '#333',
               marginTop: '20px'
             }}>
-              Sin tarjeta de crédito · Sin cuotas mensuales · Nacido en Madrid
+              {t('forShops.ctaFootnote')}
             </div>
           </div>
         </div>
