@@ -7,6 +7,24 @@ export default function ForShopsPage() {
     document.title = 'Para Barberías — titeZMe'
   }, [])
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible')
+          }
+        })
+      },
+      { threshold: 0.15 }
+    )
+    const elements = document.querySelectorAll(
+      '.reveal, .reveal-left, .section-title'
+    )
+    elements.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   return (
@@ -293,6 +311,53 @@ export default function ForShopsPage() {
             gap: 40px;
           }
         }
+
+        /* Scroll-triggered base states */
+        .reveal {
+          opacity: 0;
+          transform: translateY(24px);
+          transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .reveal.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .reveal-left {
+          opacity: 0;
+          transform: translateX(-24px);
+          transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .reveal-left.visible {
+          opacity: 1;
+          transform: translateX(0);
+        }
+
+        /* Staggered delays */
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+        .delay-5 { transition-delay: 0.5s; }
+        .delay-6 { transition-delay: 0.6s; }
+
+        /* Section title underline animation */
+        .section-title {
+          position: relative;
+          display: inline-block;
+        }
+        .section-title::after {
+          content: '';
+          position: absolute;
+          bottom: -6px;
+          left: 0;
+          width: 0;
+          height: 3px;
+          background: #F5C518;
+          transition: width 0.6s ease;
+        }
+        .section-title.visible::after {
+          width: 100%;
+        }
       `}</style>
 
       {/* WHATSAPP FIXED BUTTON */}
@@ -390,8 +455,8 @@ export default function ForShopsPage() {
               { number: '0€', label: 'Cuota mensual' },
               { number: '24/7', label: 'Tu perfil visible' },
               { number: '∞', label: 'Barberos en tu equipo' },
-            ].map(s => (
-              <div key={s.label} style={{ textAlign: 'center' }}>
+            ].map((s, i) => (
+              <div key={s.label} className={`reveal delay-${i + 1}`} style={{ textAlign: 'center' }}>
                 <div style={{
                   fontSize: '42px', fontWeight: 900,
                   color: '#F5C518', lineHeight: 1,
@@ -424,15 +489,15 @@ export default function ForShopsPage() {
             }}>
               La realidad
             </div>
-            <h2 style={{
+            <h2 className="reveal" style={{
               fontSize: 'clamp(32px, 4vw, 52px)',
               fontWeight: 900, textAlign: 'center',
               marginBottom: '64px', letterSpacing: '-1px',
               margin: '0 0 64px'
             }}>
-              Antes y después de titeZMe
+              <span className="section-title">Antes y después de titeZMe</span>
             </h2>
-            <div className="compare-grid">
+            <div className="compare-grid reveal delay-2">
               <div className="card-hover" style={{
                 background: '#0d0d0d',
                 padding: '48px'
@@ -526,7 +591,7 @@ export default function ForShopsPage() {
                   fontWeight: 900, lineHeight: 1.1,
                   marginBottom: '24px', letterSpacing: '-1px'
                 }}>
-                  Silla vacía.<br />
+                  <span className="section-title">Silla vacía.</span><br />
                   <span style={{ color: '#F5C518' }}>
                     Nosotros la llenamos.
                   </span>
@@ -602,12 +667,12 @@ export default function ForShopsPage() {
             }}>
               Cómo funciona
             </div>
-            <h2 style={{
+            <h2 className="reveal" style={{
               fontSize: 'clamp(32px, 4vw, 52px)',
               fontWeight: 900, textAlign: 'center',
               marginBottom: '80px', letterSpacing: '-1px'
             }}>
-              Tu barbería online en minutos
+              <span className="section-title">Tu barbería online en minutos</span>
             </h2>
             <div className="how-steps">
               {[
@@ -626,8 +691,8 @@ export default function ForShopsPage() {
                   title: 'Llena tus sillas',
                   desc: 'Los clientes te encuentran en titeZMe y reservan directamente. Todo en tiempo real.'
                 }
-              ].map(item => (
-                <div key={item.step} className="card-hover" style={{
+              ].map((item, i) => (
+                <div key={item.step} className={`card-hover reveal delay-${i + 1}`} style={{
                   padding: '48px 40px',
                   background: '#0d0d0d',
                   border: '1px solid #1a1a1a'
@@ -680,12 +745,12 @@ export default function ForShopsPage() {
             }}>
               Precio
             </div>
-            <h2 style={{
+            <h2 className="reveal" style={{
               fontSize: 'clamp(32px, 4vw, 52px)',
               fontWeight: 900, marginBottom: '24px',
               letterSpacing: '-1px'
             }}>
-              Primeras 100 barberías.<br />
+              <span className="section-title">Primeras 100 barberías.</span><br />
               <span style={{ color: '#F5C518' }}>Precio VIP. Sin trampa.</span>
             </h2>
             <p style={{
@@ -724,8 +789,8 @@ export default function ForShopsPage() {
                   desc: 'Precio estándar. Ver en tu dashboard.',
                   highlight: false
                 }
-              ].map(card => (
-                <div key={card.label} className="pricing-card" style={{
+              ].map((card, i) => (
+                <div key={card.label} className={`pricing-card reveal delay-${i + 1}`} style={{
                   background: card.highlight ? '#F5C518' : '#111',
                   border: card.highlight ? 'none' : '1px solid #1e1e1e',
                   borderRadius: '16px',
@@ -788,12 +853,12 @@ export default function ForShopsPage() {
           }}>
             FAQ
           </div>
-          <h2 style={{
+          <h2 className="reveal" style={{
             fontSize: 'clamp(28px, 3vw, 42px)',
             fontWeight: 900, textAlign: 'center',
             marginBottom: '64px', letterSpacing: '-1px'
           }}>
-            Preguntas frecuentes
+            <span className="section-title">Preguntas frecuentes</span>
           </h2>
           {[
             {
@@ -887,7 +952,7 @@ export default function ForShopsPage() {
               letterSpacing: '-2px', marginBottom: '24px',
               maxWidth: '800px', margin: '0 auto 24px'
             }}>
-              Cada día que esperas,<br />
+              <span className="section-title">Cada día que esperas,</span><br />
               <span style={{ color: '#F5C518' }}>
                 alguien llena sus sillas.
               </span>
