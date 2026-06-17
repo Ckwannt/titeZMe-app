@@ -127,6 +127,7 @@ function currencySymbol(c?: string): string {
 function Pagination({ page, total, onChange }: {
   page: number; total: number; onChange: (p: number) => void;
 }) {
+  const { t } = useLang();
   const totalPages = Math.ceil(total / PER_PAGE);
   if (totalPages <= 1) return null;
   let start = Math.max(1, page - 2);
@@ -138,7 +139,7 @@ function Pagination({ page, total, onChange }: {
     <div className="flex items-center justify-center gap-1 mt-10">
       <button onClick={() => onChange(page - 1)} disabled={page === 1}
         className="px-3 py-2 text-sm font-bold text-[#888] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-        ← Prev
+        {t('buttons.prev')}
       </button>
       {start > 1 && <>
         <button onClick={() => onChange(1)} className="w-11 h-11 rounded-lg text-sm font-bold text-[#888] hover:text-white">1</button>
@@ -156,7 +157,7 @@ function Pagination({ page, total, onChange }: {
       </>}
       <button onClick={() => onChange(page + 1)} disabled={page === totalPages}
         className="px-3 py-2 text-sm font-bold text-[#888] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-        Next →
+        {t('buttons.next')}
       </button>
     </div>
   );
@@ -326,12 +327,12 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
         {geoApplied && geoCity && (
           <div className="flex items-center gap-2 mb-5 bg-[#111] border border-[#1e1e1e] rounded-full px-4 py-2 w-fit text-sm font-bold text-[#888]">
             <span>📍</span>
-            <span>Showing barbers near <span className="text-white">{geoCity}</span></span>
+            <span>{t('status.showingNear')} <span className="text-white">{geoCity}</span></span>
             <button
               onClick={clearAll}
               className="ml-1 text-[#555] hover:text-white transition-colors text-xs"
             >
-              Change location ✕
+              {t('status.changeLocation')}
             </button>
           </div>
         )}
@@ -365,7 +366,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
           </div>
 
           <input value={nameSearch} onChange={e => { setNameSearch(e.target.value); setPage(1); }}
-            placeholder="Search by name... (optional)"
+            placeholder={t('forms.searchByBarberName')}
             className="w-full sm:max-w-sm bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors placeholder:text-[#444]"
           />
         </div>
@@ -405,24 +406,24 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
             <h3 className="text-xl font-black mb-2">
               {activeFilter
                 ? activeFilter.city
-                  ? `No barbers in ${activeFilter.city} yet`
-                  : `No barbers in ${activeFilter.countryDisplay || activeFilter.country} yet`
-                : 'No barbers found'}
+                  ? t('emptyStates.noBarbersCity').replace('{city}', activeFilter.city)
+                  : t('emptyStates.noBarbersCountry').replace('{country}', activeFilter.countryDisplay || activeFilter.country)
+                : t('emptyStates.noBarbersFound')}
             </h3>
             <p className="text-[#555] text-sm mb-6">
-              {activeFilter ? 'Know a barber there? Share titeZMe with them.' : 'Check back soon.'}
+              {activeFilter ? t('emptyStates.shareWithBarber') : t('emptyStates.checkBackSoon')}
             </p>
             {activeFilter && (
               <button onClick={handleShare}
                 className="bg-[#1a1a1a] border border-[#2a2a2a] text-white font-bold px-6 py-3 rounded-full text-sm hover:border-[#444] transition-colors">
-                {copied ? '✓ Copied!' : '🔗 Share titeZMe'}
+                {copied ? t('buttons.copied') : t('buttons.shareApp')}
               </button>
             )}
           </div>
         ) : (
           <>
             <div className="text-xs font-bold text-[#555] mb-4">
-              {filtered.length} barber{filtered.length !== 1 ? 's' : ''} found
+              {filtered.length === 1 ? `1 ${t('status.barbersFound')}` : `${filtered.length} ${t('status.barbersFoundPlural')}`}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full items-stretch">
               {(() => {
@@ -433,7 +434,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
                 const isFeaturedCard = b.isFeatured === true;
                 const applyBlur = shouldBlur && !isFeaturedCard;
                 const showOverlay = applyBlur && paged.indexOf(b) === firstBlurredIndex;
-                const name = `${b.firstName} ${b.lastName}`.trim() || 'Barber';
+                const name = `${b.firstName} ${b.lastName}`.trim() || t('misc.barberFallback');
                 const photo = b.profilePhotoUrl || b.photoUrl;
                 const sym = currencySymbol(b.currency);
                 const displayLangs = b.languages.slice(0, 2);
@@ -467,7 +468,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1">
                               <span className="font-extrabold text-[13px] text-white truncate">{name}</span>
-                              <span className="text-[10px] text-[#555] font-semibold whitespace-nowrap shrink-0">New ✨</span>
+                              <span className="text-[10px] text-[#555] font-semibold whitespace-nowrap shrink-0">{t('status.newBadge')}</span>
                             </div>
                             {b.city && (
                               <div className="text-[11px] text-[#666] mt-[3px]">📍 {b.city}</div>
@@ -500,7 +501,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
 
                         <div className="flex justify-between items-center mt-auto">
                           <span className="text-[13px] font-bold text-white">
-                            {b.minPrice !== null ? `from ${sym}${b.minPrice}` : t('buttons.onRequest')}
+                            {b.minPrice !== null ? `${t('status.fromPrice')} ${sym}${b.minPrice}` : t('buttons.onRequest')}
                           </span>
                           <span className="text-[12px] font-bold text-[#E8491D]">
                             {t('buttons.viewProfile')}
@@ -523,17 +524,17 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
                         padding: 16,
                       }}>
                         <div style={{ fontSize: 13, fontWeight: 900, color: '#fff', textAlign: 'center' }}>
-                          Sign up to see all barbers
+                          {t('headings.signUpToSeeBarbers')}
                         </div>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
                           <a href="/signup" style={{
                             background: '#F5C518', color: '#0a0a0a', fontWeight: 900, fontSize: 12,
                             padding: '8px 16px', borderRadius: 8, textDecoration: 'none',
-                          }}>Create Account →</a>
+                          }}>{t('buttons.createAccount')}</a>
                           <a href="/login" style={{
                             background: '#1a1a1a', color: '#fff', fontWeight: 900, fontSize: 12,
                             padding: '8px 16px', borderRadius: 8, border: '1px solid #333', textDecoration: 'none',
-                          }}>Log in</a>
+                          }}>{t('nav.login')}</a>
                         </div>
                       </div>
                     )}

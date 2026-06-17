@@ -12,6 +12,7 @@ import { getOpenStatus, getTimezoneFromLocation, getLocalDateString } from '@/li
 import { locationsMatch } from '@/lib/location-utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAuth } from '@/lib/auth-context';
+import { useLang } from '@/lib/i18n/LangContext';
 
 const PER_PAGE = 12;
 
@@ -104,7 +105,7 @@ async function fetchShops(): Promise<ShopCard[]> {
 
     return {
       id: s.id,
-      name: s.name || 'Barbershop',
+      name: s.name || '',
       coverPhotoUrl: s.coverPhotoUrl,
       country: shopCountry,
       city: shopCity,
@@ -127,6 +128,7 @@ async function fetchShops(): Promise<ShopCard[]> {
 function Pagination({ page, total, onChange }: {
   page: number; total: number; onChange: (p: number) => void;
 }) {
+  const { t } = useLang();
   const totalPages = Math.ceil(total / PER_PAGE);
   if (totalPages <= 1) return null;
   let start = Math.max(1, page - 2);
@@ -138,7 +140,7 @@ function Pagination({ page, total, onChange }: {
     <div className="flex items-center justify-center gap-1 mt-10">
       <button onClick={() => onChange(page - 1)} disabled={page === 1}
         className="px-3 py-2 text-sm font-bold text-[#888] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-        ← Prev
+        {t('buttons.prev')}
       </button>
       {start > 1 && <>
         <button onClick={() => onChange(1)} className="w-8 h-8 rounded-lg text-sm font-bold text-[#888] hover:text-white">1</button>
@@ -156,7 +158,7 @@ function Pagination({ page, total, onChange }: {
       </>}
       <button onClick={() => onChange(page + 1)} disabled={page === totalPages}
         className="px-3 py-2 text-sm font-bold text-[#888] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-        Next →
+        {t('buttons.next')}
       </button>
     </div>
   );
@@ -167,6 +169,7 @@ function Pagination({ page, total, onChange }: {
 export default function ShopsPage() {
   const router = useRouter();
   const { user, authLoading } = useAuth();
+  const { t } = useLang();
   const shouldBlur = !authLoading && !user;
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
@@ -180,7 +183,6 @@ export default function ShopsPage() {
   const [csc, setCsc] = useState<any>(null);
 
   useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
-  useEffect(() => { document.title = 'Find a Barbershop — titeZMe'; }, []);
 
   // Geolocation auto-fill — same as /barbers page.
   // Shops store address.country as the full country name ("Spain"), so we use
@@ -299,21 +301,21 @@ export default function ShopsPage() {
     <div className="bg-[#0a0a0a] text-white min-h-screen">
 
       <div className="max-w-[1400px] mx-auto px-6 pt-12 pb-8">
-        <h1 className="text-4xl md:text-5xl font-black mb-2">Find a barbershop</h1>
+        <h1 className="text-4xl md:text-5xl font-black mb-2">{t('forms.findYourShop')}</h1>
         <p className="text-[#888] font-bold text-lg mb-8">
-          Browse barbershops by city. Meet the team. Book your spot.
+          {t('forms.browseShopsCity')}
         </p>
 
         {/* Geolocation banner */}
         {geoApplied && geoCity && (
           <div className="flex items-center gap-2 mb-5 bg-[#111] border border-[#1e1e1e] rounded-full px-4 py-2 w-fit text-sm font-bold text-[#888]">
             <span>📍</span>
-            <span>Showing shops near <span className="text-white">{geoCity}</span></span>
+            <span>{t('status.showingShopsNear')} <span className="text-white">{geoCity}</span></span>
             <button
               onClick={clearAll}
               className="ml-1 text-[#555] hover:text-white transition-colors text-xs"
             >
-              Change location ✕
+              {t('status.changeLocation')}
             </button>
           </div>
         )}
@@ -329,7 +331,7 @@ export default function ShopsPage() {
               }}
               className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors"
             >
-              <option value="">Choose a country</option>
+              <option value="">{t('forms.chooseCountryShops')}</option>
               {countries.map((c: any) => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
             </select>
 
@@ -337,18 +339,18 @@ export default function ShopsPage() {
               disabled={!countryCode}
               className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <option value="">Choose a city</option>
+              <option value="">{t('forms.chooseCityShops')}</option>
               {cities.map((c: any) => <option key={c.name} value={c.name}>{c.name}</option>)}
             </select>
 
             <button onClick={handleSearch} disabled={false}
               className="bg-brand-yellow text-[#0a0a0a] font-black px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-opacity whitespace-nowrap">
-              Search shops →
+              {t('buttons.searchShops')}
             </button>
           </div>
 
           <input value={nameSearch} onChange={e => { setNameSearch(e.target.value); setPage(1); }}
-            placeholder="Search by shop name... (optional)"
+            placeholder={t('forms.searchByShopName')}
             className="w-full sm:max-w-sm bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors placeholder:text-[#444]"
           />
         </div>
@@ -368,7 +370,7 @@ export default function ShopsPage() {
               </span>
             )}
             <button onClick={clearAll} className="text-xs text-[#555] hover:text-white transition-colors">
-              Clear all ✕
+              {t('buttons.clearAll')} ✕
             </button>
           </div>
         )}
@@ -390,22 +392,22 @@ export default function ShopsPage() {
             <h3 className="text-xl font-black mb-2">
               {activeFilter
                 ? activeFilter.city
-                  ? `No barbershops in ${activeFilter.city} yet`
-                  : `No barbershops in ${activeFilter.country} yet`
-                : 'No barbershops found'}
+                  ? t('emptyStates.noShopsCity').replace('{city}', activeFilter.city)
+                  : t('emptyStates.noShopsCountry').replace('{country}', activeFilter.country)
+                : t('emptyStates.noShopsFound')}
             </h3>
             <p className="text-[#555] text-sm mb-6">
-              {activeFilter ? 'Own a shop? Join titeZMe free.' : 'Check back soon.'}
+              {activeFilter ? t('emptyStates.ownAShop') : t('emptyStates.checkBackSoon')}
             </p>
             <Link href="/signup"
               className="bg-brand-yellow text-[#0a0a0a] font-black px-6 py-3 rounded-full text-sm hover:opacity-90 transition-opacity inline-block">
-              Join as a barber →
+              {t('buttons.joinAsBarber')}
             </Link>
           </div>
         ) : (
           <>
             <div className="text-xs font-bold text-[#555] mb-4">
-              {filtered.length} shop{filtered.length !== 1 ? 's' : ''} found
+              {filtered.length === 1 ? `1 ${t('status.shopsFound')}` : `${filtered.length} ${t('status.shopsFoundPlural')}`}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full items-stretch">
               {(() => {
@@ -416,7 +418,8 @@ export default function ShopsPage() {
                 const isFeaturedCard = s.isFeatured === true;
                 const applyBlur = shouldBlur && !isFeaturedCard;
                 const showOverlay = applyBlur && paged.indexOf(s) === firstBlurredIndex;
-                const initials = s.name.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
+                const displayName = s.name || t('misc.shopFallback');
+                const initials = displayName.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
 
                 return (
                   <div key={s.id} className="relative h-full">
@@ -438,7 +441,7 @@ export default function ShopsPage() {
                         <div className="relative h-[140px] flex items-center justify-center shrink-0"
                           style={{ background: 'linear-gradient(135deg, #E8491D, #F5C518)' }}>
                           {s.coverPhotoUrl ? (
-                            <Image src={s.coverPhotoUrl} alt={s.name} fill className="object-cover" referrerPolicy="no-referrer" />
+                            <Image src={s.coverPhotoUrl} alt={displayName} fill className="object-cover" referrerPolicy="no-referrer" />
                           ) : (
                             <span className="text-[40px] font-black" style={{ color: 'rgba(0,0,0,0.3)' }}>
                               {initials}
@@ -452,7 +455,7 @@ export default function ShopsPage() {
                                 ? 'bg-[#0f2010] text-[#22C55E]'
                                 : 'bg-[#1a0808] text-[#EF4444]'
                             }`}>
-                              ● {s.isOpenNow ? 'Open now' : 'Closed today'}
+                              ● {s.isOpenNow ? t('status.openNow') : t('status.closed')}
                             </span>
                           )}
                         </div>
@@ -461,7 +464,7 @@ export default function ShopsPage() {
                         <div className="flex flex-col flex-1 px-[14px] py-[12px]">
                           {/* Shop name */}
                           <div className="text-[13px] font-extrabold text-white mb-1 truncate">
-                            {s.name}
+                            {displayName}
                           </div>
 
                           {/* Street address */}
@@ -480,8 +483,8 @@ export default function ShopsPage() {
 
                           {/* Bottom row */}
                           <div className="flex justify-between items-center mt-auto">
-                            <span className="text-[11px] text-[#555]">New shop ✨</span>
-                            <span className="text-[12px] font-bold text-[#E8491D]">View shop →</span>
+                            <span className="text-[11px] text-[#555]">{t('status.newShopBadge')}</span>
+                            <span className="text-[12px] font-bold text-[#E8491D]">{t('buttons.viewShop')}</span>
                           </div>
                         </div>
                       </Link>
@@ -501,17 +504,17 @@ export default function ShopsPage() {
                         padding: 16,
                       }}>
                         <div style={{ fontSize: 13, fontWeight: 900, color: '#fff', textAlign: 'center' }}>
-                          Sign up to see all shops
+                          {t('headings.signUpToSeeShops')}
                         </div>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
                           <a href="/signup" style={{
                             background: '#F5C518', color: '#0a0a0a', fontWeight: 900, fontSize: 12,
                             padding: '8px 16px', borderRadius: 8, textDecoration: 'none',
-                          }}>Create Account →</a>
+                          }}>{t('buttons.createAccount')}</a>
                           <a href="/login" style={{
                             background: '#1a1a1a', color: '#fff', fontWeight: 900, fontSize: 12,
                             padding: '8px 16px', borderRadius: 8, border: '1px solid #333', textDecoration: 'none',
-                          }}>Log in</a>
+                          }}>{t('nav.login')}</a>
                         </div>
                       </div>
                     )}
