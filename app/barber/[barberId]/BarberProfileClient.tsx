@@ -452,7 +452,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                     <div className="flex items-center gap-1">
                       <span className="text-brand-yellow">★</span>
                       <span>{typeof profile.rating === 'number' ? profile.rating.toFixed(1) : '—'}</span>
-                      <span className="text-[#666]">({profile.reviewCount} reviews)</span>
+                      <span className="text-[#666]">({profile.reviewCount} {t('profile.reviewsCount')})</span>
                     </div>
                   ) : <span className="text-[#888]">{t('profile.newBarber')}</span>}
                   {userProfile?.createdAt && (
@@ -474,7 +474,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
               <div className="flex flex-wrap gap-3 mb-6">
                 {(profile.languages?.length || 0) > 0 && (
                   <div className="bg-[#0d1117] border border-[#1a2a3a] rounded-2xl p-4 flex-1 min-w-[130px]">
-                    <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">🗣 Languages</div>
+                    <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">{t('misc.languages')}</div>
                     <div className="flex flex-wrap gap-1.5">
                       {profile.languages!.map((l: string) => <span key={l} className="bg-blue-950/60 text-blue-300 px-2 py-0.5 rounded-md text-[11px] font-bold border border-blue-900/50">{l}</span>)}
                     </div>
@@ -490,7 +490,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                 )}
                 {(profile.clientele?.length || 0) > 0 && (
                   <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-4 flex-1 min-w-[130px]">
-                    <div className="text-[10px] font-black text-[#888] uppercase tracking-widest mb-2">👥 Works with</div>
+                    <div className="text-[10px] font-black text-[#888] uppercase tracking-widest mb-2">👥 {t('profile.worksWith')}</div>
                     <div className="flex flex-wrap gap-1.5">
                       {profile.clientele!.map((c: string) => <span key={c} className="bg-[#1a1a1a] text-[#ccc] px-2 py-0.5 rounded-md text-[11px] font-bold border border-[#333]">{c}</span>)}
                     </div>
@@ -514,7 +514,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
               <div className="mb-10">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-extrabold text-[11px] tracking-widest text-[#666] uppercase">{t('profile.theirWork')}</h3>
-                  <span className="text-xs font-bold text-[#555]">See all {profile.photos!.length} →</span>
+                  <span className="text-xs font-bold text-[#555]">{t('profile.seeAll').replace('{n}', String(profile.photos!.length))}</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {profile.photos!.slice(0, 8).map((photo: string, i: number) => (
@@ -539,7 +539,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                         {typeof profile.rating === 'number' ? profile.rating.toFixed(1) : '—'}
                       </div>
                       <div className="text-brand-yellow text-sm mt-1">{'★'.repeat(Math.round(profile.rating || 0))}</div>
-                      <div className="text-[11px] text-[#555] mt-1">{profile.reviewCount} reviews</div>
+                      <div className="text-[11px] text-[#555] mt-1">{profile.reviewCount} {t('profile.reviewsCount')}</div>
                     </div>
                     <div className="flex-1">
                       {ratingBreakdown.map(({ star, pct }) => (
@@ -587,7 +587,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
               ) : (
                 <div className="border border-[#2a2a2a] bg-[#111] rounded-2xl p-8 text-center">
                   <div className="text-[#555] text-sm font-bold">{t('profile.noReviewsYet')}</div>
-                  <div className="text-[#444] text-xs mt-1">Book {firstName} to be the first.</div>
+                  <div className="text-[#444] text-xs mt-1">{t('profile.noReviewsYetBookFirst').replace('{name}', firstName)}</div>
                 </div>
               )}
             </div>
@@ -601,7 +601,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                   <button onClick={() => setBookingContext('solo')}
                     className={`px-4 py-2 rounded-full text-xs font-bold border transition-colors ${bookingContext === 'solo' ? 'bg-brand-yellow text-[#0a0a0a] border-brand-yellow' : 'border-[#2a2a2a] text-[#888] hover:text-white'}`}
                   >
-                    👤 Book {firstName} directly
+                    👤 {t('profile.bookDirectly').replace('{name}', firstName)}
                   </button>
                   <button onClick={() => setBookingContext('shop')}
                     className={`px-4 py-2 rounded-full text-xs font-bold border transition-colors ${bookingContext === 'shop' ? 'bg-brand-yellow text-[#0a0a0a] border-brand-yellow' : 'border-[#2a2a2a] text-[#888] hover:text-white'}`}
@@ -615,13 +615,13 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                 {profile.titeZMeCut && (
                   <div className="bg-[#111] border border-[#2a2a2a] border-l-[3px] border-l-brand-yellow rounded-2xl p-4 flex justify-between items-center gap-3">
                     <div className="flex-1">
-                      <div className="font-black text-sm flex items-center gap-1.5">⚡ titeZMe Cut <span className="text-[#555] text-xs">🔒</span></div>
-                      <div className="text-[11px] text-[#666] mt-0.5">{firstName} picks the cut based on your vibe and budget</div>
-                      <div className="text-[11px] text-[#444] mt-0.5">⏱ {profile.titeZMeCut.durationMinutes} min</div>
+                      <div className="font-black text-sm flex items-center gap-1.5">{t('profile.titeZMeCutLabel')} <span className="text-[#555] text-xs">🔒</span></div>
+                      <div className="text-[11px] text-[#666] mt-0.5">{t('profile.titeZMeCutDescBarber').replace('{name}', firstName)}</div>
+                      <div className="text-[11px] text-[#444] mt-0.5">⏱ {profile.titeZMeCut.durationMinutes} {t('misc.minShort')}</div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="font-black text-brand-yellow">{currency}{profile.titeZMeCut.price}</div>
-                      <button onClick={() => handleBooking()} disabled={!profile.isLive} title={!profile.isLive ? 'Not accepting bookings right now' : undefined} className={`px-4 py-2 rounded-xl text-xs font-black transition-opacity ${!profile.isLive ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed' : 'bg-brand-yellow text-[#0a0a0a] hover:opacity-90'}`}>Book</button>
+                      <button onClick={() => handleBooking()} disabled={!profile.isLive} title={!profile.isLive ? t('profile.notAcceptingBookings') : undefined} className={`px-4 py-2 rounded-xl text-xs font-black transition-opacity ${!profile.isLive ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed' : 'bg-brand-yellow text-[#0a0a0a] hover:opacity-90'}`}>{t('profile.book')}</button>
                     </div>
                   </div>
                 )}
@@ -634,14 +634,14 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                   <div key={s.id} className="group bg-[#111] border border-[#2a2a2a] rounded-2xl p-4 flex justify-between items-center hover:border-[#444] transition-colors">
                     <div className="flex-1">
                       <div className="font-black text-white text-sm">{s.name}</div>
-                      <div className="text-[11px] text-[#555] mt-0.5">⏱ {s.durationMinutes || s.duration} min</div>
+                      <div className="text-[11px] text-[#555] mt-0.5">⏱ {s.durationMinutes || s.duration} {t('misc.minShort')}</div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="font-black text-brand-yellow">{currency}{s.price}</div>
-                      <button onClick={() => handleBooking(s.id)} disabled={!profile.isLive} title={!profile.isLive ? 'Not accepting bookings right now' : undefined}
+                      <button onClick={() => handleBooking(s.id)} disabled={!profile.isLive} title={!profile.isLive ? t('profile.notAcceptingBookings') : undefined}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${!profile.isLive ? 'bg-[#1a1a1a] text-[#555] border border-[#2a2a2a] cursor-not-allowed' : 'bg-[#1a1a1a] text-white border border-[#333] group-hover:bg-brand-yellow group-hover:text-[#0a0a0a] group-hover:border-brand-yellow'}`}
                       >
-                        Book
+                        {t('profile.book')}
                       </button>
                     </div>
                   </div>
@@ -660,7 +660,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
               <div className="text-3xl font-black text-brand-yellow mb-4">
                 {minPrice !== null ? `${currency}${minPrice}` : t('profile.pricesOnRequest')}
               </div>
-              <button onClick={() => handleBooking()} disabled={!profile.isLive} title={!profile.isLive ? 'Not accepting bookings right now' : undefined}
+              <button onClick={() => handleBooking()} disabled={!profile.isLive} title={!profile.isLive ? t('profile.notAcceptingBookings') : undefined}
                 className={`w-full font-black py-3 rounded-full mb-2 text-sm transition-opacity ${!profile.isLive ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed' : 'bg-brand-yellow text-[#0a0a0a] hover:opacity-90'}`}
               >
                 {t('buttons.bookNow')}
@@ -678,7 +678,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
               <div className="mt-4 pt-4 border-t border-[#222]">
                 <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-1.5">{t('profile.nextAvailableSlot')}</div>
                 <div className="text-sm font-bold text-white">
-                  {todaySlots.length > 0 ? `Today · ${todaySlots[0]}` : t('profile.noSlotsToday')}
+                  {todaySlots.length > 0 ? `${t('buttons.today')} · ${todaySlots[0]}` : t('profile.noSlotsToday')}
                 </div>
               </div>
             </div>
@@ -724,7 +724,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
               <div className="grid grid-cols-2 gap-3">
                 <div
                   className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]"
-                  title={profile.experienceStartYear ? `Includes estimated cuts from ${yearsExperience} years of experience` : undefined}
+                  title={profile.experienceStartYear ? t('profile.cutsFromExperience').replace('{years}', String(yearsExperience)) : undefined}
                 >
                   <div className="text-xl font-black text-white">{cutsLabel}</div>
                   <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('barberPublic.totalCuts')}</div>
@@ -736,7 +736,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                       {profile.experienceVerified && (
                         <span
                           className="inline-block w-2 h-2 rounded-full bg-[#22c55e]"
-                          title="Verified"
+                          title={t('barberSettings.verified')}
                         />
                       )}
                     </div>
@@ -757,23 +757,17 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                         : profile.avgResponseMinutes >= 60
                         ? `~1h`
                         : `~${profile.avgResponseMinutes}min`
-                      : 'New'}
+                      : t('profile.newMember')}
                   </div>
                   <div className="text-[10px] text-[#555] font-bold mt-0.5">
                     {profile.avgResponseMinutes
-                      ? `⚡ Usually responds in ${
-                          profile.avgResponseMinutes >= 1440
-                            ? `~${Math.round(profile.avgResponseMinutes / 1440)} days`
-                            : profile.avgResponseMinutes >= 60
-                            ? `~${Math.round(profile.avgResponseMinutes / 60)}h`
-                            : `~${profile.avgResponseMinutes}min`
-                        }`
+                      ? t('profile.respondsIn').replace('{hours}', String(Math.max(1, Math.round(profile.avgResponseMinutes / 60))))
                       : t('profile.avgResponse')}
                   </div>
                 </div>
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   <div className="text-sm font-black text-white leading-tight">
-                    {userProfile?.createdAt ? formatMemberSince(userProfile.createdAt) : 'New'}
+                    {userProfile?.createdAt ? formatMemberSince(userProfile.createdAt) : t('profile.newMember')}
                   </div>
                   <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('profile.memberSince')}</div>
                 </div>
