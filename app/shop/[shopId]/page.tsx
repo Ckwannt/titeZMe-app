@@ -73,18 +73,22 @@ function formatMemberSince(ts: number): string {
   return new Date(ts).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
-function getOpenBadge(availableSlots: Record<string, string[]> | null, todayDate: string) {
+function getOpenBadge(
+  availableSlots: Record<string, string[]> | null,
+  todayDate: string,
+  t: (key: string) => string,
+) {
   if (!availableSlots) return null;
   const slots = availableSlots[todayDate] ?? [];
-  if (slots.length === 0) return { label: '🔴 Closed today', isOpen: false };
+  if (slots.length === 0) return { label: t('status.closedToday'), isOpen: false };
   const nowHour = new Date().getHours();
   const nowStr = `${String(nowHour).padStart(2, '0')}:00`;
   if (slots.includes(nowStr)) {
     const lastH = parseInt(slots[slots.length - 1]) + 1;
-    return { label: `• Open · Closes ${String(lastH).padStart(2, '0')}:00`, isOpen: true };
+    return { label: t('status.openCloses').replace('{hour}', String(lastH).padStart(2, '0')), isOpen: true };
   }
-  if (nowHour < parseInt(slots[0])) return { label: `🔴 Closed · Opens at ${slots[0]}`, isOpen: false };
-  return { label: '🔴 Closed today', isOpen: false };
+  if (nowHour < parseInt(slots[0])) return { label: t('status.closedOpens').replace('{time}', slots[0]), isOpen: false };
+  return { label: t('status.closedToday'), isOpen: false };
 }
 
 function serviceIcon(name: string): string {
@@ -217,7 +221,7 @@ export default function ShopProfilePage() {
   // ─── derived ─────────────────────────────────────────────────────────────
 
   const todayDate = new Date().toISOString().split('T')[0];
-  const openBadge = getOpenBadge(schedule?.availableSlots ?? null, todayDate);
+  const openBadge = getOpenBadge(schedule?.availableSlots ?? null, todayDate, t);
   const currency = shop?.titeZMeCut?.currency ?? '€';
 
   const allPrices = [
@@ -235,7 +239,11 @@ export default function ShopProfilePage() {
   const totalCuts = barbers.reduce((sum, b) => sum + (b.totalCuts ?? 0), 0);
 
   // Week days grid
-  const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const DAY_LABELS = [
+    t('misc.dayMon'), t('misc.dayTue'), t('misc.dayWed'),
+    t('misc.dayThu'), t('misc.dayFri'), t('misc.daySat'),
+    t('misc.daySun'),
+  ];
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
@@ -257,7 +265,7 @@ export default function ShopProfilePage() {
       return;
     }
     if (appUser?.role === 'admin') {
-      toast.error('Admin accounts cannot make bookings');
+      toast.error(t('profile.adminCannotBook'));
       return;
     }
     if (!appUser?.isOnboarded) {
@@ -277,7 +285,7 @@ export default function ShopProfilePage() {
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
-    toast.success('Link copied! 📋');
+    toast.success(t('profile.linkCopiedToast'));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -310,9 +318,9 @@ export default function ShopProfilePage() {
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
           <div className="text-5xl mb-4">🏪</div>
-          <h1 className="text-2xl font-black mb-2">Shop not found</h1>
-          <p className="text-[#888] mb-6">This shop doesn&apos;t exist.</p>
-          <Link href="/shops" className="bg-brand-yellow text-black font-black px-6 py-3 rounded-full">Browse shops →</Link>
+          <h1 className="text-2xl font-black mb-2">{t('profile.shopNotFound')}</h1>
+          <p className="text-[#888] mb-6">{t('profile.shopNotFoundDesc')}</p>
+          <Link href="/shops" className="bg-brand-yellow text-black font-black px-6 py-3 rounded-full">{t('profile.browseShops')}</Link>
         </div>
       </div>
     );
@@ -323,9 +331,9 @@ export default function ShopProfilePage() {
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-6">
         <div className="text-center max-w-[400px]">
           <div className="text-5xl mb-4">🏪</div>
-          <h1 className="text-xl font-black mb-2">This shop is not currently active</h1>
-          <p className="text-[#888] text-sm mb-6">Check back later.</p>
-          <Link href="/shops" className="bg-brand-yellow text-black font-black px-6 py-3 rounded-full">Browse other shops →</Link>
+          <h1 className="text-xl font-black mb-2">{t('profile.shopNotActive')}</h1>
+          <p className="text-[#888] text-sm mb-6">{t('emptyStates.checkBackSoon')}</p>
+          <Link href="/shops" className="bg-brand-yellow text-black font-black px-6 py-3 rounded-full">{t('profile.browseOtherShops')}</Link>
         </div>
       </div>
     );
@@ -356,9 +364,9 @@ export default function ShopProfilePage() {
         {/* Breadcrumb */}
         <div className="max-w-[1200px] mx-auto px-6 pt-6">
           <div className="text-xs font-bold text-[#444]">
-            <Link href="/" className="hover:text-white transition-colors">Home</Link>
+            <Link href="/" className="hover:text-white transition-colors">{t('nav.home')}</Link>
             <span className="mx-2">›</span>
-            <Link href="/shops" className="hover:text-white transition-colors">Shops</Link>
+            <Link href="/shops" className="hover:text-white transition-colors">{t('nav.shops')}</Link>
             <span className="mx-2">›</span>
             <span className="text-[#888]">{shop.name}</span>
           </div>
@@ -415,7 +423,7 @@ export default function ShopProfilePage() {
                   </span>
                   <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
                     className="text-brand-yellow hover:underline text-xs font-black">
-                    → Get directions
+                    → {t('profile.getDirections')}
                   </a>
                 </div>
               )}
@@ -427,7 +435,7 @@ export default function ShopProfilePage() {
                   </p>
                   {shop.description.length > 160 && (
                     <button onClick={() => setExpandDesc(e => !e)} className="text-xs font-bold text-[#555] hover:text-white mt-1">
-                      {expandDesc ? 'Show less' : 'Read more'}
+                      {expandDesc ? t('profile.showLess') : t('profile.readMore')}
                     </button>
                   )}
                 </div>
@@ -459,21 +467,21 @@ export default function ShopProfilePage() {
             {/* SECTION 1 — TEAM */}
             <div id="team" className="mb-10">
               <div className="mb-5">
-                <h2 className="font-black text-lg">Our team</h2>
+                <h2 className="font-black text-lg">{t('profile.ourTeam')}</h2>
                 <p className="text-xs text-[#555] font-bold mt-0.5">
-                  {barbers.length} barbers · synced live from shop roster
+                  {t('profile.teamSynced').replace('{n}', String(barbers.length))}
                 </p>
               </div>
 
               {barbers.length === 0 ? (
                 <div className="border-2 border-dashed border-[#2a2a2a] rounded-2xl p-8 text-center">
-                  <div className="text-[#555] text-sm font-bold">No barbers added yet.</div>
-                  <div className="text-[#444] text-xs mt-1">Check back soon.</div>
+                  <div className="text-[#555] text-sm font-bold">{t('profile.noBarberTeam')}</div>
+                  <div className="text-[#444] text-xs mt-1">{t('emptyStates.checkBackSoon')}</div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {barbers.map(b => {
-                    const name = `${b.firstName ?? ''} ${b.lastName ?? ''}`.trim() || 'Barber';
+                    const name = `${b.firstName ?? ''} ${b.lastName ?? ''}`.trim() || t('misc.barberFallback');
                     const photo = b.profilePhotoUrl ?? b.photoUrl;
                     const isAvailable = (b.availableToday ?? false) && (b.isLive ?? false);
                     const specialties = b.specialties ?? [];
@@ -501,7 +509,7 @@ export default function ShopProfilePage() {
                               </span>
                               {b.id === shop.ownerId && (
                                 <span style={{ background: '#1a1500', color: '#F5C518', border: '1px solid rgba(245,197,24,0.27)', fontSize: '9px', fontWeight: 800, padding: '2px 8px', borderRadius: '99px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                  👑 Owner
+                                  {t('profile.ownerBadge')}
                                 </span>
                               )}
                             </div>
@@ -511,7 +519,7 @@ export default function ShopProfilePage() {
                                   {'★'.repeat(Math.round(b.rating ?? 0))} {b.rating?.toFixed(1)}
                                 </span>
                               ) : (
-                                <span className="text-[#555]">New ✨</span>
+                                <span className="text-[#555]">{t('status.newBadge')}</span>
                               )}
                             </div>
                           </div>
@@ -534,7 +542,7 @@ export default function ShopProfilePage() {
                         {/* Open/off */}
                         <div className={`flex items-center gap-1.5 text-[11px] font-bold mb-2 ${isAvailable ? 'text-[#22c55e]' : 'text-[#555]'}`}>
                           <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isAvailable ? 'bg-[#22c55e]' : 'bg-[#444]'}`} />
-                          {isAvailable ? 'Open now' : 'Off today'}
+                          {isAvailable ? t('status.openNow') : t('status.offToday')}
                         </div>
 
                         {/* Languages */}
@@ -546,7 +554,7 @@ export default function ShopProfilePage() {
 
                         {/* Book button */}
                         <div className="w-full py-2.5 rounded-xl font-black text-sm text-center bg-[#1a1a1a] text-[#888] border border-[#2a2a2a] mt-1">
-                          View Profile →
+                          {t('profile.viewProfileBtn')}
                         </div>
                       </Link>
                     );
@@ -558,9 +566,9 @@ export default function ShopProfilePage() {
             {/* SECTION 2 — SERVICES */}
             <div className="mb-10">
               <div className="mb-5">
-                <h2 className="font-black text-lg">Shop services &amp; prices</h2>
+                <h2 className="font-black text-lg">{t('profile.shopServicesTitle')}</h2>
                 <p className="text-xs text-[#555] font-bold mt-0.5">
-                  Applies to all bookings through this shop · synced from dashboard
+                  {t('profile.servicesSynced')}
                 </p>
               </div>
 
@@ -569,12 +577,12 @@ export default function ShopProfilePage() {
                 {shop.titeZMeCut && (
                   <div className="bg-[#0d0d00] border border-[#2a2a2a] border-l-[3px] border-l-brand-yellow rounded-xl p-4 flex justify-between items-center gap-3">
                     <div className="flex-1">
-                      <div className="font-black text-sm flex items-center gap-1.5">⚡ titeZMe Cut 🔒</div>
+                      <div className="font-black text-sm flex items-center gap-1.5">{t('profile.titeZMeCutShopLabel')}</div>
                       <div className="text-[11px] text-[#666] mt-0.5">
-                        The barber picks the cut based on your vibe and budget
+                        {t('profile.titeZMeCutDescShop')}
                       </div>
                       <div className="text-[11px] text-[#444] mt-0.5">
-                        ⏱ ~{shop.titeZMeCut.durationMinutes ?? 45} min
+                        ⏱ ~{shop.titeZMeCut.durationMinutes ?? 45} {t('misc.minShort')}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
@@ -583,7 +591,7 @@ export default function ShopProfilePage() {
                         onClick={() => handleBookService('titeZMeCut')}
                         className="bg-[#1a1a1a] text-white border border-[#333] hover:bg-brand-yellow hover:text-[#0a0a0a] hover:border-brand-yellow px-4 py-2 rounded-xl text-xs font-bold transition-colors"
                       >
-                        Book
+                        {t('profile.book')}
                       </button>
                     </div>
                   </div>
@@ -591,7 +599,7 @@ export default function ShopProfilePage() {
 
                 {services.length === 0 && !shop.titeZMeCut && (
                   <div className="text-sm font-bold text-[#555] border-2 border-dashed border-[#2a2a2a] rounded-2xl p-6 text-center">
-                    Services not listed yet. Contact the shop directly.
+                    {t('profile.noServicesContact')}
                   </div>
                 )}
 
@@ -601,7 +609,7 @@ export default function ShopProfilePage() {
                       <span className="text-xl">{serviceIcon(s.name ?? '')}</span>
                       <div>
                         <div className="font-black text-sm text-white">{s.name}</div>
-                        <div className="text-[11px] text-[#555] mt-0.5">⏱ {s.durationMinutes ?? s.duration} min</div>
+                        <div className="text-[11px] text-[#555] mt-0.5">⏱ {s.durationMinutes ?? s.duration} {t('misc.minShort')}</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
@@ -610,7 +618,7 @@ export default function ShopProfilePage() {
                         onClick={() => handleBookService(s.id)}
                         className="bg-[#1a1a1a] text-white border border-[#333] group-hover:bg-brand-yellow group-hover:text-[#0a0a0a] group-hover:border-brand-yellow px-4 py-2 rounded-xl text-xs font-bold transition-colors"
                       >
-                        Book
+                        {t('profile.book')}
                       </button>
                     </div>
                   </div>
@@ -622,9 +630,9 @@ export default function ShopProfilePage() {
             {(shop.photos?.length ?? 0) > 0 && (
               <div className="mb-10">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-black text-lg">Shop photos</h2>
+                  <h2 className="font-black text-lg">{t('profile.shopPhotos')}</h2>
                   {(shop.photos?.length ?? 0) > 4 && (
-                    <span className="text-xs font-bold text-[#888]">See all {shop.photos!.length} →</span>
+                    <span className="text-xs font-bold text-[#888]">{t('profile.seeAll').replace('{n}', String(shop.photos!.length))}</span>
                   )}
                 </div>
                 <div className="grid grid-cols-4 gap-2">
@@ -647,36 +655,36 @@ export default function ShopProfilePage() {
             {/* CARD 1 — CTA */}
             <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-5">
               <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-1">
-                Shop services starting from
+                {t('profile.shopStartingFrom')}
               </div>
               <div className="flex items-baseline gap-1 mb-4">
                 <span className="text-[26px] font-black text-brand-yellow">
-                  {minPrice !== null ? `€${minPrice}` : 'On request'}
+                  {minPrice !== null ? `€${minPrice}` : t('buttons.onRequest')}
                 </span>
-                {minPrice !== null && <span className="text-xs text-[#555] font-bold">/ service</span>}
+                {minPrice !== null && <span className="text-xs text-[#555] font-bold">{t('profile.perService')}</span>}
               </div>
 
               <button onClick={scrollToTeam}
                 className="w-full bg-brand-yellow text-[#0a0a0a] font-black py-3 rounded-full mb-2 hover:opacity-90 transition-opacity text-sm">
-                Choose a barber →
+                {t('profile.chooseBarberBtn')}
               </button>
 
               {shop.contactPhone && (
                 <a href={`tel:${shop.contactPhone}`}
                   className="w-full border border-[#2a2a2a] text-[#888] hover:border-white hover:text-white font-black py-3 rounded-full mb-2 transition-colors text-sm flex items-center justify-center gap-2">
-                  📞 Call the shop
+                  {t('profile.callShop')}
                 </a>
               )}
 
               <button onClick={handleShare}
                 className="w-full border border-[#2a2a2a] text-[#888] hover:text-white hover:border-[#444] font-black py-3 rounded-full transition-colors text-sm">
-                {copied ? '✓ Copied!' : '🔗 Share shop'}
+                {copied ? t('profile.linkCopied') : t('profile.shareShop')}
               </button>
             </div>
 
             {/* CARD 2 — SHOP INFO */}
             <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-5">
-              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-3">Shop info</div>
+              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-3">{t('profile.shopInfo')}</div>
               <div className="flex flex-col gap-3">
                 {address && (
                   <div className="flex items-start gap-2.5">
@@ -697,7 +705,7 @@ export default function ShopProfilePage() {
                 )}
                 <div className="flex items-center gap-2.5">
                   <span className="text-sm shrink-0">👥</span>
-                  <div className="text-xs font-bold text-white">{barbers.length} active barbers</div>
+                  <div className="text-xs font-bold text-white">{barbers.length} {t('profile.activeBarbers')}</div>
                 </div>
                 {shop.chairsCount && (
                   <div className="flex items-center gap-2.5">
@@ -724,7 +732,7 @@ export default function ShopProfilePage() {
                 {shop.createdAt && (
                   <div className="flex items-center gap-2.5">
                     <span className="text-sm shrink-0">📅</span>
-                    <div className="text-xs font-bold text-white">Since {formatMemberSince(shop.createdAt)}</div>
+                    <div className="text-xs font-bold text-white">{t('profile.since').replace('{date}', formatMemberSince(shop.createdAt))}</div>
                   </div>
                 )}
               </div>
@@ -734,7 +742,7 @@ export default function ShopProfilePage() {
                 className="mt-4 block bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 hover:border-[#444] transition-colors group">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-2xl">🗺️</span>
-                  <span className="text-xs font-black text-brand-yellow group-hover:underline">Open in Google Maps →</span>
+                  <span className="text-xs font-black text-brand-yellow group-hover:underline">{t('profile.openInMaps')}</span>
                 </div>
                 <div className="text-[11px] text-[#555] font-bold">
                   {[address?.street, address?.number, address?.city].filter(Boolean).join(', ')}
@@ -744,8 +752,8 @@ export default function ShopProfilePage() {
 
             {/* CARD 3 — SHOP HOURS */}
             <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-5">
-              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-0.5">Shop hours</div>
-              <div className="text-[10px] text-[#444] font-bold mb-3">synced to shop schedule</div>
+              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-0.5">{t('profile.shopHours')}</div>
+              <div className="text-[10px] text-[#444] font-bold mb-3">{t('profile.syncedSchedule')}</div>
               {schedule ? (
                 <>
                   <div className="grid grid-cols-7 gap-1 mb-3">
@@ -769,46 +777,46 @@ export default function ShopProfilePage() {
                       <div key={day.dateStr}
                         className={`flex items-center justify-between text-[11px] font-bold ${day.isToday ? 'text-brand-yellow' : 'text-[#555]'}`}>
                         <span>{day.label}</span>
-                        <span>{day.hasSlots ? 'Available' : '—'}</span>
+                        <span>{day.hasSlots ? t('profile.available') : '—'}</span>
                       </div>
                     ))}
                   </div>
                 </>
               ) : (
-                <div className="text-[11px] text-[#555] font-bold">Hours not available</div>
+                <div className="text-[11px] text-[#555] font-bold">{t('profile.hoursNotAvailable')}</div>
               )}
             </div>
 
             {/* CARD 4 — TRACK RECORD */}
             <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-5">
-              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-3">Track record</div>
+              <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-3">{t('profile.trackRecord')}</div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   {shopRating ? (
                     <>
                       <div className="text-xl font-black text-brand-yellow">{shopRating.toFixed(1)}</div>
-                      <div className="text-[10px] text-[#555] font-bold mt-0.5">Shop rating</div>
+                      <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('profile.shopRating')}</div>
                     </>
                   ) : (
                     <>
-                      <div className="text-sm font-black text-white">New ✨</div>
-                      <div className="text-[10px] text-[#555] font-bold mt-0.5">Shop rating</div>
+                      <div className="text-sm font-black text-white">{t('status.newBadge')}</div>
+                      <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('profile.shopRating')}</div>
                     </>
                   )}
                 </div>
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   <div className="text-xl font-black text-white">{barbers.length}</div>
-                  <div className="text-[10px] text-[#555] font-bold mt-0.5">Active barbers</div>
+                  <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('profile.activeBarbersStat')}</div>
                 </div>
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   <div className="text-xl font-black text-white">{totalCuts}</div>
-                  <div className="text-[10px] text-[#555] font-bold mt-0.5">Total cuts</div>
+                  <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('profile.totalCuts')}</div>
                 </div>
                 <div className="bg-[#0a0a0a] rounded-xl p-3 border border-[#1a1a1a]">
                   <div className="text-sm font-black text-white leading-tight">
-                    {shop.createdAt ? formatMemberSince(shop.createdAt) : 'New'}
+                    {shop.createdAt ? formatMemberSince(shop.createdAt) : t('profile.newMember')}
                   </div>
-                  <div className="text-[10px] text-[#555] font-bold mt-0.5">Member since</div>
+                  <div className="text-[10px] text-[#555] font-bold mt-0.5">{t('profile.memberSince')}</div>
                 </div>
               </div>
             </div>
