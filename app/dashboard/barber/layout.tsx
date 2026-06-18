@@ -142,7 +142,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
               <button
                 onClick={handleCopyCode}
                 className="text-xs text-[#888] hover:text-white transition-colors p-1"
-                title="Copy to clipboard"
+                title={t('barberDash.copyToClipboard')}
               >
                 {copiedCode ? '✓' : '📋'}
               </button>
@@ -151,7 +151,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
             <button
               onClick={() => {
                 navigator.clipboard.writeText(`${window.location.origin}/barber/${user?.uid}`);
-                setToastMessage('Profile link copied! 🔗 Share it with your clients.');
+                setToastMessage(t('barberDash.profileLinkCopied'));
                 setTimeout(() => setToastMessage(''), 3000);
               }}
               className="mt-2 w-full border border-[#2a2a2a] text-[#888] font-bold text-[11px] px-3 py-[7px] rounded-lg hover:border-[#444] hover:text-white transition-colors"
@@ -196,7 +196,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
               href={`/shop/${profile?.shopId}`}
               className="flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors text-white bg-[#1a1a1a] hover:bg-[#2a2a2a]"
             >
-              <span>🏪</span> My Shop
+              <span>🏪</span> {t('barberLayout.myShop')}
             </Link>
           )}
         </div>

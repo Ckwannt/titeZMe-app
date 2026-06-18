@@ -234,7 +234,7 @@ export default function ClientSettings() {
     }
   };
 
-  if (loading) return <div className="p-10 text-center animate-pulse text-brand-text-secondary">Loading...</div>;
+  if (loading) return <div className="p-10 text-center animate-pulse text-brand-text-secondary">{t('misc.loading')}</div>;
 
   return (
     <div className="flex min-h-[calc(100vh-53px)] flex-col md:flex-row">
@@ -363,7 +363,7 @@ export default function ClientSettings() {
                         minHeight: '52px'
                       })
                     }}
-                    placeholder="Code"
+                    placeholder={t('forms.codePlaceholder')}
                   />
                 </div>
                 <div className="flex-1">
@@ -374,7 +374,7 @@ export default function ClientSettings() {
                     onChange={e => setPhoneNumberInput(e.target.value.replace(/\D/g, ''))}
                     maxLength={20}
                     className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[52px]"
-                    placeholder="600 000 000" 
+                    placeholder={t('forms.phonePlaceholder')}
                   />
                 </div>
               </div>
@@ -403,7 +403,7 @@ export default function ClientSettings() {
                         boxShadow: 'none',
                       })
                     }}
-                    placeholder="Country..."
+                    placeholder={t('forms.countryPlaceholder')}
                   />
                 </div>
                 <div>
@@ -430,7 +430,7 @@ export default function ClientSettings() {
                         boxShadow: 'none',
                       })
                     }}
-                    placeholder="City..."
+                    placeholder={t('forms.cityPlaceholder')}
                   />
                 </div>
               </div>
@@ -455,7 +455,7 @@ export default function ClientSettings() {
                       boxShadow: 'none',
                     })
                   }}
-                  placeholder="Select languages..."
+                  placeholder={t('misc.selectLanguages')}
                />
             </div>
 

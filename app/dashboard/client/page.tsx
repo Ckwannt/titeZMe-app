@@ -37,8 +37,6 @@ export default function ClientDashboard() {
   const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
   const shopCacheRef = useRef<Record<string, ShopCache>>({});
 
-  useEffect(() => { document.title = 'My Bookings — titeZMe'; }, []);
-
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -162,7 +160,7 @@ export default function ClientDashboard() {
     }
   }
 
-  if (fetching || loading) return <div className="p-10 text-center animate-pulse text-brand-text-secondary">Loading...</div>;
+  if (fetching || loading) return <div className="p-10 text-center animate-pulse text-brand-text-secondary">{t('misc.loading')}</div>;
 
   const now = new Date();
   const upcomingBookings = bookings.filter(b => {
@@ -246,7 +244,7 @@ export default function ClientDashboard() {
                            €{b.price}
                          </div>
                          <div className="text-[10px] text-[#555] font-bold mt-1">
-                           💵 Cash
+                           {t('clientDash.cashPayment')}
                          </div>
                        </div>
                      </div>
@@ -256,14 +254,14 @@ export default function ClientDashboard() {
                        <div className="mb-3">
                          <div className="flex items-center gap-2 mb-1">
                            <span className="text-[10px] font-black text-[#F5C518] bg-[#1a1400] border border-[#F5C51830] px-2 py-0.5 rounded-full uppercase tracking-wide">
-                             🏪 Shop
+                             {t('clientDash.shopBadge')}
                            </span>
                            <span className="font-black text-sm text-white">
                              {b.shopName}
                            </span>
                          </div>
                          <div className="text-xs text-[#666] font-bold mb-1">
-                           ✂️ with {b.barberName}
+                           ✂️ {t('clientDash.withBarber').replace('{name}', b.barberName)}
                          </div>
                          <div className="text-xs font-bold text-[#888]">
                            {b.serviceName}
@@ -284,7 +282,7 @@ export default function ClientDashboard() {
                              rel="noopener noreferrer"
                              className="inline-flex items-center gap-1 text-[11px] font-black text-[#F5C518] hover:underline mt-1.5"
                            >
-                             🗺 Open in Google Maps →
+                             {t('profile.openInMaps')}
                            </a>
                          )}
                        </div>
@@ -302,7 +300,7 @@ export default function ClientDashboard() {
                      {/* Status + actions row */}
                      <div className="flex justify-between items-center mt-4 pt-4 border-t border-[#2a2a2a]">
                        <span className="text-[11px] font-extrabold text-[#555] uppercase tracking-wide">
-                         Status: {b.status}
+                         {t('clientDash.bookingStatus').replace('{status}', t('status.' + b.status) || b.status)}
                        </span>
                        {b.status === 'completed' && (
                          b.hasReview
@@ -356,7 +354,7 @@ export default function ClientDashboard() {
                       </div>
                       <div className="text-right">
                         <div className="font-extrabold text-white text-sm mb-0.5">€{b.price}</div>
-                        <div className="text-[10px] font-black uppercase text-[#666] mb-1">{b.status}</div>
+                        <div className="text-[10px] font-black uppercase text-[#666] mb-1">{t('status.' + b.status) || b.status}</div>
                         {b.status === 'completed' && (
                           b.hasReview
                             ? <span className="text-[10px] font-extrabold text-[#22C55E]">{t('clientDash.reviewed')}</span>

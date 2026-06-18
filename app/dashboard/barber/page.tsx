@@ -23,15 +23,15 @@ function getCurrencySymbol(currency?: string): string {
   return s[(currency || 'EUR').toUpperCase()] ?? ((currency || 'EUR') + ' ');
 }
 
-function timeAgo(ts: number): string {
+function timeAgo(ts: number, t: (path: string) => string): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 2) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 2) return t('misc.justNow');
+  if (mins < 60) return t('misc.minsAgo').replace('{n}', String(mins));
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  if (hours < 48) return 'Yesterday';
-  return `${Math.floor(hours / 24)}d ago`;
+  if (hours < 24) return t('misc.hoursAgo').replace('{n}', String(hours));
+  if (hours < 48) return t('settings.yesterday');
+  return t('misc.daysAgo').replace('{n}', String(Math.floor(hours / 24)));
 }
 
 function generateDateRange(from: string, to: string): string[] {
@@ -53,7 +53,8 @@ export default function BarberDashboardPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const dateLocale = lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : 'en-US';
   const [now, setNow] = useState(new Date());
   const [recentNotifs, setRecentNotifs] = useState<(Notification & { id: string })[]>([]);
   const [bookings, setBookings] = useState<(Booking & { id: string })[]>([]);
@@ -67,8 +68,6 @@ export default function BarberDashboardPage() {
   const [blockLoading, setBlockLoading] = useState(false);
   const [rangeError, setRangeError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
-
-  useEffect(() => { document.title = 'Dashboard — titeZMe'; }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -202,9 +201,9 @@ export default function BarberDashboardPage() {
 
     let datesToBlock: string[] = [blockFrom];
     if (blockTo && blockTo !== blockFrom) {
-      if (blockTo < blockFrom) { setRangeError('End date must be after start date.'); return; }
+      if (blockTo < blockFrom) { setRangeError(t('barberDash.blockEndBeforeStart')); return; }
       datesToBlock = generateDateRange(blockFrom, blockTo);
-      if (datesToBlock.length > 30) { setRangeError('Maximum block period is 30 days.'); return; }
+      if (datesToBlock.length > 30) { setRangeError(t('barberDash.blockMaxPeriod')); return; }
     }
     setRangeError('');
 
@@ -212,7 +211,7 @@ export default function BarberDashboardPage() {
     const existingDates = rawBlocked.map((item: any) => typeof item === 'string' ? item : item.date);
     const dupes = datesToBlock.filter(d => existingDates.includes(d));
     if (dupes.length > 0) {
-      setToastMessage(`Already blocked: ${dupes.join(', ')}`);
+      setToastMessage(t('barberDash.alreadyBlocked').replace('{date}', dupes.join(', ')));
       setTimeout(() => setToastMessage(''), 3000);
       return;
     }
@@ -222,7 +221,7 @@ export default function BarberDashboardPage() {
     );
     if (conflicts.length > 0) {
       const times = conflicts.map(b => `${b.date} ${b.startTime}`).join(', ');
-      setToastMessage(`Active bookings on ${times}. Cancel or complete them first.`);
+      setToastMessage(t('barberDash.activeBookingsBlock').replace('{date}', times));
       setTimeout(() => setToastMessage(''), 5000);
       return;
     }
@@ -234,12 +233,14 @@ export default function BarberDashboardPage() {
       if (blockRecurring && recurringDays.length > 0) {
         await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), { recurringBlocked: arrayUnion(...recurringDays) });
       }
-      setToastMessage(datesToBlock.length === 1 ? `${blockFrom} blocked.` : `${datesToBlock.length} days blocked.`);
+      setToastMessage(datesToBlock.length === 1
+        ? t('barberDash.dayBlocked').replace('{date}', blockFrom)
+        : t('barberDash.nDaysBlocked').replace('{n}', String(datesToBlock.length)));
       setTimeout(() => setToastMessage(''), 4000);
       closeBlockModal();
       mutateSchedule();
     } catch (e) {
-      setToastMessage('Failed to block date(s).');
+      setToastMessage(t('barberDash.failedBlockDates'));
       setTimeout(() => setToastMessage(''), 3000);
     } finally {
       setBlockLoading(false);
@@ -250,11 +251,11 @@ export default function BarberDashboardPage() {
     if (!user) return;
     try {
       await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), { blockedDates: arrayRemove(rawItem) });
-      setToastMessage('Day unblocked.');
+      setToastMessage(t('barberDash.dayUnblocked'));
       setTimeout(() => setToastMessage(''), 3000);
       mutateSchedule();
     } catch (e) {
-      setToastMessage('Failed to unblock date.');
+      setToastMessage(t('barberDash.failedUnblock'));
       setTimeout(() => setToastMessage(''), 3000);
     }
   };
@@ -263,11 +264,11 @@ export default function BarberDashboardPage() {
     if (!user) return;
     try {
       await updateDoc(doc(db, 'schedules', `${user.uid}_shard_0`), { recurringBlocked: arrayRemove(day) });
-      setToastMessage(`${day} unblocked.`);
+      setToastMessage(t('barberDash.namedDayUnblocked').replace('{day}', day));
       setTimeout(() => setToastMessage(''), 3000);
       mutateSchedule();
     } catch (e) {
-      setToastMessage('Failed to unblock.');
+      setToastMessage(t('barberDash.failedUnblockGeneral'));
       setTimeout(() => setToastMessage(''), 3000);
     }
   };
@@ -296,9 +297,9 @@ export default function BarberDashboardPage() {
     b.date === todayStr && b.status !== 'cancelled_by_client' && b.status !== 'cancelled_by_barber'
   );
   const motivatingText = todayActiveBookings.length === 0
-    ? "Your schedule is open today — share your profile! 💈"
-    : todayActiveBookings.length === 1 ? "1 cut today. Let's go! 💈"
-    : `${todayActiveBookings.length} cuts today. Let's go! 💈`;
+    ? t('barberDash.scheduleOpen')
+    : todayActiveBookings.length === 1 ? t('barberDash.oneCutToday')
+    : t('barberDash.nCutsToday').replace('{n}', String(todayActiveBookings.length));
 
   const nextBooking = [...bookings]
     .filter(b => b.status === 'confirmed' && new Date(`${b.date}T${b.startTime}`) > now)
@@ -310,8 +311,12 @@ export default function BarberDashboardPage() {
     const diffDays = Math.floor(diff / 86400000);
     const hrs = Math.floor((diff % 86400000) / 3600000);
     const mins = Math.floor((diff % 3600000) / 60000);
-    const day = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : bt.toLocaleDateString(undefined, { weekday: 'long' });
-    const countdown = diffDays === 0 ? (hrs > 0 ? `in ${hrs}h ${mins}min` : `in ${mins}min`) : '';
+    const day = diffDays === 0 ? t('buttons.today') : diffDays === 1 ? t('misc.tomorrow') : bt.toLocaleDateString(dateLocale, { weekday: 'long' });
+    const countdown = diffDays === 0
+      ? (hrs > 0
+          ? t('misc.inHoursMin').replace('{h}', String(hrs)).replace('{m}', String(mins))
+          : t('misc.inMin').replace('{m}', String(mins)))
+      : '';
     return { day, countdown };
   };
 
@@ -319,7 +324,7 @@ export default function BarberDashboardPage() {
     const d = new Date(); const wd = d.getDay();
     d.setDate(d.getDate() - wd + (wd === 0 ? -6 : 1)); d.setHours(0, 0, 0, 0); return d;
   })();
-  const weeklyChartData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((name, i) => {
+  const weeklyChartData = [t('misc.dayMon'), t('misc.dayTue'), t('misc.dayWed'), t('misc.dayThu'), t('misc.dayFri'), t('misc.daySat'), t('misc.daySun')].map((name, i) => {
     const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
     const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const earnings = bookings.filter(b => b.date === ds && b.status === 'completed').reduce((s, b) => s + (b.price || 0), 0);
@@ -357,7 +362,10 @@ export default function BarberDashboardPage() {
   const recentActivity = [
     ...bookings.slice(0, 5).map(b => ({
       icon: '💈',
-      text: `${b.clientName || 'A client'} booked${b.serviceNames?.[0] ? ` a ${b.serviceNames[0]}` : ''} for ${b.date}`,
+      text: t('barberDash.activityBooked')
+        .replace('{name}', b.clientName || t('barberDash.clientFallback'))
+        .replace('{service}', b.serviceNames?.[0] ? ` ${b.serviceNames[0]}` : '')
+        .replace('{date}', b.date),
       ts: b.createdAt || 0,
     })),
     ...recentNotifs.slice(0, 5).map(n => ({
@@ -387,10 +395,10 @@ export default function BarberDashboardPage() {
           <p className="text-[11px] text-[#555] font-extrabold uppercase tracking-wider mb-4">{t('barberDash.whileYouWait')}</p>
           <div className="flex flex-col gap-2 items-center">
             {[
-              { label: '→ Add your services', href: '/dashboard/barber/services' },
-              { label: '→ Set your availability', href: '/dashboard/barber/availability' },
-              { label: '→ Write your bio', href: '/dashboard/barber/settings' },
-              { label: '→ Add your social links', href: '/dashboard/barber/settings' },
+              { label: t('barberDash.addServicesLink'), href: '/dashboard/barber/services' },
+              { label: t('barberDash.setAvailability'), href: '/dashboard/barber/availability' },
+              { label: t('barberDash.writeBio'), href: '/dashboard/barber/settings' },
+              { label: t('barberDash.addSocialLinks'), href: '/dashboard/barber/settings' },
             ].map(l => (
               <Link key={l.href} href={l.href} className="text-[13px] font-bold text-brand-yellow hover:underline">{l.label}</Link>
             ))}
@@ -410,7 +418,7 @@ export default function BarberDashboardPage() {
           rejectionReason: null,
         });
         queryClient.invalidateQueries({ queryKey: ['profile', user.uid] });
-        setToastMessage('Profile resubmitted for review. We\'ll notify you soon.');
+        setToastMessage(t('barberDash.profileResubmitted'));
         setTimeout(() => setToastMessage(''), 4000);
       } catch (e) { console.error(e); }
     };
@@ -421,10 +429,10 @@ export default function BarberDashboardPage() {
           <h2 className="text-[18px] font-black text-brand-red mb-3">{t('barberDash.profileNotApproved')}</h2>
           {rejectionReason && (
             <p className="text-[13px] text-[#888] bg-[#1a0808] border border-[#3b1a1a] rounded-xl px-4 py-3 mb-5 text-left">
-              <span className="font-extrabold text-[#aaa]">Reason: </span>{rejectionReason}
+              <span className="font-extrabold text-[#aaa]">{t('barberDash.rejectionReason')}</span>{rejectionReason}
             </p>
           )}
-          <p className="text-[13px] text-[#666] mb-6">Update your profile based on the feedback above, then resubmit for review.</p>
+          <p className="text-[13px] text-[#666] mb-6">{t('barberDash.updateAndResubmit')}</p>
           <button onClick={handleResubmit} className="bg-brand-yellow text-black font-black px-6 py-3 rounded-full text-sm hover:opacity-90 transition-opacity">
             {t('barberDash.fixAndResubmit')}
           </button>
@@ -453,8 +461,8 @@ export default function BarberDashboardPage() {
 
       <div className="flex flex-col md:flex-row justify-between items-start mb-7 gap-4">
         <div>
-          <h1 className="text-2xl font-black">Good morning, {appUser?.firstName} ✂️</h1>
-          <p className="text-brand-text-secondary text-sm mt-1">{new Date().toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'})} · {motivatingText}</p>
+          <h1 className="text-2xl font-black">{t('barberDash.goodMorning').replace('{name}', appUser?.firstName || '')}</h1>
+          <p className="text-brand-text-secondary text-sm mt-1">{new Date().toLocaleDateString(dateLocale, {weekday: 'long', month: 'long', day: 'numeric'})} · {motivatingText}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <a
@@ -499,7 +507,7 @@ export default function BarberDashboardPage() {
                 })}
                 {extra > 0 && (
                   <button onClick={() => setBlockModalOpen(true)} className="text-[11px] text-[#555] hover:text-white transition-colors text-left mt-0.5">
-                    + {extra} more
+                    {t('barberDash.extraMore').replace('{n}', String(extra))}
                   </button>
                 )}
               </div>
@@ -547,27 +555,27 @@ export default function BarberDashboardPage() {
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
           <div className="text-[28px] font-black leading-none text-brand-yellow">{currSym}{todayEarnings}</div>
           <div className="text-xs text-brand-text-secondary font-bold">{t('barberDash.todaysEarnings')}</div>
-          <div className="text-[11px] font-extrabold text-[#444] mt-1">{todayCompletedBookings.length} cuts today</div>
+          <div className="text-[11px] font-extrabold text-[#444] mt-1">{t('barberDash.nCutsTodayKpi').replace('{n}', String(todayCompletedBookings.length))}</div>
         </div>
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
           <div className="text-[28px] font-black leading-none text-brand-orange">{profile?.totalCuts ?? 0}</div>
           <div className="text-xs text-brand-text-secondary font-bold">{t('barberDash.totalCutsLabel')}</div>
-          <div className="text-[11px] font-extrabold text-[#444] mt-1">This month: {thisMonthCompleted}</div>
+          <div className="text-[11px] font-extrabold text-[#444] mt-1">{t('barberDash.cutsThisMonth').replace('{n}', String(thisMonthCompleted))}</div>
         </div>
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
           <div className={`text-[28px] font-black leading-none ${(profile?.rating || 0) > 0 ? 'text-brand-yellow' : 'text-brand-green'}`}>
-            {(profile?.rating || 0) > 0 ? `★ ${(profile!.rating as number).toFixed(1)}` : 'New ✨'}
+            {(profile?.rating || 0) > 0 ? `★ ${(profile!.rating as number).toFixed(1)}` : t('status.newBadge')}
           </div>
           <div className="text-xs text-brand-text-secondary font-bold">{t('barberDash.ratingLabel')}</div>
           <div className="text-[11px] font-extrabold text-[#444] mt-1">
-            {(profile?.reviewCount || 0) > 0 ? `${profile!.reviewCount} reviews` : t('barberDash.noReviewsYetShort')}
+            {(profile?.reviewCount || 0) > 0 ? t('barberDash.nReviews').replace('{n}', String(profile!.reviewCount)) : t('barberDash.noReviewsYetShort')}
           </div>
         </div>
         <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
           <div className="text-[28px] font-black leading-none text-brand-green">{showRate}%</div>
           <div className="text-xs text-brand-text-secondary font-bold">{t('barberDash.showRate')}</div>
           <div className="text-[11px] font-extrabold text-[#444] mt-1">
-            {totalFinished > 0 ? `${totalFinished} bookings total` : '0 no-shows'}
+            {totalFinished > 0 ? t('barberDash.nBookingsTotal').replace('{n}', String(totalFinished)) : t('barberDash.noShows').replace('{n}', '0')}
           </div>
         </div>
       </div>
@@ -589,10 +597,10 @@ export default function BarberDashboardPage() {
           <div className="flex items-center justify-between bg-[#111] border border-[#1e1e1e] rounded-[12px] px-5 py-[14px] mb-5">
             <div>
               <div className="text-[11px] font-bold text-[#555] mb-0.5">{t('barberDash.nextCutLabel')}</div>
-              <div className="font-extrabold text-[14px]">{nextBooking.clientName || 'Client'}{nextBooking.serviceNames?.[0] ? ` — ${nextBooking.serviceNames[0]}` : ''}</div>
+              <div className="font-extrabold text-[14px]">{nextBooking.clientName || t('barberDash.clientFallback')}{nextBooking.serviceNames?.[0] ? ` — ${nextBooking.serviceNames[0]}` : ''}</div>
             </div>
             <div className="text-right">
-              <div className="text-[13px] font-bold text-white">{day} at {nextBooking.startTime}</div>
+              <div className="text-[13px] font-bold text-white">{t('barberDash.slotAt').replace('{day}', day).replace('{time}', nextBooking.startTime)}</div>
               {countdown && <div className="text-[12px] font-extrabold text-brand-yellow">{countdown}</div>}
             </div>
           </div>
@@ -656,7 +664,7 @@ export default function BarberDashboardPage() {
                     color: '#fff',
                     marginBottom: '4px'
                   }}>
-                    {booking.barberName || 'Your barber'}
+                    {booking.barberName || t('booking.yourBarber')}
                   </div>
                   <div style={{
                     fontSize: '11px',
@@ -705,7 +713,7 @@ export default function BarberDashboardPage() {
             <div className="text-3xl mb-3">💈</div>
             <div className="font-extrabold text-white mb-1">{t('barberDash.noCutsToday')}</div>
             <div className="text-[#555] text-sm mb-4">{t('barberDash.shareProfileToBook')}</div>
-            <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/barber/${user?.uid}`); setToastMessage('Profile link copied!'); setTimeout(() => setToastMessage(''), 2000); }}
+            <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/barber/${user?.uid}`); setToastMessage(t('profile.linkCopiedToast')); setTimeout(() => setToastMessage(''), 2000); }}
               className="text-brand-orange text-sm font-bold hover:underline">
               {t('barberDash.shareProfileLink')}
             </button>
@@ -722,12 +730,12 @@ export default function BarberDashboardPage() {
                   </div>
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ background: dotColor }} />
                   <div className="flex-1 min-w-0">
-                    <div className="font-extrabold text-[14px] text-white truncate">{b.clientName || 'Client'}</div>
-                    <div className="text-[12px] text-[#666] truncate">{b.serviceNames?.join(', ') || b.serviceName || 'Service'}</div>
+                    <div className="font-extrabold text-[14px] text-white truncate">{b.clientName || t('barberDash.clientFallback')}</div>
+                    <div className="text-[12px] text-[#666] truncate">{b.serviceNames?.join(', ') || b.serviceName || t('barberDash.serviceFallback')}</div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
-                    {b.status === 'pending' && <span className="text-[10px] font-extrabold text-brand-yellow bg-[#1a1500] border border-brand-yellow/30 px-2 py-0.5 rounded-full">Pending</span>}
-                    {b.status === 'confirmed' && <span className="text-[10px] font-extrabold text-[#22C55E] bg-[#0f2010] border border-[#22C55E]/30 px-2 py-0.5 rounded-full">Confirmed</span>}
+                    {b.status === 'pending' && <span className="text-[10px] font-extrabold text-brand-yellow bg-[#1a1500] border border-brand-yellow/30 px-2 py-0.5 rounded-full">{t('status.pending')}</span>}
+                    {b.status === 'confirmed' && <span className="text-[10px] font-extrabold text-[#22C55E] bg-[#0f2010] border border-[#22C55E]/30 px-2 py-0.5 rounded-full">{t('status.confirmed')}</span>}
                     {b.status === 'completed' && <span className="text-[10px] font-extrabold text-[#555] bg-[#141414] border border-[#222] px-2 py-0.5 rounded-full">{t('barberDash.doneStatus')}</span>}
                     <span className="font-black text-brand-yellow text-[13px]">{currSym}{b.price}</span>
                     {b.status === 'pending' && (
@@ -760,7 +768,7 @@ export default function BarberDashboardPage() {
               <div key={i} className="flex items-center gap-[10px] py-[10px] border-b border-[#141414] last:border-0">
                 <span className="text-base shrink-0">{a.icon}</span>
                 <span className="flex-1 text-[13px] text-[#aaa] leading-snug">{a.text}</span>
-                <span className="text-[11px] text-[#555] shrink-0">{a.ts ? timeAgo(a.ts) : ''}</span>
+                <span className="text-[11px] text-[#555] shrink-0">{a.ts ? timeAgo(a.ts, t) : ''}</span>
               </div>
             ))}
           </div>
@@ -819,9 +827,9 @@ export default function BarberDashboardPage() {
             {rangeError && <div className="text-[11px] text-brand-red font-bold mb-3">{rangeError}</div>}
 
             <div className="mb-4 mt-3">
-              <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-2">Reason (optional)</label>
+              <label className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider block mb-2">{t('forms.reason')}</label>
               <div className="flex flex-wrap gap-2">
-                {['🏖️ Vacation', '🤒 Sick day', '👤 Personal', '🎉 Holiday', '📋 Other'].map(r => (
+                {[t('barberDash.reasonVacation'), t('barberDash.reasonSick'), t('barberDash.reasonPersonal'), t('barberDash.reasonHoliday'), t('barberDash.reasonOther')].map(r => (
                   <button key={r} onClick={() => setBlockReason(prev => prev === r ? null : r)}
                     className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-colors ${blockReason === r ? 'bg-[#1a1500] border-brand-yellow text-brand-yellow' : 'border-[#2a2a2a] text-[#888] hover:border-[#444] hover:text-white'}`}>
                     {r}
@@ -841,19 +849,22 @@ export default function BarberDashboardPage() {
               </div>
               {blockRecurring && (
                 <div className="flex flex-wrap gap-1.5">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                    <button key={day} onClick={() => setRecurringDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])}
-                      className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-colors ${recurringDays.includes(day) ? 'bg-[#1a1500] border-brand-yellow text-brand-yellow' : 'border-[#2a2a2a] text-[#888] hover:border-[#444] hover:text-white'}`}>
-                      {day}
-                    </button>
-                  ))}
+                  {(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const).map((day, i) => {
+                    const labels = [t('misc.dayMon'), t('misc.dayTue'), t('misc.dayWed'), t('misc.dayThu'), t('misc.dayFri'), t('misc.daySat'), t('misc.daySun')];
+                    return (
+                      <button key={day} onClick={() => setRecurringDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])}
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-colors ${recurringDays.includes(day) ? 'bg-[#1a1500] border-brand-yellow text-brand-yellow' : 'border-[#2a2a2a] text-[#888] hover:border-[#444] hover:text-white'}`}>
+                        {labels[i]}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
             {(() => {
               const count = !blockFrom ? 0 : (!blockTo || blockTo === blockFrom) ? 1 : generateDateRange(blockFrom, blockTo).length;
-              const label = blockLoading ? '...' : count > 1 ? `Block ${count} days` : t('barberDash.blockThisDay');
+              const label = blockLoading ? '...' : count > 1 ? t('barberDash.blockNDays').replace('{n}', String(count)) : t('barberDash.blockThisDay');
               return (
                 <button onClick={handleBlockDay} disabled={!blockFrom || blockLoading}
                   className="w-full bg-brand-yellow text-[#0a0a0a] font-black py-3 rounded-full text-sm hover:opacity-90 transition-opacity disabled:opacity-40 mb-5">
