@@ -74,12 +74,12 @@ export default function ServicesPage() {
 
   const addService = async () => {
     if (!newServiceName || !newServicePrice || !user) return;
-    if ((services as any[]).some((s: any) => s.name.toLowerCase().trim() === newServiceName.toLowerCase().trim())) { toast(`You already have '${newServiceName}'. Edit the existing one instead.`); return; }
+    if ((services as any[]).some((s: any) => s.name.toLowerCase().trim() === newServiceName.toLowerCase().trim())) { toast(t('barberDash.serviceAlreadyExists').replace('{name}', newServiceName)); return; }
     setAddingService(true);
     try {
       const result = await safeFirestore(
         () => setDoc(doc(collection(db, 'services')), { providerId: user.uid, providerType: 'barber', name: sanitizeText(newServiceName, 100), duration: parseInt(newServiceDuration) || 30, price: parseFloat(newServicePrice), description: sanitizeText(newServiceDescription, 150), isActive: true, sortOrder: (services as any[]).length }),
-        { successMessage: 'Service added!', errorMessage: 'Failed to add service.' }
+        { successMessage: t('barberDash.serviceAdded'), errorMessage: t('barberDash.failedAddService') }
       );
       if (result !== null) { setNewServiceName(''); setNewServicePrice(''); setNewServiceDuration(''); setNewServiceDescription(''); mutateServices(); }
     } finally {
@@ -89,7 +89,7 @@ export default function ServicesPage() {
 
   const saveEditService = async (svcId: string) => {
     setSavingService(true);
-    try { await updateDoc(doc(db, 'services', svcId), { name: sanitizeText(editSvcData.name, 100), duration: parseInt(editSvcData.duration) || 30, price: parseFloat(editSvcData.price) || 0, description: sanitizeText(editSvcData.description, 150), updatedAt: Date.now() }); setEditingServiceId(null); toast('Service updated ✓'); mutateServices(); } catch (e) { console.error(e); } finally { setSavingService(false); }
+    try { await updateDoc(doc(db, 'services', svcId), { name: sanitizeText(editSvcData.name, 100), duration: parseInt(editSvcData.duration) || 30, price: parseFloat(editSvcData.price) || 0, description: sanitizeText(editSvcData.description, 150), updatedAt: Date.now() }); setEditingServiceId(null); toast(t('barberDash.serviceUpdated')); mutateServices(); } catch (e) { console.error(e); } finally { setSavingService(false); }
   };
 
   const toggleServiceActive = async (svcId: string, currentIsActive: boolean) => {
@@ -104,7 +104,7 @@ export default function ServicesPage() {
       queryClient.setQueryData(['services', user?.uid], (prev: any[]) =>
         (prev || []).map((s: any) => s.id === svcId ? { ...s, isActive: currentIsActive } : s)
       );
-      toast('Failed to update service');
+      toast(t('barberDash.failedUpdateService'));
       console.error(e);
     }
   };
@@ -123,7 +123,7 @@ export default function ServicesPage() {
 
   const updateServiceCurrency = async (newCurrency: string) => {
     if (!user) return; setServiceCurrency(newCurrency);
-    try { await updateDoc(doc(db, 'barberProfiles', user.uid), { currency: newCurrency }); mutateProfile(); toast(`Currency updated to ${newCurrency}`); } catch (e) { console.error(e); }
+    try { await updateDoc(doc(db, 'barberProfiles', user.uid), { currency: newCurrency }); mutateProfile(); toast(t('barberDash.currencyUpdated').replace('{currency}', newCurrency)); } catch (e) { console.error(e); }
   };
 
   const svcSym = getCurrencySymbol(serviceCurrency);
@@ -210,7 +210,7 @@ export default function ServicesPage() {
       <div id="add-service-form">
         <h3 className="font-extrabold text-sm mb-3">{t('buttons.addNewService')}</h3>
         <div className="grid grid-cols-[2fr_1fr_1fr] gap-2.5 items-end mb-2">
-          <div><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">{t('barberLayout.nameLabel')}</label><input value={newServiceName} onChange={e => setNewServiceName(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" placeholder="E.g. Buzz Cut" /></div>
+          <div><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">{t('barberLayout.nameLabel')}</label><input value={newServiceName} onChange={e => setNewServiceName(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" placeholder={t('barberDash.servicePlaceholder')} /></div>
           <div><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">{t('onboarding.mins')}</label><input value={newServiceDuration} onChange={e => setNewServiceDuration(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" type="number" placeholder="30" /></div>
           <div><label className="text-[10px] font-extrabold text-brand-text-secondary block mb-1.5">{t('barberLayout.priceLabel')} {svcSym}</label><input value={newServicePrice} onChange={e => setNewServicePrice(e.target.value)} className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-2 text-white text-sm outline-none transition-colors focus:border-brand-yellow" type="number" placeholder="0" /></div>
         </div>
@@ -230,7 +230,7 @@ export default function ServicesPage() {
         confirmColor="#EF4444"
         onCancel={() => setConfirmDelete(null)}
         onConfirm={async () => {
-          await safeFirestore(() => deleteDoc(doc(db, 'services', confirmDelete!)), { successMessage: 'Service deleted.', errorMessage: 'Failed to delete service.' });
+          await safeFirestore(() => deleteDoc(doc(db, 'services', confirmDelete!)), { successMessage: t('barberDash.serviceDeleted'), errorMessage: t('barberDash.failedDeleteService') });
           mutateServices();
           setConfirmDelete(null);
         }}

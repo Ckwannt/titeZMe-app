@@ -23,14 +23,14 @@ function statusColor(s: string): string {
   return 'text-[#888] bg-[#1a1a1a]';
 }
 
-function timeAgo(ts: number): string {
+function timeAgo(ts: number, t: (path: string) => string): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 2) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 2) return t('misc.justNow');
+  if (mins < 60) return t('misc.minsAgo').replace('{n}', String(mins));
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return t('misc.hoursAgo').replace('{n}', String(hrs));
+  return t('misc.daysAgo').replace('{n}', String(Math.floor(hrs / 24)));
 }
 
 function exportCSV(bookings: any[], currSym: string) {
@@ -191,7 +191,7 @@ export default function ShopBookingsPage() {
     }
   };
 
-  if (loading) return <div className="p-10 text-center animate-pulse text-[#555]">Loading...</div>;
+  if (loading) return <div className="p-10 text-center animate-pulse text-[#555]">{t('misc.loading')}</div>;
 
   return (
     <div className="animate-fadeUp p-6 md:p-8 md:px-10">
@@ -201,7 +201,7 @@ export default function ShopBookingsPage() {
           onClick={() => exportCSV(filtered, currSym)}
           className="text-[12px] font-bold border border-[#2a2a2a] text-[#888] hover:border-brand-yellow hover:text-brand-yellow px-4 py-2 rounded-full transition-colors"
         >
-          ↓ {t('bookings.exportCSV').replace(' ↓', '')}
+          {t('bookings.exportCSV')}
         </button>
       </div>
 
@@ -255,8 +255,8 @@ export default function ShopBookingsPage() {
         <div className="w-px bg-[#2a2a2a] mx-1" />
         {(['all', 'pending', 'confirmed', 'completed', 'cancelled'] as const).map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
-            className={`text-[12px] font-bold px-4 py-1.5 rounded-full transition-colors capitalize ${statusFilter === s ? 'bg-[#2a2a2a] text-white' : 'text-[#666] hover:text-white'}`}>
-            {s === 'all' ? t('shop.allStatuses') : s}
+            className={`text-[12px] font-bold px-4 py-1.5 rounded-full transition-colors ${statusFilter === s ? 'bg-[#2a2a2a] text-white' : 'text-[#666] hover:text-white'}`}>
+            {s === 'all' ? t('barberDash.allBookings') : t('status.' + s)}
           </button>
         ))}
       </div>
@@ -278,9 +278,9 @@ export default function ShopBookingsPage() {
                     {(b.clientName || b.clientId || '?')[0]?.toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="font-extrabold text-[14px] leading-tight truncate">{b.clientName || b.clientId || 'Client'}</div>
+                    <div className="font-extrabold text-[14px] leading-tight truncate">{b.clientName || b.clientId || t('barberDash.clientFallback')}</div>
                     <div className="text-[11px] text-[#666] mt-0.5">
-                      via <span className="text-[#888]">{b.barberName || 'Barber'}</span>
+                      {t('shop.viaLabel')} <span className="text-[#888]">{b.barberName || t('misc.barberFallback')}</span>
                     </div>
                   </div>
                 </div>
@@ -292,7 +292,7 @@ export default function ShopBookingsPage() {
                   </div>
                   <div className="font-black text-white text-sm whitespace-nowrap">{currSym}{b.price || 0}</div>
                   <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg ${statusColor(b.status || '')}`}>
-                    {b.status?.replace('cancelled_by_', 'cancelled/') || '—'}
+                    {b.status ? (t('status.' + b.status) || b.status) : '—'}
                   </span>
                 </div>
               </div>
@@ -319,7 +319,10 @@ export default function ShopBookingsPage() {
       {totalPages > 1 && (
         <div className="mt-5">
           <div className="text-[11px] text-[#555] text-center mb-3">
-            Showing {(currentPage - 1) * BOOKINGS_PER_PAGE + 1}–{Math.min(currentPage * BOOKINGS_PER_PAGE, filtered.length)} of {filtered.length} bookings
+            {t('shopDash.showingBookings')
+              .replace('{from}', String((currentPage - 1) * BOOKINGS_PER_PAGE + 1))
+              .replace('{to}', String(Math.min(currentPage * BOOKINGS_PER_PAGE, filtered.length)))
+              .replace('{total}', String(filtered.length))}
           </div>
           <div className="flex items-center justify-center gap-2">
             <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
@@ -337,7 +340,7 @@ export default function ShopBookingsPage() {
             })}
             <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
               className="px-3 py-1.5 text-[12px] font-bold text-[#888] hover:text-white disabled:opacity-40">
-              Next →
+              {t('buttons.next')}
             </button>
           </div>
         </div>

@@ -1,11 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useLang } from '@/lib/i18n/LangContext';
 
 export default function ForBarbersPage() {
-  useEffect(() => {
-    document.title = 'For Barbers — titeZMe'
-  }, [])
+  const { t } = useLang();
 
   return (
     <div style={{
@@ -26,7 +24,7 @@ export default function ForBarbersPage() {
           fontSize: '11px', fontWeight: 800, color: '#555',
           letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '20px'
         }}>
-          FOR BARBERS
+          {t('forBarbers.kicker')}
         </div>
         <h1 style={{
           fontSize: 'clamp(36px, 6vw, 64px)',
@@ -35,15 +33,14 @@ export default function ForBarbersPage() {
           margin: '0 0 24px',
           color: '#fff'
         }}>
-          Grow your clientele.<br />
-          <span style={{ color: '#F5C518' }}>Keep your freedom.</span>
+          {t('forBarbers.heroTitle1')}<br />
+          <span style={{ color: '#F5C518' }}>{t('forBarbers.heroTitle2')}</span>
         </h1>
         <p style={{
           fontSize: '18px', color: '#666', lineHeight: 1.8,
           maxWidth: '600px', margin: '0 auto 40px'
         }}>
-          titeZMe gives you a professional booking profile, real-time availability management,
-          and a steady stream of new clients. All free. No commissions.
+          {t('forBarbers.heroSubtitle')}
         </p>
         <a href="/onboarding/barber" style={{
           background: '#F5C518',
@@ -56,10 +53,10 @@ export default function ForBarbersPage() {
           fontFamily: 'Nunito, sans-serif',
           display: 'inline-block'
         }}>
-          Join for free →
+          {t('forBarbers.joinFree')}
         </a>
         <div style={{ fontSize: '12px', color: '#444', marginTop: '12px' }}>
-          Free forever. No credit card. No commission.
+          {t('forBarbers.freeForever')}
         </div>
       </div>
 
@@ -76,10 +73,10 @@ export default function ForBarbersPage() {
               fontSize: '11px', fontWeight: 800, color: '#555',
               letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '16px'
             }}>
-              WHY TITEZME
+              {t('forBarbers.whyKicker')}
             </div>
             <h2 style={{ fontSize: '32px', fontWeight: 900, margin: 0 }}>
-              Everything you need. Nothing you don&apos;t.
+              {t('forBarbers.whyTitle')}
             </h2>
           </div>
           <div style={{
@@ -88,36 +85,12 @@ export default function ForBarbersPage() {
             gap: '24px'
           }}>
             {[
-              {
-                icon: '📅',
-                title: 'Smart scheduling',
-                desc: "Set your working hours once. Clients see your real availability. No double bookings. No chaos."
-              },
-              {
-                icon: '🔔',
-                title: 'Instant notifications',
-                desc: 'Get notified the moment a client books. Accept or decline in one tap. You stay in control.'
-              },
-              {
-                icon: '⭐',
-                title: 'Verified reviews',
-                desc: 'Only clients who actually booked through titeZMe can leave reviews. Real feedback only.'
-              },
-              {
-                icon: '📊',
-                title: 'Track your growth',
-                desc: "See your total cuts, rating, and profile views. Understand what's working and grow faster."
-              },
-              {
-                icon: '🏪',
-                title: 'Work solo or in a shop',
-                desc: 'List yourself independently OR join a barbershop. Switch anytime. Your profile, your rules.'
-              },
-              {
-                icon: '🌍',
-                title: 'Global reach',
-                desc: 'Your profile is visible to clients worldwide. Perfect for barbers in cities with expat communities.'
-              }
+              { icon: '📅', title: t('forBarbers.benefit1Title'), desc: t('forBarbers.benefit1Desc') },
+              { icon: '🔔', title: t('forBarbers.benefit2Title'), desc: t('forBarbers.benefit2Desc') },
+              { icon: '⭐', title: t('forBarbers.benefit3Title'), desc: t('forBarbers.benefit3Desc') },
+              { icon: '📊', title: t('forBarbers.benefit4Title'), desc: t('forBarbers.benefit4Desc') },
+              { icon: '🏪', title: t('forBarbers.benefit5Title'), desc: t('forBarbers.benefit5Desc') },
+              { icon: '🌍', title: t('forBarbers.benefit6Title'), desc: t('forBarbers.benefit6Desc') }
             ].map(item => (
               <div key={item.title} style={{
                 background: '#111',
@@ -141,27 +114,15 @@ export default function ForBarbersPage() {
             fontSize: '11px', fontWeight: 800, color: '#555',
             letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '16px'
           }}>
-            HOW IT WORKS
+            {t('landing.howItWorks')}
           </div>
-          <h2 style={{ fontSize: '32px', fontWeight: 900, margin: 0 }}>Up and running in minutes</h2>
+          <h2 style={{ fontSize: '32px', fontWeight: 900, margin: 0 }}>{t('forBarbers.howItWorksTitle')}</h2>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
           {[
-            {
-              step: '01',
-              title: 'Create your profile',
-              desc: 'Sign up and complete your barber profile. Add your bio, services, prices, and a profile photo. Takes 5 minutes.'
-            },
-            {
-              step: '02',
-              title: 'Set your availability',
-              desc: "Use our visual calendar to paint your working hours. Clients only see slots when you're actually free."
-            },
-            {
-              step: '03',
-              title: 'Start getting bookings',
-              desc: 'Share your profile link or let clients find you through titeZMe search. Accept bookings and grow your clientele.'
-            }
+            { step: '01', title: t('forBarbers.step1Title'), desc: t('forBarbers.step1Desc') },
+            { step: '02', title: t('forBarbers.step2Title'), desc: t('forBarbers.step2Desc') },
+            { step: '03', title: t('forBarbers.step3Title'), desc: t('forBarbers.step3Desc') }
           ].map((item, index) => (
             <div key={item.step} style={{
               display: 'flex',
@@ -199,9 +160,9 @@ export default function ForBarbersPage() {
               fontSize: '11px', fontWeight: 800, color: '#555',
               letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '16px'
             }}>
-              WHAT YOU GET
+              {t('forBarbers.whatYouGetKicker')}
             </div>
-            <h2 style={{ fontSize: '32px', fontWeight: 900, margin: 0 }}>Your complete barber toolkit</h2>
+            <h2 style={{ fontSize: '32px', fontWeight: 900, margin: 0 }}>{t('forBarbers.whatYouGetTitle')}</h2>
           </div>
           <div style={{
             display: 'grid',
@@ -209,18 +170,18 @@ export default function ForBarbersPage() {
             gap: '12px'
           }}>
             {[
-              'Professional barber profile page',
-              'Real-time availability calendar',
-              'Instant booking notifications',
-              'Client management dashboard',
-              'Verified reviews system',
-              'Unique barber code (TZB-XXXXXX)',
-              'Profile sharing link',
-              'Total cuts counter',
-              'Star rating display',
-              'Service menu with prices',
-              'Shop integration (optional)',
-              'Multi-language support'
+              t('forBarbers.feature1'),
+              t('forBarbers.feature2'),
+              t('forBarbers.feature3'),
+              t('forBarbers.feature4'),
+              t('forBarbers.feature5'),
+              t('forBarbers.feature6'),
+              t('forBarbers.feature7'),
+              t('forBarbers.feature8'),
+              t('forBarbers.feature9'),
+              t('forBarbers.feature10'),
+              t('forBarbers.feature11'),
+              t('forBarbers.feature12')
             ].map(feature => (
               <div key={feature} style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
@@ -242,36 +203,18 @@ export default function ForBarbersPage() {
             fontSize: '11px', fontWeight: 800, color: '#555',
             letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '16px'
           }}>
-            FAQ
+            {t('forBarbers.faqKicker')}
           </div>
-          <h2 style={{ fontSize: '32px', fontWeight: 900, margin: 0 }}>Questions from barbers</h2>
+          <h2 style={{ fontSize: '32px', fontWeight: 900, margin: 0 }}>{t('forBarbers.faqTitle')}</h2>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
           {[
-            {
-              q: 'Is titeZMe really free?',
-              a: 'Yes. Creating your barber profile and receiving bookings is completely free. No commission on bookings. No hidden fees.'
-            },
-            {
-              q: 'Do I need to accept every booking?',
-              a: 'No. Every booking request comes to you first. You decide whether to accept or decline. You stay in full control of your schedule.'
-            },
-            {
-              q: "What if a client doesn't show up?",
-              a: "You can mark the booking as a no-show. The client's record is updated. Repeat no-shows are flagged on our platform."
-            },
-            {
-              q: 'Can I work solo AND in a shop?',
-              a: 'Yes. You can have your own independent profile and also be part of a barbershop on titeZMe. Clients can choose how they want to book you.'
-            },
-            {
-              q: 'How do clients pay?',
-              a: 'Currently cash directly to you after the service. Online payment is coming soon.'
-            },
-            {
-              q: 'Can I join from any country?',
-              a: 'Yes. titeZMe works worldwide. Wherever you are, you can create a profile and start receiving bookings.'
-            }
+            { q: t('forBarbers.faq1Q'), a: t('forBarbers.faq1A') },
+            { q: t('forBarbers.faq2Q'), a: t('forBarbers.faq2A') },
+            { q: t('forBarbers.faq3Q'), a: t('forBarbers.faq3A') },
+            { q: t('forBarbers.faq4Q'), a: t('forBarbers.faq4A') },
+            { q: t('forBarbers.faq5Q'), a: t('forBarbers.faq5A') },
+            { q: t('forBarbers.faq6Q'), a: t('forBarbers.faq6A') }
           ].map((item, index, arr) => (
             <div key={item.q} style={{
               padding: '28px 0',
@@ -294,10 +237,10 @@ export default function ForBarbersPage() {
         textAlign: 'center'
       }}>
         <h2 style={{ fontSize: '36px', fontWeight: 900, marginBottom: '16px' }}>
-          Ready to grow your clientele?
+          {t('forBarbers.ctaTitle')}
         </h2>
         <p style={{ fontSize: '15px', color: '#555', marginBottom: '32px' }}>
-          Join hundreds of barbers already on titeZMe. Free forever.
+          {t('forBarbers.ctaSubtitle')}
         </p>
         <a href="/onboarding/barber" style={{
           background: '#F5C518',
@@ -310,10 +253,10 @@ export default function ForBarbersPage() {
           fontFamily: 'Nunito, sans-serif',
           display: 'inline-block'
         }}>
-          Create your free profile →
+          {t('forBarbers.ctaButton')}
         </a>
         <div style={{ fontSize: '12px', color: '#444', marginTop: '12px' }}>
-          No credit card. No commission. No bullshit.
+          {t('forBarbers.ctaDisclaimer')}
         </div>
       </div>
 

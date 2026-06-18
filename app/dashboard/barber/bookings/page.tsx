@@ -112,7 +112,9 @@ export default function BookingsPage() {
         }
         if (cancelledCount > 0) {
           toast.info(
-            `${cancelledCount} expired booking request${cancelledCount > 1 ? 's were' : ' was'} automatically cancelled.`
+            cancelledCount === 1
+              ? t('barberDash.expiredCancelledOne')
+              : t('barberDash.expiredCancelledMany').replace('{n}', String(cancelledCount))
           );
         }
       }
@@ -243,15 +245,21 @@ export default function BookingsPage() {
       </div>
 
       <div className="flex gap-1 border-b border-[#1e1e1e] mb-3">
-        {['today', 'this week', 'this month'].map(t => (
-          <button key={t} onClick={() => { setBookingsTab(t); resetPage(); }} className={`px-4 py-2 text-[12px] font-extrabold capitalize border-b-2 -mb-px transition-colors ${bookingsTab === t ? 'text-brand-yellow border-brand-yellow' : 'text-[#555] border-transparent hover:text-white'}`}>{t}</button>
-        ))}
+        {['today', 'this week', 'this month'].map(tab => {
+          const label = tab === 'today' ? t('buttons.today') : tab === 'this week' ? t('barberDash.thisWeek') : t('barberDash.thisMonth');
+          return (
+            <button key={tab} onClick={() => { setBookingsTab(tab); resetPage(); }} className={`px-4 py-2 text-[12px] font-extrabold border-b-2 -mb-px transition-colors ${bookingsTab === tab ? 'text-brand-yellow border-brand-yellow' : 'text-[#555] border-transparent hover:text-white'}`}>{label}</button>
+          );
+        })}
       </div>
 
       <div className="flex gap-1 flex-wrap mb-4">
-        {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map(s => (
-          <button key={s} onClick={() => { setBookingsStatusFilter(s); resetPage(); }} className={`px-4 py-2 text-[12px] font-extrabold capitalize border-b-2 -mb-px transition-colors ${bookingsStatusFilter === s ? 'text-brand-yellow border-brand-yellow' : 'text-[#555] border-transparent hover:text-white'}`}>{s}</button>
-        ))}
+        {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map(s => {
+          const label = s === 'all' ? t('barberDash.allBookings') : t('status.' + s);
+          return (
+            <button key={s} onClick={() => { setBookingsStatusFilter(s); resetPage(); }} className={`px-4 py-2 text-[12px] font-extrabold border-b-2 -mb-px transition-colors ${bookingsStatusFilter === s ? 'text-brand-yellow border-brand-yellow' : 'text-[#555] border-transparent hover:text-white'}`}>{label}</button>
+          );
+        })}
       </div>
 
       <input value={bookingsSearch} onChange={e => setBookingsSearch(e.target.value)} placeholder={t('bookings.searchByClient')} className="w-full bg-[#141414] border border-[#2a2a2a] rounded-full px-4 py-2 text-[12px] text-white outline-none focus:border-brand-yellow transition-colors placeholder:text-[#444] mb-4" />
@@ -263,11 +271,11 @@ export default function BookingsPage() {
           <div key={b.id} className={`flex flex-wrap sm:flex-nowrap items-center gap-3 bg-brand-surface border border-brand-border rounded-[14px] p-3.5 border-l-[4px] ${borderColorMap[b.status] || 'border-l-[#2a2a2a]'}`}>
             <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center text-[11px] font-black text-white shrink-0">{(b.clientName?.[0] || 'C').toUpperCase()}</div>
             <div className="flex-1 min-w-[120px]">
-              <div className="font-extrabold text-sm">{b.clientName || 'Client'}</div>
-              <div className="text-xs text-brand-text-secondary">{b.serviceNames?.join(', ') || b.serviceName || 'Service'}</div>
+              <div className="font-extrabold text-sm">{b.clientName || t('barberDash.clientFallback')}</div>
+              <div className="text-xs text-brand-text-secondary">{b.serviceNames?.join(', ') || b.serviceName || t('barberDash.serviceFallback')}</div>
             </div>
-            <div className="text-[12px] text-[#666] shrink-0 hidden sm:block"><div>{b.date}</div><div>{b.startTime}{b.totalDuration ? ` · ${b.totalDuration}min` : ''}</div></div>
-            <div className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${statusMap[b.status]?.bg} ${statusMap[b.status]?.text} ${statusMap[b.status]?.border}`}>{b.status}</div>
+            <div className="text-[12px] text-[#666] shrink-0 hidden sm:block"><div>{b.date}</div><div>{b.startTime}{b.totalDuration ? ` · ${b.totalDuration}${t('misc.minShort')}` : ''}</div></div>
+            <div className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${statusMap[b.status]?.bg} ${statusMap[b.status]?.text} ${statusMap[b.status]?.border}`}>{t('status.' + b.status) || b.status}</div>
             <div className="font-black text-[14px] text-brand-yellow shrink-0">{currSym}{b.price}</div>
             {b.status === 'pending' && (
               <div className="flex gap-1.5 w-full sm:w-auto mt-1 sm:mt-0 justify-end">
@@ -294,7 +302,10 @@ export default function BookingsPage() {
       {totalPages > 1 && (
         <div className="mt-5">
           <div className="text-[11px] text-[#555] text-center mb-3">
-            Showing {(currentPage - 1) * BOOKINGS_PER_PAGE + 1}–{Math.min(currentPage * BOOKINGS_PER_PAGE, filteredBookings.length)} of {filteredBookings.length} bookings
+            {t('barberDash.showingBookings')
+              .replace('{from}', String((currentPage - 1) * BOOKINGS_PER_PAGE + 1))
+              .replace('{to}', String(Math.min(currentPage * BOOKINGS_PER_PAGE, filteredBookings.length)))
+              .replace('{total}', String(filteredBookings.length))}
           </div>
           <div className="flex items-center justify-center gap-2">
             <button
@@ -321,7 +332,7 @@ export default function BookingsPage() {
               disabled={currentPage === totalPages}
               className="px-3 py-1.5 text-[12px] font-bold text-[#888] hover:text-white disabled:opacity-40 transition-colors"
             >
-              Next →
+              {t('buttons.next')}
             </button>
           </div>
         </div>
