@@ -8,11 +8,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useLang } from '@/lib/i18n/LangContext';
 
 export default function ShopDashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, appUser, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useLang();
   const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
@@ -43,35 +45,35 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
   });
 
   // Calculate open/closed status
-  let shopStatus = { text: 'Closed today', color: 'text-brand-red' };
+  let shopStatus = { text: t('status.closedToday'), color: 'text-brand-red' };
   if (schedule) {
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     const dayName = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     if ((schedule as any).blockedDates?.includes(todayStr)) {
-      shopStatus = { text: 'On leave', color: 'text-brand-red' };
+      shopStatus = { text: t('shopDash.onLeave'), color: 'text-brand-red' };
     } else {
       const h = (schedule as any).weeklyHours?.[dayName];
       if (h?.isOpen) {
         const nowMins = today.getHours() * 60 + today.getMinutes();
         const startMins = parseInt(h.start?.split(':')[0] || '0') * 60 + parseInt(h.start?.split(':')[1] || '0');
         const endMins = parseInt(h.end?.split(':')[0] || '0') * 60 + parseInt(h.end?.split(':')[1] || '0');
-        if (nowMins >= startMins && nowMins < endMins) shopStatus = { text: 'Open now', color: 'text-brand-green' };
-        else if (nowMins < startMins) shopStatus = { text: `Opens at ${h.start}`, color: 'text-brand-red' };
+        if (nowMins >= startMins && nowMins < endMins) shopStatus = { text: t('status.openNow'), color: 'text-brand-green' };
+        else if (nowMins < startMins) shopStatus = { text: t('status.closedOpens').replace('{time}', h.start), color: 'text-brand-red' };
       }
     }
   }
 
   const navItems = [
-    { href: '/dashboard/shop', icon: '🏪', label: 'Overview', exact: true },
-    { href: '/dashboard/shop/team', icon: '👥', label: 'Team', exact: false },
-    { href: '/dashboard/shop/bookings', icon: '📅', label: 'All Bookings', exact: false },
-    { href: '/dashboard/shop/availability', icon: '⏰', label: 'Availability', exact: false },
-    { href: '/dashboard/shop/earnings', icon: '💰', label: 'Earnings', exact: false },
-    { href: '/dashboard/shop/services', icon: '✂️', label: 'Services', exact: false },
-    { href: '/dashboard/shop/photos', icon: '📸', label: 'Shop Photos', exact: false },
-    { href: '/dashboard/shop/reviews', icon: '⭐', label: 'Reviews', exact: false },
-    { href: '/dashboard/shop/settings', icon: '⚙️', label: 'Settings', exact: false },
+    { href: '/dashboard/shop', icon: '🏪', label: t('shopDash.overviewNav'), exact: true },
+    { href: '/dashboard/shop/team', icon: '👥', label: t('shopDash.teamNav'), exact: false },
+    { href: '/dashboard/shop/bookings', icon: '📅', label: t('bookings.allBookings'), exact: false },
+    { href: '/dashboard/shop/availability', icon: '⏰', label: t('barberLayout.navAvailability'), exact: false },
+    { href: '/dashboard/shop/earnings', icon: '💰', label: t('shopDash.earnings'), exact: false },
+    { href: '/dashboard/shop/services', icon: '✂️', label: t('barberLayout.navServices'), exact: false },
+    { href: '/dashboard/shop/photos', icon: '📸', label: t('shopDash.shopPhotosNav'), exact: false },
+    { href: '/dashboard/shop/reviews', icon: '⭐', label: t('shopDash.reviews'), exact: false },
+    { href: '/dashboard/shop/settings', icon: '⚙️', label: t('clientDash.settings'), exact: false },
   ];
 
   const isActive = (item: { href: string; exact: boolean }) =>
@@ -92,9 +94,9 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
             </div>
           )}
           <div>
-            <div className="font-extrabold text-sm truncate max-w-[120px]">{(shop as any)?.name || 'My Shop'}</div>
+            <div className="font-extrabold text-sm truncate max-w-[120px]">{(shop as any)?.name || t('barberLayout.myShop')}</div>
             <div className="text-[11px] text-brand-text-secondary mt-0.5 truncate max-w-[120px]">
-              📍 {(shop as any)?.address?.city || 'Location not set'}
+              📍 {(shop as any)?.address?.city || t('shopDash.locationNotSet')}
             </div>
             <div className={`text-[11px] mt-1 font-bold ${shopStatus.color}`}>{shopStatus.text}</div>
           </div>
@@ -114,7 +116,7 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
         {appUser?.role === 'barber' && (
           <div className="hidden md:block mt-6 pt-6 border-t border-brand-border">
             <Link href="/dashboard/barber" className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold text-[#888] hover:bg-[#1a1a1a] hover:text-white transition-colors">
-              <span>✂️</span> My barber dashboard
+              <span>✂️</span> {t('shopDash.myBarberDashboard')}
             </Link>
           </div>
         )}
@@ -128,11 +130,11 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
       {/* Mobile bottom tab bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-[#111] border-t border-[#1e1e1e] h-[60px] flex md:hidden z-40">
         {[
-          { href: '/dashboard/shop', icon: '🏪', label: 'Overview', exact: true },
-          { href: '/dashboard/shop/team', icon: '👥', label: 'Team', exact: false },
-          { href: '/dashboard/shop/bookings', icon: '📅', label: 'Bookings', exact: false },
-          { href: '/dashboard/shop/earnings', icon: '💰', label: 'Earnings', exact: false },
-          { href: '/dashboard/shop/settings', icon: '⚙️', label: 'More', exact: false },
+          { href: '/dashboard/shop', icon: '🏪', label: t('shopDash.overviewNav'), exact: true },
+          { href: '/dashboard/shop/team', icon: '👥', label: t('shopDash.teamNav'), exact: false },
+          { href: '/dashboard/shop/bookings', icon: '📅', label: t('barberLayout.navBookings'), exact: false },
+          { href: '/dashboard/shop/earnings', icon: '💰', label: t('shopDash.earnings'), exact: false },
+          { href: '/dashboard/shop/settings', icon: '⚙️', label: t('barberLayout.navMore'), exact: false },
         ].map(item => (
           <Link key={item.href} href={item.href}
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition-colors ${

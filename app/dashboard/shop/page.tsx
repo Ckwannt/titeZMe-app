@@ -105,8 +105,8 @@ function getPrevYearMonth(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function getMonthLabel(): string {
-  return new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+function getMonthLabel(locale: string): string {
+  return new Date().toLocaleDateString(locale, { month: "long", year: "numeric" });
 }
 
 function getWeekRange(): { start: string; end: string } {
@@ -126,15 +126,16 @@ function barberInitials(b: BarberProfile): string {
   return (b.firstName?.[0] ?? "?").toUpperCase();
 }
 
-function barberFullName(b: BarberProfile): string {
-  return `${b.firstName ?? ""} ${b.lastName ?? ""}`.trim() || "Unknown";
+function barberFullName(b: BarberProfile, fallback: string): string {
+  return `${b.firstName ?? ""} ${b.lastName ?? ""}`.trim() || fallback;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ShopOverviewPage() {
   const { user, loading } = useAuth();
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const dateLocale = lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : 'en-US';
   const router = useRouter();
 
   const [shop, setShop] = useState<ShopData | null>(null);
@@ -376,7 +377,9 @@ export default function ShopOverviewPage() {
         <div>
           <h1 className="text-2xl font-black">{t('shop.overview')}</h1>
           <p className="text-[#888] text-sm mt-1">
-            {getMonthLabel()} · {barbers.length} barber{barbers.length !== 1 ? "s" : ""}
+            {getMonthLabel(dateLocale)} · {barbers.length === 1
+              ? t('shopDash.nBarbers').replace('{n}', '1')
+              : t('shopDash.nBarbersPlural').replace('{n}', String(barbers.length))}
           </p>
         </div>
       </div>
@@ -392,7 +395,7 @@ export default function ShopOverviewPage() {
           <div className="text-xs text-[#888] font-bold">{t('shop.monthlyRevenue')}</div>
           <div className="text-[11px] font-extrabold text-[#444] mt-1">
             {revDeltaPct !== null
-              ? `${revDeltaPct >= 0 ? "+" : ""}${revDeltaPct}% vs last month`
+              ? t('shopDash.vsLastMonth').replace('{pct}', `${revDeltaPct >= 0 ? "+" : ""}${revDeltaPct}`)
               : t('shop.noDataLastMonth')}
           </div>
         </div>
@@ -418,7 +421,11 @@ export default function ShopOverviewPage() {
           </div>
           <div className="text-xs text-[#888] font-bold">{t('shop.shopRating')}</div>
           <div className="text-[11px] font-extrabold text-[#444] mt-1">
-            {totalReviews > 0 ? `★ ${totalReviews} review${totalReviews !== 1 ? "s" : ""}` : t('barberDash.noReviewsYetShort')}
+            {totalReviews > 0
+              ? (totalReviews === 1
+                  ? t('shopDash.nReviewsStar').replace('{n}', '1')
+                  : t('shopDash.nReviewsStarPlural').replace('{n}', String(totalReviews)))
+              : t('barberDash.noReviewsYetShort')}
           </div>
         </div>
       </div>
@@ -459,11 +466,11 @@ export default function ShopOverviewPage() {
               <span className="text-xl">📨</span>
               <div className="flex-1 min-w-0">
                 <div className="font-extrabold text-sm">
-                  Invite pending: {inv.barberName ?? inv.barberEmail ?? "A barber"}
+                  {t('shopDash.invitePending').replace('{name}', inv.barberName ?? inv.barberEmail ?? t('shopDash.aBarberFallback'))}
                 </div>
                 <div className="text-xs text-[#888] mt-0.5">{t('shop.waitingForResponse')}</div>
               </div>
-              <span className="text-[#F5C518] text-[11px] font-extrabold shrink-0">PENDING</span>
+              <span className="text-[#F5C518] text-[11px] font-extrabold shrink-0">{t('status.pending').toUpperCase()}</span>
             </div>
           ))}
         </div>
@@ -494,7 +501,7 @@ export default function ShopOverviewPage() {
                   </div>
                   {/* Name + status */}
                   <div className="flex-1 min-w-0">
-                    <div className="font-extrabold text-[14px] truncate">{barberFullName(b)}</div>
+                    <div className="font-extrabold text-[14px] truncate">{barberFullName(b, t('misc.unknown'))}</div>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span
                         className={`text-[10px] font-extrabold ${stats?.workingToday ? "text-[#22C55E]" : "text-[#555]"}`}
@@ -502,14 +509,14 @@ export default function ShopOverviewPage() {
                         ● {stats?.workingToday ? t('shop.workingNow') : t('status.offToday')}
                       </span>
                       {stats?.cutsToday !== undefined && (
-                        <span className="text-[10px] text-[#555]">· {stats.cutsToday} cuts today</span>
+                        <span className="text-[10px] text-[#555]">· {t('shopDash.nCutsToday').replace('{n}', String(stats.cutsToday))}</span>
                       )}
                     </div>
                   </div>
                   {/* Next appt */}
                   {stats?.nextAppointment && (
                     <div className="text-[11px] text-[#888] font-bold shrink-0">
-                      Next: {stats.nextAppointment}
+                      {t('shopDash.nextAt').replace('{time}', stats.nextAppointment)}
                     </div>
                   )}
                 </div>
@@ -555,7 +562,7 @@ export default function ShopOverviewPage() {
       {/* Barber Roster */}
       <ErrorBoundary section="barber roster">
       <div className="animate-fadeUp">
-        <div className="font-extrabold text-base mb-4">Your Barbers — {getMonthLabel()}</div>
+        <div className="font-extrabold text-base mb-4">{t('shopDash.yourBarbersMonth').replace('{month}', getMonthLabel(dateLocale))}</div>
         {barbers.length === 0 ? (
           <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-5 text-[#555] text-sm">
             {t('shop.noBarbersRoster')}{" "}
@@ -590,7 +597,7 @@ export default function ShopOverviewPage() {
                       </div>
                       {/* Name + rating */}
                       <div className="flex-1 min-w-[120px]">
-                        <div className="font-extrabold text-[15px]">{barberFullName(b)}</div>
+                        <div className="font-extrabold text-[15px]">{barberFullName(b, t('misc.unknown'))}</div>
                         <div className="text-xs text-[#888] leading-none mt-0.5">
                           {(b.rating ?? 0) > 0 ? `★ ${b.rating}` : t('shop.noRatingYet')}
                         </div>
