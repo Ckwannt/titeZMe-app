@@ -63,14 +63,14 @@ export default function SignupPage() {
             {t('misc.checkEmail')}
           </div>
           <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.7', marginBottom: '24px' }}>
-            We sent a verification link to
+            {t('misc.sentVerificationTo')}
             <span style={{ color: '#F5C518', display: 'block', marginTop: '4px' }}>
               {email}
             </span>
-            Click the link to activate your account.
+            {t('misc.clickToActivate')}
           </div>
           <div style={{ fontSize: '11px', color: '#444', marginBottom: '16px' }}>
-            Didn&apos;t receive it? Check spam or request a new one.
+            {t('misc.didntReceive')}
           </div>
           <button
             onClick={async () => {
@@ -125,10 +125,10 @@ export default function SignupPage() {
     if (/[0-9]/.test(pass)) score++;
     if (/[^A-Za-z0-9]/.test(pass)) score++;
 
-    if (score <= 1) return { score: 1, label: 'Weak', color: '#EF4444' };
-    if (score === 2) return { score: 2, label: 'Fair', color: '#F97316' };
-    if (score === 3) return { score: 3, label: 'Good', color: '#F5C518' };
-    if (score >= 4) return { score: 4, label: 'Strong', color: '#22C55E' };
+    if (score <= 1) return { score: 1, label: t('forms.passwordWeak'), color: '#EF4444' };
+    if (score === 2) return { score: 2, label: t('forms.passwordFair'), color: '#F97316' };
+    if (score === 3) return { score: 3, label: t('forms.passwordGood'), color: '#F5C518' };
+    if (score >= 4) return { score: 4, label: t('forms.passwordStrong'), color: '#22C55E' };
     return { score: 0, label: '', color: '#2a2a2a' };
   };
 
@@ -192,7 +192,7 @@ export default function SignupPage() {
     }
 
     if (!confirmPassword) {
-      setErrorStatus('Please confirm your password');
+      setErrorStatus(t('errors.pleaseConfirmPassword'));
       return;
     }
     if (password !== confirmPassword) {
@@ -233,9 +233,9 @@ export default function SignupPage() {
       const getFriendlyError = (code: string): string => {
         switch (code) {
           case 'auth/email-already-in-use':
-            return 'An account with this email already exists. Try logging in.';
+            return t('errors.emailInUseTryLogin');
           case 'auth/weak-password':
-            return 'Password is too weak. Use at least 8 characters.';
+            return t('errors.passwordTooWeak');
           case 'auth/invalid-email':
             return t('errors.invalidCredentials');
           case 'auth/operation-not-allowed':
@@ -259,7 +259,7 @@ export default function SignupPage() {
       <div className="animate-fadeUp mb-8 text-center">
         <div className="text-3xl mb-3">🔥</div>
         <h1 className="text-[28px] font-black leading-tight mb-2">{t('headings.joinTitle')}</h1>
-        <p className="text-brand-text-secondary text-[15px]">Create an account to get started.</p>
+        <p className="text-brand-text-secondary text-[15px]">{t('headings.joinSub2')}</p>
       </div>
 
       {/* Role selection — must be visible BEFORE Google button so user's choice
@@ -329,7 +329,7 @@ export default function SignupPage() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
         <div style={{ flex: 1, height: '1px', background: '#1e1e1e' }} />
-        <span style={{ fontSize: '11px', color: '#444', fontWeight: 700 }}>or</span>
+        <span style={{ fontSize: '11px', color: '#444', fontWeight: 700 }}>{t('misc.or')}</span>
         <div style={{ flex: 1, height: '1px', background: '#1e1e1e' }} />
       </div>
 
@@ -370,7 +370,7 @@ export default function SignupPage() {
                     ? '1px solid #EF4444'
                     : '1px solid #2a2a2a'
               }}
-              placeholder="Your name"
+              placeholder={t('forms.firstNamePlaceholder')}
             />
             {submitAttempted && !firstName && <span className="text-brand-red text-xs mt-1 block">{t('errors.fieldRequired')}</span>}
           </div>
@@ -380,7 +380,7 @@ export default function SignupPage() {
               required
               value={lastName} onChange={e => setLastName(e.target.value)}
               className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-              placeholder="Your last name" 
+              placeholder={t('forms.lastNamePlaceholder')}
             />
             {submitAttempted && !lastName && <span className="text-brand-red text-xs mt-1 block">{t('errors.fieldRequired')}</span>}
           </div>
@@ -473,9 +473,9 @@ export default function SignupPage() {
                   {strength.label}
                   {strength.score < 3 && password.length > 0 && (
                     <span style={{ color: '#444', fontWeight: 700, marginLeft: '6px' }}>
-                      {!/[A-Z]/.test(password) && '· Add uppercase '}
-                      {!/[0-9]/.test(password) && '· Add a number '}
-                      {password.length < 8 && `· ${8 - password.length} more characters`}
+                      {!/[A-Z]/.test(password) && `${t('forms.passwordHintUppercase')} `}
+                      {!/[0-9]/.test(password) && `${t('forms.passwordHintNumber')} `}
+                      {password.length < 8 && t('forms.passwordHintMoreChars').replace('{count}', String(8 - password.length))}
                     </span>
                   )}
                 </div>
@@ -508,7 +508,7 @@ export default function SignupPage() {
                   setPasswordMatch(null);
                 }
               }}
-              placeholder="Confirm password"
+              placeholder={t('forms.confirmPasswordPlaceholder')}
               style={{
                 background: '#141414',
                 border: passwordMatch === null
@@ -587,7 +587,7 @@ export default function SignupPage() {
           >
             {t('misc.termsOfService')}
           </a>
-          {' '}and{' '}
+          {' '}{t('misc.and')}{' '}
           <a
             href="/privacy"
             target="_blank"
@@ -603,7 +603,7 @@ export default function SignupPage() {
         </div>
 
         <div className="text-center mt-6 text-sm text-brand-text-secondary">
-          Already have an account? <Link href="/login" className="text-white font-extrabold hover:text-brand-yellow transition-colors">{t('nav.login')}</Link>
+          {t('headings.alreadyHaveAccount')} <Link href="/login" className="text-white font-extrabold hover:text-brand-yellow transition-colors">{t('nav.login')}</Link>
         </div>
       </form>
     </div>

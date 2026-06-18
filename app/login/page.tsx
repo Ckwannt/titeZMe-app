@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [barberCount, setBarberCount] = useState<number | null>(null);
+  const [showSignUpLink, setShowSignUpLink] = useState(false);
   const { t } = useLang();
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function LoginPage() {
       if (!userDoc.exists()) {
         await signOut(auth);
         setErrorStatus(t('errors.noAccountFound'));
+        setShowSignUpLink(true);
         return;
       }
 
@@ -93,6 +95,7 @@ export default function LoginPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorStatus('');
+    setShowSignUpLink(false);
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -211,7 +214,7 @@ export default function LoginPage() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
         <div style={{ flex: 1, height: '1px', background: '#1e1e1e' }} />
-        <span style={{ fontSize: '11px', color: '#444', fontWeight: 700 }}>or</span>
+        <span style={{ fontSize: '11px', color: '#444', fontWeight: 700 }}>{t('misc.or')}</span>
         <div style={{ flex: 1, height: '1px', background: '#1e1e1e' }} />
       </div>
 
@@ -315,7 +318,7 @@ export default function LoginPage() {
             marginTop: '4px',
           }}>
             {errorStatus}
-            {errorStatus.includes('sign up') && (
+            {showSignUpLink && (
               <a
                 href="/signup"
                 style={{
@@ -361,7 +364,7 @@ export default function LoginPage() {
           >
             {t('misc.termsOfService')}
           </a>
-          {' '}and{' '}
+          {' '}{t('misc.and')}{' '}
           <a
             href="/privacy"
             target="_blank"
@@ -377,7 +380,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center mt-6 text-sm text-brand-text-secondary">
-          New here? <Link href="/signup" className="text-white font-extrabold hover:text-brand-yellow transition-colors">{t('buttons.createAccount')}</Link>
+          {t('headings.newHere')} <Link href="/signup" className="text-white font-extrabold hover:text-brand-yellow transition-colors">{t('buttons.createAccount')}</Link>
         </div>
       </form>
     </div>
