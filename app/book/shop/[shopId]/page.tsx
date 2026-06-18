@@ -67,10 +67,10 @@ function calcEndTime(startTime: string, durationMins: number): string {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
-function formatFullDate(dateStr: string): string {
+function formatFullDate(dateStr: string, locale: string): string {
   if (!dateStr) return '';
   const [y, mo, d] = dateStr.split('-').map(Number);
-  return new Date(y, mo - 1, d).toLocaleDateString('en-US', {
+  return new Date(y, mo - 1, d).toLocaleDateString(locale, {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 }
@@ -84,7 +84,8 @@ export default function ShopBookingPage() {
   const initialServiceId = searchParams.get('serviceId') ?? '';
 
   const { user, appUser } = useAuth();
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const dateLocale = lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : 'en-US';
   const router = useRouter();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -105,8 +106,6 @@ export default function ShopBookingPage() {
   const [bookingError, setBookingError] = useState<string>('');
   const [honeypot, setHoneypot] = useState('');
 
-  useEffect(() => { document.title = 'Book at this shop — titeZMe'; }, []);
-
   // ── Auth guard ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!user) {
@@ -114,7 +113,7 @@ export default function ShopBookingPage() {
       return;
     }
     if (appUser?.role === 'admin') {
-      toast.error('Admin accounts cannot make bookings');
+      toast.error(t('profile.adminCannotBook'));
       router.replace('/');
       return;
     }
@@ -253,14 +252,14 @@ export default function ShopBookingPage() {
         where('createdAt', '>', oneHourAgo),
       ));
       if (recentSnap.size >= 5) {
-        setBookingError(t('errors.tooManyBookingAttempts') || 'Too many booking attempts. Try again later.');
+        setBookingError(t('errors.tooManyBookingAttempts'));
         setConfirming(false);
         return;
       }
 
       // Offline check
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        setBookingError(t('booking.noInternetBooking') || 'You appear to be offline.');
+        setBookingError(t('booking.noInternetBooking'));
         setConfirming(false);
         return;
       }
@@ -275,7 +274,7 @@ export default function ShopBookingPage() {
         where('status', 'in', ['pending', 'confirmed']),
       ));
       if (!dupSnap.empty) {
-        setBookingError(t('booking.alreadyHaveBooking') || 'You already have a booking at this time.');
+        setBookingError(t('booking.alreadyHaveBooking'));
         setConfirming(false);
         return;
       }
@@ -357,18 +356,18 @@ export default function ShopBookingPage() {
         console.error('Post-booking notifications failed:', notifErr);
       }
 
-      toast.success(t('booking.bookingSuccess') || 'Booking confirmed!');
+      toast.success(t('booking.bookingSuccess'));
       await new Promise(r => setTimeout(r, 800));
       router.push(appUser?.role === 'barber' ? '/dashboard/barber/bookings' : '/dashboard/client');
     } catch (e: any) {
       console.error(e);
       if (e?.message === 'OVERLAP') {
-        setBookingError(t('booking.slotTaken') || 'That slot was just taken. Please pick another.');
+        setBookingError(t('booking.slotTaken'));
         setSelectedTime('');
         setSelectedEndTime('');
         setStep(2);
       } else {
-        setBookingError(t('booking.bookingFailed') || 'Booking failed. Please try again.');
+        setBookingError(t('booking.bookingFailed'));
       }
       setConfirming(false);
     }
@@ -378,7 +377,7 @@ export default function ShopBookingPage() {
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <div className="text-[#666] text-sm font-bold animate-pulse">Loading shop…</div>
+        <div className="text-[#666] text-sm font-bold animate-pulse">{t('booking.loadingShop')}</div>
       </div>
     );
   }
@@ -388,8 +387,8 @@ export default function ShopBookingPage() {
       <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-white">
         <div className="text-center">
           <div className="text-5xl mb-3">🏪</div>
-          <div className="font-black text-lg mb-1">Shop not found</div>
-          <div className="text-[#666] text-sm">This shop doesn&apos;t exist.</div>
+          <div className="font-black text-lg mb-1">{t('booking.shopNotFound')}</div>
+          <div className="text-[#666] text-sm">{t('booking.shopNotFoundDesc')}</div>
         </div>
       </div>
     );
@@ -421,12 +420,12 @@ export default function ShopBookingPage() {
         {/* ── STEP 1 — Service selection ────────────────────────────────────── */}
         {step === 1 && (
           <div className="animate-fadeUp">
-            <h1 className="text-3xl font-black mb-1">Choose a service</h1>
+            <h1 className="text-3xl font-black mb-1">{t('booking.chooseService')}</h1>
             <p className="text-[#888] text-sm font-bold mb-6">{shop.name}</p>
 
             {services.length === 0 ? (
               <div className="border-2 border-dashed border-[#2a2a2a] rounded-2xl p-8 text-center">
-                <div className="text-[#555] text-sm font-bold">No services available.</div>
+                <div className="text-[#555] text-sm font-bold">{t('emptyStates.noServicesAdded')}</div>
               </div>
             ) : (
               <div className="flex flex-col gap-3 mb-8">
@@ -446,7 +445,7 @@ export default function ShopBookingPage() {
                           <div className={`font-black flex items-center gap-1.5 ${isSelected ? 'text-[#E8491D]' : 'text-white'}`}>
                             {svc.isTitz && <span>⚡</span>} {svc.name}
                           </div>
-                          <div className="text-xs text-[#888] font-bold">{svc.durationMinutes} min</div>
+                          <div className="text-xs text-[#888] font-bold">{svc.durationMinutes} {t('misc.minShort')}</div>
                         </div>
                       </div>
                       <div className="font-black text-lg">{currency}{svc.price}</div>
@@ -462,7 +461,7 @@ export default function ShopBookingPage() {
                 disabled={selectedServiceIds.length === 0}
                 className="bg-brand-yellow text-[#0a0a0a] px-8 py-3.5 rounded-full font-black text-sm transition-all hover:opacity-90 disabled:opacity-50"
               >
-                Next →
+                {t('booking.next')}
               </button>
             </div>
           </div>
@@ -471,9 +470,9 @@ export default function ShopBookingPage() {
         {/* ── STEP 2 — Date & Time ──────────────────────────────────────────── */}
         {step === 2 && (
           <div className="animate-fadeUp">
-            <h1 className="text-3xl font-black mb-2">Choose a date &amp; time</h1>
+            <h1 className="text-3xl font-black mb-2">{t('booking.chooseDateTime')}</h1>
             <p className="text-[#888] text-sm font-bold mb-6">
-              {selectedDuration} min · {shop.name}
+              {selectedDuration} {t('misc.minShort')} · {shop.name}
             </p>
 
             <ShopTimePicker
@@ -503,21 +502,21 @@ export default function ShopBookingPage() {
                   onClick={() => { setSelectedDate(''); setSelectedTime(''); setSelectedEndTime(''); setAvailableBarberIds([]); setSelectedBarberId(''); }}
                   style={{ marginLeft: 'auto', fontSize: 11, color: '#555', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                  Clear
+                  {t('booking.clearSlot')}
                 </button>
               </div>
             )}
 
             <div className="flex justify-between mt-8">
               <button onClick={() => setStep(1)} className="text-[#888] font-bold text-sm hover:text-white transition-colors">
-                ← Back
+                {t('booking.back')}
               </button>
               <button
                 onClick={() => setStep(3)}
                 disabled={!selectedDate || !selectedTime}
                 className="bg-brand-yellow text-[#0a0a0a] px-8 py-3.5 rounded-full font-black text-sm transition-all hover:opacity-90 disabled:opacity-50"
               >
-                Next →
+                {t('booking.next')}
               </button>
             </div>
           </div>
@@ -526,23 +525,23 @@ export default function ShopBookingPage() {
         {/* ── STEP 3 — Choose barber ────────────────────────────────────────── */}
         {step === 3 && (
           <div className="animate-fadeUp">
-            <h1 className="text-3xl font-black mb-2">Choose your barber</h1>
+            <h1 className="text-3xl font-black mb-2">{t('booking.chooseBarber')}</h1>
             <p className="text-[#888] text-sm font-bold mb-6">
-              Available at {selectedTime} on {formatFullDate(selectedDate)}
+              {t('booking.availableAt').replace('{time}', selectedTime).replace('{date}', formatFullDate(selectedDate, dateLocale))}
             </p>
 
             {filteredAvailableBarbers.length === 0 ? (
               <div className="border-2 border-dashed border-[#2a2a2a] rounded-2xl p-8 text-center">
-                <div className="text-[#555] text-sm font-bold">No barbers available at this slot.</div>
+                <div className="text-[#555] text-sm font-bold">{t('booking.noBarbersSlot')}</div>
                 <button onClick={() => setStep(2)} className="mt-3 text-[#E8491D] text-xs font-black hover:underline">
-                  ← Pick a different time
+                  {t('booking.pickDifferentTime')}
                 </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
                 {filteredAvailableBarbers.map(b => {
                   const isSelected = selectedBarberId === b.id;
-                  const name = `${b.firstName ?? ''} ${b.lastName ?? ''}`.trim() || 'Barber';
+                  const name = `${b.firstName ?? ''} ${b.lastName ?? ''}`.trim() || t('misc.barberFallback');
                   const yrs = b.experienceStartYear ? currentYear - b.experienceStartYear : null;
                   return (
                     <button
@@ -568,7 +567,7 @@ export default function ShopBookingPage() {
                                 {'★'.repeat(Math.round(b.rating ?? 0))} {b.rating?.toFixed(1)} ({b.reviewCount})
                               </span>
                             ) : (
-                              <span className="text-[#555]">New ✨</span>
+                              <span className="text-[#555]">{t('status.newBadge')}</span>
                             )}
                           </div>
                         </div>
@@ -592,7 +591,7 @@ export default function ShopBookingPage() {
 
                       {yrs !== null && (
                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#888]">
-                          <span>{yrs} yrs exp</span>
+                          <span>{yrs} {t('misc.yearsExp')}</span>
                           {b.experienceVerified && (
                             <span title="Verified" style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />
                           )}
@@ -606,14 +605,14 @@ export default function ShopBookingPage() {
 
             <div className="flex justify-between mt-2">
               <button onClick={() => setStep(2)} className="text-[#888] font-bold text-sm hover:text-white transition-colors">
-                ← Back
+                {t('booking.back')}
               </button>
               <button
                 onClick={() => setStep(4)}
                 disabled={!selectedBarberId}
                 className="bg-brand-yellow text-[#0a0a0a] px-8 py-3.5 rounded-full font-black text-sm transition-all hover:opacity-90 disabled:opacity-50"
               >
-                Next →
+                {t('booking.next')}
               </button>
             </div>
           </div>
@@ -633,7 +632,7 @@ export default function ShopBookingPage() {
               aria-hidden="true"
             />
 
-            <h1 className="text-3xl font-black mb-8">Review your booking</h1>
+            <h1 className="text-3xl font-black mb-8">{t('booking.reviewYourBooking')}</h1>
 
             <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl overflow-hidden mb-6">
 
@@ -648,7 +647,7 @@ export default function ShopBookingPage() {
                 </div>
                 <div>
                   <div className="font-black text-white text-[15px]">{shop.name}</div>
-                  <div className="text-xs font-bold text-[#555] mt-0.5">Booking via shop</div>
+                  <div className="text-xs font-bold text-[#555] mt-0.5">{t('booking.bookingViaShopLabel')}</div>
                 </div>
               </div>
 
@@ -663,19 +662,19 @@ export default function ShopBookingPage() {
                 </div>
                 <div>
                   <div className="font-black text-white text-[15px]">
-                    {selectedBarber ? `${selectedBarber.firstName ?? ''} ${selectedBarber.lastName ?? ''}`.trim() : 'Barber'}
+                    {selectedBarber ? `${selectedBarber.firstName ?? ''} ${selectedBarber.lastName ?? ''}`.trim() : t('misc.barberFallback')}
                   </div>
-                  <div className="text-xs font-bold text-[#555] mt-0.5">Your barber</div>
+                  <div className="text-xs font-bold text-[#555] mt-0.5">{t('booking.yourBarber')}</div>
                 </div>
               </div>
 
               {/* Service */}
               <div className="p-5 border-b border-[#1e1e1e]">
-                <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">Service</div>
+                <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">{t('booking.serviceLabel')}</div>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm font-bold text-white">{selectedService?.name}</div>
-                    <div className="text-[11px] text-[#555]">⏱ {selectedDuration} min</div>
+                    <div className="text-[11px] text-[#555]">⏱ {selectedDuration} {t('misc.minShort')}</div>
                   </div>
                   <div className="font-black text-[#F5C518] text-sm">{currency}{selectedPrice}</div>
                 </div>
@@ -683,29 +682,29 @@ export default function ShopBookingPage() {
 
               {/* Date & time */}
               <div className="p-5 border-b border-[#1e1e1e]">
-                <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">Date &amp; time</div>
+                <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">{t('booking.dateAndTime')}</div>
                 <div className="flex items-center gap-2 mb-1.5">
                   <span style={{ fontSize: 15 }}>📅</span>
-                  <span className="font-bold text-white text-sm">{formatFullDate(selectedDate)}</span>
+                  <span className="font-bold text-white text-sm">{formatFullDate(selectedDate, dateLocale)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span style={{ fontSize: 15 }}>⏰</span>
                   <span className="font-bold text-white text-sm">
                     {selectedTime} → {selectedEndTime || calcEndTime(selectedTime, selectedDuration)}
                   </span>
-                  <span className="text-[11px] text-[#555]">({selectedDuration} min)</span>
+                  <span className="text-[11px] text-[#555]">({selectedDuration} {t('misc.minShort')})</span>
                 </div>
               </div>
 
               {/* Payment */}
               <div className="p-5">
-                <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">Payment</div>
+                <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">{t('booking.payment')}</div>
                 <div className="flex items-start gap-3">
                   <span style={{ fontSize: 15 }}>💵</span>
                   <div>
                     <div className="font-black text-[#F5C518] text-lg">{currency}{selectedPrice}</div>
-                    <div className="text-xs font-bold text-[#555] mt-0.5">Cash only</div>
-                    <div className="text-xs text-[#444] mt-0.5">Pay your barber directly.</div>
+                    <div className="text-xs font-bold text-[#555] mt-0.5">{t('booking.cashOnlyShort')}</div>
+                    <div className="text-xs text-[#444] mt-0.5">{t('booking.payDirectly')}</div>
                   </div>
                 </div>
               </div>
@@ -716,7 +715,7 @@ export default function ShopBookingPage() {
               disabled={confirming}
               className="w-full bg-brand-yellow text-[#0a0a0a] py-4 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
             >
-              {confirming ? 'Confirming…' : 'Confirm Booking'}
+              {confirming ? t('booking.confirming') : t('booking.confirmBooking')}
             </button>
 
             {bookingError && (
@@ -730,7 +729,7 @@ export default function ShopBookingPage() {
               onClick={() => setStep(3)}
               className="w-full mt-4 text-[#888] font-bold text-sm hover:text-white transition-colors disabled:opacity-50"
             >
-              ← Change barber
+              {t('booking.changeBarber')}
             </button>
           </div>
         )}
