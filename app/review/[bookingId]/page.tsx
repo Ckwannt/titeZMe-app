@@ -8,12 +8,14 @@ import { useRouter } from 'next/navigation';
 import { toast } from '@/lib/toast';
 import { notificationSchema, barberUpdateSchema } from "@/lib/schemas";
 import { sanitizeText } from '@/lib/sanitize';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export default function ReviewPage({ params }: { params: Promise<{ bookingId: string }> }) {
   const resolvedParams = use(params);
   const bookingId = resolvedParams.bookingId;
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useLang();
 
   const [booking, setBooking] = useState<any>(null);
   const [rating, setRating] = useState(0);
@@ -33,22 +35,22 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
         if (bSnap.exists()) {
            const bData = bSnap.data();
            if (bData.clientId !== user.uid || bData.status !== 'completed') {
-              toast.error("You can only review completed bookings of your own.");
+              toast.error(t('errors.canOnlyReviewOwn'));
               router.push('/dashboard/client');
               return;
            }
-           
+
            // Check if review exists
            const qR = query(collection(db, 'reviews'), where('bookingId', '==', bookingId));
            const rSnap = await getDocs(qR);
            if (!rSnap.empty) {
-              toast.error("You have already reviewed this booking.");
+              toast.error(t('errors.alreadyReviewed'));
               router.push('/dashboard/client');
               return;
            }
 
            const barberSnap = await getDoc(doc(db, 'users', bData.barberId));
-           setBooking({ ...bData, barberName: barberSnap.exists() ? barberSnap.data().firstName : 'Barber' });
+           setBooking({ ...bData, barberName: barberSnap.exists() ? barberSnap.data().firstName : t('misc.barberFallback') });
         } else {
            router.push('/dashboard/client');
         }
@@ -68,7 +70,7 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
 
       const existingReviewSnap = await getDoc(doc(db, 'reviews', reviewId));
       if (existingReviewSnap.exists()) {
-         toast.error("You have already reviewed this booking.");
+         toast.error(t('errors.alreadyReviewed'));
          router.push('/dashboard/client');
          return;
       }
@@ -88,7 +90,7 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
       // 2. Mark booking as reviewed so the dashboard shows "Reviewed ✓"
       await updateDoc(doc(db, 'bookings', bookingId), { hasReview: true });
     } catch (e: any) {
-      toast.error('Failed to submit review. ' + e.message);
+      toast.error(t('errors.failedSubmitReview') + ' ' + e.message);
       setIsSubmitting(false);
       return;
     }
@@ -107,21 +109,21 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
       console.error('Review notification failed:', notifErr);
     }
 
-    toast.success('Review submitted ✓');
+    toast.success(t('success.reviewSubmitted'));
     router.push('/dashboard/client');
     setIsSubmitting(false);
   }
 
-  if (loading) return <div className="p-20 text-center text-brand-text-secondary animate-pulse">Loading...</div>;
+  if (loading) return <div className="p-20 text-center text-brand-text-secondary animate-pulse">{t('misc.loading')}</div>;
   if (!booking) return null;
 
   return (
     <div className="max-w-[500px] mx-auto px-6 py-10 md:py-20 flex flex-col items-center animate-fadeUp">
        
        <div className="w-16 h-16 rounded-2xl bg-[#1a1a1a] border-[#2a2a2a] border flex items-center justify-center text-3xl mb-6">⭐</div>
-       <h1 className="text-3xl font-black mb-2 text-center">Rate your cut</h1>
+       <h1 className="text-3xl font-black mb-2 text-center">{t('review.rateYourCut')}</h1>
        <p className="text-brand-text-secondary text-sm font-bold mb-10 text-center">
-         How was your experience with {booking.barberName}?
+         {t('review.howWasExperience').replace('{name}', booking.barberName)}
        </p>
 
        <div className="flex gap-2 mb-10">
@@ -137,12 +139,12 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
        </div>
 
        <div className="w-full mb-8">
-         <label className="text-[11px] font-extrabold text-brand-text-secondary tracking-widest uppercase block mb-3 text-left">Leave a comment (Optional)</label>
-         <textarea 
+         <label className="text-[11px] font-extrabold text-brand-text-secondary tracking-widest uppercase block mb-3 text-left">{t('review.leaveComment')}</label>
+         <textarea
            value={comment}
            onChange={e => setComment(e.target.value)}
            maxLength={1000}
-           placeholder="Fresh fade, great conversation..."
+           placeholder={t('review.commentPlaceholder')}
            className="w-full h-[120px] bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl p-4 text-white text-[14px] font-bold outline-none transition-colors focus:border-brand-yellow resize-none"
          />
        </div>
@@ -152,9 +154,9 @@ export default function ReviewPage({ params }: { params: Promise<{ bookingId: st
          disabled={rating === 0 || isSubmitting}
          className="w-full bg-brand-yellow text-[#0a0a0a] py-4 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
        >
-         {isSubmitting ? "Submitting..." : "Submit Review"}
+         {isSubmitting ? t('review.submitting') : t('review.submitReview')}
        </button>
-       <button onClick={() => router.push('/dashboard/client')} className="mt-5 text-[#888] font-bold text-sm hover:text-white transition-colors">Skip for now</button>
+       <button onClick={() => router.push('/dashboard/client')} className="mt-5 text-[#888] font-bold text-sm hover:text-white transition-colors">{t('review.skipForNow')}</button>
     </div>
   );
 }

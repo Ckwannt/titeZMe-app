@@ -22,10 +22,10 @@ function calcEndTime(startTime: string, durationMins: number): string {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
-function formatFullDate(dateStr: string): string {
+function formatFullDate(dateStr: string, locale: string): string {
   if (!dateStr) return '';
   const [y, mo, d] = dateStr.split('-').map(Number);
-  return new Date(y, mo - 1, d).toLocaleDateString('en-US', {
+  return new Date(y, mo - 1, d).toLocaleDateString(locale, {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 }
@@ -36,7 +36,8 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
   const { user, appUser } = useAuth();
   const router = useRouter();
 
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const dateLocale = lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : 'en-US';
   const [step, setStep] = useState(1);
   const [bookingContext, setBookingContext] = useState<'solo'|'shop'>('solo');
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
@@ -45,8 +46,6 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
   const [selectedEndTime, setSelectedEndTime] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [honeypot, setHoneypot] = useState('');
-
-  useEffect(() => { document.title = 'Book an appointment — titeZMe'; }, []);
 
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['bookProfile', barberId],
@@ -100,7 +99,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
       const titzCut = {
         id: 'titezme-cut',
         name: 'titeZMe Cut',
-        description: 'The barber chooses the cut for you based on your vibe and your budget.',
+        description: t('booking.titeZMeCutDesc'),
         duration: profile?.titeZMeCut?.durationMinutes || 45,
         price: profile?.titeZMeCut?.price || 20,
         isTitz: true
@@ -260,7 +259,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
           appointmentTimestamp: new Date(
             `${selectedDate}T${selectedTime}`
           ).getTime(),
-          endTime: selectedEndTime || new Date(reqEnd).toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit'}),
+          endTime: selectedEndTime || new Date(reqEnd).toLocaleTimeString(dateLocale, {hour12:false, hour:'2-digit', minute:'2-digit'}),
           status: 'pending',
           paymentMethod: 'cash',
           price: totalPrice,
@@ -418,8 +417,9 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
               {t('booking.almostReady')}
             </div>
             <div style={{ fontSize: '12px', color: '#666', lineHeight: '1.7' }}>
-              New accounts can book after {waitMinutes} minute{waitMinutes !== 1 ? 's' : ''}.
-              This helps us keep the Platform safe for everyone.
+              {t('booking.newAccountWait')
+                .replace('{minutes}', String(waitMinutes))
+                .replace('{plural}', waitMinutes === 1 ? '' : 's')}
             </div>
           </div>
         </div>
@@ -443,7 +443,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
            <h1 className="text-3xl font-black mb-6">{t('booking.howToBook')}</h1>
            <div className="flex flex-col gap-4">
              <button onClick={() => {setBookingContext('solo'); setStep(2)}} className="bg-brand-surface border border-brand-border hover:border-brand-yellow p-6 rounded-2xl text-left transition-all group">
-               <div className="font-black text-xl mb-1 group-hover:text-brand-yellow transition-colors">Book {profile?.user?.firstName} Directly</div>
+               <div className="font-black text-xl mb-1 group-hover:text-brand-yellow transition-colors">{t('booking.bookDirectly').replace('{name}', profile?.user?.firstName || '')}</div>
                <div className="text-brand-text-secondary text-sm font-bold">{t('booking.independentBooking')}</div>
              </button>
              <button onClick={() => {setBookingContext('shop'); setStep(2)}} className="bg-brand-surface border border-brand-border hover:border-brand-yellow p-6 rounded-2xl text-left transition-all group">
@@ -457,7 +457,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
        {step === 2 && (
          <div className="animate-fadeUp">
            <h1 className="text-3xl font-black mb-2">{t('booking.selectServices')}</h1>
-           <p className="text-brand-text-secondary text-sm mb-6 font-bold">{bookingContext === 'solo' ? `${profile?.user?.firstName}'s direct services` : t('booking.shopServices')}</p>
+           <p className="text-brand-text-secondary text-sm mb-6 font-bold">{bookingContext === 'solo' ? t('booking.directServices').replace('{name}', profile?.user?.firstName || '') : t('booking.shopServices')}</p>
            
            <div className="flex flex-col gap-3 mb-8">
              {services.map((svc: any) => {
@@ -470,7 +470,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
                        </div>
                        <div>
                          <div className={`font-black flex items-center gap-1.5 ${isSelected ? 'text-brand-yellow' : 'text-white'}`}>{svc.isTitz && <span>⚡</span>} {svc.name}</div>
-                         <div className="text-xs text-brand-text-secondary font-bold">{svc.duration} mins</div>
+                         <div className="text-xs text-brand-text-secondary font-bold">{svc.duration} {t('misc.minsShort')}</div>
                          {svc.description && <div className="text-[11px] text-[#888] mt-1 pr-2 leading-tight">{svc.description}</div>}
                        </div>
                     </div>
@@ -483,7 +483,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
            <div className="flex justify-between items-center border-t border-[#2a2a2a] pt-6">
              <div>
                <div className="text-[11px] font-extrabold text-brand-text-secondary tracking-widest uppercase mb-1">{t('booking.total')}</div>
-               <div className="text-2xl font-black text-white">€{totalPrice} <span className="text-sm text-[#666] font-extrabold">/ {totalDuration} min</span></div>
+               <div className="text-2xl font-black text-white">€{totalPrice} <span className="text-sm text-[#666] font-extrabold">/ {totalDuration} {t('misc.minShort')}</span></div>
              </div>
              <button 
                onClick={() => setStep(3)}
@@ -500,7 +500,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
          <div className="animate-fadeUp w-full">
            <h1 className="text-3xl font-black mb-2">{t('booking.chooseDatetime')}</h1>
            <p className="text-brand-text-secondary text-sm font-bold mb-6">
-             {totalDuration} min · {profile?.user?.firstName}
+             {totalDuration} {t('misc.minShort')} · {profile?.user?.firstName}
            </p>
 
            <SmartTimePicker
@@ -588,7 +588,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
                    <div key={s.id} className="flex items-center justify-between">
                      <div>
                        <div className="text-sm font-bold text-white">{s.name}</div>
-                       <div className="text-[11px] text-[#555]">⏱ {s.duration} min</div>
+                       <div className="text-[11px] text-[#555]">⏱ {s.duration} {t('misc.minShort')}</div>
                      </div>
                      <div className="font-black text-[#F5C518] text-sm">€{s.price}</div>
                    </div>
@@ -596,7 +596,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
                </div>
                {selectedServices.length > 1 && (
                  <div className="mt-3 pt-3 border-t border-[#1e1e1e] flex justify-between items-center">
-                   <span className="text-xs font-bold text-[#555]">{totalDuration} min total</span>
+                   <span className="text-xs font-bold text-[#555]">{totalDuration} {t('misc.minTotal')}</span>
                    <span className="font-black text-white">€{totalPrice}</span>
                  </div>
                )}
@@ -607,14 +607,14 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
                <div className="text-[10px] font-extrabold text-[#555] tracking-widest uppercase mb-3">{t('booking.dateAndTime')}</div>
                <div className="flex items-center gap-2 mb-1.5">
                  <span style={{ fontSize: 15 }}>📅</span>
-                 <span className="font-bold text-white text-sm">{formatFullDate(selectedDate)}</span>
+                 <span className="font-bold text-white text-sm">{formatFullDate(selectedDate, dateLocale)}</span>
                </div>
                <div className="flex items-center gap-2">
                  <span style={{ fontSize: 15 }}>⏰</span>
                  <span className="font-bold text-white text-sm">
                    {selectedTime} → {calcEndTime(selectedTime, totalDuration)}
                  </span>
-                 <span className="text-[11px] text-[#555]">({totalDuration} min)</span>
+                 <span className="text-[11px] text-[#555]">({totalDuration} {t('misc.minShort')})</span>
                </div>
              </div>
 
