@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export function OfflineBanner() {
+  const { t } = useLang();
   const [isOnline, setIsOnline] = useState(true);
   const [wasOffline, setWasOffline] = useState(false);
   const [showBackOnline, setShowBackOnline] = useState(false);
@@ -56,8 +58,8 @@ export function OfflineBanner() {
       transition: 'all 0.3s ease',
     }}>
       {isOnline
-        ? '✓ Back online — your changes are being saved'
-        : '⚠ No internet connection — changes will not be saved'}
+        ? t('offline.backOnline')
+        : t('offline.noInternet')}
     </div>
   );
 }
