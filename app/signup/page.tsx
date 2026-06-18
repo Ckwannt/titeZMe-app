@@ -32,8 +32,6 @@ export default function SignupPage() {
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
   const { t } = useLang();
 
-  useEffect(() => { document.title = 'Create account — titeZMe'; }, []);
-
   if (loading) return null;
   if (user && !submitAttempted) {
     router.replace('/'); // if already logged in, go home
@@ -198,7 +196,7 @@ export default function SignupPage() {
       return;
     }
     if (password !== confirmPassword) {
-      setErrorStatus("Passwords don't match");
+      setErrorStatus(t('errors.passwordsNoMatch'));
       return;
     }
 
@@ -270,8 +268,8 @@ export default function SignupPage() {
         <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-2">{t('headings.iAmA')}</label>
         <div className="flex gap-2">
           {[
-            { id: 'client', label: 'Client', icon: '👤' },
-            { id: 'barber', label: 'Barber', icon: '✂️' },
+            { id: 'client', label: t('contactPage.roleClient'), icon: '👤' },
+            { id: 'barber', label: t('contactPage.roleBarber'), icon: '✂️' },
           ].map(r => (
             <button
               key={r.id}
@@ -444,7 +442,7 @@ export default function SignupPage() {
             required
             value={password}
             onChange={setPassword}
-            placeholder="••••••••"
+            placeholder={t('forms.passwordPlaceholder')}
             className="w-full bg-[#141414] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow"
           />
           {password.length > 0 && (() => {
@@ -605,7 +603,7 @@ export default function SignupPage() {
         </div>
 
         <div className="text-center mt-6 text-sm text-brand-text-secondary">
-          Already have an account? <Link href="/login" className="text-white font-extrabold hover:text-brand-yellow transition-colors">Log In</Link>
+          Already have an account? <Link href="/login" className="text-white font-extrabold hover:text-brand-yellow transition-colors">{t('nav.login')}</Link>
         </div>
       </form>
     </div>
