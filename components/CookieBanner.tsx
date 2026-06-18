@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLang } from '@/lib/i18n/LangContext';
 
 type CookieSettings = {
   essential: boolean;
@@ -9,6 +10,7 @@ type CookieSettings = {
 };
 
 export function CookieBanner() {
+  const { t } = useLang();
   const [isVisible, setIsVisible] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [settings, setSettings] = useState<CookieSettings>({
@@ -47,29 +49,29 @@ export function CookieBanner() {
   return (
     <>
       <div className="fixed bottom-0 md:bottom-6 left-0 md:left-6 z-[100] w-full md:max-w-sm md:w-full bg-[#111111] border-t md:border border-[#1E1E1E] p-6 rounded-t-2xl md:rounded-2xl shadow-2xl animate-fadeUp">
-        <h3 className="text-base md:text-lg font-black text-white mb-2">We value your privacy</h3>
+        <h3 className="text-base md:text-lg font-black text-white mb-2">{t('cookies.title')}</h3>
         <p className="text-xs md:text-sm font-bold text-[#888580] mb-6 leading-relaxed">
-          We use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.
+          {t('cookies.desc')}
         </p>
         <div className="flex flex-col gap-3">
           <button 
             onClick={acceptAll}
             className="w-full bg-[#FFD600] text-[#0A0A0A] font-black py-3 rounded-xl hover:opacity-90 transition-opacity"
           >
-            Accept all
+            {t('cookies.acceptAll')}
           </button>
           <div className="flex gap-3">
             <button 
               onClick={rejectAll}
               className="flex-1 bg-transparent border border-[#1E1E1E] text-[#F0EDE8] font-black py-3 rounded-xl hover:bg-[#1E1E1E] transition-colors"
             >
-              Reject all
+              {t('cookies.rejectAll')}
             </button>
-            <button 
+            <button
               onClick={() => setShowModal(true)}
               className="flex-1 bg-transparent border border-[#1E1E1E] text-[#F0EDE8] font-black py-3 rounded-xl hover:bg-[#1E1E1E] transition-colors"
             >
-              Customize
+              {t('cookies.customize')}
             </button>
           </div>
         </div>
@@ -78,13 +80,13 @@ export function CookieBanner() {
       {showModal && (
         <div className="fixed inset-0 z-[110] bg-black/80 flex flex-col justify-end md:items-center md:justify-center animate-fadeIn">
           <div className="bg-[#111111] border-t md:border border-[#1E1E1E] rounded-t-2xl md:rounded-2xl p-6 md:p-8 w-full md:max-w-md">
-            <h3 className="text-xl md:text-2xl font-black text-white mb-6">Cookie Preferences</h3>
-            
+            <h3 className="text-xl md:text-2xl font-black text-white mb-6">{t('cookies.prefsTitle')}</h3>
+
             <div className="space-y-6 mb-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h4 className="font-bold text-white">Essential</h4>
-                  <p className="text-xs md:text-sm text-[#888580] font-bold mt-1">Required for the site to function properly. Cannot be disabled.</p>
+                  <h4 className="font-bold text-white">{t('cookies.essential')}</h4>
+                  <p className="text-xs md:text-sm text-[#888580] font-bold mt-1">{t('cookies.essentialDesc')}</p>
                 </div>
                 <div className="w-12 h-6 rounded-full bg-[#FFD600]/20 flex items-center px-1 shrink-0">
                   <div className="w-4 h-4 rounded-full bg-[#FFD600] translate-x-6"></div>
@@ -93,8 +95,8 @@ export function CookieBanner() {
 
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h4 className="font-bold text-white">Preferences</h4>
-                  <p className="text-xs md:text-sm text-[#888580] font-bold mt-1">Remembers your settings like language and city.</p>
+                  <h4 className="font-bold text-white">{t('cookies.preferences')}</h4>
+                  <p className="text-xs md:text-sm text-[#888580] font-bold mt-1">{t('cookies.preferencesDesc')}</p>
                 </div>
                 <button 
                   onClick={() => setSettings(s => ({ ...s, preferences: !s.preferences }))}
@@ -106,8 +108,8 @@ export function CookieBanner() {
 
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h4 className="font-bold text-white">Analytics</h4>
-                  <p className="text-xs md:text-sm text-[#888580] font-bold mt-1">Helps us understand how visitors interact with the website.</p>
+                  <h4 className="font-bold text-white">{t('cookies.analytics')}</h4>
+                  <p className="text-xs md:text-sm text-[#888580] font-bold mt-1">{t('cookies.analyticsDesc')}</p>
                 </div>
                 <button 
                   onClick={() => setSettings(s => ({ ...s, analytics: !s.analytics }))}
@@ -122,7 +124,7 @@ export function CookieBanner() {
               onClick={savePreferences}
               className="w-full bg-[#FFD600] text-[#0A0A0A] font-black py-4 rounded-xl hover:opacity-90 transition-opacity"
             >
-              Save preferences
+              {t('cookies.savePreferences')}
             </button>
           </div>
         </div>
