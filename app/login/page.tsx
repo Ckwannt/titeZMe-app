@@ -23,8 +23,6 @@ export default function LoginPage() {
   const [barberCount, setBarberCount] = useState<number | null>(null);
   const { t } = useLang();
 
-  useEffect(() => { document.title = 'Log in — titeZMe'; }, []);
-
   useEffect(() => {
     const fetchCount = async () => {
       try {
@@ -329,7 +327,7 @@ export default function LoginPage() {
                   fontSize: '12px',
                 }}
               >
-                Create an account →
+                {t('buttons.createAccount')} →
               </a>
             )}
           </div>
@@ -379,7 +377,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center mt-6 text-sm text-brand-text-secondary">
-          New here? <Link href="/signup" className="text-white font-extrabold hover:text-brand-yellow transition-colors">Create an account</Link>
+          New here? <Link href="/signup" className="text-white font-extrabold hover:text-brand-yellow transition-colors">{t('buttons.createAccount')}</Link>
         </div>
       </form>
     </div>
