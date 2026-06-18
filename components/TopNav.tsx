@@ -13,7 +13,7 @@ export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, appUser, authLoading, logout } = useAuth();
-  const { lang, setLang } = useLang();
+  const { lang, setLang, t } = useLang();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
@@ -83,13 +83,13 @@ export function TopNav() {
 
         {/* CENTER — Nav links (desktop + tablet only) */}
         <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-          <Link href="/" className={getLinkClass('/')}>Home</Link>
+          <Link href="/" className={getLinkClass('/')}>{t('nav.home')}</Link>
           <div className="flex items-center cursor-default">
-            <span className="text-sm font-bold text-[#888580] cursor-default">Cuts</span>
-            <span style={{ marginLeft: '4px', background: '#1a1a1a', color: '#F5C518', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '99px', border: '1px solid #2a2a2a', verticalAlign: 'middle' }}>Soon</span>
+            <span className="text-sm font-bold text-[#888580] cursor-default">{t('nav.cuts')}</span>
+            <span style={{ marginLeft: '4px', background: '#1a1a1a', color: '#F5C518', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '99px', border: '1px solid #2a2a2a', verticalAlign: 'middle' }}>{t('nav.soon')}</span>
           </div>
-          <Link href="/barbers" className={getLinkClass('/barbers')}>Barbers</Link>
-          <Link href="/shops" className={getLinkClass('/shops')}>Shops</Link>
+          <Link href="/barbers" className={getLinkClass('/barbers')}>{t('nav.barbers')}</Link>
+          <Link href="/shops" className={getLinkClass('/shops')}>{t('nav.shops')}</Link>
         </div>
 
         {/* RIGHT — Actions */}
@@ -292,23 +292,23 @@ export function TopNav() {
             <div className="hidden md:flex items-center gap-4 border-l border-[#1E1E1E] pl-4">
               <NotificationBell />
               <div>
-                {appUser?.role === 'client' && <Link href="/dashboard/client" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">Dashboard</Link>}
-                {appUser?.role === 'barber' && <Link href="/dashboard/barber" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">Dashboard</Link>}
+                {appUser?.role === 'client' && <Link href="/dashboard/client" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">{t('nav.dashboard')}</Link>}
+                {appUser?.role === 'barber' && <Link href="/dashboard/barber" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">{t('nav.dashboard')}</Link>}
               </div>
               <button
                 onClick={handleLogout}
                 className="text-sm font-bold text-[#888580] hover:text-red-500 transition-colors"
               >
-                Log out
+                {t('nav.logout')}
               </button>
             </div>
           ) : (
             <div className="hidden md:flex items-center gap-4">
               <Link href="/login" className="text-sm font-bold text-[#F0EDE8] hover:text-[#888580] transition-colors border border-[#1E1E1E] px-4 py-2 rounded-full">
-                Log in
+                {t('nav.login')}
               </Link>
               <Link href="/signup" className="text-sm font-bold bg-[#FFD600] text-[#0A0A0A] px-4 py-2 rounded-full hover:opacity-90 transition-opacity">
-                Sign up
+                {t('nav.signUp')}
               </Link>
             </div>
           )}
@@ -335,7 +335,7 @@ export function TopNav() {
                 fontFamily: 'Nunito, sans-serif'
               }}
             >
-              Log in
+              {t('nav.login')}
             </a>
           )}
 
@@ -374,25 +374,25 @@ export function TopNav() {
       <div className="bg-[#111111] border-b border-[#1E1E1E] py-2.5 px-6 flex items-center justify-between overflow-hidden relative">
         <div className="flex-1 overflow-hidden relative flex items-center">
           <div className="animate-[marquee_20s_linear_infinite] whitespace-nowrap text-xs font-bold text-[#888580] flex gap-4">
-            <span>💈 Trusted by barbers nationwide</span>
+            <span>{t('ticker.trust')}</span>
             <span>—</span>
-            <span>Book your next cut in 30 seconds</span>
+            <span>{t('ticker.bookIn30')}</span>
             <span>—</span>
-            <span>Zero phone calls</span>
+            <span>{t('ticker.noCalls')}</span>
             <span>—</span>
-            <span>Real availability</span>
+            <span>{t('ticker.realAvail')}</span>
             <span>—</span>
-            <span>Find barbers near you →</span>
+            <span>{t('ticker.findBarbers')}</span>
             {/* Duplicate for seamless looping */}
-            <span className="ml-4">💈 Trusted by barbers nationwide</span>
+            <span className="ml-4">{t('ticker.trust')}</span>
             <span>—</span>
-            <span>Book your next cut in 30 seconds</span>
+            <span>{t('ticker.bookIn30')}</span>
             <span>—</span>
-            <span>Zero phone calls</span>
+            <span>{t('ticker.noCalls')}</span>
             <span>—</span>
-            <span>Real availability</span>
+            <span>{t('ticker.realAvail')}</span>
             <span>—</span>
-            <span>Find barbers near you →</span>
+            <span>{t('ticker.findBarbers')}</span>
           </div>
         </div>
       </div>
@@ -418,11 +418,11 @@ export function TopNav() {
         >
           {/* Nav links */}
           {[
-            { label: 'Home', href: '/' },
-            { label: 'Barbers', href: '/barbers' },
-            { label: 'Shops', href: '/shops' },
-            { label: 'For Barbers', href: '/for-barbers' },
-            { label: 'For Shops', href: '/for-shops' },
+            { label: t('nav.home'), href: '/' },
+            { label: t('nav.barbers'), href: '/barbers' },
+            { label: t('nav.shops'), href: '/shops' },
+            { label: t('nav.forBarbers'), href: '/for-barbers' },
+            { label: t('nav.forShops'), href: '/for-shops' },
           ].map(link => (
             <a
               key={link.href}
@@ -461,7 +461,7 @@ export function TopNav() {
                     fontFamily: 'Nunito, sans-serif'
                   }}
                 >
-                  Sign up free
+                  {t('nav.signUpFree')}
                 </a>
                 <a
                   href="/login"
@@ -479,7 +479,7 @@ export function TopNav() {
                     fontFamily: 'Nunito, sans-serif'
                   }}
                 >
-                  Log in
+                  {t('nav.login')}
                 </a>
               </>
             ) : (
@@ -499,7 +499,7 @@ export function TopNav() {
                     fontFamily: 'Nunito, sans-serif'
                   }}
                 >
-                  My dashboard →
+                  {t('nav.myDashboard')}
                 </a>
                 <button
                   onClick={() => { handleLogout(); setMenuOpen(false); }}
@@ -517,7 +517,7 @@ export function TopNav() {
                     fontFamily: 'Nunito, sans-serif',
                   }}
                 >
-                  Log out
+                  {t('nav.logout')}
                 </button>
               </>
             )}
