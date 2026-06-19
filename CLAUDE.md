@@ -157,7 +157,7 @@ Current healthy build: 21 pages generating successfully. After every change veri
 
 - Always match existing dark theme. Never introduce light backgrounds on new components.
 - Never add gradients.
-- Never use SVG icon libraries. Use emoji for icons.
+- No emojis in UI. No icon libraries. Text labels only in navigation.
 - Border radius on cards: `16px`.
 - All new pages need mobile-responsive layout (stack vertically on mobile).
 

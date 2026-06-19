@@ -96,13 +96,14 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
   };
 
   const navItems = [
-    { href: '/dashboard/barber', icon: '⚡', label: t('barberLayout.navDashboard'), exact: true },
-    { href: '/dashboard/barber/bookings', icon: '📅', label: t('barberLayout.navBookings'), exact: false },
-    { href: '/dashboard/barber/availability', icon: '⏰', label: t('barberLayout.navAvailability'), exact: false },
-    { href: '/dashboard/barber/services', icon: '✂️', label: t('barberLayout.navServices'), exact: false },
-    { href: '/dashboard/barber/portfolio', icon: '📸', label: t('barberLayout.navPortfolio'), exact: false },
-    { href: '/dashboard/barber/invites', icon: '📨', label: t('barberLayout.navInvites'), exact: false },
-    { href: '/dashboard/barber/settings', icon: '⚙️', label: t('barberLayout.navSettings'), exact: false },
+    { href: '/dashboard/barber', icon: '', label: t('barberLayout.navDashboard'), exact: true },
+    { href: '/dashboard/barber/bookings', icon: '', label: t('barberLayout.navBookings'), exact: false },
+    { href: '/dashboard/barber/availability', icon: '', label: t('barberLayout.navAvailability'), exact: false },
+    { href: '/dashboard/barber/services', icon: '', label: t('barberLayout.navServices'), exact: false },
+    { href: '/dashboard/barber/billing', icon: '', label: t('barberLayout.navBilling'), exact: false },
+    { href: '/dashboard/barber/portfolio', icon: '', label: t('barberLayout.navPortfolio'), exact: false },
+    { href: '/dashboard/barber/invites', icon: '', label: t('barberLayout.navInvites'), exact: false },
+    { href: '/dashboard/barber/settings', icon: '', label: t('barberLayout.navSettings'), exact: false },
   ];
 
   const isActive = (item: { href: string; exact: boolean }) => {
@@ -170,7 +171,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
                 isActive(l) ? "bg-[#1a1a1a] text-brand-yellow" : "text-[#888] hover:bg-[#1a1a1a] hover:text-white"
               }`}
             >
-              <span>{l.icon}</span> {l.label}
+              {l.label}
             </Link>
           ))}
         </div>
@@ -250,11 +251,11 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
       {/* Mobile bottom tab bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-[#111] border-t border-[#1e1e1e] h-[60px] flex md:hidden z-40">
         {[
-          { href: '/dashboard/barber', icon: '⚡', label: t('barberLayout.navDashboard'), exact: true },
-          { href: '/dashboard/barber/bookings', icon: '📅', label: t('barberLayout.navBookings'), exact: false },
-          { href: '/dashboard/barber/availability', icon: '⏰', label: t('barberLayout.navAvailShort'), exact: false },
-          { href: '/dashboard/barber/services', icon: '✂️', label: t('barberLayout.navServices'), exact: false },
-          { href: '/dashboard/barber/settings', icon: '⚙️', label: t('barberLayout.navMore'), exact: false },
+          { href: '/dashboard/barber', label: t('barberLayout.navDashboard'), exact: true },
+          { href: '/dashboard/barber/bookings', label: t('barberLayout.navBookings'), exact: false },
+          { href: '/dashboard/barber/availability', label: t('barberLayout.navAvailShort'), exact: false },
+          { href: '/dashboard/barber/billing', label: t('barberLayout.navBilling'), exact: false },
+          { href: '/dashboard/barber/settings', label: t('barberLayout.navMore'), exact: false },
         ].map(item => (
           <Link
             key={item.href}
@@ -263,7 +264,6 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
               isActive(item) ? 'text-brand-yellow' : 'text-[#555]'
             }`}
           >
-            <span className="text-lg">{item.icon}</span>
             {item.label}
           </Link>
         ))}
