@@ -1,3 +1,4 @@
+// i18n refresh — forced build
 export type Language = 'en' | 'fr' | 'es';
 
 const translations = {
