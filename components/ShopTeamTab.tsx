@@ -92,7 +92,7 @@ export function ShopTeamTab() {
     // Rate limit check
     if (searchBlockedUntil && Date.now() < searchBlockedUntil) {
       const secondsLeft = Math.ceil((searchBlockedUntil - Date.now()) / 1000);
-      toast.error(`Too many searches. Wait ${secondsLeft} seconds.`);
+      toast.error(t('settings.tooManySearches').replace('{n}', String(secondsLeft)));
       return;
     }
 
@@ -110,7 +110,7 @@ export function ShopTeamTab() {
     if (newAttempts >= 10) {
       setSearchBlockedUntil(Date.now() + (5 * 60 * 1000));
       setSearchAttempts(0);
-      toast.error(t('settings.tooManySearches'));
+      toast.error(t('settings.tooManySearches').replace('{n}', '300'));
       return;
     }
 
@@ -136,7 +136,7 @@ export function ShopTeamTab() {
       setFoundBarber({
         ...barberData,
         id: barberId,
-        name: `${bUserData.firstName || ''} ${bUserData.lastName || ''}`.trim() || 'Unknown Barber',
+        name: `${bUserData.firstName || ''} ${bUserData.lastName || ''}`.trim() || t('misc.barberFallback'),
         userId: barberData.userId || barberId,
       });
     } catch (err) {
@@ -226,7 +226,7 @@ export function ShopTeamTab() {
       const invSnap = await getDocs(invQ);
       await Promise.all(invSnap.docs.map(d => deleteDoc(doc(db, 'invites', d.id))));
       setRemoveConfirmId(null);
-      toast.success(`${barberName} removed from team`);
+      toast.success(t('settings.removedFromTeam').replace('{name}', barberName));
     } catch (e) {
       console.error(e);
       toast.error(t('errors.failedRemoveBarber'));
@@ -244,7 +244,7 @@ export function ShopTeamTab() {
   const getBarberName = (barber: any) => {
     const u = barberUsers[barber.id];
     if (u) return `${u.firstName || ''} ${u.lastName || ''}`.trim();
-    return barber.name || 'Barber';
+    return barber.name || t('misc.barberFallback');
   };
 
   // ── Invite status label ────────────────────────────────────────────────────
@@ -299,7 +299,7 @@ export function ShopTeamTab() {
                 <div className="flex-1 min-w-0">
                   <div className="font-black text-base">{foundBarber.name}</div>
                   <div className="text-xs text-brand-yellow mt-0.5 font-bold">
-                    ★ {foundBarber.rating?.toFixed(1) || '—'}{foundBarber.reviewCount > 0 ? ` · ${foundBarber.reviewCount} reviews` : ''}
+                    ★ {foundBarber.rating?.toFixed(1) || '—'}{foundBarber.reviewCount > 0 ? ` · ${foundBarber.reviewCount} ${t('profile.reviewsCount')}` : ''}
                   </div>
                   {foundBarber.specialties?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
@@ -320,12 +320,12 @@ export function ShopTeamTab() {
 
               {status === 'already_here' && (
                 <div className="text-sm font-bold text-brand-green mb-4">
-                  ✓ {foundBarber.name} is already on your team.
+                  {t('errors.alreadyOnTeam').replace('{name}', foundBarber.name)}
                 </div>
               )}
               {status === 'in_other_shop' && (
                 <div className="text-sm font-bold text-brand-orange mb-4">
-                  ⚠️ {foundBarber.name} is already in another shop. They must leave that shop first.
+                  {t('errors.barberInAnotherShop').replace('{name}', foundBarber.name)}
                 </div>
               )}
 
@@ -360,8 +360,8 @@ export function ShopTeamTab() {
           {pendingInvites.map(inv => (
             <div key={inv.id} className="bg-brand-surface border border-brand-border rounded-2xl p-4 flex items-center justify-between">
               <div>
-                <div className="font-extrabold">{inv.barberName || 'Barber'}</div>
-                <div className="text-xs text-[#888] mt-0.5">Sent {new Date(inv.createdAt).toLocaleDateString()}</div>
+                <div className="font-extrabold">{inv.barberName || t('misc.barberFallback')}</div>
+                <div className="text-xs text-[#888] mt-0.5">{t('shop.sentDate').replace('{date}', new Date(inv.createdAt).toLocaleDateString())}</div>
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-[10px] font-black tracking-wider text-brand-yellow bg-brand-yellow/10 px-2.5 py-1 rounded-md uppercase">
@@ -377,7 +377,7 @@ export function ShopTeamTab() {
       )}
 
       {/* ── ACTIVE TEAM ──────────────────────────────────────────────────────── */}
-      <h2 className="font-extrabold text-base mb-3">Your Team ({activeBarbers.length} barbers)</h2>
+      <h2 className="font-extrabold text-base mb-3">{t('shop.teamCount').replace('{n}', String(activeBarbers.length))}</h2>
       {activeBarbers.length === 0 ? (
         <div className="text-[#555] text-sm">{t('emptyStates.noBarbers')}</div>
       ) : (
@@ -385,7 +385,7 @@ export function ShopTeamTab() {
           {activeBarbers.map((barber: any) => {
             const barberId = barber.id;
             const u = barberUsers[barberId];
-            const name = u ? `${u.firstName || ''} ${u.lastName || ''}`.trim() : 'Barber';
+            const name = u ? `${u.firstName || ''} ${u.lastName || ''}`.trim() : t('misc.barberFallback');
             const photoUrl = u?.photoUrl || u?.profilePhotoUrl || '';
             const working = isWorkingToday(barberId);
             const isConfirming = removeConfirmId === barberId;
@@ -412,7 +412,7 @@ export function ShopTeamTab() {
                     </div>
                     {(barber.rating > 0 || barber.reviewCount > 0) && (
                       <div className="text-xs text-[#888] mt-0.5">
-                        ★ {barber.rating?.toFixed(1) || '—'}{barber.reviewCount > 0 ? ` · ${barber.reviewCount} reviews` : ''}
+                        ★ {barber.rating?.toFixed(1) || '—'}{barber.reviewCount > 0 ? ` · ${barber.reviewCount} ${t('profile.reviewsCount')}` : ''}
                       </div>
                     )}
                     {barber.specialties?.length > 0 && (

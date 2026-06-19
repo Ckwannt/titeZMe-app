@@ -404,7 +404,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   };
 
   const handleDeleteShop = async () => {
-    if(!confirm("Are you sure you want to permanently delete your shop profile? All your team members will be removed from the shop.")) return;
+    if(!confirm(t('errors.deleteShopConfirm'))) return;
     setDeleting(true);
     try {
       // Deleting a shop requires a complex set of operations. We'll do it using a cloud function normally, 
@@ -505,7 +505,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       router.push('/dashboard/barber');
     } catch(e) {
       console.error(e);
-      setErrorMsg("Failed to delete shop.");
+      setErrorMsg(t('errors.deleteShopFailed'));
       setDeleting(false);
     }
   }
@@ -734,7 +734,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
               value={formData.chairsCount}
               onChange={e => setFormData({...formData, chairsCount: e.target.value})}
               className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
-              placeholder="e.g. 4"
+              placeholder={t('forms.chairsPlaceholder')}
             />
           </div>
           <div>
@@ -746,7 +746,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
               value={formData.establishedYear}
               onChange={e => setFormData({...formData, establishedYear: e.target.value})}
               className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
-              placeholder="e.g. 2018"
+              placeholder={t('forms.yearEstablishedPlaceholder')}
             />
           </div>
         </div>

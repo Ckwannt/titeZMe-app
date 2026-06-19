@@ -6,6 +6,7 @@ import { doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebas
 import { db } from '@/lib/firebase';
 import { toast } from '@/lib/toast';
 import { getLocalDateString, getTimezoneFromLocation } from '@/lib/schedule-utils';
+import { useLang } from '@/lib/i18n/LangContext';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -30,15 +31,6 @@ type WeeklyHours = {
 
 type BlockedDate = { date: string; reason?: string };
 
-const DAYS: Array<{ key: keyof WeeklyHours; label: string }> = [
-  { key: 'monday',    label: 'Monday' },
-  { key: 'tuesday',   label: 'Tuesday' },
-  { key: 'wednesday', label: 'Wednesday' },
-  { key: 'thursday',  label: 'Thursday' },
-  { key: 'friday',    label: 'Friday' },
-  { key: 'saturday',  label: 'Saturday' },
-  { key: 'sunday',    label: 'Sunday' },
-];
 
 const DEFAULT_DAY: DayHours = { isOpen: true, open: '09:00', close: '19:00', hasBreak: false, breakStart: '13:00', breakEnd: '14:00' };
 const CLOSED_DAY: DayHours = { isOpen: false, open: '09:00', close: '19:00', hasBreak: false, breakStart: '13:00', breakEnd: '14:00' };
@@ -71,6 +63,16 @@ interface ShopAvailabilityTabProps {
 
 export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabilityTabProps) {
   const { user } = useAuth();
+  const { t } = useLang();
+  const DAYS: Array<{ key: keyof WeeklyHours; label: string }> = [
+    { key: 'monday',    label: t('misc.dayMondayLong') },
+    { key: 'tuesday',   label: t('misc.dayTuesdayLong') },
+    { key: 'wednesday', label: t('misc.dayWednesdayLong') },
+    { key: 'thursday',  label: t('misc.dayThursdayLong') },
+    { key: 'friday',    label: t('misc.dayFridayLong') },
+    { key: 'saturday',  label: t('misc.daySaturdayLong') },
+    { key: 'sunday',    label: t('misc.daySundayLong') },
+  ];
   const [hours, setHours] = useState<WeeklyHours>(DEFAULT_HOURS);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [newClosureDate, setNewClosureDate] = useState('');
@@ -162,8 +164,8 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
       '2026-07-14': 'Bastille Day', '2026-11-11': 'Armistice Day', '2026-04-30': 'Morocco Festival',
       '2026-05-04': 'Early May BH', '2026-08-31': 'Summer BH', '2026-12-28': 'Boxing Day+',
     };
-    setBlockedDates(prev => [...prev, ...toAdd.map(d => ({ date: d, reason: names[d] || 'Public holiday' }))]);
-    toast.success(`Added ${toAdd.length} holidays`);
+    setBlockedDates(prev => [...prev, ...toAdd.map(d => ({ date: d, reason: names[d] || t('success.publicHolidayFallback') }))]);
+    toast.success(t('success.holidaysAdded').replace('{n}', String(toAdd.length)));
   };
 
   const todayMin = getLocalDateString();
@@ -171,13 +173,13 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
   return (
     <div className="animate-fadeUp max-w-2xl">
       <div className="mb-7">
-        <h1 className="text-2xl font-black mb-1">Shop Hours ⏰</h1>
-        <p className="text-[#888] text-sm">Set when your shop is open. Each barber manages their own individual availability.</p>
+        <h1 className="text-2xl font-black mb-1">{t('headings.shopHours')}</h1>
+        <p className="text-[#888] text-sm">{t('headings.shopAvailabilityDesc')}</p>
       </div>
 
       {/* ── WEEKLY HOURS ───────────────────────────────────────────────────── */}
       <div className="bg-brand-surface border border-brand-border rounded-3xl p-6 mb-6">
-        <h2 className="text-base font-black mb-5">Regular hours</h2>
+        <h2 className="text-base font-black mb-5">{t('headings.regularHours')}</h2>
         <div className="flex flex-col gap-4">
           {DAYS.map(({ key, label }, idx) => {
             const day = hours[key];
@@ -197,7 +199,7 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
 
                   {day.isOpen ? (
                     <div className="flex flex-wrap items-center gap-2 flex-1">
-                      <span className="text-[11px] text-[#666]">Opens</span>
+                      <span className="text-[11px] text-[#666]">{t('misc.opens')}</span>
                       <select value={day.open} onChange={e => updateDay(key, { open: e.target.value })}
                         className="bg-[#141414] border border-[#2a2a2a] text-white rounded-lg px-2 py-1.5 text-sm outline-none">
                         {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
@@ -210,12 +212,12 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
                       {idx === 0 && (
                         <button onClick={copyMonToWeekdays}
                           className="text-[10px] font-bold text-brand-yellow hover:underline ml-2 whitespace-nowrap">
-                          Copy to Tue–Fri
+                          {t('buttons.copyToTueFri')}
                         </button>
                       )}
                     </div>
                   ) : (
-                    <span className="text-[12px] text-[#555] font-bold">Closed</span>
+                    <span className="text-[12px] text-[#555] font-bold">{t('status.closed')}</span>
                   )}
                 </div>
 
@@ -225,11 +227,11 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
                     {!day.hasBreak ? (
                       <button onClick={() => updateDay(key, { hasBreak: true })}
                         className="text-[10px] text-[#555] hover:text-[#888] font-bold transition-colors">
-                        + Add lunch break
+                        {t('buttons.addLunchBreak')}
                       </button>
                     ) : (
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[11px] text-[#666]">Break</span>
+                        <span className="text-[11px] text-[#666]">{t('misc.breakLabel')}</span>
                         <select value={day.breakStart} onChange={e => updateDay(key, { breakStart: e.target.value })}
                           className="bg-[#141414] border border-[#2a2a2a] text-white rounded-lg px-2 py-1.5 text-xs outline-none">
                           {TIME_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
@@ -241,7 +243,7 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
                         </select>
                         <button onClick={() => updateDay(key, { hasBreak: false })}
                           className="text-[10px] text-[#555] hover:text-brand-red font-bold ml-1">
-                          Remove break
+                          {t('buttons.removeBreak')}
                         </button>
                       </div>
                     )}
@@ -258,35 +260,35 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
           disabled={saving}
           className="mt-6 w-full bg-brand-yellow text-black py-3 rounded-xl font-black text-sm hover:bg-yellow-400 disabled:opacity-50 transition-colors"
         >
-          {saving ? 'Saving...' : 'Save Shop Hours'}
+          {saving ? t('settings.saving') : t('buttons.saveShopHours')}
         </button>
         {lastSaved && (
           <div className="mt-2 text-[10px] text-[#555] text-center">
-            Last saved: {new Date(lastSaved).toLocaleTimeString()}
+            {t('misc.lastSavedAt').replace('{time}', new Date(lastSaved).toLocaleTimeString())}
           </div>
         )}
       </div>
 
       {/* ── SPECIAL CLOSURES ───────────────────────────────────────────────── */}
       <div className="bg-brand-surface border border-brand-border rounded-3xl p-6 mb-6">
-        <h2 className="text-base font-black mb-1">Special closures</h2>
-        <p className="text-[#888] text-xs mb-5">Add specific dates when your shop will be closed.</p>
+        <h2 className="text-base font-black mb-1">{t('headings.specialClosures')}</h2>
+        <p className="text-[#888] text-xs mb-5">{t('headings.specialClosuresDesc')}</p>
 
         <div className="flex gap-2 mb-5 flex-wrap">
           <input type="date" min={todayMin} value={newClosureDate}
             onChange={e => setNewClosureDate(e.target.value)}
             className="bg-[#141414] border border-[#2a2a2a] text-white rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-yellow transition-colors" />
-          <input type="text" placeholder="Reason (optional)" value={newClosureReason}
+          <input type="text" placeholder={t('forms.reason')} value={newClosureReason}
             onChange={e => setNewClosureReason(e.target.value)}
             className="flex-1 min-w-[140px] bg-[#141414] border border-[#2a2a2a] text-white rounded-xl px-3 py-2.5 text-sm outline-none focus:border-brand-yellow transition-colors" />
           <button onClick={addClosure} disabled={!newClosureDate}
             className="bg-brand-yellow text-black px-5 py-2.5 rounded-xl font-black text-sm hover:bg-yellow-400 disabled:opacity-50 transition-colors">
-            Add closure
+            {t('buttons.addClosure')}
           </button>
         </div>
 
         {blockedDates.length === 0 ? (
-          <div className="text-[#555] text-xs">No special closures set.</div>
+          <div className="text-[#555] text-xs">{t('emptyStates.noSpecialClosures')}</div>
         ) : (
           <div className="flex flex-wrap gap-2">
             {blockedDates
@@ -306,14 +308,14 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
 
       {/* ── HOLIDAY PRESETS ────────────────────────────────────────────────── */}
       <div className="bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-base font-black mb-1">Add national holidays</h2>
-        <p className="text-[#888] text-xs mb-5">One click to add all public holidays for 2026.</p>
+        <h2 className="text-base font-black mb-1">{t('headings.addHolidays')}</h2>
+        <p className="text-[#888] text-xs mb-5">{t('headings.addHolidaysDesc')}</p>
         <div className="flex flex-wrap gap-3">
           {[
-            { label: '🇪🇸 Spain', key: 'spain' },
-            { label: '🇲🇦 Morocco', key: 'morocco' },
-            { label: '🇫🇷 France', key: 'france' },
-            { label: '🇬🇧 UK', key: 'uk' },
+            { label: t('shop.spainHolidays'), key: 'spain' },
+            { label: t('shop.moroccoHolidays'), key: 'morocco' },
+            { label: t('shop.franceHolidays'), key: 'france' },
+            { label: t('shop.ukHolidays'), key: 'uk' },
           ].map(({ label, key }) => (
             <button key={key} onClick={() => addHolidays(key)}
               className="border border-[#2a2a2a] text-[#888] hover:border-brand-yellow hover:text-brand-yellow px-5 py-2.5 rounded-full font-bold text-sm transition-colors">
@@ -322,7 +324,7 @@ export function ShopAvailabilityTab({ schedule, mutateSchedule }: ShopAvailabili
           ))}
         </div>
         <p className="text-[10px] text-[#444] mt-4">
-          Adding holidays saves them to Special Closures above. Click &ldquo;Save Shop Hours&rdquo; to persist.
+          {t('headings.holidaysSaveNote')}
         </p>
       </div>
     </div>

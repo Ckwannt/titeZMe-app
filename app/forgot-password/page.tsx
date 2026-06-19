@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useLang } from '@/lib/i18n/LangContext';
@@ -12,11 +12,9 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState('');
   const { t } = useLang();
 
-  useEffect(() => { document.title = 'Reset password — titeZMe'; }, []);
-
   const handleReset = async () => {
     if (!email.trim()) {
-      setError('Please enter your email');
+      setError(t('errors.pleaseEnterEmail'));
       return;
     }
 
@@ -90,13 +88,13 @@ export default function ForgotPasswordPage() {
               marginBottom: '24px',
               lineHeight: '1.6'
             }}>
-              Enter your email and we&apos;ll send you a reset link.
+              {t('forms.resetPasswordDesc')}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input
                 type="email"
-                placeholder="Your email address"
+                placeholder={t('forms.emailAddressPlaceholder')}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !loading && handleReset()}
@@ -165,10 +163,7 @@ export default function ForgotPasswordPage() {
               lineHeight: '1.7',
               marginBottom: '24px'
             }}>
-              If an account exists for{' '}
-              <span style={{ color: '#F5C518' }}>{email}</span>
-              {', '}you will receive a password reset link shortly.
-              Check your spam folder too.
+              {t('forms.resetEmailSent').replace('{email}', email)}
             </div>
             <a
               href="/login"
