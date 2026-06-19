@@ -109,7 +109,7 @@ export function ShopServicesTab({ services = [], mutateServices, shop, mutateSho
 
   return (
     <div className="animate-fadeUp max-w-2xl">
-      <h1 className="text-2xl font-black mb-2">{t('barberDash.servicesTitle')}</h1>
+      <h1 className="text-2xl font-black mb-2">{t('headings.shopServicesHeading')} ✂️</h1>
       <p className="text-brand-text-secondary text-sm mb-8">{t('shop.manageServicesDesc')}</p>
 
       {/* Summary line */}
@@ -128,7 +128,7 @@ export function ShopServicesTab({ services = [], mutateServices, shop, mutateSho
               <span className="font-black text-lg text-brand-yellow">titeZMe Cut</span>
               <span className="text-brand-text-secondary text-xs">{t('shop.lockedBadge')}</span>
             </div>
-            <p className="text-[#888] text-xs max-w-sm">{t('barberDash.titeZMeCutDescFull')}</p>
+            <p className="text-[#888] text-xs max-w-sm">{t('booking.titeZMeCutDesc')}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-end gap-3 mt-4">
