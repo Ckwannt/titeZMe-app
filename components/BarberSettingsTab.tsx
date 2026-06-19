@@ -356,10 +356,10 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       }));
       mutateProfile();
       invalidateBarber(user.uid);
-      setSuccessMsg('Experience saved.');
+      setSuccessMsg(t('success.experienceSaved'));
     } catch (e) {
       console.error(e);
-      setErrorMsg('Failed to save experience.');
+      setErrorMsg(t('errors.failedSaveExperience'));
     }
     setSavingExperience(false);
   };
@@ -661,7 +661,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
       {/* SECTION A2: EXPERIENCE */}
       <section className="mb-10 bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <h2 className="text-lg font-black mb-4">Experience</h2>
+        <h2 className="text-lg font-black mb-4">{t('headings.experience')}</h2>
 
         {profile?.experienceLocked ? (
           <>
@@ -674,9 +674,9 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
                 <div className="text-white text-sm font-bold">{profile.experienceStartYear}</div>
               </div>
               <div>
-                <div className="text-xs font-bold text-[#888] mb-1.5 uppercase">Experience</div>
+                <div className="text-xs font-bold text-[#888] mb-1.5 uppercase">{t('headings.experience')}</div>
                 <div className="text-white text-sm font-bold">
-                  {new Date().getFullYear() - Number(profile.experienceStartYear)} years
+                  {t('misc.nYears').replace('{n}', String(new Date().getFullYear() - Number(profile.experienceStartYear)))}
                 </div>
               </div>
             </div>
@@ -712,7 +712,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
                   type="number"
                   min={1950}
                   max={new Date().getFullYear()}
-                  placeholder="e.g. 2015"
+                  placeholder={t('forms.experienceYearPlaceholder')}
                   value={experienceStartYear}
                   onChange={e => setExperienceStartYear(e.target.value)}
                   className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm"
@@ -838,11 +838,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
             </div>
             <button
               onClick={async () => {
-                if (!confirm(
-                  'Leave your shop? All your pending and ' +
-                  'confirmed shop bookings will be cancelled ' +
-                  'and clients will be notified.'
-                )) return;
+                if (!confirm(t('errors.leaveShopConfirm'))) return;
 
                 try {
                   const {
@@ -956,7 +952,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
                     const count = snap.size;
 
                     const confirmed = window.confirm(
-                      `Are you sure? You have ${count} pending solo bookings that will still be honoured. New solo bookings will stop coming in.`
+                      t('errors.stopSoloConfirm').replace('{n}', String(count))
                     );
                     if (!confirmed) return;
 

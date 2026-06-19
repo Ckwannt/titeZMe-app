@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { collection, addDoc, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { barbershopUpdateSchema, serviceSchema } from "@/lib/schemas";
+import { useLang } from '@/lib/i18n/LangContext';
 
 function getCurrencySymbol(c?: string): string {
   const m: Record<string, string> = { EUR: '€', GBP: '£', USD: '$', MAD: 'MAD ', DZD: 'DA ', TND: 'DT ', SAR: 'SAR ', AED: 'AED ' };
@@ -22,6 +23,7 @@ interface ShopServicesTabProps {
 
 export function ShopServicesTab({ services = [], mutateServices, shop, mutateShop }: ShopServicesTabProps) {
   const { user } = useAuth();
+  const { t } = useLang();
   const currSym = getCurrencySymbol(shop?.currency);
 
   // Add form
@@ -48,7 +50,7 @@ export function ShopServicesTab({ services = [], mutateServices, shop, mutateSho
     if (!name || !price || !duration || !user) return;
     // Duplicate check
     const exists = services.some(s => s.name.toLowerCase() === name.toLowerCase() && s.isActive !== false);
-    if (exists) { setAddError(`"${name}" already exists.`); return; }
+    if (exists) { setAddError(t('barberDash.serviceAlreadyExists').replace('{name}', name)); return; }
     setAddError('');
     try {
       await addDoc(collection(db, 'services'), serviceSchema.parse({
@@ -108,7 +110,7 @@ export function ShopServicesTab({ services = [], mutateServices, shop, mutateSho
   return (
     <div className="animate-fadeUp max-w-2xl">
       <h1 className="text-2xl font-black mb-2">Services ✂️</h1>
-      <p className="text-brand-text-secondary text-sm mb-8">Manage the services offered by your shop.</p>
+      <p className="text-brand-text-secondary text-sm mb-8">{t('shop.manageServicesDesc')}</p>
 
       {/* Summary line */}
       {activeServices.length > 0 && (
@@ -124,7 +126,7 @@ export function ShopServicesTab({ services = [], mutateServices, shop, mutateSho
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="font-black text-lg text-brand-yellow">titeZMe Cut</span>
-              <span className="text-brand-text-secondary text-xs">🔒 Locked</span>
+              <span className="text-brand-text-secondary text-xs">{t('shop.lockedBadge')}</span>
             </div>
             <p className="text-[#888] text-xs max-w-sm">The barber chooses the cut based on the client&apos;s vibe and budget. You can only edit the duration and price.</p>
           </div>
@@ -148,7 +150,7 @@ export function ShopServicesTab({ services = [], mutateServices, shop, mutateSho
       </div>
 
       {/* SHOP SERVICES LIST */}
-      <h2 className="font-black text-lg mb-4">Shop Services</h2>
+      <h2 className="font-black text-lg mb-4">{t('headings.shopServicesHeading')}</h2>
       <div className="flex flex-col gap-3 mb-8">
         {services.length === 0 ? (
           <div className="text-brand-text-secondary text-sm">No regular services added yet.</div>
@@ -179,7 +181,7 @@ export function ShopServicesTab({ services = [], mutateServices, shop, mutateSho
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-bold text-base mb-0.5">{s.name}</div>
-                      <div className="text-xs text-brand-text-secondary">{s.durationMinutes} min · {currSym}{s.price}</div>
+                      <div className="text-xs text-brand-text-secondary">{s.durationMinutes} {t('misc.minShort')} · {currSym}{s.price}</div>
                     </div>
                     <div className="flex items-center gap-2">
                       {/* Active toggle */}
@@ -255,7 +257,7 @@ export function ShopServicesTab({ services = [], mutateServices, shop, mutateSho
       {/* Info note */}
       <div className="mt-5 bg-[#0d0d0d] border border-[#1e1e1e] rounded-[10px] px-[14px] py-[10px]">
         <p className="text-[11px] text-[#555]">
-          💡 These services and prices apply to all bookings made through your shop. Each barber can also set their own solo prices separately.
+          {t('shop.servicesSharedNote')}
         </p>
       </div>
     </div>

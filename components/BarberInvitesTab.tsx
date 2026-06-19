@@ -118,9 +118,9 @@ export function BarberInvitesTab() {
   const daysAgo = (ts: number) => {
     const diff = Date.now() - ts;
     const days = Math.floor(diff / 86400000);
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    return `${days} days ago`;
+    if (days === 0) return t('buttons.today');
+    if (days === 1) return t('settings.yesterday');
+    return t('misc.daysAgo').replace('{n}', String(days));
   };
 
   // Change 2 — if barber owns a shop, show shop owner message
@@ -175,7 +175,7 @@ export function BarberInvitesTab() {
                   {(inv.shopCity || inv.shopCountry) && (
                     <div className="text-xs text-[#888] mt-0.5">📍 {[inv.shopCity, inv.shopCountry].filter(Boolean).join(', ')}</div>
                   )}
-                  <div className="text-xs text-[#555] mt-1">Invited {daysAgo(inv.createdAt)}</div>
+                  <div className="text-xs text-[#555] mt-1">{t('settings.invitedAgo').replace('{when}', daysAgo(inv.createdAt))}</div>
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
                   <button
@@ -213,7 +213,7 @@ export function BarberInvitesTab() {
                 <span className={`text-[10px] font-black tracking-wider px-2.5 py-1 rounded-md uppercase ${
                   inv.status === 'accepted' ? 'text-brand-green bg-brand-green/10' : 'text-brand-red bg-brand-red/10'
                 }`}>
-                  {inv.status}
+                  {t('status.' + inv.status) || inv.status}
                 </span>
               </div>
             ))}
@@ -251,7 +251,7 @@ export function BarberInvitesTab() {
           <div className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 max-w-sm w-full">
             <h2 className="text-xl font-black text-white mb-2">{t('modals.soloBookingsTitle')}</h2>
             <p className="text-[#888] text-sm mb-6 leading-relaxed">
-              You joined {showSoloModal.shopName}. Do you still want to accept solo bookings outside the shop?
+              {t('settings.joinedShopSoloQuestion').replace('{shopName}', showSoloModal.shopName)}
             </p>
             <div className="flex flex-col gap-3">
               <button disabled={actionLoading === showSoloModal.id} onClick={() => handleKeepSolo(true)} className="w-full bg-brand-yellow text-black py-3 rounded-xl font-bold text-sm hover:bg-yellow-500 disabled:opacity-50">{t('buttons.keepSoloBookings')}</button>

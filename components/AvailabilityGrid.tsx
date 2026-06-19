@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { scheduleUpdateSchema } from "@/lib/schemas";
 import { safeFirestore } from '@/lib/firebase-helpers';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export interface AvailabilityGridProps {
   mode?: 'barber' | 'shop' | 'client';
@@ -47,6 +48,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
   
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useLang();
   const uid = mode === 'barber' && user ? user.uid : barberId;
 
   // Generate the 7 days of the currently viewed week
@@ -183,7 +185,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
         { ...scheduleUpdateSchema.parse({ availableSlots }), cleanupBufferMinutes: bufferMinutes },
         { merge: true }
       ),
-      { successMessage: 'Schedule saved!', errorMessage: 'Failed to save schedule.' }
+      { successMessage: t('success.scheduleSaved'), errorMessage: t('errors.failedSaveSchedule') }
     );
     if (result !== null) {
       setLastSaved(new Date());
@@ -225,7 +227,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
   };
 
   const clearWeek = () => {
-    if (!confirm('Clear all slots for this week?')) return;
+    if (!confirm(t('errors.clearWeekConfirm'))) return;
     const weekDateStrs = weekDays.map(d => format(d, 'yyyy-MM-dd'));
     setAvailableSlots(prev => {
       const updated = { ...prev };
@@ -332,7 +334,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
   };
 
   if (loading) {
-    return <div className="text-brand-text-secondary animate-pulse text-sm">Loading calendar...</div>;
+    return <div className="text-brand-text-secondary animate-pulse text-sm">{t('misc.loadingCalendar')}</div>;
   }
 
   // ── Summary strip computed values ─────────────────────────────────────────
@@ -359,12 +361,14 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
   })();
 
   const nextOpenLabel = nextOpenSlot
-    ? `🟢 Next: ${format(parseISO(nextOpenSlot.date), 'EEE')} ${nextOpenSlot.time}`
-    : '🔴 No upcoming slots';
+    ? t('misc.nextOpenSlot')
+        .replace('{weekday}', format(parseISO(nextOpenSlot.date), 'EEE'))
+        .replace('{time}', nextOpenSlot.time)
+    : t('status.noUpcomingSlots');
 
   const lastSavedLabel = lastSaved
-    ? `Last saved: today at ${lastSaved.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
-    : 'Not saved yet';
+    ? t('misc.lastSavedAt').replace('{time}', lastSaved.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }))
+    : t('misc.notSavedYet');
 
   return (
     <div className="flex flex-col select-none">
@@ -373,8 +377,8 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
       {mode === 'barber' && (
         <div className="flex gap-2 flex-wrap mb-3">
           {[
-            currentWeekSlots > 0 ? `⏱ ${currentWeekSlots}h available this week` : '⏱ No hours set this week',
-            `📅 ${workingDaysThisWeek} day${workingDaysThisWeek !== 1 ? 's' : ''}`,
+            currentWeekSlots > 0 ? t('misc.nHoursAvailable').replace('{n}', String(currentWeekSlots)) : t('misc.noHoursSet'),
+            t('misc.nDays').replace('{n}', String(workingDaysThisWeek)),
             nextOpenLabel,
           ].map((label, i) => (
             <span key={i} className="inline-flex items-center gap-[5px] bg-[#111] border border-[#1e1e1e] rounded-full px-3 py-[5px] text-[11px] text-[#888] font-bold">
@@ -391,25 +395,25 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
             onClick={() => fillDay(format(new Date(), 'yyyy-MM-dd'))}
             className="bg-[#141414] border border-[#2a2a2a] text-[#888] rounded-full px-[14px] py-[6px] text-[11px] font-bold hover:border-brand-yellow hover:text-brand-yellow transition-colors"
           >
-            Fill today
+            {t('buttons.fillToday')}
           </button>
           <button
             onClick={fillWeekdays}
             className="bg-[#141414] border border-[#2a2a2a] text-[#888] rounded-full px-[14px] py-[6px] text-[11px] font-bold hover:border-brand-yellow hover:text-brand-yellow transition-colors"
           >
-            Fill weekdays
+            {t('buttons.fillWeekdays')}
           </button>
           <button
             onClick={copyToNextWeek}
             className="bg-[#141414] border border-[#2a2a2a] text-[#888] rounded-full px-[14px] py-[6px] text-[11px] font-bold hover:border-brand-yellow hover:text-brand-yellow transition-colors"
           >
-            Copy to next week →
+            {t('buttons.copyToNextWeek')}
           </button>
           <button
             onClick={clearWeek}
             className="bg-[#141414] border border-[#EF444433] text-[#666] rounded-full px-[14px] py-[6px] text-[11px] font-bold hover:border-[#EF4444] hover:text-[#EF4444] transition-colors"
           >
-            Clear week
+            {t('buttons.clearWeek')}
           </button>
         </div>
       )}
@@ -417,7 +421,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-black">{format(currentWeekStart, "MMM d")} – {format(addDays(currentWeekStart, 6), "MMM d, yyyy")}</h3>
         <div className="flex gap-2">
-          <button onClick={handleToday} className="px-4 py-2 bg-[#1a1a1a] text-[#888] hover:text-white rounded-lg text-xs font-bold transition-colors">Today</button>
+          <button onClick={handleToday} className="px-4 py-2 bg-[#1a1a1a] text-[#888] hover:text-white rounded-lg text-xs font-bold transition-colors">{t('buttons.today')}</button>
           <div className="flex border-[1.5px] border-[#2a2a2a] rounded-lg overflow-hidden shrink-0">
             <button onClick={handlePrevWeek} className="px-3 py-2 bg-[#141414] text-[#888] hover:text-white hover:bg-[#1a1a1a] transition-colors border-r-[1.5px] border-[#2a2a2a]">←</button>
             <button onClick={handleNextWeek} className="px-3 py-2 bg-[#141414] text-[#888] hover:text-white hover:bg-[#1a1a1a] transition-colors">→</button>
@@ -445,7 +449,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
                   </div>
                   {mode === 'barber' && (
                     <div className={`text-[9px] font-bold mt-0.5 ${(availableSlots[dStr]?.length || 0) > 0 ? 'text-[#22C55E]' : 'text-[#444]'}`}>
-                      {(availableSlots[dStr]?.length || 0) > 0 ? `${availableSlots[dStr].length} slots` : 'no slots'}
+                      {(availableSlots[dStr]?.length || 0) > 0 ? t('misc.nSlots').replace('{n}', String(availableSlots[dStr].length)) : t('misc.noSlots')}
                     </div>
                   )}
                 </div>
@@ -479,7 +483,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
                              <div
                                key={dayIdx}
                                className={cellClasses}
-                               onMouseDown={() => toast.error("This day is blocked. Remove the day off first to set availability.")}
+                               onMouseDown={() => toast.error(t('errors.dayAlreadyBlocked'))}
                              />
                            );
                         } else if (isPastCell) {
@@ -512,7 +516,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
                            cellClasses += "bg-[#111] cursor-not-allowed";
                         } else if (status === 'booked') {
                            cellClasses += "bg-brand-red cursor-not-allowed";
-                           content = <div className="w-full h-full flex items-center justify-center text-[10px] text-white font-bold">Booked</div>;
+                           content = <div className="w-full h-full flex items-center justify-center text-[10px] text-white font-bold">{t('misc.booked')}</div>;
                         } else if (status === 'available') {
                            if (isSelected) {
                               // Orange = selected by this client
@@ -543,7 +547,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
         <div className="mt-5">
           {/* Addition 6 — Buffer time selector */}
           <div className="mb-4">
-            <div className="text-[11px] text-[#888] font-bold mb-2">⏱ Cleanup buffer between cuts</div>
+            <div className="text-[11px] text-[#888] font-bold mb-2">⏱ {t('forms.bufferTime')}</div>
             <div className="flex gap-2 flex-wrap">
               {[0, 5, 10, 15, 20].map(m => (
                 <button key={m} onClick={() => setBufferMinutes(m)}
@@ -552,7 +556,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
                       ? 'bg-[#1a1500] border-brand-yellow text-brand-yellow'
                       : 'bg-[#141414] border-[#2a2a2a] text-[#666] hover:border-[#444] hover:text-[#888]'
                   }`}>
-                  {m} min
+                  {t('misc.nMinBuffer').replace('{n}', String(m))}
                 </button>
               ))}
             </div>
@@ -562,7 +566,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
           <div className="flex items-center justify-between gap-3">
             <div className="text-[11px] font-bold">
               {hasUnsavedChanges && !saving && (
-                <span className="text-brand-yellow">● Unsaved changes — saving in 2s...</span>
+                <span className="text-brand-yellow">{t('misc.unsavedChanges')}</span>
               )}
               {autoSavedMsg && (
                 <span className="text-brand-green">{autoSavedMsg}</span>
@@ -573,7 +577,7 @@ export function AvailabilityGrid({ mode = 'barber', barberId = '', totalDuration
               disabled={saving}
               className="bg-brand-yellow text-[#0a0a0a] px-8 py-3.5 rounded-full font-black text-sm transition-all hover:opacity-90 disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Save Schedule"}
+              {saving ? t('settings.saving') : t('buttons.saveSchedule')}
             </button>
           </div>
 
