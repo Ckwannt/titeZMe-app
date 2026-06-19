@@ -8,6 +8,16 @@ service firebase.storage {
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
+    match /shop-profile/{uid}/{file} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && file.matches('cover\\.jpg|logo\\.jpg')
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null
+        && request.auth.uid == uid;
+    }
     match /portfolios/{uid}/{allPaths=**} {
       allow read: if true;
       allow write: if request.auth != null
