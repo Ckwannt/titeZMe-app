@@ -10,11 +10,11 @@ export default function BarberBillingPage() {
         {t('barberLayout.navBilling')}
       </h1>
       <p className="text-[#888] text-sm mb-8">
-        Manage your subscription
+        {t('shop.manageSubscription')}
       </p>
       <div className="bg-[#111] border border-[#1e1e1e] rounded-2xl p-6">
         <p className="text-[#888] text-sm">
-          Subscription management coming soon.
+          {t('shop.subscriptionComingSoon')}
         </p>
       </div>
     </div>
