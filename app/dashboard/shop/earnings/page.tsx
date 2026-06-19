@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { collection, query, where, getDocs, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell, Tooltip } from 'recharts';
+import { useLang } from '@/lib/i18n/LangContext';
 
 function getCurrencySymbol(c?: string): string {
   const m: Record<string, string> = { EUR: '€', GBP: '£', USD: '$', MAD: 'MAD ', DZD: 'DA ' };
@@ -34,6 +35,7 @@ function exportCSV(rows: any[], currSym: string, monthLabel: string) {
 export default function ShopEarningsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { t, lang } = useLang();
 
   const [bookings, setBookings] = useState<any[]>([]);
   const [barbers, setBarbers] = useState<any[]>([]);
@@ -48,12 +50,13 @@ export default function ShopEarningsPage() {
       const yr = d.getFullYear();
       const mo = d.getMonth();
       const value = `${yr}-${String(mo + 1).padStart(2, '0')}`;
-      const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const locale = lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : 'en-US';
+      const label = d.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
       opts.push({ value, label });
       d.setMonth(mo - 1);
     }
     return opts;
-  }, []);
+  }, [lang]);
 
   const [selectedMonth, setSelectedMonth] = useState(monthOptions[0].value);
   const selectedMonthLabel = monthOptions.find(o => o.value === selectedMonth)?.label || selectedMonth;
@@ -128,7 +131,7 @@ export default function ShopEarningsPage() {
       const hours = completedB.reduce((s, bk) => s + (bk.totalDuration || 0), 0) / 60;
       return {
         id: b.id,
-        name: barberNames[b.id] || 'Barber',
+        name: barberNames[b.id] || t('misc.barberFallback'),
         cuts: completedB.length,
         hours,
         earned,
@@ -152,13 +155,13 @@ export default function ShopEarningsPage() {
     });
   }, [monthlyCompleted, selectedMonth]);
 
-  if (loading) return <div className="p-10 text-center animate-pulse text-[#555]">Loading...</div>;
+  if (loading) return <div className="p-10 text-center animate-pulse text-[#555]">{t('misc.loading')}</div>;
 
   return (
     <div className="animate-fadeUp p-6 md:p-8 md:px-10 max-w-[900px]">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-black">Earnings 💰</h1>
+        <h1 className="text-2xl font-black">{t('shopDash.earnings')} 💰</h1>
         <select
           value={selectedMonth}
           onChange={e => setSelectedMonth(e.target.value)}
@@ -173,10 +176,10 @@ export default function ShopEarningsPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-8">
         {[
-          { val: fmtMoney(monthRevenue, currSym), label: 'Monthly Revenue', delta: selectedMonthLabel, color: 'text-brand-yellow' },
-          { val: fmtMoney(yearRevenue, currSym), label: 'Annual Revenue', delta: 'This year', color: 'text-brand-orange' },
-          { val: monthCuts, label: 'Total Cuts', delta: selectedMonthLabel, color: 'text-[#60a5fa]' },
-          { val: `${currSym}${avgPerCut.toFixed(2)}`, label: 'Avg per cut', delta: 'Revenue per service', color: 'text-brand-green' },
+          { val: fmtMoney(monthRevenue, currSym), label: t('shop.monthlyRevenue'), delta: selectedMonthLabel, color: 'text-brand-yellow' },
+          { val: fmtMoney(yearRevenue, currSym), label: t('shopDash.annualRevenue'), delta: t('shopDash.thisYear'), color: 'text-brand-orange' },
+          { val: monthCuts, label: t('shop.totalCuts'), delta: selectedMonthLabel, color: 'text-[#60a5fa]' },
+          { val: `${currSym}${avgPerCut.toFixed(2)}`, label: t('shopDash.avgPerCut'), delta: t('shopDash.revenuePerService'), color: 'text-brand-green' },
         ].map((s, i) => (
           <div key={i} className="bg-brand-surface border border-brand-border rounded-2xl p-5 flex flex-col gap-1.5">
             <div className={`text-[28px] font-black leading-none ${s.color}`}>{s.val}</div>
@@ -189,23 +192,23 @@ export default function ShopEarningsPage() {
       {/* Per-barber table */}
       <div className="bg-brand-surface border border-brand-border rounded-3xl p-6 mb-6">
         <div className="flex justify-between items-center mb-5">
-          <div className="font-black text-base">Breakdown by barber — {selectedMonthLabel}</div>
+          <div className="font-black text-base">{t('shopDash.breakdownByBarber').replace('{month}', selectedMonthLabel)}</div>
           <button
             onClick={() => exportCSV(barberRows, currSym, selectedMonth)}
             className="text-[11px] font-bold border border-[#2a2a2a] text-[#888] hover:border-brand-yellow hover:text-brand-yellow px-3 py-1.5 rounded-full transition-colors"
           >
-            ↓ Export CSV
+            {t('shop.exportCSV')}
           </button>
         </div>
 
         {barberRows.length === 0 ? (
-          <div className="text-[#555] text-sm">No barbers in your team yet.</div>
+          <div className="text-[#555] text-sm">{t('shopDash.noBarbersTeamYet')}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#1e1e1e]">
-                  {['Barber', 'Cuts', 'Hours', 'Earned', 'Avg/cut'].map(h => (
+                  {[t('shopDash.tableBarber'), t('shopDash.tableCuts'), t('shopDash.tableHours'), t('shopDash.tableEarned'), t('shopDash.tableAvgCut')].map(h => (
                     <th key={h} className="text-left text-[10px] font-black uppercase text-[#555] pb-3 pr-4">{h}</th>
                   ))}
                 </tr>
@@ -233,14 +236,14 @@ export default function ShopEarningsPage() {
 
       {/* Daily chart */}
       <div className="bg-brand-surface border border-brand-border rounded-3xl p-6">
-        <div className="font-black text-base mb-5">Daily earnings — {selectedMonthLabel}</div>
+        <div className="font-black text-base mb-5">{t('shopDash.dailyEarnings').replace('{month}', selectedMonthLabel)}</div>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={dailyChartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
             <XAxis dataKey="day" tick={{ fill: '#555', fontSize: 10 }} axisLine={false} tickLine={false} interval={4} />
             <Tooltip
               contentStyle={{ background: '#141414', border: '1px solid #2a2a2a', borderRadius: 8, color: '#fff', fontSize: 12 }}
               cursor={{ fill: '#1a1a1a' }}
-              formatter={(v: any) => [`${currSym}${v}`, 'Earnings']}
+              formatter={(v: any) => [`${currSym}${v}`, t('shopDash.earningsLabel')]}
             />
             <Bar dataKey="earnings" radius={[4, 4, 0, 0]}>
               {dailyChartData.map((_, i) => (

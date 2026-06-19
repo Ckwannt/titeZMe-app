@@ -11,10 +11,12 @@ import Select from "react-select";
 // country-state-city loaded dynamically to avoid bundling 1.8 MB on initial load
 import { barberUpdateSchema, userUpdateSchema, barbershopSchema } from "@/lib/schemas";
 import { sanitizeText, sanitizeUrl } from '@/lib/sanitize';
+import { useLang } from '@/lib/i18n/LangContext';
 
 export default function CreateShopPage() {
   const router = useRouter();
   const { user, appUser, loading } = useAuth();
+  const { t } = useLang();
   
   const [name, setName] = useState('');
   
@@ -111,7 +113,7 @@ export default function CreateShopPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phoneCode || !phoneNumberInput || !selectedCountry || !selectedCityOption || !street || !buildingNumber || !postalCode) {
-      setErrorStatus('Please fill in all required fields.');
+      setErrorStatus(t('errors.fillRequiredFields'));
       return;
     }
 
@@ -154,7 +156,7 @@ export default function CreateShopPage() {
       router.push('/dashboard/shop');
     } catch (err: any) {
       console.error("Error creating shop", err);
-      setErrorStatus(err.message || 'Failed to create shop.');
+      setErrorStatus(err.message || t('errors.failedCreateShop'));
       setIsSubmitting(false);
     }
   };
@@ -171,25 +173,25 @@ export default function CreateShopPage() {
             ←
           </Link>
           <div>
-            <h1 className="text-2xl font-black text-white leading-tight">Create Shop Profile</h1>
-            <p className="text-[#888] text-sm mt-1">Set up your barbershop on titeZMe</p>
+            <h1 className="text-2xl font-black text-white leading-tight">{t('barberLayout.createShopProfile')}</h1>
+            <p className="text-[#888] text-sm mt-1">{t('forms.createShopSubtitle')}</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5 relative z-10">
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">SHOP NAME <span className="text-brand-red">*</span></label>
-            <input 
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.shopName')} <span className="text-brand-red">*</span></label>
+            <input
               required
               value={name} onChange={e => setName(e.target.value)}
               maxLength={100}
               className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow"
-              placeholder="e.g. Fade Factory" 
+              placeholder={t('forms.shopNamePlaceholder')}
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">CONTACT PHONE <span className="text-brand-red">*</span></label>
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.contactPhone')} <span className="text-brand-red">*</span></label>
             <div className="flex gap-2">
               <div className="flex-none w-1/3">
                 <Select 
@@ -197,7 +199,7 @@ export default function CreateShopPage() {
                   value={phoneCode}
                   onChange={setPhoneCode}
                   styles={selectStyles}
-                  placeholder="Code"
+                  placeholder={t('forms.codePlaceholder')}
                 />
               </div>
               <div className="flex-1">
@@ -208,7 +210,7 @@ export default function CreateShopPage() {
                   onChange={e => setPhoneNumberInput(e.target.value.replace(/\D/g, ''))}
                   maxLength={20}
                   className="w-full bg-[#0a0a0a] border-[1.5px] border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow placeholder:text-[#444] h-[52px]"
-                  placeholder="600 000 000" 
+                  placeholder={t('forms.phonePlaceholder')}
                 />
               </div>
             </div>
@@ -216,7 +218,7 @@ export default function CreateShopPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">COUNTRY <span className="text-brand-red">*</span></label>
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.country')} <span className="text-brand-red">*</span></label>
               <Select 
                 options={countryOptions} 
                 value={selectedCountry}
@@ -225,11 +227,11 @@ export default function CreateShopPage() {
                   setSelectedCityOption(null);
                 }}
                 styles={selectStyles}
-                placeholder="Country..."
+                placeholder={t('forms.countryPlaceholder')}
               />
             </div>
             <div>
-              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">CITY <span className="text-brand-red">*</span></label>
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.city')} <span className="text-brand-red">*</span></label>
               <Select 
                 options={selectedCountry && csc ?
                   (csc.City.getCitiesOfCountry(selectedCountry.value) ?? []).map((c: any) => ({
@@ -242,67 +244,67 @@ export default function CreateShopPage() {
                 onChange={setSelectedCityOption}
                 isDisabled={!selectedCountry}
                 styles={selectStyles}
-                placeholder="City..."
+                placeholder={t('forms.cityPlaceholder')}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">STREET NAME <span className="text-brand-red">*</span></label>
-              <input 
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.streetName')} <span className="text-brand-red">*</span></label>
+              <input
                 required
                 value={street} onChange={e => setStreet(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-                placeholder="Calle Gran Vía" 
+                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow"
+                placeholder={t('forms.streetPlaceholder2')}
               />
             </div>
             <div>
-              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">NUMBER <span className="text-brand-red">*</span></label>
-              <input 
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.buildingNumber')} <span className="text-brand-red">*</span></label>
+              <input
                 required
                 value={buildingNumber} onChange={e => setBuildingNumber(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-                placeholder="42" 
+                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow"
+                placeholder={t('forms.buildingPlaceholder2')}
               />
             </div>
             <div>
-              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">POSTAL CODE <span className="text-brand-red">*</span></label>
-              <input 
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.postalCode')} <span className="text-brand-red">*</span></label>
+              <input
                 required
                 value={postalCode} onChange={e => setPostalCode(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-                placeholder="28013" 
+                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow"
+                placeholder={t('forms.postalPlaceholder')}
               />
             </div>
             <div className="md:col-span-2">
-              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">FLOOR / SUITE (Optional)</label>
-              <input 
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.floorSuite')}</label>
+              <input
                 value={floor} onChange={e => setFloor(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow" 
-                placeholder="Local 3, 2nd floor..." 
+                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow"
+                placeholder={t('forms.floorPlaceholder2')}
               />
             </div>
           </div>
 
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">GOOGLE MAPS LINK</label>
-            <input 
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('headings.googleMapsLink')}</label>
+            <input
               readOnly
               value={googleMapsUrl}
-              className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-[#555] text-xs outline-none cursor-not-allowed" 
-              placeholder="Auto-generated based on address..." 
+              className="w-full bg-[#141414] border border-[#2a2a2a] rounded-xl px-4 py-3 text-[#555] text-xs outline-none cursor-not-allowed"
+              placeholder={t('settings.autoGeneratedLink')}
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">DESCRIPTION</label>
-            <textarea 
+            <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.description')}</label>
+            <textarea
               value={description} onChange={e => setDescription(e.target.value)}
               rows={3}
               maxLength={2000}
-              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow resize-none" 
-              placeholder="Tell clients what makes your shop special..." 
+              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow resize-none"
+              placeholder={t('forms.shopDescPlaceholder2')}
             />
           </div>
 
@@ -317,7 +319,7 @@ export default function CreateShopPage() {
             disabled={isSubmitting}
             className="bg-brand-yellow text-[#0a0a0a] w-full mt-2 px-7 py-3.5 rounded-xl font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
           >
-            {isSubmitting ? 'Creating...' : 'Create My Shop 🏪'}
+            {isSubmitting ? t('buttons.creating') : t('buttons.createMyShop')}
           </button>
         </form>
       </div>

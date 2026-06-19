@@ -5,16 +5,17 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, getDocs, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useLang } from '@/lib/i18n/LangContext';
 
-function timeAgo(ts: number): string {
+function timeAgo(ts: number, t: (k: string) => string): string {
   const diff = Date.now() - ts;
   const days = Math.floor(diff / 86400000);
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Yesterday';
-  if (days < 30) return `${days}d ago`;
+  if (days === 0) return t('buttons.today');
+  if (days === 1) return t('settings.yesterday');
+  if (days < 30) return t('misc.daysAgo').replace('{n}', String(days));
   const months = Math.floor(days / 30);
-  if (months < 12) return `${months}mo ago`;
-  return `${Math.floor(months / 12)}y ago`;
+  if (months < 12) return t('shopDash.monthsAgo').replace('{n}', String(months));
+  return t('shopDash.yearsAgo').replace('{n}', String(Math.floor(months / 12)));
 }
 
 const POSITIVE_WORDS = ['clean', 'fade', 'professional', 'friendly', 'best', 'amazing', 'perfect', 'recommend', 'great', 'fast', 'precise', 'skilled'];
@@ -22,6 +23,7 @@ const POSITIVE_WORDS = ['clean', 'fade', 'professional', 'friendly', 'best', 'am
 export default function ShopReviewsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { t } = useLang();
 
   const [barbers, setBarbers] = useState<any[]>([]);
   const [barberNames, setBarberNames] = useState<Record<string, string>>({});
@@ -123,19 +125,19 @@ export default function ShopReviewsPage() {
       .slice(0, 5);
   }, [reviews]);
 
-  if (loading || fetching) return <div className="p-10 text-center animate-pulse text-[#555]">Loading reviews...</div>;
+  if (loading || fetching) return <div className="p-10 text-center animate-pulse text-[#555]">{t('shopDash.loadingReviews')}</div>;
 
   return (
     <div className="animate-fadeUp p-6 md:p-8 md:px-10 max-w-[800px]">
-      <h1 className="text-2xl font-black mb-6">Reviews ⭐</h1>
+      <h1 className="text-2xl font-black mb-6">{t('shopDash.reviews')} ⭐</h1>
 
       {totalReviews === 0 ? (
         /* Empty state */
         <div>
           <div className="bg-brand-surface border border-brand-border rounded-3xl p-8 text-center mb-6">
             <div className="text-5xl mb-4">⭐</div>
-            <div className="font-extrabold text-lg mb-2">No reviews yet</div>
-            <p className="text-sm text-[#888]">Reviews from clients will appear here after completed bookings.</p>
+            <div className="font-extrabold text-lg mb-2">{t('profile.noReviewsYet')}</div>
+            <p className="text-sm text-[#888]">{t('shopDash.reviewsFromClients')}</p>
           </div>
           {/* Placeholder preview */}
           <div className="flex flex-col gap-3 opacity-30 pointer-events-none">
@@ -162,7 +164,7 @@ export default function ShopReviewsPage() {
             <div className="text-center shrink-0">
               <div className="text-[56px] font-black leading-none text-brand-yellow">{avgRating.toFixed(1)}</div>
               <div className="text-lg text-brand-yellow mt-1">{'★'.repeat(Math.round(avgRating))}</div>
-              <div className="text-xs text-[#888] mt-1">{totalReviews} total review{totalReviews !== 1 ? 's' : ''} across all barbers</div>
+              <div className="text-xs text-[#888] mt-1">{totalReviews === 1 ? t('shopDash.nTotalReviews').replace('{n}', '1') : t('shopDash.nTotalReviewsPlural').replace('{n}', String(totalReviews))}</div>
             </div>
             <div className="flex-1 w-full">
               {starCounts.map(({ star, count }) => (
@@ -183,7 +185,7 @@ export default function ShopReviewsPage() {
           <div className="flex flex-wrap gap-2 mb-4">
             <select value={barberFilter} onChange={e => setBarberFilter(e.target.value)}
               className="bg-[#141414] border border-[#2a2a2a] text-white rounded-xl px-3 py-2 text-sm outline-none">
-              <option value="all">All barbers</option>
+              <option value="all">{t('shop.allBarbersFilter')}</option>
               {barbers.map(b => (
                 <option key={b.id} value={b.id}>{barberNames[b.id] || b.id}</option>
               ))}
@@ -191,7 +193,7 @@ export default function ShopReviewsPage() {
             {[0, 5, 4, 3].map(star => (
               <button key={star} onClick={() => setStarFilter(star)}
                 className={`text-[12px] font-bold px-4 py-2 rounded-full transition-colors ${starFilter === star ? 'bg-brand-yellow text-black' : 'bg-[#1a1a1a] text-[#888] hover:text-white'}`}>
-                {star === 0 ? 'All' : `${star}★`}
+                {star === 0 ? t('shopDash.allStars') : `${star}★`}
               </button>
             ))}
           </div>
@@ -212,7 +214,7 @@ export default function ShopReviewsPage() {
             {filtered.slice(0, visibleCount).map(r => {
               const clientInitial = (r.clientName || r.reviewerName || '?')[0]?.toUpperCase();
               const clientDisplay = (() => {
-                const name = r.clientName || r.reviewerName || 'Client';
+                const name = r.clientName || r.reviewerName || t('misc.barberFallback');
                 const parts = name.trim().split(' ');
                 return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0];
               })();
@@ -230,13 +232,13 @@ export default function ShopReviewsPage() {
                         <span className="font-extrabold text-[14px]">{clientDisplay}</span>
                         {barberName && (
                           <span className="text-[10px] text-[#666] font-bold bg-[#1a1a1a] px-2 py-0.5 rounded-full">
-                            via {barberName}
+                            {t('shop.viaLabel')} {barberName}
                           </span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-brand-yellow text-xs">{'★'.repeat(r.rating || 0)}</span>
-                        <span className="text-[10px] text-[#555]">{timeAgo(r.createdAt)}</span>
+                        <span className="text-[10px] text-[#555]">{timeAgo(r.createdAt, t)}</span>
                       </div>
                     </div>
                   </div>
@@ -252,7 +254,7 @@ export default function ShopReviewsPage() {
             <div className="text-center mt-5">
               <button onClick={() => setVisibleCount(v => v + 10)}
                 className="text-[13px] font-bold text-brand-yellow border border-brand-yellow/40 hover:bg-[#1a1500] px-6 py-2.5 rounded-full transition-colors">
-                Load more
+                {t('profile.loadMoreReviews')}
               </button>
             </div>
           )}
