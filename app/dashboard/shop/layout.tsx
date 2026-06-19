@@ -65,15 +65,16 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
   }
 
   const navItems = [
-    { href: '/dashboard/shop', icon: '🏪', label: t('shopDash.overviewNav'), exact: true },
-    { href: '/dashboard/shop/team', icon: '👥', label: t('shopDash.teamNav'), exact: false },
-    { href: '/dashboard/shop/bookings', icon: '📅', label: t('bookings.allBookings'), exact: false },
-    { href: '/dashboard/shop/availability', icon: '⏰', label: t('barberLayout.navAvailability'), exact: false },
-    { href: '/dashboard/shop/earnings', icon: '💰', label: t('shopDash.earnings'), exact: false },
-    { href: '/dashboard/shop/services', icon: '✂️', label: t('barberLayout.navServices'), exact: false },
-    { href: '/dashboard/shop/photos', icon: '📸', label: t('shopDash.shopPhotosNav'), exact: false },
-    { href: '/dashboard/shop/reviews', icon: '⭐', label: t('shopDash.reviews'), exact: false },
-    { href: '/dashboard/shop/settings', icon: '⚙️', label: t('clientDash.settings'), exact: false },
+    { href: '/dashboard/shop', icon: '', label: t('shopDash.overviewNav'), exact: true },
+    { href: '/dashboard/shop/team', icon: '', label: t('shopDash.teamNav'), exact: false },
+    { href: '/dashboard/shop/bookings', icon: '', label: t('bookings.allBookings'), exact: false },
+    { href: '/dashboard/shop/availability', icon: '', label: t('barberLayout.navAvailability'), exact: false },
+    { href: '/dashboard/shop/earnings', icon: '', label: t('shopDash.earnings'), exact: false },
+    { href: '/dashboard/shop/services', icon: '', label: t('barberLayout.navServices'), exact: false },
+    { href: '/dashboard/shop/billing', icon: '', label: t('shopDash.navBilling'), exact: false },
+    { href: '/dashboard/shop/photos', icon: '', label: t('shopDash.shopPhotosNav'), exact: false },
+    { href: '/dashboard/shop/reviews', icon: '', label: t('shopDash.reviews'), exact: false },
+    { href: '/dashboard/shop/settings', icon: '', label: t('clientDash.settings'), exact: false },
   ];
 
   const isActive = (item: { href: string; exact: boolean }) =>
@@ -108,7 +109,7 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
               className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 ${
                 isActive(l) ? 'bg-[#1a1a1a] text-brand-yellow' : 'text-[#888] hover:bg-[#1a1a1a] hover:text-white'
               }`}>
-              <span>{l.icon}</span> {l.label}
+              {l.label}
             </Link>
           ))}
         </div>
@@ -130,17 +131,16 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
       {/* Mobile bottom tab bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-[#111] border-t border-[#1e1e1e] h-[60px] flex md:hidden z-40">
         {[
-          { href: '/dashboard/shop', icon: '🏪', label: t('shopDash.overviewNav'), exact: true },
-          { href: '/dashboard/shop/team', icon: '👥', label: t('shopDash.teamNav'), exact: false },
-          { href: '/dashboard/shop/bookings', icon: '📅', label: t('barberLayout.navBookings'), exact: false },
-          { href: '/dashboard/shop/earnings', icon: '💰', label: t('shopDash.earnings'), exact: false },
-          { href: '/dashboard/shop/settings', icon: '⚙️', label: t('barberLayout.navMore'), exact: false },
+          { href: '/dashboard/shop', label: t('shopDash.overviewNav'), exact: true },
+          { href: '/dashboard/shop/team', label: t('shopDash.teamNav'), exact: false },
+          { href: '/dashboard/shop/bookings', label: t('barberLayout.navBookings'), exact: false },
+          { href: '/dashboard/shop/billing', label: t('shopDash.navBilling'), exact: false },
+          { href: '/dashboard/shop/settings', label: t('barberLayout.navMore'), exact: false },
         ].map(item => (
           <Link key={item.href} href={item.href}
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition-colors ${
               isActive(item) ? 'text-brand-yellow' : 'text-[#555]'
             }`}>
-            <span className="text-lg">{item.icon}</span>
             {item.label}
           </Link>
         ))}

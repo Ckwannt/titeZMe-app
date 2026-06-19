@@ -1256,6 +1256,7 @@ const translations = {
       overviewNav: 'Overview',
       teamNav: 'Team',
       showingBookings: 'Showing {from}–{to} of {total} bookings',
+      navBilling: 'Billing',
     },
     barberLayout: {
       profileItemPhoto: '📸 Add a profile photo',
@@ -1279,6 +1280,7 @@ const translations = {
       navSettings: 'Settings',
       navAvailShort: 'Avail.',
       navMore: 'More',
+      navBilling: 'Billing',
       live: 'Live',
       hidden: 'Hidden',
       shareWithShops: 'Share this with shops to receive invites',
@@ -2608,6 +2610,7 @@ const translations = {
       overviewNav: "Vue d'ensemble",
       teamNav: 'Équipe',
       showingBookings: 'Affichage {from}–{to} sur {total} réservations',
+      navBilling: 'Facturation',
     },
     barberLayout: {
       profileItemPhoto: '📸 Ajouter une photo de profil',
@@ -2631,6 +2634,7 @@ const translations = {
       navSettings: 'Paramètres',
       navAvailShort: 'Dispos.',
       navMore: 'Plus',
+      navBilling: 'Facturation',
       live: 'En ligne',
       hidden: 'Masqué',
       shareWithShops: 'Partagez ceci avec les salons pour recevoir des invitations',
@@ -3960,6 +3964,7 @@ const translations = {
       overviewNav: 'Resumen',
       teamNav: 'Equipo',
       showingBookings: 'Mostrando {from}–{to} de {total} reservas',
+      navBilling: 'Facturación',
     },
     barberLayout: {
       profileItemPhoto: '📸 Añadir una foto de perfil',
@@ -3983,6 +3988,7 @@ const translations = {
       navSettings: 'Configuración',
       navAvailShort: 'Dispon.',
       navMore: 'Más',
+      navBilling: 'Facturación',
       live: 'En vivo',
       hidden: 'Oculto',
       shareWithShops: 'Comparte esto con las barberías para recibir invitaciones',
