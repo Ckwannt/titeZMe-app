@@ -44,6 +44,7 @@ interface LandingPageClientProps {
   featuredBarbers?: any[];
   featuredShops?: any[];
   citiesData?: { city: string; barbers: number; shops: number }[];
+  hideFeaturedSection?: boolean;
 }
 
 // ─── component ───────────────────────────────────────────────────────────────
@@ -52,6 +53,7 @@ export default function LandingPageClient({
   featuredBarbers = [],
   featuredShops = [],
   citiesData = [],
+  hideFeaturedSection = false,
 }: LandingPageClientProps) {
   const { t } = useLang();
   const citySlots = [...citiesData];
@@ -127,7 +129,7 @@ export default function LandingPageClient({
           </div>
 
           {/* Right column — featured barbers + shops, unified */}
-          {((featuredBarbers.length > 0 && !!mainBarber) || (featuredShops.length > 0 && !!mainShop)) && (
+          {!hideFeaturedSection && ((featuredBarbers.length > 0 && !!mainBarber) || (featuredShops.length > 0 && !!mainShop)) && (
             <div className="flex-1 lg:max-w-[440px] animate-fadeUp mt-10 lg:mt-0">
 
               {/* ── Barber cards ── */}

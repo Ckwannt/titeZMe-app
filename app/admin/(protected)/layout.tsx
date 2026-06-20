@@ -25,6 +25,7 @@ function AdminSidebar() {
     { label: '✉️ Messages', href: '/admin/messages', always: true },
     { label: '🌟 Featured', href: '/admin/featured', perm: p?.canManageFeatured },
     { label: '👥 Team', href: '/admin/team', superAdminOnly: true },
+    { label: '⚙️ Settings', href: '/admin/settings', superAdminOnly: true },
   ];
 
   const visibleLinks = allLinks.filter(l =>

@@ -151,6 +151,17 @@ async function fetchCitiesData(): Promise<{ city: string; barbers: number; shops
 
 // ─── page component ───────────────────────────────────────────────────────────
 
+async function fetchHideFeaturedSection(): Promise<boolean> {
+  try {
+    const configSnap = await getDoc(doc(db, 'siteConfig', 'global'));
+    return configSnap.exists()
+      ? configSnap.data().hideFeaturedSection === true
+      : false;
+  } catch {
+    return false;
+  }
+}
+
 export default function LandingPage() {
   const { data: featuredBarbers = [] } = useQuery({
     queryKey: ['landing_featured'],
@@ -164,10 +175,17 @@ export default function LandingPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: hideFeaturedSection = false } = useQuery({
+    queryKey: ['landing_site_config'],
+    queryFn: fetchHideFeaturedSection,
+    staleTime: 60 * 1000,
+  });
+
   return (
     <LandingPageClient
       featuredBarbers={featuredBarbers}
       citiesData={citiesData}
+      hideFeaturedSection={hideFeaturedSection}
     />
   );
 }
