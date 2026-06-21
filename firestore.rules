@@ -157,10 +157,15 @@ service cloud.firestore {
       allow list: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
 
       allow create: if isSignedIn()
-        && request.auth.uid == userId
-        && isValidUser(incoming())
-        && incoming().uid == request.auth.uid
-        && incoming().role in ['client', 'barber'];
+        && (
+          isAdmin()
+          || (
+            request.auth.uid == userId
+            && isValidUser(incoming())
+            && incoming().uid == request.auth.uid
+            && incoming().role in ['client', 'barber']
+          )
+        );
 
       allow update: if isSignedIn()
         && (
@@ -203,8 +208,13 @@ service cloud.firestore {
       allow read: if true;
 
       allow create: if isSignedIn()
-        && request.auth.uid == incoming().userId
-        && isValidBarberProfile(incoming());
+        && (
+          isAdmin()
+          || (
+            request.auth.uid == incoming().userId
+            && isValidBarberProfile(incoming())
+          )
+        );
 
       allow update: if (
         isAdmin()
@@ -252,8 +262,13 @@ service cloud.firestore {
     match /schedules/{userId} {
       allow read: if true;
       allow create: if isSignedIn()
-        && request.auth.uid == incoming().userId
-        && isValidSchedule(incoming());
+        && (
+          isAdmin()
+          || (
+            request.auth.uid == incoming().userId
+            && isValidSchedule(incoming())
+          )
+        );
       allow update: if isSignedIn()
         && request.auth.uid == existing().userId
         && isValidSchedule(incoming())
@@ -275,7 +290,10 @@ service cloud.firestore {
       allow read: if true;
 
       allow create: if isSignedIn()
-        && request.auth.uid == incoming().ownerId;
+        && (
+          isAdmin()
+          || request.auth.uid == incoming().ownerId
+        );
 
       allow update: if (
         isAdmin()
@@ -306,9 +324,14 @@ service cloud.firestore {
       allow read: if true;
 
       allow create: if isSignedIn()
-        && request.auth.uid == incoming().providerId
-        && isValidService(incoming())
-        && exists(/databases/$(database)/documents/barberProfiles/$(request.auth.uid));
+        && (
+          isAdmin()
+          || (
+            request.auth.uid == incoming().providerId
+            && isValidService(incoming())
+            && exists(/databases/$(database)/documents/barberProfiles/$(request.auth.uid))
+          )
+        );
 
       allow update: if isSignedIn()
         && request.auth.uid == existing().providerId
@@ -485,14 +508,19 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isSignedIn()
-        && request.auth.uid == incoming().clientId
-        && incoming().providerId != request.auth.uid
-        && isValidReview(incoming())
-        && exists(/databases/$(database)/documents/barberProfiles/$(incoming().providerId))
-        && exists(/databases/$(database)/documents/bookings/$(incoming().bookingId))
-        && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.clientId == request.auth.uid
-        && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.status == 'completed'
-        && !exists(/databases/$(database)/documents/reviews/$(incoming().bookingId + '_' + request.auth.uid));
+        && (
+          isAdmin()
+          || (
+            request.auth.uid == incoming().clientId
+            && incoming().providerId != request.auth.uid
+            && isValidReview(incoming())
+            && exists(/databases/$(database)/documents/barberProfiles/$(incoming().providerId))
+            && exists(/databases/$(database)/documents/bookings/$(incoming().bookingId))
+            && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.clientId == request.auth.uid
+            && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.status == 'completed'
+            && !exists(/databases/$(database)/documents/reviews/$(incoming().bookingId + '_' + request.auth.uid))
+          )
+        );
       allow update: if (
         isAdmin()
         || (
