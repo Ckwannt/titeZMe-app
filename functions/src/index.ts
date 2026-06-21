@@ -154,6 +154,37 @@ export const onBarberUpdated = onDocumentWritten(
     }
 
     await syncBarberToAlgolia(barberId);
+
+    // ── Self-healing: when a real barber gets approved, hide one fake ─────
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (
+      before?.approvalStatus !== 'approved' &&
+      after?.approvalStatus === 'approved' &&
+      after?.isFake !== true
+    ) {
+      const city = after?.city || '';
+      let fakeQuery = await db
+        .collection('barberProfiles')
+        .where('isFake', '==', true)
+        .where('isVisible', '==', true)
+        .where('city', '==', city)
+        .limit(1)
+        .get();
+
+      if (fakeQuery.empty) {
+        fakeQuery = await db
+          .collection('barberProfiles')
+          .where('isFake', '==', true)
+          .where('isVisible', '==', true)
+          .limit(1)
+          .get();
+      }
+
+      if (!fakeQuery.empty) {
+        await fakeQuery.docs[0].ref.update({ isVisible: false });
+      }
+    }
   }
 );
 

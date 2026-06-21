@@ -67,7 +67,9 @@ async function fetchShops(): Promise<ShopCard[]> {
     collection(db, 'barbershops'),
     where('status', '==', 'active'),
   ));
-  const shops = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+  const shops = snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as any))
+    .filter((shop: any) => shop.isFake !== true || shop.isVisible !== false);
   if (shops.length === 0) return [];
 
   const ids: string[] = shops.map((s: any) => s.id);
