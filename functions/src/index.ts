@@ -124,6 +124,8 @@ async function syncBarberToAlgolia(
     weeklyDays,
     opensAt,
     closesAt,
+    isFake:    profile.isFake    === true,
+    isVisible: profile.isVisible !== false,
   };
 
   await getAlgoliaClient().saveObject({
