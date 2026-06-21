@@ -79,7 +79,8 @@ async function fetchBarbers(): Promise<BarberCardItem[]> {
   const featuredIds = new Set<string>(featuredSnap.docs.map(d => d.id));
 
   const hits =
-    (response.results[0] as any).hits as any[];
+    ((response.results[0] as any).hits as any[])
+      .filter((hit: any) => hit.isFake !== true || hit.isVisible !== false);
 
   return hits.map((hit: any) => ({
     id:             hit.objectID,

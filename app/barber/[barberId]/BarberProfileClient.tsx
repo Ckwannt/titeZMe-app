@@ -47,6 +47,7 @@ type BarberDoc = {
   city?: string;
   experienceStartYear?: number;
   experienceVerified?: boolean;
+  isFake?: boolean;
 };
 
 type UserDoc = {
@@ -146,6 +147,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
   const { t } = useLang();
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+  const [showFakeModal, setShowFakeModal] = useState(false);
   const [bookingContext, setBookingContext] = useState<'solo' | 'shop'>('solo');
   const [visibleReviews, setVisibleReviews] = useState(5);
   // Pre-populate schedule from SSR initialData so the sidebar shows availability immediately
@@ -305,6 +307,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   // ─── actions ─────────────────────────────────────────────────────────────────
 
   const handleBooking = (serviceId?: string) => {
+    if (profile?.isFake) { setShowFakeModal(true); return; }
     if (!user) { router.push(`/login?redirect=/barber/${barberId}`); return; }
     if (!appUser?.role) { toast.error(t('profile.pleaseLogin')); return; }
     if (appUser?.role === 'admin') { toast.error(t('profile.adminCannotBook')); return; }
@@ -378,6 +381,39 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
           <button className="absolute top-4 right-4 text-white text-3xl font-black z-10">✕</button>
           <div className="relative w-full max-w-[80vw] max-h-[80vh] aspect-square">
             <Image src={lightboxPhoto} alt="Portfolio" fill className="object-contain" referrerPolicy="no-referrer" />
+          </div>
+        </div>
+      )}
+
+      {showFakeModal && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowFakeModal(false)}
+        >
+          <div
+            className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-6 max-w-[420px] w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-black text-white mb-2">
+              Este barbero está completo por ahora
+            </h2>
+            <p className="text-sm text-[#888] font-medium leading-relaxed mb-5">
+              Actualmente no tiene huecos disponibles. Explora otros barberos en la plataforma.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => router.push('/barbers')}
+                className="w-full bg-brand-yellow text-[#0a0a0a] font-black py-3 rounded-full text-sm hover:opacity-90 transition-opacity"
+              >
+                Ver otros barberos
+              </button>
+              <button
+                onClick={() => setShowFakeModal(false)}
+                className="w-full border border-[#2a2a2a] text-[#888] hover:text-white hover:border-[#444] font-black py-3 rounded-full text-sm transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}
