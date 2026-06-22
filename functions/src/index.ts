@@ -390,6 +390,11 @@ export const onBarberServiceUpdated = onDocumentWritten(
     const data = event.data?.after.exists
       ? event.data.after.data()
       : event.data?.before.data();
+    // Skip sync for fake-barber service writes
+    // (fakes are static, syncing once via profile write is enough)
+    if (data?.isFake === true) {
+      return;
+    }
     if (data && data.providerId) {
       await syncBarberToAlgolia(data.providerId);
     }
@@ -404,6 +409,12 @@ export const onBarberScheduleUpdated = onDocumentWritten(
   async (event) => {
     const barberId = event.params.scheduleId
       .replace('_shard_0', '');
+    // For fake-barber schedule writes, skip re-sync
+    // (schedule itself doesn't carry isFake — check parent profile)
+    const profileSnap = await db.collection('barberProfiles').doc(barberId).get();
+    if (profileSnap.exists && profileSnap.data()?.isFake === true) {
+      return;
+    }
     await syncBarberToAlgolia(barberId);
   }
 );

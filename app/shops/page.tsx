@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
 // country-state-city loaded dynamically to avoid bundling 1.8 MB on initial load
@@ -66,6 +66,7 @@ async function fetchShops(): Promise<ShopCard[]> {
   const snap = await getDocs(query(
     collection(db, 'barbershops'),
     where('status', '==', 'active'),
+    limit(100),
   ));
   const shops = snap.docs
     .map(d => ({ id: d.id, ...d.data() } as any))
@@ -237,18 +238,13 @@ export default function ShopsPage() {
     return csc.City.getCitiesOfCountry(countryCode) ?? [];
   }, [csc, countryCode]);
 
-  const { data: allShops = [], isLoading, refetch: refetchShops } = useQuery({
+  const { data: allShops = [], isLoading } = useQuery({
     queryKey: ['shopsListV2'],
     queryFn: fetchShops,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
-
-  // 2-minute background refresh for the shops list (avoids N onSnapshot listeners)
-  useEffect(() => {
-    const interval = setInterval(() => { refetchShops(); }, 2 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [refetchShops]);
 
   const filtered = useMemo(() => {
     let list = [...allShops];

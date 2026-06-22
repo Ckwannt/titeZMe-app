@@ -11,7 +11,7 @@ import { locationsMatch } from '@/lib/location-utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { BarberCard } from './page';
 import { useLang } from '@/lib/i18n/LangContext';
-import { collection, query as firestoreQuery, where, getDocs } from 'firebase/firestore';
+import { collection, query as firestoreQuery, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 
@@ -73,6 +73,7 @@ async function fetchBarbers(): Promise<BarberCardItem[]> {
     getDocs(firestoreQuery(
       collection(db, 'barberProfiles'),
       where('isFeatured', '==', true),
+      limit(50),
     )),
   ]);
 
@@ -230,22 +231,16 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   }, []);
 
   // Use server-provided initialBarbers if available, otherwise fetch client-side.
-  const { data: allBarbers = [], isLoading, refetch } = useQuery({
+  const { data: allBarbers = [], isLoading } = useQuery({
     queryKey: ['barbersListV2'],
     queryFn: fetchBarbers,
     // If server already supplied barbers, use them as initial data (no fetch on load).
     // If server returned empty (e.g. Admin SDK not configured), fetch client-side.
     initialData: initialBarbers && initialBarbers.length > 0 ? initialBarbers : undefined,
-    staleTime: 0,               // Always treat as stale — rely on 2-min interval
-    refetchOnWindowFocus: true,  // Refetch when user returns to tab
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
-
-  // 2-minute background refresh: new barbers appear within 2 minutes of going live.
-  // Avoids onSnapshot (which would open N listeners for N barbers).
-  useEffect(() => {
-    const interval = setInterval(() => { refetch(); }, 2 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [refetch]);
   const [nameSearch, setNameSearch] = useState('');
   const debouncedNameSearch = useDebounce(nameSearch, 300);
   const [page, setPage] = useState(1);
