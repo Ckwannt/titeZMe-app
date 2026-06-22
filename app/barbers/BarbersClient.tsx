@@ -14,6 +14,9 @@ import { useLang } from '@/lib/i18n/LangContext';
 import { collection, query as firestoreQuery, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
+import { fakeBarbersUI } from '@/lib/fakeUIData';
+import { fakeToBarberCard } from '@/lib/fakeUIDataMappers';
+import { useShowFakeUIData } from '@/hooks/useShowFakeUIData';
 
 const algoliaClient = algoliasearch(
   process.env.NEXT_PUBLIC_ALGOLIA_APP_ID!,
@@ -173,6 +176,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   const router = useRouter();
   const { user, authLoading } = useAuth();
   const shouldBlur = !authLoading && !user;
+  const showFakes = useShowFakeUIData();
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -253,8 +257,20 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
     return csc.City.getCitiesOfCountry(countryCode) ?? [];
   }, [csc, countryCode]);
 
+  const mergedList = useMemo<BarberCardItem[]>(() => {
+    const realBarbers = allBarbers;
+    const TARGET_TOTAL = 100;
+    const visibleFakeCount = showFakes
+      ? Math.max(0, TARGET_TOTAL - realBarbers.length)
+      : 0;
+    const fakesAsCards: BarberCardItem[] = fakeBarbersUI
+      .slice(0, visibleFakeCount)
+      .map(fakeToBarberCard);
+    return [...realBarbers, ...fakesAsCards];
+  }, [allBarbers, showFakes]);
+
   const filtered = useMemo(() => {
-    let list = [...allBarbers];
+    let list = [...mergedList];
 
     if (activeFilter) {
       list = list.filter(b => {
@@ -281,7 +297,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
     const openNow = fisherYates(nonFeatured.filter(b => b.isOpenNow));
     const closed = fisherYates(nonFeatured.filter(b => !b.isOpenNow));
     return [...featured, ...openNow, ...closed];
-  }, [allBarbers, activeFilter, debouncedNameSearch]);
+  }, [mergedList, activeFilter, debouncedNameSearch]);
 
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 

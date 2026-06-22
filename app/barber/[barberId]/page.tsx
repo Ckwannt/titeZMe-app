@@ -63,6 +63,73 @@ export default async function BarberProfilePage({
 }) {
   const { barberId } = await params;
 
+  if (barberId.startsWith('fake_')) {
+    const { fakeBarbersUI } = await import('@/lib/fakeUIData');
+    const fake = fakeBarbersUI.find(f => f.userId === barberId);
+    if (!fake) notFound();
+
+    const initialData: BarberProfileInitialData = {
+      profile: {
+        id: barberId,
+        userId: barberId,
+        isFake: true,
+        firstName: fake.firstName,
+        lastName: fake.lastName,
+        bio: fake.bio,
+        city: fake.city,
+        country: fake.country,
+        languages: fake.languages,
+        specialties: fake.specialties,
+        rating: fake.rating,
+        reviewCount: fake.reviewCount,
+        totalReviews: fake.reviewCount,
+        totalCuts: fake.totalCuts,
+        currency: fake.currency,
+        photoUrl: fake.photoUrl,
+        profilePhotoUrl: fake.profilePhotoUrl,
+        experienceStartYear: fake.experienceStartYear,
+        isLive: true,
+        isSolo: true,
+        isOnboarded: true,
+        approvalStatus: 'approved',
+        location: fake.location,
+        createdAt: fake.createdAt,
+      } as any,
+      userProfile: {
+        uid: barberId,
+        firstName: fake.firstName,
+        lastName: fake.lastName,
+        photoUrl: fake.photoUrl,
+        city: fake.city,
+        country: fake.country,
+      } as any,
+      shop: null,
+      services: fake.services.map((s, i) => ({
+        id: `${fake.userId}_service_${i}`,
+        name: s.name,
+        price: s.price,
+        durationMinutes: s.duration,
+        isActive: true,
+        providerId: barberId,
+        providerType: 'barber',
+      })) as any[],
+      reviews: fake.reviews.map((r, i) => ({
+        id: `${fake.userId}_review_${i}`,
+        rating: r.rating,
+        comment: r.comment,
+        clientName: r.clientName,
+        createdAt: r.createdAt,
+        providerId: barberId,
+      })) as any[],
+      schedule: {
+        availableSlots: {},
+        weeklyHours: fake.weeklyHours,
+      } as any,
+    };
+
+    return <BarberProfileClient barberId={barberId} initialData={initialData} />;
+  }
+
   try {
     const [profileDoc, userDoc, scheduleDoc] = await Promise.all([
       adminDb.collection('barberProfiles').doc(barberId).get(),
