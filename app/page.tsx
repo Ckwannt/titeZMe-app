@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  collection, query, where, getDocs, doc, getDoc,
+  collection, query, where, getDocs, doc, getDoc, limit,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +17,7 @@ async function fetchFeaturedBarbers() {
       where('isLive', '==', true),
       where('isSolo', '==', true),
       where('approvalStatus', '==', 'approved'),
+      limit(20),
     ));
     const profiles = snap.docs
       .map(d => ({ id: d.id, ...d.data() } as any))
@@ -126,8 +127,8 @@ function normalizeCity(raw: string): string {
 async function fetchCitiesData(): Promise<{ city: string; barbers: number; shops: number }[]> {
   try {
     const [shopsSnap, barbersSnap] = await Promise.all([
-      getDocs(query(collection(db, 'barbershops'), where('status', '==', 'active'))),
-      getDocs(query(collection(db, 'barberProfiles'), where('isLive', '==', true))),
+      getDocs(query(collection(db, 'barbershops'), where('status', '==', 'active'), limit(100))),
+      getDocs(query(collection(db, 'barberProfiles'), where('isLive', '==', true), limit(200))),
     ]);
     const bc: Record<string, number> = {};
     const sc: Record<string, number> = {};
@@ -166,7 +167,9 @@ export default function LandingPage() {
   const { data: featuredBarbers = [] } = useQuery({
     queryKey: ['landing_featured'],
     queryFn: fetchFeaturedBarbers,
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const { data: citiesData = [] } = useQuery({
@@ -178,7 +181,7 @@ export default function LandingPage() {
   const { data: hideFeaturedSection = false } = useQuery({
     queryKey: ['landing_site_config'],
     queryFn: fetchHideFeaturedSection,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   return (
