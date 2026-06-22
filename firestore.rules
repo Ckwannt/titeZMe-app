@@ -338,7 +338,8 @@ service cloud.firestore {
         && isValidService(incoming())
         && incoming().providerId == existing().providerId;
 
-      allow delete: if isSignedIn() && request.auth.uid == existing().providerId;
+      allow delete: if isAdmin()
+        || (isSignedIn() && request.auth.uid == existing().providerId);
     }
 
     // Invites — shop → barber team invitations
