@@ -115,6 +115,7 @@ function buildMapsUrl(address: ShopData['address'], googleMapsUrl?: string): str
 export default function ShopProfilePage() {
   const params = useParams();
   const shopId = params.shopId as string;
+  const isFake = typeof shopId === 'string' && shopId.startsWith('fake_');
   const { user, appUser } = useAuth();
   const { t } = useLang();
   const router = useRouter();
@@ -131,15 +132,15 @@ export default function ShopProfilePage() {
   const [schedule, setSchedule] = useState<{ availableSlots?: Record<string, string[]> } | null>(null);
 
   useEffect(() => {
-    if (!shopId) return;
+    if (!shopId || isFake) return;
     const unsub = onSnapshot(doc(db, 'barbershops', shopId), snap => {
       setShop(snap.exists() ? ({ id: snap.id, ...snap.data() } as ShopData) : null);
     });
     return () => unsub();
-  }, [shopId]);
+  }, [shopId, isFake]);
 
   useEffect(() => {
-    if (!shopId) return;
+    if (!shopId || isFake) return;
     const q = query(
       collection(db, 'barberProfiles'),
       where('shopId', '==', shopId),
@@ -149,15 +150,40 @@ export default function ShopProfilePage() {
       setBarberDocs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
     return () => unsub();
-  }, [shopId]);
+  }, [shopId, isFake]);
 
   useEffect(() => {
-    if (!shopId) return;
+    if (!shopId || isFake) return;
     const unsub = onSnapshot(doc(db, 'schedules', `${shopId}_shard_0`), snap => {
       setSchedule(snap.exists() ? (snap.data() as { availableSlots?: Record<string, string[]> }) : null);
     });
     return () => unsub();
-  }, [shopId]);
+  }, [shopId, isFake]);
+
+  useEffect(() => {
+    if (!isFake) return;
+    import('@/lib/fakeUIData').then(({ fakeShopsUI }) => {
+      const fake = fakeShopsUI.find(f => f.shopId === shopId);
+      if (!fake) {
+        setShop(null);
+        return;
+      }
+      setShop({
+        id: fake.shopId,
+        name: fake.name,
+        description: fake.description,
+        address: fake.address,
+        coverPhotoUrl: fake.coverPhotoUrl,
+        logoUrl: fake.logoUrl,
+        chairsCount: fake.chairsCount,
+        establishedYear: fake.establishedYear,
+        status: 'active',
+        createdAt: fake.createdAt,
+      } as ShopData);
+      setBarberDocs([]);
+      setSchedule({ availableSlots: {} });
+    });
+  }, [isFake, shopId]);
 
   // Cached: shop services
   const { data: services = [] } = useQuery<ServiceDoc[]>({
@@ -174,7 +200,7 @@ export default function ShopProfilePage() {
       return snap.docs.map(d => ({ id: d.id, ...d.data() } as ServiceDoc));
     },
     staleTime: 5 * 60 * 1000,
-    enabled: !!shopId,
+    enabled: !!shopId && !isFake,
   });
 
   // Cached: per-barber user info + schedules
@@ -199,7 +225,7 @@ export default function ShopProfilePage() {
       return result;
     },
     staleTime: 5 * 60 * 1000,
-    enabled: barberIds.length > 0,
+    enabled: barberIds.length > 0 && !isFake,
   });
 
   const barbers: BarberInShop[] = barberDocs.map((b: any) => ({

@@ -13,6 +13,9 @@ import { locationsMatch } from '@/lib/location-utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAuth } from '@/lib/auth-context';
 import { useLang } from '@/lib/i18n/LangContext';
+import { fakeShopsUI } from '@/lib/fakeUIData';
+import { fakeToShopCard } from '@/lib/fakeUIDataMappers';
+import { useShowFakeUIData } from '@/hooks/useShowFakeUIData';
 
 const PER_PAGE = 12;
 
@@ -174,6 +177,7 @@ export default function ShopsPage() {
   const { user, authLoading } = useAuth();
   const { t } = useLang();
   const shouldBlur = !authLoading && !user;
+  const showFakes = useShowFakeUIData();
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -246,8 +250,19 @@ export default function ShopsPage() {
     refetchOnMount: false,
   });
 
+  const mergedShops = useMemo<ShopCard[]>(() => {
+    const TARGET_TOTAL = 50;
+    const visibleFakeCount = showFakes
+      ? Math.max(0, TARGET_TOTAL - allShops.length)
+      : 0;
+    const fakesAsCards: ShopCard[] = fakeShopsUI
+      .slice(0, visibleFakeCount)
+      .map(fakeToShopCard);
+    return [...allShops, ...fakesAsCards];
+  }, [allShops, showFakes]);
+
   const filtered = useMemo(() => {
-    let list = [...allShops];
+    let list = [...mergedShops];
 
     if (activeFilter) {
       list = list.filter(s => {
@@ -271,7 +286,7 @@ export default function ShopsPage() {
     const openNow = fisherYates(nonFeatured.filter(s => s.isOpenNow));
     const closed = fisherYates(nonFeatured.filter(s => !s.isOpenNow));
     return [...featured, ...openNow, ...closed];
-  }, [allShops, activeFilter, debouncedNameSearch]);
+  }, [mergedShops, activeFilter, debouncedNameSearch]);
 
   const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
