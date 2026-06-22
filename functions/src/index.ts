@@ -13,7 +13,7 @@ import { setGlobalOptions } from 'firebase-functions/v2';
 setGlobalOptions({ region: 'europe-west2' });
 
 const DATABASE_ID =
-  'ai-studio-a8aba99a-6d28-4780-b075-b9829cce70f1';
+  'titezme-prod';
 const ALGOLIA_INDEX = 'barbers';
 
 admin.initializeApp();

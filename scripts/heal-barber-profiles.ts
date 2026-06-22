@@ -15,7 +15,7 @@ if (!getApps().length) {
   });
 }
 
-const db = getFirestore(getApp(), 'ai-studio-a8aba99a-6d28-4780-b075-b9829cce70f1');
+const db = getFirestore(getApp(), 'titezme-prod');
 
 async function healBarberProfiles() {
   console.log('Starting barberProfiles heal...');
