@@ -15,6 +15,7 @@ import {
   type ChallengeSubmissionData,
   type ChallengeSettingsData,
 } from '@/lib/schemas';
+import { statusColor } from '@/lib/challenge-utils';
 
 type Mode = 'barber' | 'shop';
 
@@ -162,21 +163,6 @@ function formatDate(ms?: number): string {
     });
   } catch {
     return '';
-  }
-}
-
-function statusColor(status?: string): { bg: string; text: string; label: string } {
-  switch (status) {
-    case 'awaiting_payment':
-      return { bg: 'bg-brand-yellow/10', text: 'text-brand-yellow', label: 'Awaiting payment' };
-    case 'pending':
-      return { bg: 'bg-[#3b3b1a]', text: 'text-brand-yellow', label: 'Under review' };
-    case 'approved':
-      return { bg: 'bg-[#103a1c]', text: 'text-brand-green', label: 'Approved' };
-    case 'rejected':
-      return { bg: 'bg-[#3a1010]', text: 'text-brand-red', label: 'Rejected' };
-    default:
-      return { bg: 'bg-[#1a1a1a]', text: 'text-[#888]', label: status || 'unknown' };
   }
 }
 
