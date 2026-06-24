@@ -2,10 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  doc, getDoc, setDoc,
+  collection, query, orderBy, limit, startAfter, where,
+  getDocs, addDoc, updateDoc,
+} from 'firebase/firestore';
+import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAdminData } from '@/components/AdminGuard';
 import { toast } from '@/lib/toast';
+import type { ChallengeSubmission } from '@/lib/types';
 
 type TabKey = 'settings' | 'submissions';
 const REF_LABELS = ['back', 'left', 'right', 'front'] as const;
@@ -62,6 +68,19 @@ export default function AdminChallengePage() {
 
   const [uploadingLabel, setUploadingLabel] = useState<string | null>(null);
 
+  // Submissions tab state
+  const [submissions, setSubmissions] = useState<(ChallengeSubmission & { id: string })[]>([]);
+  const [statusFilter, setStatusFilter] = useState<ChallengeSubmission['status']>(
+    (searchParams.get('status') as ChallengeSubmission['status']) || 'pending'
+  );
+  const [loadingList, setLoadingList] = useState(false);
+  const [lastCursor, setLastCursor] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showRejectFor, setShowRejectFor] = useState<string | null>(null);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState('');
+  const [actioning, setActioning] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -95,6 +114,129 @@ export default function AdminChallengePage() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  const fetchSubmissions = useCallback(async (reset: boolean) => {
+    if (loadingList) return;
+    setLoadingList(true);
+    try {
+      let q = query(
+        collection(db, 'challengeSubmissions'),
+        where('status', '==', statusFilter),
+        orderBy('submittedAt', 'desc'),
+        limit(10)
+      );
+      if (!reset && lastCursor) {
+        q = query(q, startAfter(lastCursor));
+      }
+      const snap = await getDocs(q);
+      const docs = snap.docs.map(d => ({ id: d.id, ...(d.data() as ChallengeSubmission) }));
+      if (reset) {
+        setSubmissions(docs);
+      } else {
+        setSubmissions(prev => [...prev, ...docs]);
+      }
+      setLastCursor(snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : lastCursor);
+      setHasMore(snap.docs.length === 10);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to load submissions';
+      toast.error(msg);
+    } finally {
+      setLoadingList(false);
+    }
+  }, [statusFilter, lastCursor, loadingList]);
+
+  useEffect(() => {
+    if (activeTab !== 'submissions') return;
+    setLastCursor(null);
+    setHasMore(true);
+    setExpandedId(null);
+    setShowRejectFor(null);
+    setRejectionReasonInput('');
+    fetchSubmissions(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, statusFilter]);
+
+  async function handleApprove(submission: ChallengeSubmission & { id: string }) {
+    if (!auth.currentUser) return;
+    setActioning(submission.id);
+    try {
+      const now = Date.now();
+      await updateDoc(doc(db, 'challengeSubmissions', submission.id), {
+        status: 'approved',
+        approvedAt: now,
+        rejectionReason: null,
+      });
+      const linkTo = submission.type === 'shop'
+        ? '/dashboard/shop/challenge'
+        : '/dashboard/barber/challenge';
+      await addDoc(collection(db, 'notifications'), {
+        userId: submission.userId,
+        message: `🎉 Your titeZMe Challenge submission has been approved! It will go live when voting opens.`,
+        read: false,
+        linkTo,
+        createdAt: now,
+      });
+      await addDoc(collection(db, 'adminLogs'), {
+        action: 'approved_submission',
+        targetId: submission.id,
+        adminId: auth.currentUser.uid,
+        timestamp: now,
+      });
+      toast.success('Submission approved.');
+      setSubmissions(prev => prev.filter(s => s.id !== submission.id));
+      setExpandedId(null);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to approve';
+      toast.error(msg);
+    } finally {
+      setActioning(null);
+    }
+  }
+
+  async function handleReject(submission: ChallengeSubmission & { id: string }) {
+    if (!auth.currentUser) return;
+    const reason = rejectionReasonInput.trim();
+    if (!reason) {
+      toast.error('Please provide a reason.');
+      return;
+    }
+    setActioning(submission.id);
+    try {
+      const now = Date.now();
+      await updateDoc(doc(db, 'challengeSubmissions', submission.id), {
+        status: 'rejected',
+        rejectedAt: now,
+        rejectionReason: reason,
+      });
+      const linkTo = submission.type === 'shop'
+        ? '/dashboard/shop/challenge'
+        : '/dashboard/barber/challenge';
+      await addDoc(collection(db, 'notifications'), {
+        userId: submission.userId,
+        message: `❌ Your titeZMe Challenge submission needs to be resubmitted. Reason: ${reason}`,
+        read: false,
+        linkTo,
+        createdAt: now,
+      });
+      await addDoc(collection(db, 'adminLogs'), {
+        action: 'requested_resubmission',
+        targetId: submission.id,
+        adminId: auth.currentUser.uid,
+        timestamp: now,
+        reason,
+      });
+      toast.success('Resubmission requested.');
+      setSubmissions(prev => prev.filter(s => s.id !== submission.id));
+      setShowRejectFor(null);
+      setRejectionReasonInput('');
+      setExpandedId(null);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to reject';
+      toast.error(msg);
+    } finally {
+      setActioning(null);
+    }
+  }
 
   const switchTab = useCallback((tab: TabKey) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -273,8 +415,326 @@ export default function AdminChallengePage() {
       </div>
 
       {activeTab === 'submissions' && (
-        <div style={{ padding: '60px 0', textAlign: 'center', color: '#555', fontSize: 13 }}>
-          Submissions manager coming in Step 6.
+        <div>
+          {/* SUB-TABS (status filter) */}
+          <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #1e1e1e', marginBottom: 24 }}>
+            {(['pending', 'awaiting_payment', 'approved', 'rejected'] as const).map(status => (
+              <button
+                key={status}
+                onClick={() => {
+                  setStatusFilter(status);
+                  setLastCursor(null);
+                  router.replace(`/admin/challenge?tab=submissions&status=${status}`);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: '12px 20px',
+                  color: statusFilter === status ? '#F5C518' : '#555',
+                  borderBottom: statusFilter === status ? '2px solid #F5C518' : '2px solid transparent',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  textTransform: 'capitalize',
+                  fontFamily: 'Nunito, sans-serif',
+                  marginBottom: -1,
+                }}
+              >
+                {status.replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+
+          {/* EMPTY / LOADING STATES */}
+          {loadingList && submissions.length === 0 && (
+            <div style={{ padding: '60px 0', textAlign: 'center', color: '#555', fontSize: 13 }}>
+              Loading...
+            </div>
+          )}
+          {!loadingList && submissions.length === 0 && (
+            <div style={{ padding: '60px 0', textAlign: 'center', color: '#555', fontSize: 13 }}>
+              No submissions in this category.
+            </div>
+          )}
+
+          {/* LIST */}
+          {submissions.map(sub => (
+            <div
+              key={sub.id}
+              style={{
+                background: '#111',
+                border: '1px solid #1e1e1e',
+                borderRadius: 16,
+                padding: 20,
+                marginBottom: 12,
+              }}
+            >
+              {/* ROW HEADER */}
+              <div
+                onClick={() => setExpandedId(expandedId === sub.id ? null : sub.id)}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16 }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={sub.submitterAvatarUrl || '/placeholder-avatar.png'}
+                  alt=""
+                  style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', background: '#222' }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>{sub.submitterName}</div>
+                  <div style={{ color: '#666', fontSize: 12 }}>
+                    {sub.type === 'shop' ? 'Barbershop' : 'Barber'} · {sub.submitterCity} ·{' '}
+                    {new Date(sub.submittedAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </div>
+                </div>
+                <div style={{ color: '#555', fontSize: 11 }}>
+                  {expandedId === sub.id ? '▼' : '▶'}
+                </div>
+              </div>
+
+              {/* EXPANDED DETAIL */}
+              {expandedId === sub.id && (
+                <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #1e1e1e' }}>
+                  {/* PHOTOS */}
+                  {sub.photos && sub.photos.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ color: '#888', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                        Photos ({sub.photos.length})
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                        {sub.photos.map((url, i) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            key={i}
+                            src={url}
+                            alt={`Photo ${i + 1}`}
+                            style={{
+                              width: '100%',
+                              aspectRatio: '1/1',
+                              objectFit: 'cover',
+                              borderRadius: 10,
+                              background: '#222',
+                              cursor: 'pointer',
+                            }}
+                            onClick={() => window.open(url, '_blank')}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* VIDEO */}
+                  {sub.videoUrl && (
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ color: '#888', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                        Video
+                      </div>
+                      <video
+                        src={sub.videoUrl}
+                        controls
+                        preload="metadata"
+                        style={{ width: '100%', maxWidth: 480, borderRadius: 10, background: '#000' }}
+                      />
+                    </div>
+                  )}
+
+                  {/* DESCRIPTION */}
+                  {sub.description && (
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ color: '#888', fontSize: 11, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                        Description
+                      </div>
+                      <div style={{ fontSize: 14, lineHeight: 1.5, color: '#ddd', whiteSpace: 'pre-wrap' }}>
+                        {sub.description}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PAYMENT INFO */}
+                  <div style={{ marginBottom: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div>
+                      <div style={{ color: '#888', fontSize: 11, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+                        Declared amount
+                      </div>
+                      <div style={{ fontSize: 14, color: '#fff' }}>
+                        {sub.declaredAmount != null ? `€${sub.declaredAmount}` : '—'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ color: '#888', fontSize: 11, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+                        Declared reference
+                      </div>
+                      <div style={{ fontSize: 14, color: '#fff' }}>
+                        {sub.declaredReference || '—'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* META */}
+                  <div style={{ marginBottom: 16, color: '#555', fontSize: 11 }}>
+                    User ID: {sub.userId} · Status: {sub.status} · Resubmissions: {sub.resubmissionCount || 0}
+                    {sub.barberCode && ` · Barber code: ${sub.barberCode}`}
+                    {sub.shopId && ` · Shop ID: ${sub.shopId}`}
+                  </div>
+
+                  {/* PREVIOUS REJECTION REASON */}
+                  {sub.rejectionReason && (
+                    <div style={{ marginBottom: 16, padding: 12, background: '#1a0808', border: '1px solid #4a1f1f', borderRadius: 10 }}>
+                      <div style={{ color: '#EF4444', fontSize: 11, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+                        Previous rejection reason
+                      </div>
+                      <div style={{ fontSize: 13, color: '#ddd' }}>
+                        {sub.rejectionReason}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ACTIONS — pending only */}
+                  {sub.status === 'pending' && (
+                    <div style={{ marginTop: 20, display: 'flex', gap: 12 }}>
+                      <button
+                        onClick={() => handleApprove(sub)}
+                        disabled={actioning === sub.id}
+                        style={{
+                          background: actioning === sub.id ? '#1a1a1a' : '#22C55E',
+                          color: actioning === sub.id ? '#555' : '#000',
+                          border: 'none',
+                          padding: '10px 24px',
+                          borderRadius: 10,
+                          fontWeight: 900,
+                          fontSize: 13,
+                          cursor: actioning === sub.id ? 'not-allowed' : 'pointer',
+                          fontFamily: 'Nunito, sans-serif',
+                        }}
+                      >
+                        {actioning === sub.id ? 'Working...' : 'Approve'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowRejectFor(sub.id);
+                          setRejectionReasonInput('');
+                        }}
+                        style={{
+                          background: 'transparent',
+                          color: '#EF4444',
+                          border: '1px solid #EF4444',
+                          padding: '10px 24px',
+                          borderRadius: 10,
+                          fontWeight: 900,
+                          fontSize: 13,
+                          cursor: 'pointer',
+                          fontFamily: 'Nunito, sans-serif',
+                        }}
+                      >
+                        Request Resubmission
+                      </button>
+                    </div>
+                  )}
+
+                  {/* REJECT FORM */}
+                  {showRejectFor === sub.id && (
+                    <div style={{ marginTop: 16, padding: 16, background: '#0d0404', border: '1px solid #4a1f1f', borderRadius: 12 }}>
+                      <div style={{ color: '#EF4444', fontSize: 12, marginBottom: 8, fontWeight: 700 }}>
+                        Reason for resubmission request:
+                      </div>
+                      <textarea
+                        value={rejectionReasonInput}
+                        onChange={(e) => setRejectionReasonInput(e.target.value)}
+                        placeholder="e.g. Payment not received, photo quality too low, etc."
+                        rows={3}
+                        style={{
+                          width: '100%',
+                          background: '#141414',
+                          border: '1px solid #2a2a2a',
+                          borderRadius: 10,
+                          padding: 12,
+                          color: '#fff',
+                          fontSize: 13,
+                          fontFamily: 'inherit',
+                          resize: 'vertical',
+                          boxSizing: 'border-box',
+                          outline: 'none',
+                        }}
+                      />
+                      <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => handleReject(sub)}
+                          disabled={!rejectionReasonInput.trim() || actioning === sub.id}
+                          style={{
+                            background: !rejectionReasonInput.trim() ? '#1a1a1a' : '#EF4444',
+                            color: !rejectionReasonInput.trim() ? '#555' : '#fff',
+                            border: 'none',
+                            padding: '10px 20px',
+                            borderRadius: 10,
+                            fontWeight: 900,
+                            fontSize: 13,
+                            cursor: !rejectionReasonInput.trim() ? 'not-allowed' : 'pointer',
+                            fontFamily: 'Nunito, sans-serif',
+                          }}
+                        >
+                          {actioning === sub.id ? 'Working...' : 'Send'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowRejectFor(null);
+                            setRejectionReasonInput('');
+                          }}
+                          style={{
+                            background: 'transparent',
+                            color: '#666',
+                            border: '1px solid #2a2a2a',
+                            padding: '10px 20px',
+                            borderRadius: 10,
+                            fontWeight: 700,
+                            fontSize: 13,
+                            cursor: 'pointer',
+                            fontFamily: 'Nunito, sans-serif',
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* AWAITING PAYMENT */}
+                  {sub.status === 'awaiting_payment' && (
+                    <div style={{ marginTop: 16, padding: 12, background: '#0a0a0a', border: '1px dashed #2a2a2a', borderRadius: 10, color: '#777', fontSize: 12 }}>
+                      User has filled the form but has not yet clicked &quot;I paid&quot;.
+                      No admin action available until payment is declared.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* LOAD MORE */}
+          {hasMore && submissions.length > 0 && (
+            <div style={{ textAlign: 'center', marginTop: 20 }}>
+              <button
+                onClick={() => fetchSubmissions(false)}
+                disabled={loadingList}
+                style={{
+                  background: '#1a1a1a',
+                  color: '#F5C518',
+                  border: '1px solid #2a2a2a',
+                  padding: '10px 28px',
+                  borderRadius: 10,
+                  fontWeight: 800,
+                  fontSize: 13,
+                  cursor: loadingList ? 'not-allowed' : 'pointer',
+                  fontFamily: 'Nunito, sans-serif',
+                }}
+              >
+                {loadingList ? 'Loading...' : 'Load more'}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
