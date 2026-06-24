@@ -26,5 +26,28 @@ service firebase.storage {
         && (request.resource.contentType.matches('image/.*')
             || request.resource.contentType.matches('video/.*'));
     }
+    match /challenge-submissions/{uid}/{type}/{file} {
+      allow read: if true;
+
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && (type == 'photos' || type == 'video')
+        && (
+          (type == 'photos'
+            && request.resource.size < 1 * 1024 * 1024
+            && request.resource.contentType.matches('image/.*'))
+          ||
+          (type == 'video'
+            && request.resource.size < 10 * 1024 * 1024
+            && request.resource.contentType.matches('video/.*'))
+        );
+
+      allow delete: if request.auth != null
+        && request.auth.uid == uid;
+    }
+    match /challenge-reference-photos/{file} {
+      allow read: if true;
+      allow write, delete: if false;
+    }
   }
 }
