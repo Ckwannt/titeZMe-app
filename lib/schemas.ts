@@ -224,6 +224,7 @@ export const challengeSettingsSchema = z.object({
   feeShop: z.number().nonnegative().optional(),
   prizeBarberValue: z.number().nonnegative().optional(),
   prizeShopValue: z.number().nonnegative().optional(),
+  showHomepageBox: z.boolean().optional(),
 }).passthrough();
 export type ChallengeSettingsData = z.infer<typeof challengeSettingsSchema>;
 export const challengeSettingsUpdateSchema = challengeSettingsSchema.partial();

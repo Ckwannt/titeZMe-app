@@ -258,4 +258,5 @@ export interface ChallengeSettings {
   feeShop: number;
   prizeBarberValue: number;
   prizeShopValue: number;
+  showHomepageBox?: boolean;
 }
