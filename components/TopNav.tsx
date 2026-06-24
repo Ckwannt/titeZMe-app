@@ -90,6 +90,7 @@ export function TopNav() {
           </div>
           <Link href="/barbers" className={getLinkClass('/barbers')}>{t('nav.barbers')}</Link>
           <Link href="/shops" className={getLinkClass('/shops')}>{t('nav.shops')}</Link>
+          <Link href="/challenge" className={getLinkClass('/challenge')}>{t('nav.challenge')}</Link>
         </div>
 
         {/* RIGHT — Actions */}
@@ -421,6 +422,7 @@ export function TopNav() {
             { label: t('nav.home'), href: '/' },
             { label: t('nav.barbers'), href: '/barbers' },
             { label: t('nav.shops'), href: '/shops' },
+            { label: t('nav.challenge'), href: '/challenge' },
             { label: t('nav.forBarbers'), href: '/for-barbers' },
             { label: t('nav.forShops'), href: '/for-shops' },
           ].map(link => (
