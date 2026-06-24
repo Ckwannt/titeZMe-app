@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc, collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
@@ -26,6 +26,23 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
   const { t } = useLang();
   const [copiedCode, setCopiedCode] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [challengeUnread, setChallengeUnread] = useState(0);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', user.uid),
+      where('type', 'in', ['challenge_approved', 'challenge_rejected']),
+      where('read', '==', false)
+    );
+    const unsub = onSnapshot(q, snap => {
+      setChallengeUnread(snap.size);
+    }, err => {
+      console.warn('challenge unread listener', err);
+    });
+    return () => unsub();
+  }, [user?.uid]);
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.uid],
@@ -172,7 +189,12 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
                 isActive(l) ? "bg-[#1a1a1a] text-brand-yellow" : "text-[#888] hover:bg-[#1a1a1a] hover:text-white"
               }`}
             >
-              {l.label}
+              <span className="flex items-center gap-2">
+                {l.label}
+                {l.href === '/dashboard/barber/challenge' && challengeUnread > 0 && (
+                  <span className="w-2 h-2 bg-brand-red rounded-full" />
+                )}
+              </span>
             </Link>
           ))}
         </div>

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   doc, getDoc, setDoc,
   collection, query, orderBy, limit, startAfter, where,
-  getDocs, addDoc, updateDoc,
+  getDocs, addDoc, updateDoc, increment,
 } from 'firebase/firestore';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
@@ -171,11 +171,19 @@ export default function AdminChallengePage() {
         : '/dashboard/barber/challenge';
       await addDoc(collection(db, 'notifications'), {
         userId: submission.userId,
+        type: 'challenge_approved',
         message: `🎉 Your titeZMe Challenge submission has been approved! It will go live when voting opens.`,
         read: false,
         linkTo,
         createdAt: now,
       });
+      try {
+        await updateDoc(doc(db, 'users', submission.userId), {
+          unreadCount: increment(1),
+        });
+      } catch (e) {
+        console.warn('unreadCount increment failed (approve)', e);
+      }
       await addDoc(collection(db, 'adminLogs'), {
         action: 'approved_submission',
         targetId: submission.id,
@@ -213,11 +221,19 @@ export default function AdminChallengePage() {
         : '/dashboard/barber/challenge';
       await addDoc(collection(db, 'notifications'), {
         userId: submission.userId,
+        type: 'challenge_rejected',
         message: `❌ Your titeZMe Challenge submission needs to be resubmitted. Reason: ${reason}`,
         read: false,
         linkTo,
         createdAt: now,
       });
+      try {
+        await updateDoc(doc(db, 'users', submission.userId), {
+          unreadCount: increment(1),
+        });
+      } catch (e) {
+        console.warn('unreadCount increment failed (reject)', e);
+      }
       await addDoc(collection(db, 'adminLogs'), {
         action: 'requested_resubmission',
         targetId: submission.id,

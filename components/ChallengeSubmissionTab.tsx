@@ -16,6 +16,7 @@ import {
   type ChallengeSettingsData,
 } from '@/lib/schemas';
 import { statusColor } from '@/lib/challenge-utils';
+import { toast } from '@/lib/toast';
 
 type Mode = 'barber' | 'shop';
 
@@ -164,6 +165,56 @@ function formatDate(ms?: number): string {
   } catch {
     return '';
   }
+}
+
+function RejectionBanner({
+  reason,
+  onJumpToForm,
+}: {
+  reason?: string;
+  onJumpToForm: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = (reason?.length || 0) > 200;
+  const visible = !isLong || expanded ? reason : `${reason!.slice(0, 200)}…`;
+  return (
+    <div className="mb-8 bg-[#3a1010] border-2 border-brand-red/50 rounded-[16px] p-6">
+      <div className="flex items-start gap-3">
+        <div className="text-2xl shrink-0">❌</div>
+        <div className="flex-1 min-w-0">
+          <div className="text-brand-red font-black text-base mb-2">
+            Your previous submission was rejected
+          </div>
+          {reason && (
+            <div className="text-[#f5b5b5] text-[13px] leading-relaxed mb-2 whitespace-pre-wrap">
+              {visible}
+              {isLong && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded(v => !v)}
+                  className="ml-2 text-brand-red font-extrabold hover:underline"
+                >
+                  {expanded ? 'Show less' : 'Read full reason'}
+                </button>
+              )}
+            </div>
+          )}
+          <div className="flex items-center gap-3 mt-3">
+            <button
+              type="button"
+              onClick={onJumpToForm}
+              className="bg-brand-red text-white text-[12px] font-black px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+            >
+              Jump to form
+            </button>
+            <span className="text-[#f5b5b5] text-[11px] opacity-80">
+              Edit your submission below and resubmit.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function ChallengeSubmissionTab({ mode }: Props) {
@@ -470,6 +521,19 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
   // Existing submission state (not rejected) → show status panel
   if (existingSubmission && existingSubmission.status !== 'rejected') {
     const s = statusColor(existingSubmission.status);
+    const status = existingSubmission.status;
+
+    const handleCopyShareLink = () => {
+      const name = encodeURIComponent(existingSubmission.submitterName || '');
+      const url = `https://titezme.com/challenge?ref=${name}`;
+      try {
+        navigator.clipboard.writeText(url);
+        toast.success('Link copied — share it with your network!');
+      } catch {
+        toast.error('Could not copy link.');
+      }
+    };
+
     return (
       <div className="p-6 md:p-10 animate-fadeUp">
         <h1 className="text-2xl font-black mb-2">🏆 Challenge</h1>
@@ -501,33 +565,129 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
         )}
 
         <div className="bg-[#111] border border-[#2a2a2a] rounded-[16px] p-8 max-w-[640px]">
-          <div className={`inline-block px-3 py-1.5 rounded-full ${s.bg} ${s.text} text-[11px] font-extrabold uppercase mb-4`}>
-            {s.label}
-          </div>
-          <div className="text-[#ccc] text-sm mb-6">
-            Submitted on{' '}
-            <span className="text-white font-bold">{formatDate(existingSubmission.submittedAt)}</span> as{' '}
-            <span className="text-white font-bold">{submitMode === 'barber' ? 'a barber' : 'a barbershop'}</span>.
+          {status === 'awaiting_payment' && (
+            <>
+              <div className="text-4xl mb-3">💳</div>
+              <div className={`inline-block px-3 py-1.5 rounded-full ${s.bg} ${s.text} text-[11px] font-extrabold uppercase mb-3`}>
+                {s.label}
+              </div>
+              <h2 className="text-xl font-black mb-2">Almost there — complete your payment</h2>
+              <p className="text-[#ccc] text-sm mb-6 leading-relaxed">
+                Your proposal is uploaded but the entry fee hasn&apos;t been paid yet. Send the fee and confirm to enter the challenge.
+              </p>
+              <button
+                onClick={() => router.push(`/dashboard/${submitMode}/challenge/payment`)}
+                className="w-full sm:w-auto bg-brand-yellow text-[#0a0a0a] font-black text-sm px-6 py-3 rounded-xl hover:opacity-90 transition-opacity"
+              >
+                Continue to payment
+              </button>
+            </>
+          )}
+
+          {status === 'pending' && (
+            <>
+              <div className="text-4xl mb-3">👀</div>
+              <div className={`inline-block px-3 py-1.5 rounded-full ${s.bg} ${s.text} text-[11px] font-extrabold uppercase mb-3`}>
+                {s.label}
+              </div>
+              <h2 className="text-xl font-black mb-2">Awaiting verification</h2>
+              <p className="text-[#ccc] text-sm mb-4 leading-relaxed">
+                We&apos;ve received your payment declaration. Admin is verifying the bank transfer. You&apos;ll get a notification when reviewed (usually within 24h).
+              </p>
+              {(existingSubmission.declaredAmount !== undefined || existingSubmission.declaredReference) && (
+                <div className="text-[#666] text-[12px]">
+                  You declared:{' '}
+                  {existingSubmission.declaredAmount !== undefined && (
+                    <span className="text-[#aaa]">€{existingSubmission.declaredAmount}</span>
+                  )}
+                  {existingSubmission.declaredReference && (
+                    <> · ref: <span className="text-[#aaa] font-mono">{existingSubmission.declaredReference}</span></>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {status === 'approved' && (
+            <>
+              <div className="text-4xl mb-3">🎉</div>
+              <div className={`inline-block px-3 py-1.5 rounded-full ${s.bg} ${s.text} text-[11px] font-extrabold uppercase mb-3`}>
+                {s.label}
+              </div>
+              <h2 className="text-xl font-black mb-2">You&apos;re in the Challenge!</h2>
+              <p className="text-[#ccc] text-sm mb-2 leading-relaxed">
+                Your submission is approved. It will go live when voting opens
+                {votingOpenAt && (
+                  <> on <span className="text-white font-bold">{formatDate(votingOpenAt)}</span></>
+                )}
+                .
+              </p>
+              {settings.votingCloseAt && (
+                <p className="text-[#888] text-[12px] mb-6">
+                  Voting closes on <span className="text-white font-bold">{formatDate(settings.votingCloseAt)}</span>.
+                </p>
+              )}
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={handleCopyShareLink}
+                  className="bg-brand-yellow text-[#0a0a0a] font-black text-sm px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
+                >
+                  Copy your share link
+                </button>
+                <button
+                  onClick={() => router.push(`/dashboard/${submitMode}`)}
+                  className="bg-[#1a1a1a] text-white font-black text-sm px-5 py-2.5 rounded-xl hover:bg-[#222] transition-colors"
+                >
+                  Back to dashboard
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Your submission — always shown when one exists */}
+        <div className="bg-[#111] border border-[#2a2a2a] rounded-[16px] p-8 max-w-[640px] mt-6">
+          <div className="text-[#888] text-[11px] uppercase tracking-widest mb-4 font-extrabold">
+            Your submission
           </div>
 
           {existingSubmission.photos && existingSubmission.photos.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="grid grid-cols-4 gap-2 mb-4">
               {existingSubmission.photos.map((url, i) => (
-                <div key={i} className="aspect-square relative rounded-[16px] overflow-hidden border border-[#2a2a2a]">
+                <a
+                  key={i}
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="aspect-square relative rounded-[10px] overflow-hidden border border-[#2a2a2a] block hover:opacity-80 transition-opacity"
+                >
                   <Image src={url} alt={`Submission ${i + 1}`} fill className="object-cover" referrerPolicy="no-referrer" />
-                </div>
+                </a>
               ))}
             </div>
           )}
 
-          {existingSubmission.status === 'awaiting_payment' && (
-            <button
-              onClick={() => router.push(`/dashboard/${submitMode}/challenge/payment`)}
-              className="w-full bg-brand-yellow text-[#0a0a0a] font-black text-sm px-5 py-3 rounded-xl hover:opacity-90 transition-opacity"
-            >
-              Continue to payment
-            </button>
+          {existingSubmission.videoUrl && (
+            <video
+              src={existingSubmission.videoUrl}
+              controls
+              preload="metadata"
+              className="w-full max-w-[400px] rounded-[10px] bg-black mb-4"
+            />
           )}
+
+          {existingSubmission.description && (
+            <div className="text-[#ddd] text-sm whitespace-pre-wrap leading-relaxed">
+              {existingSubmission.description}
+            </div>
+          )}
+
+          <div className="text-[#666] text-[11px] mt-4">
+            Submitted on {formatDate(existingSubmission.submittedAt)}
+            {existingSubmission.resubmissionCount && existingSubmission.resubmissionCount > 0
+              ? ` · Resubmission #${existingSubmission.resubmissionCount}`
+              : ''}
+          </div>
         </div>
       </div>
     );
@@ -550,15 +710,13 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
       </p>
 
       {existingSubmission?.status === 'rejected' && (
-        <div className="mb-8 bg-[#3a1010] border border-brand-red/40 rounded-[16px] p-5">
-          <div className="text-brand-red font-black text-sm mb-1">Your previous submission was rejected</div>
-          {existingSubmission.rejectionReason && (
-            <div className="text-[#f5b5b5] text-[13px]">{existingSubmission.rejectionReason}</div>
-          )}
-          <div className="text-[#f5b5b5] text-[12px] mt-2 opacity-80">
-            You can edit and resubmit below.
-          </div>
-        </div>
+        <RejectionBanner
+          reason={existingSubmission.rejectionReason}
+          onJumpToForm={() => {
+            const slot = document.getElementById('challenge-photo-slot-0');
+            if (slot) slot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }}
+        />
       )}
 
       {/* Section 2: Submit as (toggle) */}
@@ -641,6 +799,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
           {photos.map((slot, i) => (
             <div
               key={i}
+              id={i === 0 ? 'challenge-photo-slot-0' : undefined}
               className="aspect-square bg-[#111] rounded-[16px] overflow-hidden border border-dashed border-[#333] relative"
             >
               <input

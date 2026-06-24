@@ -111,6 +111,11 @@
     { "collectionGroup": "challengeVotes", "queryScope": "COLLECTION", "fields": [
       { "fieldPath": "submissionId", "order": "ASCENDING" },
       { "fieldPath": "votedAt", "order": "DESCENDING" }
+    ]},
+    { "collectionGroup": "notifications", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "userId", "order": "ASCENDING" },
+      { "fieldPath": "type", "order": "ASCENDING" },
+      { "fieldPath": "read", "order": "ASCENDING" }
     ]}
   ],
   "fieldOverrides": []

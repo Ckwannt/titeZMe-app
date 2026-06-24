@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, usePathname } from "next/navigation";
@@ -16,6 +16,23 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
   const pathname = usePathname();
   const { t } = useLang();
   const [toastMessage, setToastMessage] = useState('');
+  const [challengeUnread, setChallengeUnread] = useState(0);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', user.uid),
+      where('type', 'in', ['challenge_approved', 'challenge_rejected']),
+      where('read', '==', false)
+    );
+    const unsub = onSnapshot(q, snap => {
+      setChallengeUnread(snap.size);
+    }, err => {
+      console.warn('challenge unread listener', err);
+    });
+    return () => unsub();
+  }, [user?.uid]);
 
   useEffect(() => {
     if (loading) return;
@@ -110,7 +127,12 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
               className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 ${
                 isActive(l) ? 'bg-[#1a1a1a] text-brand-yellow' : 'text-[#888] hover:bg-[#1a1a1a] hover:text-white'
               }`}>
-              {l.label}
+              <span className="flex items-center gap-2">
+                {l.label}
+                {l.href === '/dashboard/shop/challenge' && challengeUnread > 0 && (
+                  <span className="w-2 h-2 bg-brand-red rounded-full" />
+                )}
+              </span>
             </Link>
           ))}
         </div>
