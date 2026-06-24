@@ -193,6 +193,7 @@ export interface AdminPermissions {
   canApproveShops: boolean;
   canManageReviews: boolean;
   canManageBookings: boolean;
+  canManageChallenge: boolean;
   canManageUsers: boolean;
   canManageFeatured: boolean;
   canCreateAdmins: boolean;

@@ -21,6 +21,7 @@ const DEFAULT_PERMISSIONS: AdminPermissions = {
   canApproveShops: false,
   canManageReviews: false,
   canManageBookings: false,
+  canManageChallenge: false,
   canManageUsers: false,
   canManageFeatured: false,
   canCreateAdmins: false,
