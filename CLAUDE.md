@@ -130,6 +130,31 @@ Collections: `users`, `barbers` (also called `barberProfiles`), `barbershops`, `
 
 **Barber search visibility** — only show barbers where ALL are true: `isLive: true`, `isOnboarded: true`, `isSolo: true`.
 
+**Challenge collections:**
+
+- Collection: `challengeSubmissions`
+  - Doc ID: `{userId}_{type}` where type ∈ ['barber','shop']
+  - Enforces one submission per user per type
+  - A barber who owns a shop CAN have two separate submissions (one as barber, one as shop) because doc IDs differ
+  - Status state machine: `awaiting_payment` → `pending` → `approved` OR `rejected` (which can loop back to `awaiting_payment` via resubmit)
+  - `voteCount` is denormalized — incremented by Cloud Function (Step 4), never queried from `challengeVotes` directly
+
+- Collection: `challengeVotes`
+  - Doc ID: `{voterUid}_{type}` where type ∈ ['barber','shop']
+  - Enforces one vote per user per category
+  - A client votes once for a barber AND once for a shop = 2 docs
+  - Never queried for counting — exists only for uniqueness + audit
+
+- Document: `siteConfig/challenge`
+  - Extends existing `siteConfig` pattern (alongside `siteConfig/global`)
+  - Holds: dates, IBAN, Bizum, 4 reference photo URLs, fake counters, F1 page on/off, entry fees, prize display values
+  - Admin-only write, public read (matches existing siteConfig rule)
+
+- `users` collection now has 2 new optional fields:
+  - `challengeVotedForBarber?: string` (submissionId)
+  - `challengeVotedForShop?: string` (submissionId)
+  - These are UX denormalization — source of truth is `challengeVotes`
+
 ## TypeScript Rules
 
 - Never use implicit `any`. Always type arrays explicitly: `any[]`.
