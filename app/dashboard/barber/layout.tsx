@@ -102,6 +102,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
     { href: '/dashboard/barber/services', icon: '', label: t('barberLayout.navServices'), exact: false },
     { href: '/dashboard/barber/billing', icon: '', label: t('barberLayout.navBilling'), exact: false },
     { href: '/dashboard/barber/portfolio', icon: '', label: t('barberLayout.navPortfolio'), exact: false },
+    { href: '/dashboard/barber/challenge', icon: '', label: '🏆 Challenge', exact: false },
     { href: '/dashboard/barber/invites', icon: '', label: t('barberLayout.navInvites'), exact: false },
     { href: '/dashboard/barber/settings', icon: '', label: t('barberLayout.navSettings'), exact: false },
   ];

@@ -73,6 +73,7 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
     { href: '/dashboard/shop/services', icon: '', label: t('barberLayout.navServices'), exact: false },
     { href: '/dashboard/shop/billing', icon: '', label: t('shopDash.navBilling'), exact: false },
     { href: '/dashboard/shop/photos', icon: '', label: t('shopDash.shopPhotosNav'), exact: false },
+    { href: '/dashboard/shop/challenge', icon: '', label: '🏆 Challenge', exact: false },
     { href: '/dashboard/shop/reviews', icon: '', label: t('shopDash.reviews'), exact: false },
     { href: '/dashboard/shop/settings', icon: '', label: t('clientDash.settings'), exact: false },
   ];
