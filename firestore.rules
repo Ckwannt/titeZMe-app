@@ -151,6 +151,51 @@ service cloud.firestore {
         && data.createdAt is number;
     }
 
+    function isValidChallengeSubmission(data) {
+      return data.keys().hasAll(['userId', 'type', 'submitterName', 'submitterCity', 'photos', 'description', 'status', 'voteCount', 'submittedAt', 'termsAcceptedAt', 'resubmissionCount'])
+        && data.userId is string && data.userId.size() <= 128
+        && data.type in ['barber', 'shop']
+        && data.submitterName is string && data.submitterName.size() > 0 && data.submitterName.size() <= 200
+        && data.submitterCity is string && data.submitterCity.size() <= 100
+        && data.get('submitterAvatarUrl', '') is string
+        && data.get('barberCode', '') is string
+        && data.get('shopId', '') is string
+        && data.photos is list && data.photos.size() >= 1 && data.photos.size() <= 4
+        && data.get('videoUrl', '') is string
+        && data.description is string && data.description.size() <= 1000
+        && data.status in ['awaiting_payment', 'pending', 'approved', 'rejected']
+        && (data.get('declaredAmount', 0) is number)
+        && (data.get('declaredReference', '') is string)
+        && (data.get('rejectionReason', '') is string)
+        && data.voteCount is number && data.voteCount >= 0
+        && data.submittedAt is number
+        && (data.get('paidAt', 0) is number)
+        && (data.get('approvedAt', 0) is number)
+        && (data.get('rejectedAt', 0) is number)
+        && data.termsAcceptedAt is number && data.termsAcceptedAt > 0
+        && data.resubmissionCount is number && data.resubmissionCount >= 0;
+    }
+
+    function isValidChallengeVote(data) {
+      return data.keys().hasAll(['voterUid', 'type', 'submissionId', 'votedAt'])
+        && data.voterUid is string && data.voterUid.size() <= 128
+        && data.type in ['barber', 'shop']
+        && data.submissionId is string && data.submissionId.size() > 0 && data.submissionId.size() <= 200
+        && data.votedAt is number;
+    }
+
+    function isChallengeSubmissionsOpen() {
+      return exists(/databases/$(database)/documents/siteConfig/challenge)
+        && get(/databases/$(database)/documents/siteConfig/challenge).data.submissionsOpenAt <= request.time.toMillis()
+        && get(/databases/$(database)/documents/siteConfig/challenge).data.submissionsCloseAt > request.time.toMillis();
+    }
+
+    function isChallengeVotingOpen() {
+      return exists(/databases/$(database)/documents/siteConfig/challenge)
+        && get(/databases/$(database)/documents/siteConfig/challenge).data.votingOpenAt <= request.time.toMillis()
+        && get(/databases/$(database)/documents/siteConfig/challenge).data.votingCloseAt > request.time.toMillis();
+    }
+
     // Users
     match /users/{userId} {
       allow get: if request.auth != null;
@@ -194,6 +239,22 @@ service cloud.firestore {
               .affectedKeys()
               .hasOnly(['lastSeenAt'])
             && incoming().lastSeenAt is number
+          )
+          ||
+          (
+            request.auth.uid == userId
+            && incoming().diff(existing())
+              .affectedKeys()
+              .hasOnly(['challengeVotedForBarber'])
+            && incoming().challengeVotedForBarber is string
+          )
+          ||
+          (
+            request.auth.uid == userId
+            && incoming().diff(existing())
+              .affectedKeys()
+              .hasOnly(['challengeVotedForShop'])
+            && incoming().challengeVotedForShop is string
           )
         );
 
@@ -649,6 +710,88 @@ service cloud.firestore {
         request.resource.data.read == false;
 
       allow read, update, delete: if isAdmin();
+    }
+
+    // Challenge submissions — leaderboard entries (one per user per type).
+    // Public read for approved submissions; owner/admin read for any status.
+    // Voting counter `voteCount` is reserved for Cloud Function writes only.
+    match /challengeSubmissions/{submissionId} {
+      allow get: if (
+        isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid)
+        || resource.data.status == 'approved'
+      );
+
+      allow list: if (
+        isAdmin()
+        || resource.data.status == 'approved'
+        || (isSignedIn() && resource.data.userId == request.auth.uid)
+      );
+
+      allow create: if isSignedIn()
+        && isValidId(submissionId)
+        && isChallengeSubmissionsOpen()
+        && isValidChallengeSubmission(incoming())
+        && incoming().userId == request.auth.uid
+        && submissionId == request.auth.uid + '_' + incoming().type
+        && incoming().status == 'awaiting_payment'
+        && incoming().voteCount == 0
+        && incoming().resubmissionCount == 0;
+
+      allow update: if (
+        isAdmin()
+        && incoming().voteCount == existing().voteCount
+        && incoming().userId == existing().userId
+        && incoming().type == existing().type
+      ) || (
+        // Path 1 — owner marks as paid
+        isSignedIn()
+        && request.auth.uid == existing().userId
+        && existing().status == 'awaiting_payment'
+        && incoming().status == 'pending'
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'paidAt', 'declaredAmount', 'declaredReference'])
+        && incoming().paidAt is number
+      ) || (
+        // Path 2 — owner resubmits after rejection
+        isSignedIn()
+        && request.auth.uid == existing().userId
+        && existing().status == 'rejected'
+        && incoming().status == 'awaiting_payment'
+        && isChallengeSubmissionsOpen()
+        && incoming().diff(existing()).affectedKeys().hasOnly(['photos', 'videoUrl', 'description', 'status', 'submittedAt', 'resubmissionCount'])
+        && incoming().resubmissionCount == existing().resubmissionCount + 1
+        && incoming().photos is list && incoming().photos.size() >= 1 && incoming().photos.size() <= 4
+        && incoming().description.size() <= 1000
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // Challenge votes — one doc per (voter, type). Immutable once created.
+    // Email-verified gate enforced here only; no other collection uses it.
+    // Vote counter is denormalized to challengeSubmissions.voteCount via
+    // Cloud Function (Step 4) — never read this collection for counting.
+    match /challengeVotes/{voteId} {
+      allow get: if isAdmin()
+        || (isSignedIn() && resource.data.voterUid == request.auth.uid);
+
+      allow list: if isAdmin()
+        || (isSignedIn() && resource.data.voterUid == request.auth.uid);
+
+      allow create: if isSignedIn()
+        && request.auth.token.email_verified == true
+        && isValidId(voteId)
+        && isChallengeVotingOpen()
+        && isValidChallengeVote(incoming())
+        && incoming().voterUid == request.auth.uid
+        && voteId == request.auth.uid + '_' + incoming().type
+        && exists(/databases/$(database)/documents/challengeSubmissions/$(incoming().submissionId))
+        && get(/databases/$(database)/documents/challengeSubmissions/$(incoming().submissionId)).data.status == 'approved'
+        && get(/databases/$(database)/documents/challengeSubmissions/$(incoming().submissionId)).data.type == incoming().type;
+
+      allow update: if false;
+
+      allow delete: if isAdmin();
     }
   }
 }
