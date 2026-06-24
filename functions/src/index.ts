@@ -15,6 +15,9 @@ setGlobalOptions({ region: 'europe-west2' });
 const DATABASE_ID =
   'titezme-prod';
 const ALGOLIA_INDEX = 'barbers';
+const ALGOLIA_SHOP_INDEX = 'barbershops';
+const ALGOLIA_CHALLENGE_BARBERS_INDEX = 'challenge_barbers';
+const ALGOLIA_CHALLENGE_SHOPS_INDEX = 'challenge_shops';
 
 admin.initializeApp();
 const db = getFirestore(admin.app(), DATABASE_ID);
@@ -416,5 +419,234 @@ export const onBarberScheduleUpdated = onDocumentWritten(
       return;
     }
     await syncBarberToAlgolia(barberId);
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────
+// Challenge — submission sync to Algolia
+// ─────────────────────────────────────────────────────────────────────
+export const onChallengeSubmissionWritten = onDocumentWritten(
+  {
+    document: 'challengeSubmissions/{submissionId}',
+    database: DATABASE_ID,
+  },
+  async (event) => {
+    const submissionId = event.params.submissionId;
+    const before = event.data?.before.exists ? event.data.before.data() : null;
+    const after = event.data?.after.exists ? event.data.after.data() : null;
+
+    // Deletion — remove from both challenge indexes
+    if (!after) {
+      try {
+        await getAlgoliaClient().deleteObject({
+          indexName: ALGOLIA_CHALLENGE_BARBERS_INDEX,
+          objectID: submissionId,
+        });
+      } catch {
+        // Not in index — that's fine
+      }
+      try {
+        await getAlgoliaClient().deleteObject({
+          indexName: ALGOLIA_CHALLENGE_SHOPS_INDEX,
+          objectID: submissionId,
+        });
+      } catch {
+        // Not in index — that's fine
+      }
+      return;
+    }
+
+    const type = after.type;
+    const indexName =
+      type === 'barber'
+        ? ALGOLIA_CHALLENGE_BARBERS_INDEX
+        : type === 'shop'
+        ? ALGOLIA_CHALLENGE_SHOPS_INDEX
+        : null;
+
+    if (!indexName) return;
+
+    const wasApproved = before?.status === 'approved';
+    const isApproved = after.status === 'approved';
+
+    // Status moved away from approved → remove from index
+    if (wasApproved && !isApproved) {
+      try {
+        await getAlgoliaClient().deleteObject({
+          indexName,
+          objectID: submissionId,
+        });
+      } catch {
+        // Not in index — that's fine
+      }
+      return;
+    }
+
+    // Not currently approved → nothing to index
+    if (!isApproved) return;
+
+    // Approved (newly or already) → save / refresh record
+    const record = {
+      objectID: submissionId,
+      userId: after.userId || '',
+      type,
+      submitterName: after.submitterName || '',
+      submitterCity: after.submitterCity || '',
+      submitterAvatarUrl: after.submitterAvatarUrl || '',
+      barberCode: after.barberCode || '',
+      shopId: after.shopId || '',
+      photos: after.photos || [],
+      videoUrl: after.videoUrl || '',
+      description: after.description || '',
+      voteCount: after.voteCount || 0,
+      submittedAt: after.submittedAt || null,
+      approvedAt: after.approvedAt || null,
+    };
+
+    await getAlgoliaClient().saveObject({
+      indexName,
+      body: record,
+    });
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────
+// Challenge — vote tally + denormalize on user
+// ─────────────────────────────────────────────────────────────────────
+export const onChallengeVoteCreated = onDocumentCreated(
+  {
+    document: 'challengeVotes/{voteId}',
+    database: DATABASE_ID,
+  },
+  async (event) => {
+    const vote = event.data?.data();
+    if (!vote) return;
+
+    const voterUid = vote.voterUid;
+    const type = vote.type;
+    const submissionId = vote.submissionId;
+
+    if (!voterUid || !type || !submissionId) {
+      console.error(
+        `Challenge vote ${event.params.voteId} missing required fields`,
+        { voterUid, type, submissionId }
+      );
+      return;
+    }
+
+    const submissionRef = db.collection('challengeSubmissions').doc(submissionId);
+    const userRef = db.collection('users').doc(voterUid);
+
+    const userUpdate: Record<string, string> = {};
+    if (type === 'barber') {
+      userUpdate.challengeVotedForBarber = submissionId;
+    } else if (type === 'shop') {
+      userUpdate.challengeVotedForShop = submissionId;
+    } else {
+      console.error(`Unknown challenge vote type: ${type}`);
+      return;
+    }
+
+    const batch = db.batch();
+    batch.set(submissionRef, { voteCount: FieldValue.increment(1) }, { merge: true });
+    batch.set(userRef, userUpdate, { merge: true });
+    await batch.commit();
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────
+// Barbershops — Algolia sync
+// ─────────────────────────────────────────────────────────────────────
+async function syncShopToAlgolia(shopId: string, data: FirebaseFirestore.DocumentData): Promise<void> {
+  const address = data.address || {};
+  const record = {
+    objectID: shopId,
+    ownerId: data.ownerId || '',
+    name: data.name || '',
+    city: address.city || '',
+    country: address.country || '',
+    contactPhone: data.contactPhone || '',
+    logoUrl: data.logoUrl || '',
+    coverPhotoUrl: data.coverPhotoUrl || '',
+    description: data.description || '',
+    barbersCount: Array.isArray(data.barbers) ? data.barbers.length : 0,
+    status: data.status || '',
+  };
+
+  await getAlgoliaClient().saveObject({
+    indexName: ALGOLIA_SHOP_INDEX,
+    body: record,
+  });
+}
+
+export const onBarbershopWritten = onDocumentWritten(
+  {
+    document: 'barbershops/{shopId}',
+    database: DATABASE_ID,
+  },
+  async (event) => {
+    const shopId = event.params.shopId;
+    const after = event.data?.after.exists ? event.data.after.data() : null;
+
+    // Deletion → remove from index
+    if (!after) {
+      try {
+        await getAlgoliaClient().deleteObject({
+          indexName: ALGOLIA_SHOP_INDEX,
+          objectID: shopId,
+        });
+      } catch {
+        // Not in index — that's fine
+      }
+      return;
+    }
+
+    if (after.status === 'active') {
+      await syncShopToAlgolia(shopId, after);
+      return;
+    }
+
+    if (after.status === 'inactive' || after.status === 'suspended') {
+      try {
+        await getAlgoliaClient().deleteObject({
+          indexName: ALGOLIA_SHOP_INDEX,
+          objectID: shopId,
+        });
+      } catch {
+        // Not in index — that's fine
+      }
+    }
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────
+// Challenge — scheduled state-flag check
+// ─────────────────────────────────────────────────────────────────────
+export const scheduledChallengeStateCheck = onSchedule(
+  {
+    schedule: 'every 5 minutes',
+    timeZone: 'Europe/Madrid',
+  },
+  async () => {
+    const configRef = db.collection('siteConfig').doc('challenge');
+    const configSnap = await configRef.get();
+    if (!configSnap.exists) return;
+
+    const data = configSnap.data() || {};
+    const now = Date.now();
+
+    const votingCloseAt =
+      typeof data.votingCloseAt === 'number'
+        ? data.votingCloseAt
+        : data.votingCloseAt?.toMillis?.() ?? 0;
+
+    if (
+      votingCloseAt &&
+      now >= votingCloseAt &&
+      data.publicLeaderboardEnabled === true
+    ) {
+      await configRef.update({ publicLeaderboardEnabled: false });
+      console.log('Challenge voting closed — leaderboard disabled');
+    }
   }
 );
