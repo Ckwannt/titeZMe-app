@@ -94,6 +94,23 @@
       { "fieldPath": "clientId", "order": "ASCENDING" },
       { "fieldPath": "status", "order": "ASCENDING" },
       { "fieldPath": "date", "order": "ASCENDING" }
+    ]},
+    { "collectionGroup": "challengeSubmissions", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "type", "order": "ASCENDING" },
+      { "fieldPath": "status", "order": "ASCENDING" },
+      { "fieldPath": "voteCount", "order": "DESCENDING" }
+    ]},
+    { "collectionGroup": "challengeSubmissions", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "status", "order": "ASCENDING" },
+      { "fieldPath": "submittedAt", "order": "DESCENDING" }
+    ]},
+    { "collectionGroup": "challengeSubmissions", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "userId", "order": "ASCENDING" },
+      { "fieldPath": "type", "order": "ASCENDING" }
+    ]},
+    { "collectionGroup": "challengeVotes", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "submissionId", "order": "ASCENDING" },
+      { "fieldPath": "votedAt", "order": "DESCENDING" }
     ]}
   ],
   "fieldOverrides": []

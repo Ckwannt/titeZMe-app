@@ -50,6 +50,8 @@ export interface UserDocument {
   notifyInviteResponse?: boolean;
   notifyNewBooking?: boolean;
   unreadCount?: number;
+  challengeVotedForBarber?: string;
+  challengeVotedForShop?: string;
 }
 
 export interface Barbershop {
@@ -206,4 +208,53 @@ export interface AdminUser {
   lastName: string;
   createdAt: number;
   permissions: AdminPermissions;
+}
+
+export interface ChallengeSubmission {
+  userId: string;
+  type: 'barber' | 'shop';
+  submitterName: string;
+  submitterCity: string;
+  submitterAvatarUrl?: string;
+  barberCode?: string;
+  shopId?: string;
+  photos: string[];
+  videoUrl?: string;
+  description: string;
+  status: 'awaiting_payment' | 'pending' | 'approved' | 'rejected';
+  declaredAmount?: number;
+  declaredReference?: string;
+  rejectionReason?: string;
+  voteCount: number;
+  submittedAt: number;
+  paidAt?: number;
+  approvedAt?: number;
+  rejectedAt?: number;
+  termsAcceptedAt: number;
+  resubmissionCount: number;
+}
+
+export interface ChallengeVote {
+  voterUid: string;
+  type: 'barber' | 'shop';
+  submissionId: string;
+  votedAt: number;
+}
+
+export interface ChallengeSettings {
+  submissionsOpenAt: number;
+  submissionsCloseAt: number;
+  votingOpenAt: number;
+  votingCloseAt: number;
+  ibanText: string;
+  bizumNumber: string;
+  referencePhotos: string[];
+  referencePhotoLabels: string[];
+  fakeBarberCount: number;
+  fakeShopCount: number;
+  publicLeaderboardEnabled: boolean;
+  feeBarber: number;
+  feeShop: number;
+  prizeBarberValue: number;
+  prizeShopValue: number;
 }

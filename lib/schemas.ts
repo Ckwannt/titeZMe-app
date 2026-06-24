@@ -14,6 +14,8 @@ export const userSchema = z.object({
   ownsShop: z.boolean().optional(),
   barberCode: z.string().optional(),
   createdAt: z.number().optional(),
+  challengeVotedForBarber: z.string().optional(),
+  challengeVotedForShop: z.string().optional(),
 }).passthrough();
 
 export type User = z.infer<typeof userSchema>;
@@ -166,3 +168,63 @@ export type Notification = z.infer<typeof notificationSchema>;
 
 export const notificationUpdateSchema = notificationSchema.partial();
 export type NotificationUpdate = z.infer<typeof notificationUpdateSchema>;
+
+export const challengeSubmissionSchema = z.object({
+  userId: z.string().optional(),
+  type: z.enum(['barber', 'shop']).optional(),
+  submitterName: z.string().optional(),
+  submitterCity: z.string().optional(),
+  submitterAvatarUrl: z.string().optional(),
+  barberCode: z.string().optional(),
+  shopId: z.string().optional(),
+  photos: z.array(z.string()).min(1).max(4).optional(),
+  videoUrl: z.string().optional(),
+  description: z.string().max(1000).optional(),
+  status: z.enum(['awaiting_payment', 'pending', 'approved', 'rejected']).optional(),
+  declaredAmount: z.number().nonnegative().optional(),
+  declaredReference: z.string().optional(),
+  rejectionReason: z.string().optional(),
+  voteCount: z.number().int().nonnegative().optional(),
+  submittedAt: z.number().optional(),
+  paidAt: z.number().optional(),
+  approvedAt: z.number().optional(),
+  rejectedAt: z.number().optional(),
+  termsAcceptedAt: z.number().optional(),
+  resubmissionCount: z.number().int().nonnegative().optional(),
+}).passthrough();
+export type ChallengeSubmissionData = z.infer<typeof challengeSubmissionSchema>;
+export const challengeSubmissionUpdateSchema = challengeSubmissionSchema.partial();
+export type ChallengeSubmissionUpdate = z.infer<typeof challengeSubmissionUpdateSchema>;
+
+
+export const challengeVoteSchema = z.object({
+  voterUid: z.string().optional(),
+  type: z.enum(['barber', 'shop']).optional(),
+  submissionId: z.string().optional(),
+  votedAt: z.number().optional(),
+}).passthrough();
+export type ChallengeVoteData = z.infer<typeof challengeVoteSchema>;
+export const challengeVoteUpdateSchema = challengeVoteSchema.partial();
+export type ChallengeVoteUpdate = z.infer<typeof challengeVoteUpdateSchema>;
+
+
+export const challengeSettingsSchema = z.object({
+  submissionsOpenAt: z.number().optional(),
+  submissionsCloseAt: z.number().optional(),
+  votingOpenAt: z.number().optional(),
+  votingCloseAt: z.number().optional(),
+  ibanText: z.string().optional(),
+  bizumNumber: z.string().optional(),
+  referencePhotos: z.array(z.string()).max(4).optional(),
+  referencePhotoLabels: z.array(z.string()).max(4).optional(),
+  fakeBarberCount: z.number().int().nonnegative().optional(),
+  fakeShopCount: z.number().int().nonnegative().optional(),
+  publicLeaderboardEnabled: z.boolean().optional(),
+  feeBarber: z.number().nonnegative().optional(),
+  feeShop: z.number().nonnegative().optional(),
+  prizeBarberValue: z.number().nonnegative().optional(),
+  prizeShopValue: z.number().nonnegative().optional(),
+}).passthrough();
+export type ChallengeSettingsData = z.infer<typeof challengeSettingsSchema>;
+export const challengeSettingsUpdateSchema = challengeSettingsSchema.partial();
+export type ChallengeSettingsUpdate = z.infer<typeof challengeSettingsUpdateSchema>;
