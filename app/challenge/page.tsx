@@ -2,7 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import {
+  doc, getDoc, setDoc,
+  collection, query, where, orderBy, limit, getDocs,
+} from 'firebase/firestore';
 import { sendEmailVerification } from 'firebase/auth';
 import { algoliasearch } from 'algoliasearch';
 import { db, auth } from '@/lib/firebase';
@@ -10,7 +15,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast } from '@/lib/toast';
 import CountdownTimer from '@/components/CountdownTimer';
-import type { ChallengeSettings } from '@/lib/types';
+import type { ChallengeSettings, ChallengeSubmission } from '@/lib/types';
 
 const algoliaClient = algoliasearch(
   process.env.NEXT_PUBLIC_ALGOLIA_APP_ID!,
@@ -19,9 +24,16 @@ const algoliaClient = algoliasearch(
 
 export default function ChallengePage() {
   const { user, appUser } = useAuth();
+  const router = useRouter();
 
-  const [settings, setSettings] = useState<ChallengeSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: settings, isLoading: settingsLoading } = useQuery({
+    queryKey: ['challenge_settings'],
+    queryFn: async () => {
+      const snap = await getDoc(doc(db, 'siteConfig', 'challenge'));
+      return snap.exists() ? (snap.data() as ChallengeSettings) : null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [barberHits, setBarberHits] = useState<any[]>([]);
   const [shopHits, setShopHits] = useState<any[]>([]);
@@ -37,18 +49,6 @@ export default function ChallengePage() {
   const [verifyingEmail, setVerifyingEmail] = useState(false);
   // Re-render after auth.currentUser.reload() — context user ref doesn't change.
   const [verifiedTick, setVerifiedTick] = useState(0);
-
-  // Settings fetch (once)
-  useEffect(() => {
-    (async () => {
-      try {
-        const snap = await getDoc(doc(db, 'siteConfig', 'challenge'));
-        if (snap.exists()) setSettings(snap.data() as ChallengeSettings);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
 
   // Algolia search (on debounced query change)
   useEffect(() => {
@@ -103,6 +103,43 @@ export default function ChallengePage() {
       ? 'voting'
       : 'closed';
 
+  const leaderboardEnabled =
+    phase === 'voting' && !!settings?.publicLeaderboardEnabled;
+
+  const { data: barberLeaderboard = [], isLoading: lbBarberLoading } = useQuery({
+    queryKey: ['challenge_leaderboard', 'barber'],
+    queryFn: async () => {
+      const q = query(
+        collection(db, 'challengeSubmissions'),
+        where('type', '==', 'barber'),
+        where('status', '==', 'approved'),
+        orderBy('voteCount', 'desc'),
+        limit(20),
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...(d.data() as ChallengeSubmission) }));
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: leaderboardEnabled,
+  });
+
+  const { data: shopLeaderboard = [], isLoading: lbShopLoading } = useQuery({
+    queryKey: ['challenge_leaderboard', 'shop'],
+    queryFn: async () => {
+      const q = query(
+        collection(db, 'challengeSubmissions'),
+        where('type', '==', 'shop'),
+        where('status', '==', 'approved'),
+        orderBy('voteCount', 'desc'),
+        limit(20),
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...(d.data() as ChallengeSubmission) }));
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: leaderboardEnabled,
+  });
+
   const handleShare = useCallback(() => {
     navigator.clipboard.writeText('https://titezme.com/challenge');
     toast.success('Link copied — share it with your network!');
@@ -139,7 +176,7 @@ export default function ChallengePage() {
 
   async function handleVote(hit: any, type: 'barber' | 'shop') {
     if (!user) {
-      toast.error('Please sign in to vote.');
+      router.push('/signup?next=/challenge');
       return;
     }
     const verifiedNow = auth.currentUser?.emailVerified ?? user.emailVerified;
@@ -175,7 +212,7 @@ export default function ChallengePage() {
 
   // ─── Render branches ─────────────────────────────────────────────────────
 
-  if (loading || phase === 'loading') {
+  if (settingsLoading || phase === 'loading') {
     return (
       <div className="min-h-[50vh] flex items-center justify-center text-[#666] text-sm">
         Loading…
@@ -307,41 +344,72 @@ export default function ChallengePage() {
           </div>
         )}
 
-        {/* Section: Barbers */}
-        <section className="mb-12">
-          <h2 className="text-xl font-black mb-4">
-            🪒 Barbers ({barberHits.length})
-          </h2>
-          <SubmissionGrid
-            hits={barberHits}
-            type="barber"
-            searching={searching}
-            appUser={appUser}
-            justVotedBarber={justVotedBarber}
-            justVotedShop={justVotedShop}
-            voting={voting}
-            canVote={!!user && emailVerifiedNow}
-            onVote={handleVote}
-          />
-        </section>
+        {leaderboardEnabled && !debouncedSearch.trim() ? (
+          <>
+            <Leaderboard
+              title="🏆 Top Barbers"
+              data={barberLeaderboard}
+              loading={lbBarberLoading}
+              type="barber"
+              appUser={appUser}
+              justVotedBarber={justVotedBarber}
+              justVotedShop={justVotedShop}
+              voting={voting}
+              canVote={!!user && emailVerifiedNow}
+              onVote={handleVote}
+            />
+            <Leaderboard
+              title="🏆 Top Barbershops"
+              data={shopLeaderboard}
+              loading={lbShopLoading}
+              type="shop"
+              appUser={appUser}
+              justVotedBarber={justVotedBarber}
+              justVotedShop={justVotedShop}
+              voting={voting}
+              canVote={!!user && emailVerifiedNow}
+              onVote={handleVote}
+            />
+          </>
+        ) : (
+          <>
+            {/* Section: Barbers */}
+            <section className="mb-12">
+              <h2 className="text-xl font-black mb-4">
+                🪒 Barbers ({barberHits.length})
+              </h2>
+              <SubmissionGrid
+                hits={barberHits}
+                type="barber"
+                searching={searching}
+                appUser={appUser}
+                justVotedBarber={justVotedBarber}
+                justVotedShop={justVotedShop}
+                voting={voting}
+                canVote={!!user && emailVerifiedNow}
+                onVote={handleVote}
+              />
+            </section>
 
-        {/* Section: Barbershops */}
-        <section className="mb-12">
-          <h2 className="text-xl font-black mb-4">
-            💈 Barbershops ({shopHits.length})
-          </h2>
-          <SubmissionGrid
-            hits={shopHits}
-            type="shop"
-            searching={searching}
-            appUser={appUser}
-            justVotedBarber={justVotedBarber}
-            justVotedShop={justVotedShop}
-            voting={voting}
-            canVote={!!user && emailVerifiedNow}
-            onVote={handleVote}
-          />
-        </section>
+            {/* Section: Barbershops */}
+            <section className="mb-12">
+              <h2 className="text-xl font-black mb-4">
+                💈 Barbershops ({shopHits.length})
+              </h2>
+              <SubmissionGrid
+                hits={shopHits}
+                type="shop"
+                searching={searching}
+                appUser={appUser}
+                justVotedBarber={justVotedBarber}
+                justVotedShop={justVotedShop}
+                voting={voting}
+                canVote={!!user && emailVerifiedNow}
+                onVote={handleVote}
+              />
+            </section>
+          </>
+        )}
       </div>
     </div>
   );
@@ -576,6 +644,190 @@ function SubmissionGrid({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+type LeaderboardItem = { id: string } & ChallengeSubmission;
+
+function Leaderboard({
+  title,
+  data,
+  loading,
+  type,
+  appUser,
+  justVotedBarber,
+  justVotedShop,
+  voting,
+  canVote,
+  onVote,
+}: {
+  title: string;
+  data: LeaderboardItem[];
+  loading: boolean;
+  type: 'barber' | 'shop';
+  appUser: any;
+  justVotedBarber: string | null;
+  justVotedShop: string | null;
+  voting: string | null;
+  canVote: boolean;
+  onVote: (hit: any, type: 'barber' | 'shop') => void;
+}) {
+  return (
+    <section className="mb-12">
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-xl md:text-2xl font-black">{title}</h2>
+        <div className="text-[#666] text-xs">Top {data.length}</div>
+      </div>
+
+      {loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-[#141414] border border-[#222] rounded-[12px] h-[280px] animate-pulse"
+            />
+          ))}
+        </div>
+      )}
+
+      {!loading && data.length === 0 && (
+        <div className="text-[#666] text-sm text-center py-12">
+          No {type === 'barber' ? 'barber' : 'barbershop'} submissions yet.
+        </div>
+      )}
+
+      {!loading && data.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {data.map((sub, idx) => (
+            <LeaderboardCard
+              key={sub.id}
+              submission={sub}
+              rank={idx + 1}
+              type={type}
+              appUser={appUser}
+              justVotedBarber={justVotedBarber}
+              justVotedShop={justVotedShop}
+              voting={voting}
+              canVote={canVote}
+              onVote={onVote}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function LeaderboardCard({
+  submission,
+  rank,
+  type,
+  appUser,
+  justVotedBarber,
+  justVotedShop,
+  voting,
+  canVote,
+  onVote,
+}: {
+  submission: LeaderboardItem;
+  rank: number;
+  type: 'barber' | 'shop';
+  appUser: any;
+  justVotedBarber: string | null;
+  justVotedShop: string | null;
+  voting: string | null;
+  canVote: boolean;
+  onVote: (hit: any, type: 'barber' | 'shop') => void;
+}) {
+  const alreadyVotedFromContext =
+    type === 'barber'
+      ? appUser?.challengeVotedForBarber
+      : appUser?.challengeVotedForShop;
+  const alreadyVotedJust =
+    type === 'barber' ? justVotedBarber : justVotedShop;
+  const userVotedForThis =
+    alreadyVotedFromContext === submission.id ||
+    alreadyVotedJust === submission.id;
+  const userVotedForOther =
+    (!!alreadyVotedFromContext && alreadyVotedFromContext !== submission.id) ||
+    (!!alreadyVotedJust && alreadyVotedJust !== submission.id);
+
+  const baseVoteCount = submission.voteCount || 0;
+  const displayVoteCount =
+    baseVoteCount + (alreadyVotedJust === submission.id ? 1 : 0);
+
+  // onVote expects an Algolia-shaped hit (uses hit.objectID). Provide a shim.
+  const voteShim = { ...submission, objectID: submission.id };
+
+  return (
+    <div className="relative bg-[#141414] border border-[#222] rounded-[12px] p-[14px] flex flex-col gap-3">
+      <div className="absolute top-2 left-2 z-10">
+        {rank === 1 && <span className="text-2xl">🥇</span>}
+        {rank === 2 && <span className="text-2xl">🥈</span>}
+        {rank === 3 && <span className="text-2xl">🥉</span>}
+        {rank > 3 && (
+          <span className="bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] text-xs font-bold px-2 py-1 rounded-md">
+            #{rank}
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-3 pl-10">
+        {submission.submitterAvatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={submission.submitterAvatarUrl}
+            alt=""
+            className="w-11 h-11 rounded-full object-cover bg-[#222]"
+          />
+        ) : (
+          <div className="w-11 h-11 rounded-full bg-[#222] flex items-center justify-center text-[#666] text-sm font-bold">
+            {submission.submitterName?.[0]?.toUpperCase() || '?'}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="font-bold text-white truncate">
+            {submission.submitterName || 'Unnamed'}
+          </div>
+          {submission.submitterCity && (
+            <div className="text-[#888] text-xs truncate">
+              {submission.submitterCity}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {submission.photos?.[0] && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={submission.photos[0]}
+          alt=""
+          className="w-full aspect-square object-cover rounded-[10px] bg-[#0a0a0a]"
+        />
+      )}
+
+      <div className="flex items-center justify-between gap-2 mt-1">
+        <div className="text-brand-orange text-sm font-bold">
+          {displayVoteCount} votes
+        </div>
+
+        {userVotedForThis ? (
+          <span className="text-brand-yellow text-xs font-bold">
+            ✓ You voted
+          </span>
+        ) : userVotedForOther ? (
+          <span className="text-[#555] text-xs">Already voted</span>
+        ) : (
+          <button
+            onClick={() => onVote(voteShim, type)}
+            disabled={voting === submission.id}
+            className="bg-brand-yellow text-[#0a0a0a] font-black text-xs px-3 py-1.5 rounded-lg hover:bg-brand-yellow/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {voting === submission.id ? 'Voting…' : 'Vote'}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
