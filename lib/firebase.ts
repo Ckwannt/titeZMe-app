@@ -9,13 +9,16 @@ import firebaseConfig from '../firebase-applet-config.json';
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 let db: Firestore;
 try {
-  db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-  }, firebaseConfig.firestoreDatabaseId);
-} catch (e: unknown) {
-  // Falls back if: already initialized, browser doesn't support IndexedDB, or private browsing
-  db = getFirestore(app, firebaseConfig.firestoreDatabaseId); // CRITICAL: Database ID must be explicitly set
+  initializeFirestore(
+    app,
+    { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) },
+    firebaseConfig.firestoreDatabaseId
+  );
+} catch {
+  // Persistence unavailable (private browsing, SSR, etc.) — safe to ignore
 }
+// Always get the named database instance — this is the guaranteed correct path
+db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export { db };
 export const auth = getAuth(app);
 export const storage = getStorage(app);
