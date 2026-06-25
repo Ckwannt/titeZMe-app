@@ -12,6 +12,7 @@ import { sendEmailVerification } from 'firebase/auth';
 import { algoliasearch } from 'algoliasearch';
 import { db, auth } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
+import { useLang } from '@/lib/i18n/LangContext';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast } from '@/lib/toast';
 import CountdownTimer from '@/components/CountdownTimer';
@@ -25,6 +26,7 @@ const algoliaClient = algoliasearch(
 export default function ChallengePage() {
   const { user, appUser } = useAuth();
   const router = useRouter();
+  const { t } = useLang();
 
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['challenge_settings'],
@@ -142,18 +144,18 @@ export default function ChallengePage() {
 
   const handleShare = useCallback(() => {
     navigator.clipboard.writeText('https://titezme.com/challenge');
-    toast.success('Link copied — share it with your network!');
-  }, []);
+    toast.success(t('challenge.public.toastShareCopied'));
+  }, [t]);
 
   const handleResendVerification = useCallback(async () => {
     if (!auth.currentUser) return;
     try {
       await sendEmailVerification(auth.currentUser);
-      toast.success('Verification email sent. Check your inbox.');
+      toast.success(t('challenge.public.toastVerifySent'));
     } catch {
-      toast.error('Could not send verification email. Try again in a moment.');
+      toast.error(t('challenge.public.toastVerifySendFail'));
     }
-  }, []);
+  }, [t]);
 
   const handleVerifyRefresh = useCallback(async () => {
     if (!auth.currentUser) return;
@@ -161,18 +163,18 @@ export default function ChallengePage() {
     try {
       await auth.currentUser.reload();
       await auth.currentUser.getIdToken(true);
-      setVerifiedTick(t => t + 1);
+      setVerifiedTick(prev => prev + 1);
       if (auth.currentUser?.emailVerified) {
-        toast.success('Email verified. You can vote now.');
+        toast.success(t('challenge.public.toastVerifyOk'));
       } else {
-        toast.error('Still not verified. Click the link in your email first.');
+        toast.error(t('challenge.public.toastVerifyStill'));
       }
     } catch {
-      toast.error('Could not refresh. Please try again.');
+      toast.error(t('challenge.public.toastVerifyRefreshFail'));
     } finally {
       setVerifyingEmail(false);
     }
-  }, []);
+  }, [t]);
 
   async function handleVote(hit: any, type: 'barber' | 'shop') {
     if (!user) {
@@ -181,11 +183,11 @@ export default function ChallengePage() {
     }
     const verifiedNow = auth.currentUser?.emailVerified ?? user.emailVerified;
     if (!verifiedNow) {
-      toast.error('Please verify your email first.');
+      toast.error(t('challenge.public.toastNeedVerify'));
       return;
     }
     if (phase !== 'voting') {
-      toast.error('Voting is not open.');
+      toast.error(t('challenge.public.toastNotOpen'));
       return;
     }
     setVoting(hit.objectID);
@@ -198,12 +200,12 @@ export default function ChallengePage() {
       });
       if (type === 'barber') setJustVotedBarber(hit.objectID);
       else setJustVotedShop(hit.objectID);
-      toast.success('Vote recorded! Thanks for participating.');
+      toast.success(t('challenge.public.toastVoteOk'));
     } catch (e: any) {
       if (e?.code === 'permission-denied') {
-        toast.error('Voting is closed or you have already voted.');
+        toast.error(t('challenge.public.toastVoteClosedOrDup'));
       } else {
-        toast.error('Failed to vote. Please try again.');
+        toast.error(t('challenge.public.toastVoteFail'));
       }
     } finally {
       setVoting(null);
@@ -215,7 +217,7 @@ export default function ChallengePage() {
   if (settingsLoading || phase === 'loading') {
     return (
       <div className="min-h-[50vh] flex items-center justify-center text-[#666] text-sm">
-        Loading…
+        {t('challenge.public.loading')}
       </div>
     );
   }
@@ -223,8 +225,8 @@ export default function ChallengePage() {
   if (phase === 'misconfigured') {
     return (
       <SimpleMessage
-        title="Challenge coming soon"
-        body="The challenge is being configured. Come back soon."
+        title={t('challenge.public.misconfTitle')}
+        body={t('challenge.public.misconfBody')}
       />
     );
   }
@@ -234,11 +236,11 @@ export default function ChallengePage() {
     return (
       <PreVotingScreen
         settings={settings!}
-        headline={isGap ? 'Submissions are closed' : 'The challenge is live'}
+        headline={isGap ? t('challenge.public.gapTitle') : t('challenge.public.preTitle')}
         subhead={
           isGap
-            ? 'Voting begins in'
-            : 'Voting opens in'
+            ? t('challenge.public.votingBeginsIn')
+            : t('challenge.public.votingOpensIn')
         }
         onShare={handleShare}
       />
@@ -246,10 +248,15 @@ export default function ChallengePage() {
   }
 
   if (phase === 'closed') {
+    const eventDate = new Date(2026, 8, 17).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
     return (
       <SimpleMessage
-        title="Voting has closed"
-        body="Winners will be announced at the public event on September 17, 2026."
+        title={t('challenge.public.closedTitle')}
+        body={t('challenge.public.closedBody').replace('{date}', eventDate)}
       />
     );
   }
@@ -267,13 +274,13 @@ export default function ChallengePage() {
         {/* Header */}
         <div className="mb-8">
           <div className="inline-block text-[10px] font-black tracking-[3px] text-brand-orange uppercase mb-4">
-            🏆 Challenge 2026
+            🏆 {t('challenge.public.eyebrow')}
           </div>
           <h1 className="text-3xl md:text-5xl font-black mb-3">
-            Vote for your favorite
+            {t('challenge.public.headerTitle')}
           </h1>
           <p className="text-[#888] text-sm md:text-base">
-            Voting closes in{' '}
+            {t('challenge.public.votingClosesIn')}{' '}
             <CountdownTimer
               targetMs={settings!.votingCloseAt}
               className="text-brand-yellow font-bold"
@@ -287,45 +294,49 @@ export default function ChallengePage() {
             onClick={handleShare}
             className="bg-[#1a1a1a] border border-[#2a2a2a] text-white font-bold text-xs px-4 py-2 rounded-full hover:border-[#444] transition-colors"
           >
-            Share the Challenge
+            {t('challenge.public.shareBtn')}
           </button>
         </div>
 
         {/* Auth / verify gate */}
         {!user ? (
           <div className="bg-[#111] border border-[#1e1e1e] rounded-[16px] p-6 mb-8">
-            <h2 className="text-lg font-black mb-2">Sign up to vote in the Challenge</h2>
+            <h2 className="text-lg font-black mb-2">{t('challenge.public.signupTitle')}</h2>
             <p className="text-[#888] text-sm mb-4">
-              Voting is free but you need an account to participate.
+              {t('challenge.public.signupBody')}
             </p>
             <Link
               href="/signup"
               className="inline-block bg-brand-yellow text-[#0a0a0a] font-black text-sm px-5 py-3 rounded-xl hover:bg-brand-yellow/90 transition-colors"
             >
-              Sign up to vote
+              {t('challenge.public.signupBtn')}
             </Link>
           </div>
         ) : !emailVerifiedNow ? (
           <div className="bg-[#111] border border-[#1e1e1e] rounded-[16px] p-6 mb-8">
-            <h2 className="text-lg font-black mb-2">Verify your email to vote</h2>
+            <h2 className="text-lg font-black mb-2">{t('challenge.public.verifyTitle')}</h2>
             <p className="text-[#888] text-sm mb-4">
-              We sent a verification link to{' '}
-              <span className="text-white font-bold">{user.email}</span>. Click it,
-              then come back.
+              {t('challenge.public.verifyBody')
+                .split('{email}')
+                .flatMap((part, i, arr) =>
+                  i < arr.length - 1
+                    ? [part, <span key={i} className="text-white font-bold">{user.email}</span>]
+                    : [part]
+                )}
             </p>
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={handleResendVerification}
                 className="bg-[#1a1a1a] border border-[#2a2a2a] text-white font-bold text-sm px-4 py-2.5 rounded-xl hover:border-[#444] transition-colors"
               >
-                Resend verification email
+                {t('challenge.public.resendBtn')}
               </button>
               <button
                 onClick={handleVerifyRefresh}
                 disabled={verifyingEmail}
                 className="bg-brand-yellow text-[#0a0a0a] font-black text-sm px-4 py-2.5 rounded-xl hover:bg-brand-yellow/90 disabled:opacity-50"
               >
-                {verifyingEmail ? 'Checking…' : "I've verified my email — refresh"}
+                {verifyingEmail ? t('challenge.public.checkingBtn') : t('challenge.public.refreshBtn')}
               </button>
             </div>
           </div>
@@ -335,11 +346,13 @@ export default function ChallengePage() {
             <input
               value={nameSearch}
               onChange={e => setNameSearch(e.target.value)}
-              placeholder="Search by name…"
+              placeholder={t('challenge.public.searchPlaceholder')}
               className="w-full sm:max-w-md bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors placeholder:text-[#444]"
             />
             <div className="text-xs text-[#666] mt-2">
-              Showing {barberHits.length} barbers · {shopHits.length} barbershops
+              {t('challenge.public.showingCount')
+                .replace('{b}', String(barberHits.length))
+                .replace('{s}', String(shopHits.length))}
             </div>
           </div>
         )}
@@ -347,7 +360,7 @@ export default function ChallengePage() {
         {leaderboardEnabled && !debouncedSearch.trim() ? (
           <>
             <Leaderboard
-              title="🏆 Top Barbers"
+              title={t('challenge.public.topBarbers')}
               data={barberLeaderboard}
               loading={lbBarberLoading}
               type="barber"
@@ -359,7 +372,7 @@ export default function ChallengePage() {
               onVote={handleVote}
             />
             <Leaderboard
-              title="🏆 Top Barbershops"
+              title={t('challenge.public.topShops')}
               data={shopLeaderboard}
               loading={lbShopLoading}
               type="shop"
@@ -376,7 +389,7 @@ export default function ChallengePage() {
             {/* Section: Barbers */}
             <section className="mb-12">
               <h2 className="text-xl font-black mb-4">
-                🪒 Barbers ({barberHits.length})
+                {t('challenge.public.sectionBarbers').replace('{n}', String(barberHits.length))}
               </h2>
               <SubmissionGrid
                 hits={barberHits}
@@ -394,7 +407,7 @@ export default function ChallengePage() {
             {/* Section: Barbershops */}
             <section className="mb-12">
               <h2 className="text-xl font-black mb-4">
-                💈 Barbershops ({shopHits.length})
+                {t('challenge.public.sectionShops').replace('{n}', String(shopHits.length))}
               </h2>
               <SubmissionGrid
                 hits={shopHits}
@@ -418,11 +431,12 @@ export default function ChallengePage() {
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function SimpleMessage({ title, body }: { title: string; body: string }) {
+  const { t } = useLang();
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-6 py-20">
       <div className="max-w-[640px] text-center">
         <div className="inline-block text-[10px] font-black tracking-[3px] text-brand-orange uppercase mb-4">
-          🏆 Challenge 2026
+          🏆 {t('challenge.public.eyebrow')}
         </div>
         <h1 className="text-3xl md:text-4xl font-black mb-4">{title}</h1>
         <p className="text-[#888] text-sm mb-8">{body}</p>
@@ -430,7 +444,7 @@ function SimpleMessage({ title, body }: { title: string; body: string }) {
           href="/"
           className="inline-block bg-brand-yellow text-[#0a0a0a] font-black text-sm px-6 py-3 rounded-xl"
         >
-          Back to home
+          {t('challenge.public.backHome')}
         </Link>
       </div>
     </div>
@@ -448,8 +462,9 @@ function PreVotingScreen({
   subhead: string;
   onShare: () => void;
 }) {
+  const { t } = useLang();
   const openDate = settings.votingOpenAt
-    ? new Date(settings.votingOpenAt).toLocaleDateString('en-US', {
+    ? new Date(settings.votingOpenAt).toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -463,7 +478,7 @@ function PreVotingScreen({
       <div className="max-w-[640px] w-full">
         <div className="text-center mb-8">
           <div className="inline-block text-[10px] font-black tracking-[3px] text-brand-orange uppercase mb-4">
-            🏆 Challenge 2026
+            🏆 {t('challenge.public.eyebrow')}
           </div>
           <h1 className="text-3xl md:text-4xl font-black mb-4">{headline}</h1>
           <p className="text-[#888] text-sm mb-2">
@@ -474,25 +489,27 @@ function PreVotingScreen({
             />
           </p>
           {openDate && (
-            <p className="text-[#666] text-xs">Voting opens {openDate}.</p>
+            <p className="text-[#666] text-xs">
+              {t('challenge.public.votingOpensOn').replace('{date}', openDate)}
+            </p>
           )}
         </div>
 
         <div className="bg-[#111] border-2 border-brand-orange/40 rounded-[16px] p-6 mb-6">
           <div className="mb-4">
             <div className="text-brand-yellow text-3xl md:text-4xl font-black leading-none">
-              Win {shopAmount}
+              {t('landing.challenge.win')} {shopAmount}
             </div>
             <div className="text-[#888] text-[11px] uppercase tracking-widest mt-1">
-              For barbershops
+              {t('landing.challenge.forBarbershops')}
             </div>
           </div>
           <div>
             <div className="text-brand-yellow text-2xl md:text-3xl font-black leading-none">
-              Win {barberAmount}
+              {t('landing.challenge.win')} {barberAmount}
             </div>
             <div className="text-[#888] text-[11px] uppercase tracking-widest mt-1">
-              For barbers
+              {t('landing.challenge.forBarbers')}
             </div>
           </div>
         </div>
@@ -502,13 +519,13 @@ function PreVotingScreen({
             onClick={onShare}
             className="bg-[#1a1a1a] border border-[#2a2a2a] text-white font-bold text-xs px-4 py-2.5 rounded-full hover:border-[#444] transition-colors"
           >
-            Share the Challenge
+            {t('challenge.public.shareBtn')}
           </button>
           <Link
             href="/"
             className="bg-brand-yellow text-[#0a0a0a] font-black text-xs px-5 py-2.5 rounded-full"
           >
-            Back to home
+            {t('challenge.public.backHome')}
           </Link>
         </div>
       </div>
@@ -537,6 +554,7 @@ function SubmissionGrid({
   canVote: boolean;
   onVote: (hit: any, type: 'barber' | 'shop') => void;
 }) {
+  const { t } = useLang();
   if (searching && hits.length === 0) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -555,8 +573,8 @@ function SubmissionGrid({
       <div className="bg-[#111] border border-[#1e1e1e] rounded-[12px] p-8 text-center">
         <p className="text-[#666] text-sm">
           {type === 'barber'
-            ? 'No barber submissions yet.'
-            : 'No barbershop submissions yet.'}
+            ? t('challenge.public.emptyBarbers')
+            : t('challenge.public.emptyShops')}
         </p>
       </div>
     );
@@ -603,7 +621,7 @@ function SubmissionGrid({
               )}
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-white truncate">
-                  {hit.submitterName || 'Unnamed'}
+                  {hit.submitterName || t('challenge.public.unnamed')}
                 </div>
                 {hit.submitterCity && (
                   <div className="text-[#888] text-xs truncate">
@@ -623,21 +641,23 @@ function SubmissionGrid({
             )}
 
             <div className="flex items-center justify-between gap-2 mt-1">
-              <div className="text-[#888] text-xs">{displayVoteCount} votes</div>
+              <div className="text-[#888] text-xs">
+                {t('challenge.public.votesCount').replace('{n}', String(displayVoteCount))}
+              </div>
 
               {userVotedForThis ? (
                 <span className="text-brand-yellow text-xs font-bold">
-                  ✓ You voted
+                  {t('challenge.public.youVoted')}
                 </span>
               ) : userVotedForOther ? (
-                <span className="text-[#555] text-xs">Already voted</span>
+                <span className="text-[#555] text-xs">{t('challenge.public.alreadyVoted')}</span>
               ) : (
                 <button
                   onClick={() => onVote(hit, hitType)}
                   disabled={!canVote || voting === hit.objectID}
                   className="bg-brand-yellow text-[#0a0a0a] font-black text-xs px-3 py-1.5 rounded-lg hover:bg-brand-yellow/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {voting === hit.objectID ? 'Voting…' : 'Vote'}
+                  {voting === hit.objectID ? t('challenge.public.votingBtn') : t('challenge.public.voteBtn')}
                 </button>
               )}
             </div>
@@ -673,11 +693,14 @@ function Leaderboard({
   canVote: boolean;
   onVote: (hit: any, type: 'barber' | 'shop') => void;
 }) {
+  const { t } = useLang();
   return (
     <section className="mb-12">
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-xl md:text-2xl font-black">{title}</h2>
-        <div className="text-[#666] text-xs">Top {data.length}</div>
+        <div className="text-[#666] text-xs">
+          {t('challenge.public.topN').replace('{n}', String(data.length))}
+        </div>
       </div>
 
       {loading && (
@@ -693,7 +716,7 @@ function Leaderboard({
 
       {!loading && data.length === 0 && (
         <div className="text-[#666] text-sm text-center py-12">
-          No {type === 'barber' ? 'barber' : 'barbershop'} submissions yet.
+          {type === 'barber' ? t('challenge.public.emptyBarbers') : t('challenge.public.emptyShops')}
         </div>
       )}
 
@@ -740,6 +763,7 @@ function LeaderboardCard({
   canVote: boolean;
   onVote: (hit: any, type: 'barber' | 'shop') => void;
 }) {
+  const { t } = useLang();
   const alreadyVotedFromContext =
     type === 'barber'
       ? appUser?.challengeVotedForBarber
@@ -788,7 +812,7 @@ function LeaderboardCard({
         )}
         <div className="flex-1 min-w-0">
           <div className="font-bold text-white truncate">
-            {submission.submitterName || 'Unnamed'}
+            {submission.submitterName || t('challenge.public.unnamed')}
           </div>
           {submission.submitterCity && (
             <div className="text-[#888] text-xs truncate">
@@ -809,22 +833,22 @@ function LeaderboardCard({
 
       <div className="flex items-center justify-between gap-2 mt-1">
         <div className="text-brand-orange text-sm font-bold">
-          {displayVoteCount} votes
+          {t('challenge.public.votesCount').replace('{n}', String(displayVoteCount))}
         </div>
 
         {userVotedForThis ? (
           <span className="text-brand-yellow text-xs font-bold">
-            ✓ You voted
+            {t('challenge.public.youVoted')}
           </span>
         ) : userVotedForOther ? (
-          <span className="text-[#555] text-xs">Already voted</span>
+          <span className="text-[#555] text-xs">{t('challenge.public.alreadyVoted')}</span>
         ) : (
           <button
             onClick={() => onVote(voteShim, type)}
-            disabled={voting === submission.id}
+            disabled={!canVote || voting === submission.id}
             className="bg-brand-yellow text-[#0a0a0a] font-black text-xs px-3 py-1.5 rounded-lg hover:bg-brand-yellow/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {voting === submission.id ? 'Voting…' : 'Vote'}
+            {voting === submission.id ? t('challenge.public.votingBtn') : t('challenge.public.voteBtn')}
           </button>
         )}
       </div>
