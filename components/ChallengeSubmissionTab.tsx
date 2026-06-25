@@ -9,6 +9,7 @@ import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebas
 import imageCompression from 'browser-image-compression';
 import { db, storage } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
+import { useLang } from '@/lib/i18n/LangContext';
 import {
   challengeSubmissionSchema,
   challengeSettingsSchema,
@@ -67,7 +68,7 @@ function checkVideoDuration(file: File): Promise<number> {
     };
     video.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error('Could not read video metadata.'));
+      reject(new Error('errVideoMeta'));
     };
     video.src = url;
   });
@@ -75,10 +76,10 @@ function checkVideoDuration(file: File): Promise<number> {
 
 async function uploadPhoto(file: File, uid: string): Promise<string> {
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    throw new Error('Photos must be JPEG, PNG, or WebP.');
+    throw new Error('errPhotoType');
   }
   if (file.size > MAX_PHOTO_BYTES_HARD) {
-    throw new Error('Photo is too large. Pick something under 5MB.');
+    throw new Error('errPhotoSize');
   }
   const compressed = await imageCompression(file, {
     maxSizeMB: 0.5,
@@ -86,7 +87,7 @@ async function uploadPhoto(file: File, uid: string): Promise<string> {
     useWebWorker: false,
   });
   if (compressed.size > MAX_PHOTO_BYTES_COMPRESSED) {
-    throw new Error('Compressed photo still exceeds 1MB. Try a different image.');
+    throw new Error('errPhotoCompressed');
   }
   const filename = `${uuidv4()}.${extFromFile(file)}`;
   const path = `challenge-submissions/${uid}/photos/${filename}`;
@@ -113,14 +114,14 @@ async function uploadPhoto(file: File, uid: string): Promise<string> {
 
 async function uploadVideo(file: File, uid: string): Promise<string> {
   if (!file.type.startsWith('video/')) {
-    throw new Error('Video file required.');
+    throw new Error('errVideoType');
   }
   if (file.size > MAX_VIDEO_BYTES) {
-    throw new Error('Video must be 10MB or less.');
+    throw new Error('errVideoSize');
   }
   const duration = await checkVideoDuration(file);
   if (duration > MAX_VIDEO_DURATION_SEC) {
-    throw new Error(`Video must be 30 seconds or less. (Yours: ${Math.round(duration)}s)`);
+    throw new Error(`errVideoDuration:${Math.round(duration)}`);
   }
   const filename = `${uuidv4()}.${extFromFile(file)}`;
   const path = `challenge-submissions/${uid}/video/${filename}`;
@@ -174,6 +175,7 @@ function RejectionBanner({
   reason?: string;
   onJumpToForm: () => void;
 }) {
+  const { t } = useLang();
   const [expanded, setExpanded] = useState(false);
   const isLong = (reason?.length || 0) > 200;
   const visible = !isLong || expanded ? reason : `${reason!.slice(0, 200)}…`;
@@ -183,7 +185,7 @@ function RejectionBanner({
         <div className="text-2xl shrink-0">❌</div>
         <div className="flex-1 min-w-0">
           <div className="text-brand-red font-black text-base mb-2">
-            Your previous submission was rejected
+            {t('challenge.submission.rejectedBanner')}
           </div>
           {reason && (
             <div className="text-[#f5b5b5] text-[13px] leading-relaxed mb-2 whitespace-pre-wrap">
@@ -194,7 +196,7 @@ function RejectionBanner({
                   onClick={() => setExpanded(v => !v)}
                   className="ml-2 text-brand-red font-extrabold hover:underline"
                 >
-                  {expanded ? 'Show less' : 'Read full reason'}
+                  {expanded ? t('challenge.submission.showLess') : t('challenge.submission.readFull')}
                 </button>
               )}
             </div>
@@ -205,10 +207,10 @@ function RejectionBanner({
               onClick={onJumpToForm}
               className="bg-brand-red text-white text-[12px] font-black px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
             >
-              Jump to form
+              {t('challenge.submission.jumpToForm')}
             </button>
             <span className="text-[#f5b5b5] text-[11px] opacity-80">
-              Edit your submission below and resubmit.
+              {t('challenge.submission.rejectedHint')}
             </span>
           </div>
         </div>
@@ -220,6 +222,7 @@ function RejectionBanner({
 export default function ChallengeSubmissionTab({ mode }: Props) {
   const { user, appUser } = useAuth();
   const router = useRouter();
+  const { t } = useLang();
 
   const dualEligible = appUser?.role === 'barber' && appUser?.ownsShop === true;
 
@@ -336,7 +339,12 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
       });
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e?.message || 'Failed to upload photo.');
+      const code = e?.message as string | undefined;
+      const photoKeys = ['errPhotoType', 'errPhotoSize', 'errPhotoCompressed'];
+      const msg = code && photoKeys.includes(code)
+        ? t(`challenge.submission.${code}`)
+        : t('challenge.submission.errUploadPhoto');
+      setErrorMsg(msg);
       setPhotos(prev => {
         const next = [...prev];
         next[slotIndex] = { file: null, url: null, uploading: false };
@@ -365,7 +373,18 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
       setVideoUrl(url);
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e?.message || 'Failed to upload video.');
+      const raw = (e?.message as string | undefined) || '';
+      const [code, arg] = raw.split(':');
+      const videoKeys = ['errVideoType', 'errVideoSize', 'errVideoMeta'];
+      let msg: string;
+      if (code === 'errVideoDuration') {
+        msg = t('challenge.submission.errVideoDuration').replace('{n}', arg || '');
+      } else if (videoKeys.includes(code)) {
+        msg = t(`challenge.submission.${code}`);
+      } else {
+        msg = t('challenge.submission.errUploadVideo');
+      }
+      setErrorMsg(msg);
       setVideoFile(null);
     } finally {
       setVideoUploading(false);
@@ -385,11 +404,11 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
 
     const uploadedPhotoUrls = photos.map(p => p.url).filter((u): u is string => !!u);
     if (uploadedPhotoUrls.length < 1) {
-      setErrorMsg('Add at least one proposal photo.');
+      setErrorMsg(t('challenge.submission.errNoPhoto'));
       return;
     }
     if (!termsAccepted) {
-      setErrorMsg('You must accept the Challenge terms to submit.');
+      setErrorMsg(t('challenge.submission.errNoTerms'));
       return;
     }
 
@@ -460,7 +479,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
       router.push(`/dashboard/${submitMode}/challenge/payment`);
     } catch (e: any) {
       console.error('Submission failed', e);
-      setErrorMsg(e?.message || 'Something went wrong submitting. Try again.');
+      setErrorMsg(e?.message || t('challenge.submission.errSubmit'));
       setSubmitting(false);
     }
   };
@@ -470,7 +489,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
   if (loading) {
     return (
       <div className="p-6 md:p-10 animate-fadeUp">
-        <div className="text-[#666] text-sm">Loading…</div>
+        <div className="text-[#666] text-sm">{t('challenge.submission.loading')}</div>
       </div>
     );
   }
@@ -478,9 +497,9 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
   if (!settings) {
     return (
       <div className="p-6 md:p-10 animate-fadeUp">
-        <h1 className="text-2xl font-black mb-2">🏆 Challenge</h1>
+        <h1 className="text-2xl font-black mb-2">{t('challenge.submission.pageTitle')}</h1>
         <div className="bg-[#111] border border-[#2a2a2a] rounded-[16px] p-8 max-w-[640px]">
-          <div className="text-[#888]">The Challenge is not configured yet. Check back soon.</div>
+          <div className="text-[#888]">{t('challenge.submission.notConfigured')}</div>
         </div>
       </div>
     );
@@ -494,10 +513,10 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
   if (openAt && now < openAt) {
     return (
       <div className="p-6 md:p-10 animate-fadeUp">
-        <h1 className="text-2xl font-black mb-2">🏆 Challenge</h1>
+        <h1 className="text-2xl font-black mb-2">{t('challenge.submission.pageTitle')}</h1>
         <div className="bg-[#111] border border-[#2a2a2a] rounded-[16px] p-8 max-w-[640px]">
           <div className="text-[#888]">
-            The challenge opens on <span className="text-white font-bold">{formatDate(openAt)}</span>. Come back then!
+            {t('challenge.submission.opensOn').replace('{date}', formatDate(openAt))}
           </div>
         </div>
       </div>
@@ -507,11 +526,10 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
   if (closeAt && now >= closeAt) {
     return (
       <div className="p-6 md:p-10 animate-fadeUp">
-        <h1 className="text-2xl font-black mb-2">🏆 Challenge</h1>
+        <h1 className="text-2xl font-black mb-2">{t('challenge.submission.pageTitle')}</h1>
         <div className="bg-[#111] border border-[#2a2a2a] rounded-[16px] p-8 max-w-[640px]">
           <div className="text-[#888]">
-            Submissions are closed. Voting opens{' '}
-            <span className="text-white font-bold">{formatDate(votingOpenAt)}</span>.
+            {t('challenge.submission.submissionsClosed').replace('{date}', formatDate(votingOpenAt))}
           </div>
         </div>
       </div>
@@ -528,16 +546,16 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
       const url = `https://titezme.com/challenge?ref=${name}`;
       try {
         navigator.clipboard.writeText(url);
-        toast.success('Link copied — share it with your network!');
+        toast.success(t('challenge.public.toastShareCopied'));
       } catch {
-        toast.error('Could not copy link.');
+        toast.error(t('challenge.payment.toastCopyFail'));
       }
     };
 
     return (
       <div className="p-6 md:p-10 animate-fadeUp">
-        <h1 className="text-2xl font-black mb-2">🏆 Challenge</h1>
-        <p className="text-brand-text-secondary text-sm mb-6">Your submission is in.</p>
+        <h1 className="text-2xl font-black mb-2">{t('challenge.submission.pageTitle')}</h1>
+        <p className="text-brand-text-secondary text-sm mb-6">{t('challenge.submission.subline')}</p>
 
         {dualEligible && (
           <div className="mb-6 flex gap-2">
@@ -549,7 +567,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
                   : 'bg-[#1a1a1a] text-[#888] hover:text-white'
               }`}
             >
-              As barber
+              {t('challenge.submission.asBarber')}
             </button>
             <button
               onClick={() => setSubmitMode('shop')}
@@ -559,7 +577,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
                   : 'bg-[#1a1a1a] text-[#888] hover:text-white'
               }`}
             >
-              As barbershop
+              {t('challenge.submission.asShop')}
             </button>
           </div>
         )}
@@ -569,17 +587,17 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
             <>
               <div className="text-4xl mb-3">💳</div>
               <div className={`inline-block px-3 py-1.5 rounded-full ${s.bg} ${s.text} text-[11px] font-extrabold uppercase mb-3`}>
-                {s.label}
+                {t(`challenge.status.${status}`)}
               </div>
-              <h2 className="text-xl font-black mb-2">Almost there — complete your payment</h2>
+              <h2 className="text-xl font-black mb-2">{t('challenge.submission.awaitingTitle')}</h2>
               <p className="text-[#ccc] text-sm mb-6 leading-relaxed">
-                Your proposal is uploaded but the entry fee hasn&apos;t been paid yet. Send the fee and confirm to enter the challenge.
+                {t('challenge.submission.awaitingBody')}
               </p>
               <button
                 onClick={() => router.push(`/dashboard/${submitMode}/challenge/payment`)}
                 className="w-full sm:w-auto bg-brand-yellow text-[#0a0a0a] font-black text-sm px-6 py-3 rounded-xl hover:opacity-90 transition-opacity"
               >
-                Continue to payment
+                {t('challenge.submission.continuePayment')}
               </button>
             </>
           )}
@@ -588,20 +606,20 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
             <>
               <div className="text-4xl mb-3">👀</div>
               <div className={`inline-block px-3 py-1.5 rounded-full ${s.bg} ${s.text} text-[11px] font-extrabold uppercase mb-3`}>
-                {s.label}
+                {t(`challenge.status.${status}`)}
               </div>
-              <h2 className="text-xl font-black mb-2">Awaiting verification</h2>
+              <h2 className="text-xl font-black mb-2">{t('challenge.submission.pendingTitle')}</h2>
               <p className="text-[#ccc] text-sm mb-4 leading-relaxed">
-                We&apos;ve received your payment declaration. Admin is verifying the bank transfer. You&apos;ll get a notification when reviewed (usually within 24h).
+                {t('challenge.submission.pendingBody')}
               </p>
               {(existingSubmission.declaredAmount !== undefined || existingSubmission.declaredReference) && (
                 <div className="text-[#666] text-[12px]">
-                  You declared:{' '}
+                  {t('challenge.submission.declaredAmount')}{' '}
                   {existingSubmission.declaredAmount !== undefined && (
                     <span className="text-[#aaa]">€{existingSubmission.declaredAmount}</span>
                   )}
                   {existingSubmission.declaredReference && (
-                    <> · ref: <span className="text-[#aaa] font-mono">{existingSubmission.declaredReference}</span></>
+                    <> · {t('challenge.submission.declaredRef')} <span className="text-[#aaa] font-mono">{existingSubmission.declaredReference}</span></>
                   )}
                 </div>
               )}
@@ -612,19 +630,15 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
             <>
               <div className="text-4xl mb-3">🎉</div>
               <div className={`inline-block px-3 py-1.5 rounded-full ${s.bg} ${s.text} text-[11px] font-extrabold uppercase mb-3`}>
-                {s.label}
+                {t(`challenge.status.${status}`)}
               </div>
-              <h2 className="text-xl font-black mb-2">You&apos;re in the Challenge!</h2>
+              <h2 className="text-xl font-black mb-2">{t('challenge.submission.approvedTitle')}</h2>
               <p className="text-[#ccc] text-sm mb-2 leading-relaxed">
-                Your submission is approved. It will go live when voting opens
-                {votingOpenAt && (
-                  <> on <span className="text-white font-bold">{formatDate(votingOpenAt)}</span></>
-                )}
-                .
+                {t('challenge.submission.approvedBody').replace('{date}', formatDate(votingOpenAt))}
               </p>
               {settings.votingCloseAt && (
                 <p className="text-[#888] text-[12px] mb-6">
-                  Voting closes on <span className="text-white font-bold">{formatDate(settings.votingCloseAt)}</span>.
+                  {t('challenge.submission.votingClosesOn').replace('{date}', formatDate(settings.votingCloseAt))}
                 </p>
               )}
               <div className="flex flex-wrap gap-3">
@@ -632,13 +646,13 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
                   onClick={handleCopyShareLink}
                   className="bg-brand-yellow text-[#0a0a0a] font-black text-sm px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
                 >
-                  Copy your share link
+                  {t('challenge.submission.copyShareLink')}
                 </button>
                 <button
                   onClick={() => router.push(`/dashboard/${submitMode}`)}
                   className="bg-[#1a1a1a] text-white font-black text-sm px-5 py-2.5 rounded-xl hover:bg-[#222] transition-colors"
                 >
-                  Back to dashboard
+                  {t('challenge.submission.backDashboard')}
                 </button>
               </div>
             </>
@@ -648,7 +662,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
         {/* Your submission — always shown when one exists */}
         <div className="bg-[#111] border border-[#2a2a2a] rounded-[16px] p-8 max-w-[640px] mt-6">
           <div className="text-[#888] text-[11px] uppercase tracking-widest mb-4 font-extrabold">
-            Your submission
+            {t('challenge.submission.yourSubmission')}
           </div>
 
           {existingSubmission.photos && existingSubmission.photos.length > 0 && (
@@ -683,9 +697,9 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
           )}
 
           <div className="text-[#666] text-[11px] mt-4">
-            Submitted on {formatDate(existingSubmission.submittedAt)}
+            {t('challenge.submission.submittedOn').replace('{date}', formatDate(existingSubmission.submittedAt))}
             {existingSubmission.resubmissionCount && existingSubmission.resubmissionCount > 0
-              ? ` · Resubmission #${existingSubmission.resubmissionCount}`
+              ? ` ${t('challenge.submission.resubmissionN').replace('{n}', String(existingSubmission.resubmissionCount))}`
               : ''}
           </div>
         </div>
@@ -704,9 +718,9 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
 
   return (
     <div className="p-6 md:p-10 animate-fadeUp max-w-[840px]">
-      <h1 className="text-2xl font-black mb-2">🏆 Challenge</h1>
+      <h1 className="text-2xl font-black mb-2">{t('challenge.submission.pageTitle')}</h1>
       <p className="text-brand-text-secondary text-sm mb-8">
-        Show your take on the reference cut. Submit your proposal and get votes.
+        {t('challenge.submission.intro')}
       </p>
 
       {existingSubmission?.status === 'rejected' && (
@@ -722,7 +736,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
       {/* Section 2: Submit as (toggle) */}
       {dualEligible && (
         <section className="mb-10">
-          <h2 className="text-lg font-black mb-3">Submit as</h2>
+          <h2 className="text-lg font-black mb-3">{t('challenge.submission.submitAsLabel')}</h2>
           <div className="flex gap-2">
             <button
               type="button"
@@ -733,7 +747,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
                   : 'bg-[#1a1a1a] text-[#888] hover:text-white'
               }`}
             >
-              As barber
+              {t('challenge.submission.asBarber')}
             </button>
             <button
               type="button"
@@ -744,24 +758,24 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
                   : 'bg-[#1a1a1a] text-[#888] hover:text-white'
               }`}
             >
-              As barbershop
+              {t('challenge.submission.asShop')}
             </button>
           </div>
           <p className="text-[11px] text-[#555] mt-2">
-            You can submit one entry per category.
+            {t('challenge.submission.oneEntryHint')}
           </p>
         </section>
       )}
 
       {/* Section 1: Reference photos */}
       <section className="mb-10">
-        <h2 className="text-lg font-black mb-1">Download the reference photos</h2>
+        <h2 className="text-lg font-black mb-1">{t('challenge.submission.refTitle')}</h2>
         <p className="text-xs text-[#888] mb-4">
-          Use these four angles as your reference for the cut.
+          {t('challenge.submission.refHint')}
         </p>
         {referencePhotos.length === 0 ? (
           <div className="border border-dashed border-[#333] rounded-[16px] p-8 text-center bg-[#0a0a0a] text-[#666] text-sm">
-            Reference photos coming soon.
+            {t('challenge.submission.refSoon')}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -782,7 +796,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
                     rel="noreferrer"
                     className="text-brand-yellow text-[11px] font-extrabold hover:underline"
                   >
-                    Download
+                    {t('challenge.submission.download')}
                   </a>
                 </div>
               </div>
@@ -793,8 +807,8 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
 
       {/* Section 3: Proposal photos */}
       <section className="mb-10">
-        <h2 className="text-lg font-black mb-1">Your haircut proposal (1-4 photos)</h2>
-        <p className="text-xs text-[#888] mb-4">JPEG, PNG, or WebP. Up to 5MB each — we compress to 1MB.</p>
+        <h2 className="text-lg font-black mb-1">{t('challenge.submission.photosTitle')}</h2>
+        <p className="text-xs text-[#888] mb-4">{t('challenge.submission.photosHint')}</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {photos.map((slot, i) => (
             <div
@@ -817,7 +831,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
               />
               {slot.uploading ? (
                 <div className="absolute inset-0 flex items-center justify-center text-[12px] font-bold text-brand-yellow">
-                  Uploading…
+                  {t('challenge.submission.uploading')}
                 </div>
               ) : slot.url ? (
                 <>
@@ -826,7 +840,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
                     type="button"
                     onClick={() => void handlePhotoRemove(i)}
                     className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/70 text-white flex items-center justify-center backdrop-blur-sm hover:bg-brand-red transition-colors"
-                    aria-label="Remove photo"
+                    aria-label={t('challenge.submission.removePhoto')}
                   >
                     ✕
                   </button>
@@ -838,7 +852,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
                   className="absolute inset-0 flex flex-col items-center justify-center text-[#666] hover:text-brand-yellow text-[12px] font-bold transition-colors"
                 >
                   <span className="text-2xl mb-1">+</span>
-                  <span>Add photo</span>
+                  <span>{t('challenge.submission.addPhoto')}</span>
                 </button>
               )}
             </div>
@@ -848,8 +862,8 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
 
       {/* Section 4: Video */}
       <section className="mb-10">
-        <h2 className="text-lg font-black mb-1">Optional: a short video of your work (max 30s)</h2>
-        <p className="text-xs text-[#888] mb-4">MP4 or MOV. Max 10MB.</p>
+        <h2 className="text-lg font-black mb-1">{t('challenge.submission.videoTitle')}</h2>
+        <p className="text-xs text-[#888] mb-4">{t('challenge.submission.videoHint')}</p>
         <input
           ref={el => {
             videoInputRef.current = el;
@@ -866,7 +880,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
         <div className="bg-[#111] rounded-[16px] overflow-hidden border border-dashed border-[#333] relative aspect-video max-w-[420px]">
           {videoUploading ? (
             <div className="absolute inset-0 flex items-center justify-center text-[12px] font-bold text-brand-yellow">
-              Uploading…
+              {t('challenge.submission.uploading')}
             </div>
           ) : videoUrl ? (
             <>
@@ -875,7 +889,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
                 type="button"
                 onClick={() => void handleVideoRemove()}
                 className="absolute top-2 right-2 w-8 h-8 z-10 rounded-full bg-black/70 text-white flex items-center justify-center backdrop-blur-sm hover:bg-brand-red transition-colors"
-                aria-label="Remove video"
+                aria-label={t('challenge.submission.removeVideo')}
               >
                 ✕
               </button>
@@ -887,7 +901,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
               className="absolute inset-0 flex flex-col items-center justify-center text-[#666] hover:text-brand-yellow text-[12px] font-bold transition-colors"
             >
               <span className="text-2xl mb-1">+</span>
-              <span>Add video</span>
+              <span>{t('challenge.submission.addVideo')}</span>
             </button>
           )}
         </div>
@@ -895,15 +909,15 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
 
       {/* Section 5: Description */}
       <section className="mb-10">
-        <h2 className="text-lg font-black mb-1">Notes (optional)</h2>
-        <p className="text-xs text-[#888] mb-3">Tell us anything about the cut.</p>
+        <h2 className="text-lg font-black mb-1">{t('challenge.submission.notesTitle')}</h2>
+        <p className="text-xs text-[#888] mb-3">{t('challenge.submission.notesHint')}</p>
         <textarea
           value={description}
           onChange={e => setDescription(e.target.value.slice(0, MAX_DESCRIPTION_CHARS))}
           rows={5}
           maxLength={MAX_DESCRIPTION_CHARS}
           className="w-full bg-[#111] border border-[#2a2a2a] rounded-[16px] p-4 text-sm text-white placeholder-[#555] focus:border-brand-yellow focus:outline-none transition-colors resize-none"
-          placeholder="Technique, products used, fade type, finishing details…"
+          placeholder={t('challenge.submission.notesPlaceholder')}
         />
         <div className="text-right text-[11px] text-[#555] mt-1 font-bold">
           {description.length}/{MAX_DESCRIPTION_CHARS}
@@ -920,11 +934,10 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
             className="mt-1 w-4 h-4 accent-brand-yellow"
           />
           <span className="text-sm text-[#ccc]">
-            I accept the{' '}
+            {t('challenge.submission.termsLabel')}{' '}
             <a href="/terms/challenge" target="_blank" rel="noreferrer" className="text-brand-yellow font-bold hover:underline">
-              titeZMe Challenge terms
+              {t('challenge.submission.termsLink')}
             </a>
-            .
           </span>
         </label>
       </section>
@@ -947,7 +960,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
             : 'bg-[#1a1a1a] text-[#555] cursor-not-allowed'
         }`}
       >
-        {submitting ? 'Submitting…' : 'Submit and continue to payment'}
+        {submitting ? t('challenge.submission.submittingBtn') : t('challenge.submission.submitBtn')}
       </button>
     </div>
   );
