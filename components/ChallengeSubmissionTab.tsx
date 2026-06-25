@@ -921,7 +921,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
           />
           <span className="text-sm text-[#ccc]">
             I accept the{' '}
-            <a href="/terms" target="_blank" rel="noreferrer" className="text-brand-yellow font-bold hover:underline">
+            <a href="/terms/challenge" target="_blank" rel="noreferrer" className="text-brand-yellow font-bold hover:underline">
               titeZMe Challenge terms
             </a>
             .

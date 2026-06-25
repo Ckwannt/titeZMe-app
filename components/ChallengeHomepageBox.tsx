@@ -145,7 +145,7 @@ export default function ChallengeHomepageBox() {
           </Link>
 
           <Link
-            href="/terms"
+            href="/terms/challenge"
             className="block text-[#666] text-[10px] mt-3 text-center hover:text-[#888]"
           >
             {t('landing.challenge.smallPrint')}
