@@ -718,12 +718,14 @@ service cloud.firestore {
     match /challengeSubmissions/{submissionId} {
       allow get: if (
         isAdmin()
+        || resource == null
         || (isSignedIn() && resource.data.userId == request.auth.uid)
         || resource.data.status == 'approved'
       );
 
       allow list: if (
         isAdmin()
+        || resource == null
         || resource.data.status == 'approved'
         || (isSignedIn() && resource.data.userId == request.auth.uid)
       );
