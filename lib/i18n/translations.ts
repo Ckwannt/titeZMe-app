@@ -690,7 +690,7 @@ const translations = {
     },
     challenge: {
       suspendedTitle: 'Bookings are temporarily suspended 🏆',
-      suspendedBody: 'titeZMe is in Challenge Mode. Our barbers are competing for the best cuts in Madrid. Bookings resume on',
+      suspendedBody: 'titeZMe is in Challenge Mode. Our barbers across Spain are competing for the best cuts. Bookings resume on',
       suspendedCta: 'View The Challenge →',
       suspendedDate: 'Check back soon.',
       eventClosedTitle: 'The Challenge has ended 🏆',
@@ -2280,7 +2280,7 @@ const translations = {
     },
     challenge: {
       suspendedTitle: 'Les réservations sont temporairement suspendues 🏆',
-      suspendedBody: 'titeZMe est en mode Défi. Nos barbiers s\'affrontent pour les meilleures coupes de Madrid. Les réservations reprennent le',
+      suspendedBody: 'titeZMe est en mode Défi. Nos barbiers à travers l\'Espagne s\'affrontent pour les meilleures coupes. Les réservations reprennent le',
       suspendedCta: 'Voir le Défi →',
       suspendedDate: 'Revenez bientôt.',
       eventClosedTitle: 'Le Défi est terminé 🏆',
@@ -3870,7 +3870,7 @@ const translations = {
     },
     challenge: {
       suspendedTitle: 'Las reservas están temporalmente suspendidas 🏆',
-      suspendedBody: 'titeZMe está en Modo Desafío. Nuestros barberos compiten por los mejores cortes de Madrid. Las reservas se reanudan el',
+      suspendedBody: 'titeZMe está en Modo Desafío. Nuestros barberos de toda España compiten por los mejores cortes. Las reservas se reanudan el',
       suspendedCta: 'Ver el Desafío →',
       suspendedDate: 'Vuelve pronto.',
       eventClosedTitle: 'El Desafío ha terminado 🏆',
