@@ -212,7 +212,7 @@ export default function ChallengePaymentTab({ mode }: Props) {
   }
 
   // Settings missing or incomplete
-  if (!settings || !settings.ibanText || !settings.bizumNumber) {
+  if (!settings || !settings.ibanText || !settings.accountHolderName) {
     return (
       <div className="p-6 md:p-10 animate-fadeUp max-w-[640px]">
         <h1 className="text-2xl font-black mb-2">{t('challenge.payment.title')}</h1>
@@ -272,6 +272,15 @@ export default function ChallengePaymentTab({ mode }: Props) {
         <h2 className="text-lg font-black mb-4">{t('challenge.payment.ibanTitle')}</h2>
 
         <div className="mb-4">
+          <div className="text-[10px] uppercase tracking-widest text-[#666] mb-1">
+            {t('challenge.payment.accountHolderLabel')}
+          </div>
+          <div className="font-semibold text-white text-sm">
+            {settings.accountHolderName}
+          </div>
+        </div>
+
+        <div className="mb-4">
           <div className="text-[10px] font-extrabold text-[#888] uppercase tracking-wider mb-2">{t('challenge.payment.ibanLabel')}</div>
           <div className="flex items-center gap-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl p-3">
             <span className="font-mono text-sm text-white flex-1 break-all">{settings.ibanText}</span>
@@ -301,44 +310,6 @@ export default function ChallengePaymentTab({ mode }: Props) {
           </div>
           <p className="text-[11px] text-[#666] mt-2">
             {t('challenge.payment.refHint')}
-          </p>
-        </div>
-      </section>
-
-      {/* Section 3: Bizum */}
-      <section className="mb-8 bg-[#111] border border-[#2a2a2a] rounded-[16px] p-6">
-        <h2 className="text-lg font-black mb-4">{t('challenge.payment.bizumTitle')}</h2>
-
-        <div className="mb-4">
-          <div className="text-[10px] font-extrabold text-[#888] uppercase tracking-wider mb-2">{t('challenge.payment.bizumLabel')}</div>
-          <div className="flex items-center gap-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl p-3">
-            <span className="font-mono text-sm text-white flex-1 break-all">{settings.bizumNumber}</span>
-            <button
-              type="button"
-              onClick={() => copy(settings.bizumNumber || '')}
-              className="text-brand-yellow text-[11px] font-extrabold px-2 py-1 rounded-lg hover:bg-brand-yellow/10 transition-colors shrink-0"
-            >
-              {t('challenge.payment.copyBtn')}
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <div className="text-[10px] font-extrabold text-[#888] uppercase tracking-wider mb-2">
-            {t('challenge.payment.bizumConceptLabel')}
-          </div>
-          <div className="flex items-center gap-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl p-3">
-            <span className="font-mono text-[13px] text-white flex-1 break-all">{reference}</span>
-            <button
-              type="button"
-              onClick={() => copy(reference)}
-              className="text-brand-yellow text-[11px] font-extrabold px-2 py-1 rounded-lg hover:bg-brand-yellow/10 transition-colors shrink-0"
-            >
-              {t('challenge.payment.copyBtn')}
-            </button>
-          </div>
-          <p className="text-[11px] text-[#666] mt-2">
-            {t('challenge.payment.bizumConceptHint')}
           </p>
         </div>
       </section>
