@@ -259,4 +259,8 @@ export interface ChallengeSettings {
   prizeBarberValue: number;
   prizeShopValue: number;
   showHomepageBox?: boolean;
+  eventDate?: string;
+  challengeMode?: boolean;
+  challengeModeEndDate?: string;
+  accountHolderName?: string;
 }

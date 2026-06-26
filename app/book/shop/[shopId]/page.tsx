@@ -16,6 +16,8 @@ import {
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { useLang } from '@/lib/i18n/LangContext';
+import { useChallengeConfig } from '@/hooks/useChallengeConfig';
+import SuspendedBookingBanner from '@/components/SuspendedBookingBanner';
 import { ShopTimePicker } from '@/components/ShopTimePicker';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { toast } from '@/lib/toast';
@@ -87,6 +89,9 @@ export default function ShopBookingPage() {
   const { t, lang } = useLang();
   const dateLocale = lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : 'en-US';
   const router = useRouter();
+  const { data: challengeConfig } = useChallengeConfig();
+  const isChallengeModeOn = challengeConfig?.challengeMode ?? false;
+  const challengeModeEndDate = challengeConfig?.challengeModeEndDate ?? '';
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
@@ -398,6 +403,16 @@ export default function ShopBookingPage() {
   const currentYear = new Date().getFullYear();
 
   // ─── Render ─────────────────────────────────────────────────────────────────
+  if (isChallengeModeOn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-md w-full">
+          <SuspendedBookingBanner endDate={challengeModeEndDate} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <div className="max-w-[600px] mx-auto px-6 py-10 md:py-16">

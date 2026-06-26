@@ -65,6 +65,10 @@ export default function AdminChallengePage() {
   const [feeShop, setFeeShop] = useState(49);
   const [prizeBarberValue, setPrizeBarberValue] = useState(12000);
   const [prizeShopValue, setPrizeShopValue] = useState(100000);
+  const [eventDate, setEventDate] = useState('2026-09-17T20:00:00+02:00');
+  const [showHomepageBox, setShowHomepageBox] = useState(true);
+  const [challengeMode, setChallengeMode] = useState(false);
+  const [challengeModeEndDate, setChallengeModeEndDate] = useState('');
 
   const [uploadingLabel, setUploadingLabel] = useState<string | null>(null);
 
@@ -104,6 +108,10 @@ export default function AdminChallengePage() {
           if (typeof d.feeShop === 'number') setFeeShop(d.feeShop);
           if (typeof d.prizeBarberValue === 'number') setPrizeBarberValue(d.prizeBarberValue);
           if (typeof d.prizeShopValue === 'number') setPrizeShopValue(d.prizeShopValue);
+          if (d.eventDate) setEventDate(d.eventDate);
+          setShowHomepageBox(d.showHomepageBox ?? true);
+          setChallengeMode(d.challengeMode ?? false);
+          setChallengeModeEndDate(d.challengeModeEndDate ?? '');
         }
       } catch (e) {
         console.error('Failed to load challenge settings:', e);
@@ -302,6 +310,10 @@ export default function AdminChallengePage() {
           feeShop,
           prizeBarberValue,
           prizeShopValue,
+          eventDate,
+          showHomepageBox,
+          challengeMode,
+          challengeModeEndDate,
         },
         { merge: true }
       );
@@ -804,6 +816,22 @@ export default function AdminChallengePage() {
                   <div style={helper}>Spain time (Europe/Madrid)</div>
                 </div>
               </div>
+
+              {/* Event Date */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Live Event Date (Madrid)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={eventDate ? new Date(eventDate).toISOString().slice(0,16) : ''}
+                  onChange={(e) => setEventDate(new Date(e.target.value).toISOString())}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Shown in the challenge closed screen and terms page.
+                </p>
+              </div>
             </div>
 
             {/* B. Payment details */}
@@ -898,6 +926,58 @@ export default function AdminChallengePage() {
               </label>
               <div style={helper}>
                 Auto-disabled when voting ends (handled by scheduled function). Turn back on if needed.
+              </div>
+
+              {/* Show Homepage Box */}
+              <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    Show Challenge Box on Homepage
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Toggle the challenge banner on the landing page
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowHomepageBox(!showHomepageBox)}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${showHomepageBox ? 'bg-black' : 'bg-gray-300'}`}
+                >
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${showHomepageBox ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              {/* Challenge Mode (Booking Suspension) */}
+              <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    Challenge Mode — Suspend Bookings
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {challengeMode
+                      ? '🔴 Bookings SUSPENDED'
+                      : '🟢 Bookings ACTIVE'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setChallengeMode(!challengeMode)}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${challengeMode ? 'bg-red-500' : 'bg-gray-300'}`}
+                >
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${challengeMode ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              {/* Challenge Mode End Date */}
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Booking Suspension End Date (shown to users)
+                </label>
+                <input
+                  type="text"
+                  value={challengeModeEndDate}
+                  onChange={(e) => setChallengeModeEndDate(e.target.value)}
+                  placeholder="e.g. July 1, 2026"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
               </div>
             </div>
 

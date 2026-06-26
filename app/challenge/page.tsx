@@ -26,7 +26,7 @@ const algoliaClient = algoliasearch(
 export default function ChallengePage() {
   const { user, appUser } = useAuth();
   const router = useRouter();
-  const { t } = useLang();
+  const { t, lang } = useLang();
 
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['challenge_settings'],
@@ -248,15 +248,16 @@ export default function ChallengePage() {
   }
 
   if (phase === 'closed') {
-    const eventDate = new Date(2026, 8, 17).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    const formattedEventDate = settings?.eventDate
+      ? new Date(settings.eventDate).toLocaleDateString(
+          lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : 'en-GB',
+          { day: 'numeric', month: 'long', year: 'numeric' }
+        )
+      : '17 September 2026';
     return (
       <SimpleMessage
-        title={t('challenge.public.closedTitle')}
-        body={t('challenge.public.closedBody').replace('{date}', eventDate)}
+        title={t('challenge.eventClosedTitle')}
+        body={`${t('challenge.eventClosedBody')} ${formattedEventDate}.`}
       />
     );
   }

@@ -15,6 +15,8 @@ import { BarberProfileSkeleton } from '@/components/skeletons';
 import { toast } from '@/lib/toast';
 import { getOpenStatus, getLocalDateString, getTimezoneFromLocation, getScheduleDocId } from '@/lib/schedule-utils';
 import { useLang } from '@/lib/i18n/LangContext';
+import { useChallengeConfig } from '@/hooks/useChallengeConfig';
+import SuspendedBookingBanner from '@/components/SuspendedBookingBanner';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -143,6 +145,9 @@ interface BarberProfileClientProps {
 export default function BarberProfileClient({ barberId, initialData }: BarberProfileClientProps) {
   const { user, appUser } = useAuth();
   const router = useRouter();
+  const { data: challengeConfig } = useChallengeConfig();
+  const isChallengeModeOn = challengeConfig?.challengeMode ?? false;
+  const challengeModeEndDate = challengeConfig?.challengeModeEndDate ?? '';
   const queryClient = useQueryClient();
 
   const { t } = useLang();
@@ -307,6 +312,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   // ─── actions ─────────────────────────────────────────────────────────────────
 
   const handleBooking = (serviceId?: string) => {
+    if (isChallengeModeOn) return;
     if (profile?.isFake) { setShowFakeModal(true); return; }
     if (!user) { router.push(`/login?redirect=/barber/${barberId}`); return; }
     if (!appUser?.role) { toast.error(t('profile.pleaseLogin')); return; }
@@ -657,9 +663,12 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="font-black text-brand-yellow">{currency}{profile.titeZMeCut.price}</div>
-                      <button onClick={() => handleBooking()} disabled={!profile.isLive} title={!profile.isLive ? t('profile.notAcceptingBookings') : undefined} className={`px-4 py-2 rounded-xl text-xs font-black transition-opacity ${!profile.isLive ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed' : 'bg-brand-yellow text-[#0a0a0a] hover:opacity-90'}`}>{t('profile.book')}</button>
+                      {isChallengeModeOn ? null : <button onClick={() => handleBooking()} disabled={!profile.isLive} title={!profile.isLive ? t('profile.notAcceptingBookings') : undefined} className={`px-4 py-2 rounded-xl text-xs font-black transition-opacity ${!profile.isLive ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed' : 'bg-brand-yellow text-[#0a0a0a] hover:opacity-90'}`}>{t('profile.book')}</button>}
                     </div>
                   </div>
+                )}
+                {isChallengeModeOn && (
+                  <SuspendedBookingBanner endDate={challengeModeEndDate} />
                 )}
 
                 {services.length === 0 && !profile.titeZMeCut && (
@@ -674,11 +683,11 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="font-black text-brand-yellow">{currency}{s.price}</div>
-                      <button onClick={() => handleBooking(s.id)} disabled={!profile.isLive} title={!profile.isLive ? t('profile.notAcceptingBookings') : undefined}
+                      {isChallengeModeOn ? null : <button onClick={() => handleBooking(s.id)} disabled={!profile.isLive} title={!profile.isLive ? t('profile.notAcceptingBookings') : undefined}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${!profile.isLive ? 'bg-[#1a1a1a] text-[#555] border border-[#2a2a2a] cursor-not-allowed' : 'bg-[#1a1a1a] text-white border border-[#333] group-hover:bg-brand-yellow group-hover:text-[#0a0a0a] group-hover:border-brand-yellow'}`}
                       >
                         {t('profile.book')}
-                      </button>
+                      </button>}
                     </div>
                   </div>
                 ))}
@@ -696,11 +705,11 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
               <div className="text-3xl font-black text-brand-yellow mb-4">
                 {minPrice !== null ? `${currency}${minPrice}` : t('profile.pricesOnRequest')}
               </div>
-              <button onClick={() => handleBooking()} disabled={!profile.isLive} title={!profile.isLive ? t('profile.notAcceptingBookings') : undefined}
+              {isChallengeModeOn ? null : <button onClick={() => handleBooking()} disabled={!profile.isLive} title={!profile.isLive ? t('profile.notAcceptingBookings') : undefined}
                 className={`w-full font-black py-3 rounded-full mb-2 text-sm transition-opacity ${!profile.isLive ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed' : 'bg-brand-yellow text-[#0a0a0a] hover:opacity-90'}`}
               >
                 {t('buttons.bookNow')}
-              </button>
+              </button>}
               <button onClick={handleToggleFav} disabled={isSaving}
                 className={`w-full py-3 rounded-full font-black text-sm mb-2 border transition-colors ${isFav ? 'bg-brand-yellow/10 border-brand-yellow text-brand-yellow' : 'border-[#2a2a2a] text-[#888] hover:border-white hover:text-white'}`}
               >
@@ -743,7 +752,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                   <div className="text-[10px] font-black text-[#555] uppercase tracking-widest mb-2">{t('profile.todaysSlots')}</div>
                   <div className="flex flex-wrap gap-1.5">
                     {todaySlots.map((slot: string) => (
-                      <button key={slot} onClick={() => handleBooking()} disabled={!profile.isLive}
+                      isChallengeModeOn ? null : <button key={slot} onClick={() => handleBooking()} disabled={!profile.isLive}
                         className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${!profile.isLive ? 'bg-[#1a1a1a] border border-[#333] text-[#555] cursor-not-allowed' : 'bg-[#0f2010] border border-[#22c55e]/30 text-[#22c55e] hover:bg-[#22c55e]/20'}`}
                       >
                         {slot}
@@ -817,13 +826,13 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
       {/* Mobile sticky booking bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-[#0A0A0A] border-t border-[#1A1A1A]">
-        <button
+        {isChallengeModeOn ? null : <button
           onClick={() => handleBooking()}
           disabled={!profile?.isLive}
           className="w-full py-4 rounded-2xl text-sm font-black tracking-wide bg-[#F5C518] text-black hover:bg-[#e6b800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('buttons.bookNow')}
-        </button>
+        </button>}
       </div>
     </>
   );

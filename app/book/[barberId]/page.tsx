@@ -13,6 +13,8 @@ import { sendEmailVerification } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { notificationSchema } from "@/lib/schemas";
 import { useLang } from '@/lib/i18n/LangContext';
+import { useChallengeConfig } from '@/hooks/useChallengeConfig';
+import SuspendedBookingBanner from '@/components/SuspendedBookingBanner';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -38,6 +40,9 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
 
   const { t, lang } = useLang();
   const dateLocale = lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : 'en-US';
+  const { data: challengeConfig } = useChallengeConfig();
+  const isChallengeModeOn = challengeConfig?.challengeMode ?? false;
+  const challengeModeEndDate = challengeConfig?.challengeModeEndDate ?? '';
   const [step, setStep] = useState(1);
   const [bookingContext, setBookingContext] = useState<'solo'|'shop'>('solo');
   const [selectedServices, setSelectedServices] = useState<any[]>([]);
@@ -427,9 +432,19 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
     }
   }
 
+  if (isChallengeModeOn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-md w-full">
+          <SuspendedBookingBanner endDate={challengeModeEndDate} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-[600px] mx-auto px-6 py-10 md:py-16">
-       
+
        <div className="flex gap-2 mb-8">
          {[1,2,3,4].map((i) => (
            <div key={i} className={`h-2 flex-1 rounded-full bg-[#1a1a1a] overflow-hidden`}>
