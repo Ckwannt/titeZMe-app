@@ -431,7 +431,10 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
       } else {
         const shopSnap = await getDoc(doc(db, 'barbershops', user.uid));
         const shop = shopSnap.exists() ? (shopSnap.data() as any) : null;
-        submitterName = shop?.name || '';
+        submitterName = shop?.name
+          || `${appUser?.firstName || ''} ${appUser?.lastName || ''}`.trim()
+          || appUser?.email
+          || 'Unknown';
         submitterCity = shop?.address?.city || '';
         submitterAvatarUrl = shop?.logoUrl || shop?.coverPhotoUrl || '';
         shopId = user.uid;
@@ -445,12 +448,10 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
         const updateData: Partial<ChallengeSubmissionData> = {
           status: 'awaiting_payment',
           photos: uploadedPhotoUrls,
-          videoUrl: videoUrl || undefined,
-          description: description || undefined,
+          description: description || '',
           submittedAt: now,
-          termsAcceptedAt: now,
           resubmissionCount: (existingSubmission.resubmissionCount || 0) + 1,
-          rejectionReason: undefined,
+          ...(videoUrl ? { videoUrl } : {}),
         };
         const parsed = challengeSubmissionSchema.partial().parse(updateData);
         await updateDoc(docRef, parsed);
