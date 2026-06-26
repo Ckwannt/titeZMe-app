@@ -1,6 +1,26 @@
 'use client';
 
+import { useChallengeConfig } from '@/hooks/useChallengeConfig';
+import { useLang } from '@/lib/i18n/LangContext';
+
 export default function ChallengeTermsPage() {
+  const { data: config } = useChallengeConfig();
+  const { lang } = useLang();
+
+  const fmt = (ms: number) => ms
+    ? new Date(ms).toLocaleDateString(
+        lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : 'en-GB',
+        { day: 'numeric', month: 'long', year: 'numeric' }
+      )
+    : '—';
+
+  const fmtDate = (iso: string) => iso
+    ? new Date(iso).toLocaleDateString(
+        lang === 'fr' ? 'fr-FR' : lang === 'es' ? 'es-ES' : 'en-GB',
+        { day: 'numeric', month: 'long', year: 'numeric' }
+      )
+    : '—';
+
   return (
     <div className="bg-[#0A0A0A] text-[#F0EDE8] pt-24 min-h-screen font-sans border-t border-[#1a1a1a]">
       <section className="bg-[#111111] py-24 px-6 min-h-screen">
@@ -46,10 +66,10 @@ export default function ChallengeTermsPage() {
               <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 3 — Challenge Period</h2>
 
               <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">3.1 Submission window:</h3>
-              <p className="mb-4">25 June 2026 00:00 (Madrid time) to 28 June 2026 00:00 (Madrid time). Late submissions will be automatically rejected.</p>
+              <p className="mb-4">{fmt(config?.submissionsOpenAt ?? 0)} 00:00 (Madrid time) to {fmt(config?.submissionsCloseAt ?? 0)} 00:00 (Madrid time). Late submissions will be automatically rejected.</p>
 
               <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">3.2 Voting window:</h3>
-              <p className="mb-4">28 June 2026 00:00 (Madrid time) until the official Challenge event on 17 September 2026.</p>
+              <p className="mb-4">{fmt(config?.submissionsCloseAt ?? 0)} 00:00 (Madrid time) until the official Challenge event on {fmtDate(config?.eventDate ?? '')}.</p>
 
               <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">3.3 Modifications:</h3>
               <p>The Organizer reserves the right to extend, shorten, suspend, or cancel the Challenge at any time if technical, legal, or operational reasons require it. In the event of cancellation prior to winner selection, paid entry fees will be refunded in full.</p>
@@ -61,8 +81,8 @@ export default function ChallengeTermsPage() {
               <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">4.1 Amounts:</h3>
               <p className="mb-2">Entry fees are payable as follows:</p>
               <ul className="list-disc pl-5 space-y-2 text-[#888580] mb-4">
-                <li>Individual barbers: €19 (nineteen euros)</li>
-                <li>Barbershops: €49 (forty-nine euros)</li>
+                <li>Individual barbers: {config?.feeBarber ?? 49}€</li>
+                <li>Barbershops: {config?.feeShop ?? 99}€</li>
               </ul>
 
               <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">4.2 Payment method:</h3>
@@ -142,9 +162,9 @@ export default function ChallengeTermsPage() {
 
               <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">8.1 Prize structure:</h3>
               <ul className="list-disc pl-5 space-y-2 text-[#888580] mb-4">
-                <li>Top 10 barbershops by vote count receive five (5) years of complimentary titeZMe subscription, equivalent to a displayed marketing value of approximately €100,000 (calculated from the current platform subscription rate of €1,723.65/month including IVA).</li>
-                <li>Top 10 individual barbers by vote count receive five (5) years of complimentary titeZMe subscription, equivalent to a displayed marketing value of approximately €12,000 (calculated from the current platform subscription rate of €69/month including IVA).</li>
-                <li>The single top-ranked barber and the single top-ranked barbershop (subject to public selection at the Challenge event) receive an additional honor of cutting the Organizer&apos;s hair at the public Challenge event on 17 September 2026.</li>
+                <li>Top 10 barbershops by vote count receive five (5) years of complimentary titeZMe subscription, equivalent to a displayed marketing value of approximately {(config?.prizeShopValue ?? 100000).toLocaleString()}€ (calculated from the current platform subscription rate of €1,723.65/month including IVA).</li>
+                <li>Top 10 individual barbers by vote count receive five (5) years of complimentary titeZMe subscription, equivalent to a displayed marketing value of approximately {(config?.prizeBarberValue ?? 15000).toLocaleString()}€ (calculated from the current platform subscription rate of €69/month including IVA).</li>
+                <li>The single top-ranked barber and the single top-ranked barbershop (subject to public selection at the Challenge event) receive an additional honor of cutting the Organizer&apos;s hair at the public Challenge event on {fmtDate(config?.eventDate ?? '')}.</li>
               </ul>
 
               <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">8.2 Nature of the prize:</h3>
@@ -164,7 +184,7 @@ export default function ChallengeTermsPage() {
               <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 9 — Public Event</h2>
 
               <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">9.1 Event date:</h3>
-              <p className="mb-4">The Challenge culminates in a public event scheduled for 17 September 2026 in Madrid, Spain. The event date, location, and final logistics will be communicated to winners and published on titezme.com no later than 30 days before the event.</p>
+              <p className="mb-4">The Challenge culminates in a public event scheduled for {fmtDate(config?.eventDate ?? '')} in Madrid, Spain. The event date, location, and final logistics will be communicated to winners and published on titezme.com no later than 30 days before the event.</p>
 
               <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">9.2 Attendance:</h3>
               <p className="mb-4">Attendance of winners at the public event is encouraged but not required to claim the subscription prize. The &quot;haircut at the event&quot; honor (Section 8.1) requires physical presence and is not redeemable remotely.</p>

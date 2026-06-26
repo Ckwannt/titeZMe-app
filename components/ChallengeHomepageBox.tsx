@@ -11,7 +11,7 @@ import { useLang } from '@/lib/i18n/LangContext';
 import type { ChallengeSettings } from '@/lib/types';
 import CountdownTimer from './CountdownTimer';
 
-type Phase = 'preOpen' | 'entry' | 'voting' | 'closed' | 'hidden';
+type Phase = 'preOpen' | 'entry' | 'gap' | 'voting' | 'closed' | 'hidden';
 
 export default function ChallengeHomepageBox() {
   const { user, appUser, loading: authLoading } = useAuth();
@@ -47,16 +47,34 @@ export default function ChallengeHomepageBox() {
   });
 
   const now = Date.now();
-  const phase: Phase =
-    !settings ? 'hidden' :
-    settings.showHomepageBox === false ? 'hidden' :
-    !settings.submissionsOpenAt || !settings.votingCloseAt ? 'hidden' :
-    now < settings.submissionsOpenAt ? 'preOpen' :
-    now < settings.submissionsCloseAt ? 'entry' :
-    now < settings.votingCloseAt ? 'voting' :
-    'closed';
+  let phase: Phase = 'hidden';
+
+  if (!settings?.showHomepageBox) {
+    phase = 'hidden';
+  } else if (now < (settings?.submissionsOpenAt ?? 0)) {
+    phase = 'preOpen';
+  } else if (now < (settings?.submissionsCloseAt ?? 0)) {
+    phase = 'entry';
+  } else if (now < (settings?.votingOpenAt ?? 0)) {
+    phase = 'gap';
+  } else if (now < (settings?.votingCloseAt ?? 0)) {
+    phase = 'voting';
+  } else {
+    phase = 'closed';
+  }
 
   if (phase === 'hidden' || phase === 'closed' || !settings) return null;
+
+  if (phase === 'gap') {
+    return (
+      <div className="w-full rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
+        <div className="text-2xl mb-2">⏳</div>
+        <p className="text-sm font-medium text-gray-700">
+          {t('landing.challenge.votingComingSoon') ?? 'Voting opens soon — stay tuned.'}
+        </p>
+      </div>
+    );
+  }
 
   function getCTA(): { label: string; href: string } {
     if (authLoading) {

@@ -14,6 +14,8 @@ import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { useLang } from '@/lib/i18n/LangContext';
+import { useChallengeConfig } from '@/hooks/useChallengeConfig';
+import SuspendedBookingBanner from '@/components/SuspendedBookingBanner';
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -119,6 +121,9 @@ export default function ShopProfilePage() {
   const { user, appUser } = useAuth();
   const { t } = useLang();
   const router = useRouter();
+  const { data: challengeConfig } = useChallengeConfig();
+  const isChallengeModeOn = challengeConfig?.challengeMode ?? false;
+  const challengeModeEndDate = challengeConfig?.challengeModeEndDate ?? '';
 
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -286,6 +291,7 @@ export default function ShopProfilePage() {
   // ─── actions ─────────────────────────────────────────────────────────────
 
   const handleBookService = (serviceId?: string) => {
+    if (isChallengeModeOn) return;
     if (!user) {
       router.push(`/login?redirect=/shop/${shopId}`);
       return;
@@ -613,14 +619,17 @@ export default function ShopProfilePage() {
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="font-black text-brand-yellow">{currency}{shop.titeZMeCut.price}</div>
-                      <button
+                      {isChallengeModeOn ? null : <button
                         onClick={() => handleBookService('titeZMeCut')}
                         className="bg-[#1a1a1a] text-white border border-[#333] hover:bg-brand-yellow hover:text-[#0a0a0a] hover:border-brand-yellow px-4 py-2 rounded-xl text-xs font-bold transition-colors"
                       >
                         {t('profile.book')}
-                      </button>
+                      </button>}
                     </div>
                   </div>
+                )}
+                {isChallengeModeOn && (
+                  <SuspendedBookingBanner endDate={challengeModeEndDate} />
                 )}
 
                 {services.length === 0 && !shop.titeZMeCut && (
@@ -640,12 +649,12 @@ export default function ShopProfilePage() {
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="font-black text-brand-yellow">{currency}{s.price}</div>
-                      <button
+                      {isChallengeModeOn ? null : <button
                         onClick={() => handleBookService(s.id)}
                         className="bg-[#1a1a1a] text-white border border-[#333] group-hover:bg-brand-yellow group-hover:text-[#0a0a0a] group-hover:border-brand-yellow px-4 py-2 rounded-xl text-xs font-bold transition-colors"
                       >
                         {t('profile.book')}
-                      </button>
+                      </button>}
                     </div>
                   </div>
                 ))}
