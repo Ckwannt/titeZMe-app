@@ -13,7 +13,7 @@ export const queryClient = new QueryClient({
       staleTime: 30 * 1000,       // 30 s — mutable data needs short TTL
       gcTime: 5 * 60 * 1000,      // 5 min in memory cache
       retry: 2,
-      refetchOnWindowFocus: true,  // Refresh when user returns to tab
+      refetchOnWindowFocus: false, // Disabled globally — pages opt in if needed
       refetchInterval: false,      // No polling — we use onSnapshot / manual invalidation
     },
   },

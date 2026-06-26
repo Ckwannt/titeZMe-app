@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -609,10 +610,11 @@ function SubmissionGrid({
           >
             <div className="flex items-center gap-3">
               {hit.submitterAvatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={hit.submitterAvatarUrl}
-                  alt=""
+                  alt="Barber avatar"
+                  width={44}
+                  height={44}
                   className="w-11 h-11 rounded-full object-cover bg-[#222]"
                 />
               ) : (
@@ -633,12 +635,15 @@ function SubmissionGrid({
             </div>
 
             {hit.photos?.[0] && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={hit.photos[0]}
-                alt=""
-                className="w-full aspect-square object-cover rounded-[10px] bg-[#0a0a0a]"
-              />
+              <div className="relative w-full aspect-square">
+                <Image
+                  src={hit.photos[0]}
+                  alt="Submission photo"
+                  fill
+                  className="object-cover rounded-[10px] bg-[#0a0a0a]"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                />
+              </div>
             )}
 
             <div className="flex items-center justify-between gap-2 mt-1">
@@ -800,10 +805,11 @@ function LeaderboardCard({
 
       <div className="flex items-center gap-3 pl-10">
         {submission.submitterAvatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={submission.submitterAvatarUrl}
-            alt=""
+            alt="Barber avatar"
+            width={44}
+            height={44}
             className="w-11 h-11 rounded-full object-cover bg-[#222]"
           />
         ) : (
@@ -824,12 +830,15 @@ function LeaderboardCard({
       </div>
 
       {submission.photos?.[0] && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={submission.photos[0]}
-          alt=""
-          className="w-full aspect-square object-cover rounded-[10px] bg-[#0a0a0a]"
-        />
+        <div className="relative w-full aspect-square">
+          <Image
+            src={submission.photos[0]}
+            alt="Submission photo"
+            fill
+            className="object-cover rounded-[10px] bg-[#0a0a0a]"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          />
+        </div>
       )}
 
       <div className="flex items-center justify-between gap-2 mt-1">
