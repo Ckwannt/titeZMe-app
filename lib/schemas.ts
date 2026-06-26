@@ -214,7 +214,7 @@ export const challengeSettingsSchema = z.object({
   votingOpenAt: z.number().optional(),
   votingCloseAt: z.number().optional(),
   ibanText: z.string().optional(),
-  bizumNumber: z.string().optional(),
+  accountHolderName: z.string().optional(),
   referencePhotos: z.array(z.string()).max(4).optional(),
   referencePhotoLabels: z.array(z.string()).max(4).optional(),
   fakeBarberCount: z.number().int().nonnegative().optional(),

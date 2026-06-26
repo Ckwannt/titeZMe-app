@@ -66,7 +66,7 @@ export default function ChallengeTermsPage() {
               </ul>
 
               <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">4.2 Payment method:</h3>
-              <p className="mb-4">Entry fees are paid by bank transfer (IBAN) or Bizum to the Organizer&apos;s account. The exact payment reference will be displayed to the participant after submitting their proposal and must be used verbatim.</p>
+              <p className="mb-4">Entry fees are paid by bank transfer (IBAN) to the Organizer&apos;s account. The exact payment reference will be displayed to the participant after submitting their proposal and must be used verbatim.</p>
 
               <h3 className="text-lg font-bold text-[#F0EDE8] mt-6 mb-2">4.3 Non-refundable:</h3>
               <p className="mb-4">Entry fees are NON-REFUNDABLE once the submission has been approved by the Organizer, except in the case of cancellation under Section 3.3.</p>

@@ -53,7 +53,7 @@ export default function AdminChallengePage() {
     new Date('2026-09-17T00:00:00+02:00').getTime()
   );
   const [ibanText, setIbanText] = useState('');
-  const [bizumNumber, setBizumNumber] = useState('');
+  const [accountHolderName, setAccountHolderName] = useState('');
   const [referencePhotos, setReferencePhotos] = useState<string[]>([]);
   const [referencePhotoLabels, setReferencePhotoLabels] = useState<string[]>([
     'back', 'left', 'right', 'front',
@@ -94,7 +94,7 @@ export default function AdminChallengePage() {
           if (typeof d.votingOpenAt === 'number') setVotingOpenAt(d.votingOpenAt);
           if (typeof d.votingCloseAt === 'number') setVotingCloseAt(d.votingCloseAt);
           if (typeof d.ibanText === 'string') setIbanText(d.ibanText);
-          if (typeof d.bizumNumber === 'string') setBizumNumber(d.bizumNumber);
+          if (typeof d.accountHolderName === 'string') setAccountHolderName(d.accountHolderName);
           if (Array.isArray(d.referencePhotos)) setReferencePhotos(d.referencePhotos);
           if (Array.isArray(d.referencePhotoLabels)) setReferencePhotoLabels(d.referencePhotoLabels);
           if (typeof d.fakeBarberCount === 'number') setFakeBarberCount(d.fakeBarberCount);
@@ -292,7 +292,7 @@ export default function AdminChallengePage() {
           votingOpenAt,
           votingCloseAt,
           ibanText,
-          bizumNumber,
+          accountHolderName,
           referencePhotos,
           referencePhotoLabels,
           fakeBarberCount,
@@ -821,14 +821,14 @@ export default function AdminChallengePage() {
                 />
               </div>
               <div>
-                <label style={fieldLabel}>Bizum number</label>
+                <label style={fieldLabel}>Account holder name</label>
                 <input
                   type="text"
-                  maxLength={20}
-                  value={bizumNumber}
-                  onChange={e => setBizumNumber(e.target.value)}
+                  maxLength={100}
+                  value={accountHolderName}
+                  onChange={e => setAccountHolderName(e.target.value)}
                   style={inputStyle}
-                  placeholder="+34 ..."
+                  placeholder="Ibrahim Mellouli"
                 />
               </div>
               <div style={helper}>Only shown to barbers AFTER they submit a proposal.</div>
