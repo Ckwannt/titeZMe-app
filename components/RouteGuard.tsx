@@ -92,6 +92,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
 
     // Onboarding redirect — preserve existing behaviour
     if (appUser && !appUser.isOnboarded &&
+        appUser.role !== 'admin' &&
         !pathname.startsWith('/onboarding') &&
         pathname !== '/' &&
         pathname !== '/login' &&
@@ -111,6 +112,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
     // required fields (phone, city, country) or have default barber data.
     if (
       appUser?.isOnboarded === true &&
+      appUser.role !== 'admin' &&
       !isProfileComplete(appUser) &&
       !pathname.startsWith('/onboarding')
     ) {
