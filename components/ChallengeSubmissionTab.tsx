@@ -470,7 +470,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
           ...(barberCode ? { barberCode } : {}),
           ...(shopId ? { shopId } : {}),
           ...(videoUrl ? { videoUrl } : {}),
-          ...(description ? { description } : {}),
+          description: description || '',
         };
         const parsed = challengeSubmissionSchema.parse(newData);
         await setDoc(docRef, parsed);
