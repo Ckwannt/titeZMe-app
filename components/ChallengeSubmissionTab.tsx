@@ -461,16 +461,16 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
           submitterName,
           submitterCity,
           submitterAvatarUrl,
-          barberCode,
-          shopId,
           photos: uploadedPhotoUrls,
-          videoUrl: videoUrl || undefined,
-          description: description || undefined,
           status: 'awaiting_payment',
           voteCount: 0,
           submittedAt: now,
           termsAcceptedAt: now,
           resubmissionCount: 0,
+          ...(barberCode ? { barberCode } : {}),
+          ...(shopId ? { shopId } : {}),
+          ...(videoUrl ? { videoUrl } : {}),
+          ...(description ? { description } : {}),
         };
         const parsed = challengeSubmissionSchema.parse(newData);
         await setDoc(docRef, parsed);
