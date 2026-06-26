@@ -775,9 +775,11 @@ service cloud.firestore {
     // Cloud Function (Step 4) — never read this collection for counting.
     match /challengeVotes/{voteId} {
       allow get: if isAdmin()
+        || resource == null
         || (isSignedIn() && resource.data.voterUid == request.auth.uid);
 
       allow list: if isAdmin()
+        || resource == null
         || (isSignedIn() && resource.data.voterUid == request.auth.uid);
 
       allow create: if isSignedIn()
