@@ -233,19 +233,7 @@ export default function ChallengePage() {
   }
 
   if (phase === 'preOpen' || phase === 'entry' || phase === 'gap') {
-    const isGap = phase === 'gap';
-    return (
-      <PreVotingScreen
-        settings={settings!}
-        headline={isGap ? t('challenge.public.gapTitle') : t('challenge.public.preTitle')}
-        subhead={
-          isGap
-            ? t('challenge.public.votingBeginsIn')
-            : t('challenge.public.votingOpensIn')
-        }
-        onShare={handleShare}
-      />
-    );
+    return <PreVotingScreen settings={settings!} phase={phase} />;
   }
 
   if (phase === 'closed') {
@@ -453,84 +441,265 @@ function SimpleMessage({ title, body }: { title: string; body: string }) {
   );
 }
 
-function PreVotingScreen({
-  settings,
-  headline,
-  subhead,
-  onShare,
-}: {
+function PreVotingScreen({ settings, phase }: {
   settings: ChallengeSettings;
-  headline: string;
-  subhead: string;
-  onShare: () => void;
+  phase: string;
 }) {
-  const { t } = useLang();
-  const openDate = settings.votingOpenAt
-    ? new Date(settings.votingOpenAt).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : '';
-  const shopAmount = `€${(settings.prizeShopValue ?? 100000).toLocaleString('es-ES')}`;
-  const barberAmount = `€${(settings.prizeBarberValue ?? 12000).toLocaleString('es-ES')}`;
+  const prizeShop = settings.prizeShopValue
+    ? new Intl.NumberFormat('es-ES').format(settings.prizeShopValue)
+    : '100.000';
+  const prizeBarber = settings.prizeBarberValue
+    ? new Intl.NumberFormat('es-ES').format(settings.prizeBarberValue)
+    : '15.000';
+
+  const countdownTargetMs =
+    phase === 'entry' ? settings.submissionsCloseAt : settings.votingOpenAt;
+
+  const countdownLabel =
+    phase === 'entry' ? 'Las inscripciones cierran en' : 'La votación abre en';
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center px-6 py-20">
-      <div className="max-w-[640px] w-full">
-        <div className="text-center mb-8">
-          <div className="inline-block text-[10px] font-black tracking-[3px] text-brand-orange uppercase mb-4">
-            🏆 {t('challenge.public.eyebrow')}
-          </div>
-          <h1 className="text-3xl md:text-4xl font-black mb-4">{headline}</h1>
-          <p className="text-[#888] text-sm mb-2">
-            {subhead}{' '}
-            <CountdownTimer
-              targetMs={settings.votingOpenAt}
-              className="text-brand-yellow font-bold"
-            />
+    <div className="min-h-screen bg-black text-white">
+
+      {/* ── 1. HERO ── */}
+      <section className="min-h-screen flex flex-col justify-center px-6 py-24 relative overflow-hidden">
+        <div
+          className="absolute inset-0 pointer-events-none opacity-10"
+          style={{
+            backgroundImage: `radial-gradient(ellipse at 80% 10%, #FF5500 0%, transparent 55%),
+                              radial-gradient(ellipse at 10% 90%, #FFD700 0%, transparent 55%)`,
+          }}
+        />
+        <div className="relative z-10 max-w-md mx-auto w-full">
+          <p className="text-xs font-mono tracking-[0.35em] text-yellow-400 uppercase mb-8">
+            titeZMe Challenge
           </p>
-          {openDate && (
-            <p className="text-[#666] text-xs">
-              {t('challenge.public.votingOpensOn').replace('{date}', openDate)}
+
+          <div className="mb-6">
+            <p className="text-8xl font-black leading-none text-yellow-400">10</p>
+            <p className="text-5xl font-black leading-tight text-yellow-400 uppercase">
+              Barbershops
             </p>
-          )}
-        </div>
-
-        <div className="bg-[#111] border-2 border-brand-orange/40 rounded-[16px] p-6 mb-6">
-          <div className="mb-4">
-            <div className="text-brand-yellow text-3xl md:text-4xl font-black leading-none">
-              {t('landing.challenge.win')} {shopAmount}
-            </div>
-            <div className="text-[#888] text-[11px] uppercase tracking-widest mt-1">
-              {t('landing.challenge.forBarbershops')}
-            </div>
+            <p className="text-5xl font-black leading-tight text-yellow-400 uppercase mb-3">
+              ganarán
+            </p>
+            <p className="text-6xl font-black text-yellow-400 leading-none">
+              €{prizeShop}
+            </p>
+            <p className="text-2xl font-bold text-yellow-400 mt-1">cada una</p>
           </div>
-          <div>
-            <div className="text-brand-yellow text-2xl md:text-3xl font-black leading-none">
-              {t('landing.challenge.win')} {barberAmount}
+
+          <div className="w-12 h-px bg-gray-700 my-6" />
+
+          <p className="text-base text-gray-400 leading-relaxed">
+            Y{' '}
+            <span className="text-white font-bold">10 barberos</span>{' '}
+            ganarán{' '}
+            <span className="text-white font-bold">€{prizeBarber}</span>{' '}
+            cada uno
+          </p>
+
+          {countdownTargetMs ? (
+            <div className="mt-10 p-5 border border-gray-800 rounded-xl bg-gray-950">
+              <p className="text-xs font-mono tracking-widest text-gray-500 uppercase mb-3">
+                {countdownLabel}
+              </p>
+              <CountdownTimer
+                targetMs={countdownTargetMs}
+                className="text-yellow-400 font-bold text-2xl"
+              />
             </div>
-            <div className="text-[#888] text-[11px] uppercase tracking-widest mt-1">
-              {t('landing.challenge.forBarbers')}
-            </div>
+          ) : null}
+
+          <div className="mt-8 flex flex-col gap-3">
+            <a
+              href="/dashboard/barber/challenge"
+              className="block w-full text-center py-4 px-6 bg-yellow-400 text-black font-black text-base uppercase tracking-wider rounded-xl hover:bg-yellow-300 transition-colors"
+            >
+              Soy barbero — Participar
+            </a>
+            <a
+              href="/dashboard/shop/challenge"
+              className="block w-full text-center py-4 px-6 border border-yellow-400 text-yellow-400 font-black text-base uppercase tracking-wider rounded-xl hover:bg-yellow-400 hover:text-black transition-colors"
+            >
+              Tengo una barbería — Participar
+            </a>
           </div>
         </div>
+      </section>
 
-        <div className="flex flex-wrap gap-3 justify-center">
-          <button
-            onClick={onShare}
-            className="bg-[#1a1a1a] border border-[#2a2a2a] text-white font-bold text-xs px-4 py-2.5 rounded-full hover:border-[#444] transition-colors"
-          >
-            {t('challenge.public.shareBtn')}
-          </button>
-          <Link
-            href="/"
-            className="bg-brand-yellow text-[#0a0a0a] font-black text-xs px-5 py-2.5 rounded-full"
-          >
-            {t('challenge.public.backHome')}
-          </Link>
+      {/* ── 2. HOW? ── */}
+      <section className="border-t border-gray-900 px-6 py-20">
+        <div className="max-w-md mx-auto">
+          <p className="text-6xl font-black text-yellow-400 mb-8">¿CÓMO?</p>
+          <p className="text-2xl font-bold text-orange-500 leading-snug mb-6">
+            Compite por hacerle el mejor corte de pelo a nuestro CEO, después
+            de 2 años sin pasar por la barbería.
+          </p>
+          <p className="text-xl text-white leading-relaxed">
+            Aquí no elegimos nosotros.{' '}
+            <span className="font-bold">El ganador lo decide la gente.</span>
+          </p>
         </div>
-      </div>
+      </section>
+
+      {/* ── 3. MEET THE CEO ── */}
+      <section className="relative w-full overflow-hidden">
+        <div className="relative w-full" style={{ aspectRatio: '3 / 4' }}>
+          <Image
+            src="/ckwant-challenge.png"
+            alt="CKwant, CEO de titeZMe"
+            fill
+            className="object-cover object-top"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-8">
+            <p className="text-xs font-mono tracking-widest text-yellow-400 uppercase mb-2">
+              CEO de titeZMe
+            </p>
+            <p className="text-4xl font-black text-white leading-tight">
+              Este es CKwant.
+            </p>
+            <p className="text-xl text-gray-300 mt-1">Así es como luce.</p>
+            <p className="text-sm text-gray-500 font-mono mt-3">
+              2 años sin pasar por la barbería.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. HOW TO JOIN ── */}
+      <section className="border-t border-gray-900 px-6 py-20">
+        <div className="max-w-md mx-auto">
+          <p className="text-xs font-mono tracking-[0.35em] text-orange-500 uppercase mb-4">
+            Paso a paso
+          </p>
+          <h3 className="text-4xl font-black text-white uppercase leading-tight mb-12">
+            Cómo participar
+          </h3>
+          {[
+            'Regístrate en TiteZMe.com como barbero.',
+            'Completa tu perfil.',
+            'Si tienes una barbería, crea el perfil de tu negocio y añade a tus empleados.',
+            'Y listo, ya puedes empezar.',
+          ].map((step, i) => (
+            <div key={i} className="flex gap-5 mb-8 items-start">
+              <span className="text-5xl font-black text-orange-500 leading-none w-10 shrink-0">
+                {i + 1}
+              </span>
+              <div className="border-l border-gray-800 pl-5 pt-1">
+                <p className="text-lg text-white font-medium leading-snug">{step}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 5. CHALLENGE STEPS ── */}
+      <section className="bg-gray-950 border-t border-gray-900 px-6 py-20">
+        <div className="max-w-md mx-auto">
+          <p className="text-xs font-mono tracking-[0.35em] text-yellow-400 uppercase mb-4">
+            El proceso
+          </p>
+          <h3 className="text-4xl font-black text-white uppercase leading-tight mb-12">
+            Pasos del Challenge
+          </h3>
+          {[
+            { text: 'Entra en la sección "Challenge" desde tu panel.', color: 'orange' },
+            { text: 'Descarga las fotos de CKwant.', color: 'yellow' },
+            { text: 'Usa cualquier herramienta de IA para crear tu diseño de corte sobre su cara.', color: 'orange' },
+            { text: 'Describe tu idea. Explica tu visión.', color: 'yellow' },
+            { text: 'Realiza el pago.', color: 'orange' },
+            { text: 'Pulsa ENVIAR.', color: 'yellow' },
+          ].map((step, i) => (
+            <div key={i} className="flex gap-4 mb-6 items-start">
+              <div
+                className={`w-10 h-10 shrink-0 rounded border-2 flex items-center justify-center text-sm font-black ${
+                  step.color === 'orange'
+                    ? 'border-orange-500 text-orange-500'
+                    : 'border-yellow-400 text-yellow-400'
+                }`}
+              >
+                {i + 1}
+              </div>
+              <p className="text-white text-base leading-snug pt-2 font-medium">
+                {step.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 6. TIMELINE ── */}
+      <section className="border-t border-gray-900 px-6 py-20">
+        <div className="max-w-md mx-auto">
+          <h3 className="text-4xl font-black text-yellow-400 leading-tight mb-4">
+            3 Días Para Enviar Tu Propuesta
+          </h3>
+          <div className="w-full h-px bg-gray-800 my-6" />
+          <h3 className="text-4xl font-black text-yellow-400 leading-tight mb-8">
+            77 Días Para Conseguir Los Votos De Tus Clientes
+          </h3>
+          <p className="text-lg text-gray-300 leading-relaxed">
+            Cada cliente es{' '}
+            <span className="text-white font-bold">1 voto.</span>{' '}
+            Cada voto te acerca a la victoria.
+          </p>
+        </div>
+      </section>
+
+      {/* ── 7. LIVE ANNOUNCEMENT ── */}
+      <section className="border-t border-gray-900 px-6 py-20 relative overflow-hidden">
+        <div className="absolute top-5 right-5 w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+        <div className="max-w-md mx-auto">
+          <p className="text-xs font-mono tracking-widest text-gray-500 uppercase mb-6">
+            En directo
+          </p>
+          <p className="text-xl text-white font-bold leading-snug mb-8">
+            El día del lanzamiento de TiteZMe se anunciarán los ganadores en
+            directo
+          </p>
+          <p className="text-7xl font-black text-white tracking-tight leading-none">
+            17.09.
+            <span className="text-yellow-400">2026</span>
+          </p>
+        </div>
+      </section>
+
+      {/* ── 8. CTA ── */}
+      <section className="bg-yellow-400 px-6 py-24">
+        <div className="max-w-md mx-auto text-center">
+          <h2 className="text-5xl font-black text-black leading-tight uppercase mb-4">
+            REGÍSTRATE.
+            <br />
+            ENVÍA.
+            <br />
+            GANA.
+          </h2>
+          <p className="text-black/50 text-sm font-medium mb-10 tracking-wide">
+            vamos a hacer que todo el mundo sea titiZ
+          </p>
+          <div className="flex flex-col gap-3">
+            <a
+              href="/dashboard/barber/challenge"
+              className="block w-full py-5 px-8 bg-black text-yellow-400 font-black text-lg uppercase tracking-wider rounded-xl hover:bg-gray-900 transition-colors"
+            >
+              Soy barbero
+            </a>
+            <a
+              href="/dashboard/shop/challenge"
+              className="block w-full py-5 px-8 border-2 border-black text-black font-black text-lg uppercase tracking-wider rounded-xl hover:bg-black hover:text-yellow-400 transition-colors"
+            >
+              Tengo una barbería
+            </a>
+          </div>
+          <p className="text-black/30 text-xs font-mono mt-8 tracking-widest">
+            TITEZME.COM/CHALLENGE
+          </p>
+        </div>
+      </section>
+
     </div>
   );
 }
