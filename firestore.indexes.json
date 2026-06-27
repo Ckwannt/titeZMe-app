@@ -132,6 +132,17 @@
         { "fieldPath": "userId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "services",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "isActive",      "order": "ASCENDING" },
+        { "fieldPath": "providerId",    "order": "ASCENDING" },
+        { "fieldPath": "providerType",  "order": "ASCENDING" },
+        { "fieldPath": "price",         "order": "ASCENDING" },
+        { "fieldPath": "__name__",      "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
