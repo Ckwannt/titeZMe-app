@@ -972,6 +972,15 @@ const translations = {
         approved: 'Approved',
         rejected: 'Rejected',
       },
+      locationGate: {
+        comingSoonPrefix: 'titeZMe Challenge is coming to ',
+        comingSoonSuffix: '!',
+        comingSoonBody:
+          'The challenge is currently available in Spain only. We are launching in your country soon — stay tuned.',
+        noCountryTitle: 'Where are you based?',
+        noCountryBody:
+          'Add your country to your profile to see if you qualify for the titeZMe Challenge.',
+      },
     },
     cookies: {
       title: 'We value your privacy',
@@ -2684,6 +2693,15 @@ const translations = {
         approved: 'Approuvée',
         rejected: 'Rejetée',
       },
+      locationGate: {
+        comingSoonPrefix: 'Le titeZMe Challenge arrive bientôt en ',
+        comingSoonSuffix: ' !',
+        comingSoonBody:
+          'Le challenge est actuellement disponible en Espagne uniquement. Nous arrivons bientôt dans votre pays — restez connectés.',
+        noCountryTitle: 'Où êtes-vous basé ?',
+        noCountryBody:
+          'Ajoutez votre pays dans votre profil pour voir si vous êtes éligible au titeZMe Challenge.',
+      },
     },
     cookies: {
       title: 'Nous respectons votre vie privée',
@@ -4395,6 +4413,15 @@ const translations = {
         pending: 'En revisión',
         approved: 'Aprobada',
         rejected: 'Rechazada',
+      },
+      locationGate: {
+        comingSoonPrefix: '¡El titeZMe Challenge llega pronto a ',
+        comingSoonSuffix: '!',
+        comingSoonBody:
+          'El desafío está disponible actualmente solo en España. Pronto llegaremos a tu país — ¡estad atentos!',
+        noCountryTitle: '¿Dónde estás ubicado?',
+        noCountryBody:
+          'Añade tu país en tu perfil para ver si calificas para el titeZMe Challenge.',
       },
     },
     cookies: {
