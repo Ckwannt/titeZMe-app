@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 
 const FOOTER_ROUTES = [
   '/',
+  '/challenge',
   '/about',
   '/for-barbers',
   '/for-shops',

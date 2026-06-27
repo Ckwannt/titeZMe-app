@@ -633,8 +633,17 @@ function PreVotingScreen({ settings, phase }: {
           </h2>
           <div className="space-y-4 text-gray-400 leading-relaxed text-base lg:text-lg">
             <p>{t('challenge.public.ceoStory1')}</p>
-            <p>{t('challenge.public.ceoStory2')}</p>
-            <p>{t('challenge.public.ceoStory3')}</p>
+            <blockquote className="border-l-2 border-yellow-400 pl-6 my-6">
+              <p className="text-white italic mb-3">
+                &ldquo;{t('challenge.public.ceoStory2')}
+              </p>
+              <p className="text-white italic mb-4">
+                {t('challenge.public.ceoStory3')}&rdquo;
+              </p>
+              <cite className="text-yellow-400 text-sm font-black not-italic">
+                {t('challenge.public.ceoQuoteCredit')}
+              </cite>
+            </blockquote>
             <p className="text-white font-medium">{t('challenge.public.ceoStory4')}</p>
           </div>
           <div className="mt-10 pt-8 border-t border-gray-800">
@@ -785,7 +794,7 @@ function PreVotingScreen({ settings, phase }: {
                 {t('challenge.public.timelineWinBody')}
               </p>
               <ul className="space-y-2">
-                {([1,2,3,4,5] as const).map(i => (
+                {([1,2,4,5] as const).map(i => (
                   <li key={i} className="flex items-start gap-2">
                     <span className="text-yellow-400 mt-1 shrink-0">—</span>
                     <span className="text-gray-300 text-sm leading-relaxed">
