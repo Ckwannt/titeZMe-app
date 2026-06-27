@@ -39,7 +39,7 @@ export default function ChallengeTermsPage() {
                 Ibrahim Mellouli<br/>
                 NIE: Z3592657Q<br/>
                 Cristo de la Victoria, 108, Madrid, Spain<br/>
-                Contact: <a href="mailto:legal@titezme.com" className="text-[#FFD600] hover:underline">legal@titezme.com</a>
+                Contact: <a href="mailto:support@titezme.com" className="text-[#FFD600] hover:underline">support@titezme.com</a>
               </p>
               <p className="mb-4">Ibrahim Mellouli acts as the Organizer in a personal capacity until the formal incorporation of titeZMe (a Spanish startup currently in registration). Upon successful incorporation, titeZMe S.L. shall automatically succeed Ibrahim Mellouli as the entity bound by these Terms, and all rights, obligations, fees, and prize commitments shall transfer to titeZMe S.L. without any requirement of further consent from participants.</p>
               <p>By participating in the Challenge you agree to be bound by these Rules, by the titeZMe <a href="/terms" className="text-[#FFD600] hover:underline">Terms of Service</a>, and by the titeZMe <a href="/privacy" className="text-[#FFD600] hover:underline">Privacy Policy</a>. Where there is any conflict between general Terms of Service and these Challenge Rules, these Challenge Rules prevail for matters specifically related to the Challenge.</p>
@@ -247,7 +247,7 @@ export default function ChallengeTermsPage() {
             <div>
               <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 13 — Governing Law &amp; Disputes</h2>
               <p className="mb-4">These Rules are governed by the laws of Spain. Any dispute arising out of or in connection with the Challenge shall be subject to the exclusive jurisdiction of the courts of Madrid, Spain, except where mandatory consumer protection laws provide otherwise.</p>
-              <p>Before initiating any legal proceedings, participants are encouraged to contact the Organizer at <a href="mailto:legal@titezme.com" className="text-[#FFD600] hover:underline">legal@titezme.com</a> so a good-faith resolution can be attempted.</p>
+              <p>Before initiating any legal proceedings, participants are encouraged to contact the Organizer at <a href="mailto:support@titezme.com" className="text-[#FFD600] hover:underline">support@titezme.com</a> so a good-faith resolution can be attempted.</p>
             </div>
 
             <div>
@@ -260,7 +260,7 @@ export default function ChallengeTermsPage() {
               <h2 className="text-xl font-black text-[#F0EDE8] mb-4">SECTION 15 — Contact</h2>
               <p className="mb-2">For any questions about the Challenge:</p>
               <p className="font-bold">
-                Email: <a href="mailto:legal@titezme.com" className="text-[#FFD600] hover:underline">legal@titezme.com</a><br/>
+                Email: <a href="mailto:support@titezme.com" className="text-[#FFD600] hover:underline">support@titezme.com</a><br/>
                 Mail: Ibrahim Mellouli — titeZMe Challenge<br/>
                 Cristo de la Victoria, 108<br/>
                 Madrid, Spain

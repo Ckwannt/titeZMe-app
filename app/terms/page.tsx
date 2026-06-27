@@ -146,7 +146,7 @@ export default function TermsPage() {
               <p className="mb-2">For questions about these Terms:</p>
               <p className="font-bold">
                 titeZMe Legal Team<br/>
-                Email: <a href="mailto:legal@titezme.com" className="text-[#FFD600] hover:underline">legal@titezme.com</a><br/>
+                Email: <a href="mailto:support@titezme.com" className="text-[#FFD600] hover:underline">support@titezme.com</a><br/>
                 Response time: within 30 days
               </p>
             </div>
