@@ -661,8 +661,13 @@ function PreVotingScreen({ settings, phase }: {
             directo
           </p>
           <p className="text-7xl font-black text-white tracking-tight leading-none">
-            17.09.
-            <span className="text-yellow-400">2026</span>
+            {settings.eventDate
+              ? new Date(settings.eventDate).toLocaleDateString('es-ES', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                }).replace(/\//g, '.')
+              : '17.09.2026'}
           </p>
         </div>
       </section>

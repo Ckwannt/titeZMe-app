@@ -70,7 +70,7 @@ export default function ChallengeHomepageBox() {
       <div className="w-full rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
         <div className="text-2xl mb-2">⏳</div>
         <p className="text-sm font-medium text-gray-700">
-          {t('landing.challenge.votingComingSoon') ?? 'Voting opens soon — stay tuned.'}
+          {t('landing.challenge.votingComingSoon') ?? ''}
         </p>
       </div>
     );
