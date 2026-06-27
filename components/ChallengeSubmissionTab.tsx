@@ -434,7 +434,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
         submitterName = shop?.name
           || `${appUser?.firstName || ''} ${appUser?.lastName || ''}`.trim()
           || appUser?.email
-          || 'Unknown';
+          || '';
         submitterCity = shop?.address?.city || '';
         submitterAvatarUrl = shop?.logoUrl || shop?.coverPhotoUrl || '';
         shopId = user.uid;
