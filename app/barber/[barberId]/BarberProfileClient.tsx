@@ -98,11 +98,11 @@ function formatTimeAgo(ts: number): string {
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
   const weeks = Math.floor(days / 7);
-  return weeks < 4 ? `${weeks}w ago` : new Date(ts).toLocaleDateString();
+  return weeks < 4 ? `${weeks}w ago` : new Date(ts).toLocaleDateString('en-US', { timeZone: 'UTC' });
 }
 
 function formatMemberSince(ts: number): string {
-  return new Date(ts).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  return new Date(ts).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
 const POSITIVE_WORDS = new Set([
@@ -165,6 +165,13 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   // Real-time services + reviews — updated via onSnapshot so edits appear instantly
   const [services, setServices] = useState<ServiceDoc[]>(initialData?.services || []);
   const [reviews, setReviews] = useState<ReviewDoc[]>(initialData?.reviews || []);
+  const [mounted, setMounted] = useState(false);
+  const [weekDays, setWeekDays] = useState<Array<{
+    dateStr: string;
+    label: string;
+    isToday: boolean;
+    hasSlots: boolean;
+  }>>([]);
   const reviewUserCache = useRef<Record<string, ReviewDoc['user']>>({});
 
   // ─── queries ─────────────────────────────────────────────────────────────────
@@ -261,6 +268,25 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
     if (data?.profile) setBookingContext(data.profile.isSolo ? 'solo' : 'shop');
   }, [data?.profile?.isSolo]);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      return {
+        dateStr,
+        label: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        isToday: i === 0,
+        hasSlots: (schedule?.availableSlots?.[dateStr] || []).length > 0,
+      };
+    });
+    setWeekDays(days);
+  }, [schedule]);
+
   // ─── derived ─────────────────────────────────────────────────────────────────
 
   const profile = data?.profile;
@@ -282,7 +308,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   const estimatedTotalCuts = profile?.experienceStartYear && yearsExperience !== null
     ? (yearsExperience * 240 * 10) + (profile.totalCuts || 0)
     : (profile?.totalCuts || 0);
-  const cutsLabel = estimatedTotalCuts.toLocaleString();
+  const cutsLabel = estimatedTotalCuts.toLocaleString('en-US');
   const minPrice = services.length > 0 ? Math.min(...services.map(s => s.price || 0)) : null;
   const currency = profile?.currency || '€';
   const isFav = optimisticFav !== null ? optimisticFav : !!(appUser?.favoriteBarbers?.includes(barberId));
@@ -296,18 +322,6 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
       ? (reviews.filter(r => Math.round(r.rating || 0) === star).length / reviews.length) * 100
       : 0,
   }));
-
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return {
-      dateStr,
-      label: d.toLocaleDateString('en-US', { weekday: 'short' }),
-      isToday: i === 0,
-      hasSlots: (schedule?.availableSlots?.[dateStr] || []).length > 0,
-    };
-  });
 
   // ─── actions ─────────────────────────────────────────────────────────────────
 
@@ -606,7 +620,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                             </div>
                             <div>
                               <div className="text-sm font-bold">{r.user?.firstName || 'Client'} {r.user?.lastName?.[0] || ''}.</div>
-                              <div className="text-[10px] text-[#555]">{r.createdAt ? formatTimeAgo(r.createdAt) : ''}</div>
+                              <div className="text-[10px] text-[#555]">{mounted && r.createdAt ? formatTimeAgo(r.createdAt) : ''}</div>
                             </div>
                           </div>
                           <div className="text-brand-yellow text-sm font-black">{'★'.repeat(r.rating || 0)}</div>
