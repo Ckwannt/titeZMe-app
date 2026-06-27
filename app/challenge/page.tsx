@@ -453,24 +453,37 @@ function PreVotingScreen({ settings, phase }: {
   const prizeBarber = settings.prizeBarberValue
     ? new Intl.NumberFormat('es-ES').format(settings.prizeBarberValue)
     : '15.000'
+  const feeShop: number = (settings as any).feeShop ?? 99
+  const feeBarber: number = (settings as any).feeBarber ?? 49
 
   const countdownTarget = (() => {
     const val: any = phase === 'entry' ? settings.submissionsCloseAt : settings.votingOpenAt
     if (!val) return null
     if (typeof val === 'number') return new Date(val)
-    if (val instanceof Date) return val
-    return val.toDate()
+    if (val instanceof Date) return val as Date
+    return val.toDate() as Date
   })()
 
   const countdownLabel = phase === 'entry'
     ? t('challenge.public.countdownSubmissionsLabel')
     : t('challenge.public.countdownVotingLabel')
 
+  const eventDateFormatted = settings.eventDate
+    ? new Date(settings.eventDate)
+        .toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        .replace(/\//g, '.')
+    : '17.09.2026'
+
+  const withFees = (key: string) =>
+    (t as any)(key)
+      .replace('{shop}', String(feeShop))
+      .replace('{barber}', String(feeBarber))
+
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="bg-black text-white">
 
       {/* ── 1. HERO ── */}
-      <section className="min-h-screen flex flex-col justify-center px-6 py-24 relative overflow-hidden">
+      <section className="px-6 py-24 lg:py-32 relative overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none opacity-10"
           style={{
@@ -478,78 +491,121 @@ function PreVotingScreen({ settings, phase }: {
                               radial-gradient(ellipse at 10% 90%, #FFD700 0%, transparent 55%)`,
           }}
         />
-        <div className="relative z-10 max-w-md mx-auto w-full">
-          <p className="text-xs font-mono tracking-[0.35em] text-yellow-400 uppercase mb-8">
+        <div className="relative z-10 max-w-5xl mx-auto">
+          <p className="text-xs font-mono tracking-[0.35em] text-yellow-400 uppercase mb-10">
             {t('challenge.public.heroEyebrow')}
           </p>
+          <div className="lg:grid lg:grid-cols-2 lg:gap-20 items-start">
 
-          <div className="mb-6">
-            <p className="text-8xl font-black leading-none text-yellow-400">10</p>
-            <p className="text-5xl font-black leading-tight text-yellow-400 uppercase">
-              {t('challenge.public.heroShopsLabel')}
-            </p>
-            <p className="text-5xl font-black leading-tight text-yellow-400 uppercase mb-3">
-              {t('challenge.public.heroGanaran')}
-            </p>
-            <p className="text-6xl font-black text-yellow-400 leading-none">
-              €{prizeShop}
-            </p>
-            <p className="text-2xl font-bold text-yellow-400 mt-1">
-              {t('challenge.public.heroCadaUna')}
-            </p>
-          </div>
-
-          <div className="w-12 h-px bg-gray-700 my-6" />
-
-          <p className="text-base text-gray-400 leading-relaxed">
-            {t('challenge.public.heroBarberLine').replace('{amount}', prizeBarber)}
-          </p>
-
-          {countdownTarget && (
-            <div className="mt-10 p-5 border border-gray-800 rounded-xl bg-gray-950">
-              <p className="text-xs font-mono tracking-widest text-gray-500 uppercase mb-3">
-                {countdownLabel}
+            {/* Left — tagline + possibilities */}
+            <div>
+              <h1 className="text-4xl lg:text-6xl font-black text-yellow-400 leading-tight mb-8">
+                {t('challenge.public.heroTagline')}
+              </h1>
+              <p className="text-lg text-gray-400 mb-4">{t('challenge.public.heroPossibilities')}</p>
+              <ul className="space-y-3 mb-8">
+                {[1,2,3,4,5,6].map(i => (
+                  <li key={i} className="flex items-start gap-3 text-white text-lg">
+                    <span className="text-yellow-400 mt-1 shrink-0">—</span>
+                    <span>{(t as any)(`challenge.public.heroPossibility${i}`)}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xl font-bold text-white">
+                {t('challenge.public.heroConclusion')}
               </p>
-              <CountdownTimer targetMs={countdownTarget.getTime()} />
             </div>
-          )}
 
-          <div className="mt-8 flex flex-col gap-3">
-            <a
-              href="/dashboard/barber/challenge"
-              className="block w-full text-center py-4 px-6 bg-yellow-400 text-black font-black text-base uppercase tracking-wider rounded-xl hover:bg-yellow-300 transition-colors"
-            >
-              {t('challenge.public.ctaBarberBtn')}
-            </a>
-            <a
-              href="/dashboard/shop/challenge"
-              className="block w-full text-center py-4 px-6 border border-yellow-400 text-yellow-400 font-black text-base uppercase tracking-wider rounded-xl hover:bg-yellow-400 hover:text-black transition-colors"
-            >
-              {t('challenge.public.ctaShopBtn')}
-            </a>
+            {/* Right — prize box + countdown + CTAs */}
+            <div className="mt-12 lg:mt-0">
+              <div className="border border-yellow-400/20 rounded-2xl p-8 bg-gray-950">
+                <div className="mb-8">
+                  <p className="text-6xl lg:text-7xl font-black text-yellow-400 leading-none">
+                    €{prizeShop}
+                  </p>
+                  <p className="text-gray-400 mt-2 text-sm">
+                    {t('challenge.public.heroShopsWin')}
+                  </p>
+                </div>
+                <div className="w-full h-px bg-gray-800 mb-8" />
+                <div>
+                  <p className="text-5xl font-black text-yellow-400 leading-none">
+                    €{prizeBarber}
+                  </p>
+                  <p className="text-gray-400 mt-2 text-sm">
+                    {t('challenge.public.heroBarbersWin')}
+                  </p>
+                </div>
+              </div>
+
+              {countdownTarget && (
+                <div className="mt-6 p-5 border border-gray-800 rounded-xl bg-gray-950">
+                  <p className="text-xs font-mono tracking-widest text-gray-500 uppercase mb-3">
+                    {countdownLabel}
+                  </p>
+                  <CountdownTimer targetMs={countdownTarget.getTime()} />
+                </div>
+              )}
+
+              <div className="mt-6 flex flex-col gap-3">
+                <a
+                  href="/dashboard/barber/challenge"
+                  className="block w-full text-center py-4 px-6 bg-yellow-400 text-black font-black text-base uppercase tracking-wider rounded-xl hover:bg-yellow-300 transition-colors"
+                >
+                  {t('challenge.public.ctaBarberBtn')}
+                </a>
+                <a
+                  href="/dashboard/shop/challenge"
+                  className="block w-full text-center py-4 px-6 border border-yellow-400 text-yellow-400 font-black text-base uppercase tracking-wider rounded-xl hover:bg-yellow-400 hover:text-black transition-colors"
+                >
+                  {t('challenge.public.ctaShopBtn')}
+                </a>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
 
       {/* ── 2. HOW? ── */}
-      <section className="border-t border-gray-900 px-6 py-20">
-        <div className="max-w-md mx-auto">
-          <p className="text-6xl font-black text-yellow-400 mb-8">
+      <section className="border-t border-gray-900 px-6 py-20 lg:py-28">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-6xl font-black text-yellow-400 mb-6">
             {t('challenge.public.howQuestion')}
           </p>
-          <p className="text-2xl font-bold text-orange-500 leading-snug mb-6">
-            {t('challenge.public.howMechanic')}
+          <p className="text-2xl lg:text-3xl font-bold text-orange-500 leading-snug mb-12">
+            {t('challenge.public.howSubtitle')}
           </p>
-          <p className="text-xl text-white leading-relaxed">
-            {t('challenge.public.howCommunity')}{' '}
-            <span className="font-bold">{t('challenge.public.howCommunityBold')}</span>
+          <div className="space-y-4">
+            {([1,2,3,4,5] as const).map(i => (
+              <div
+                key={i}
+                className="flex gap-6 lg:gap-8 items-start p-6 lg:p-8 bg-gray-950 rounded-2xl border border-gray-800"
+              >
+                <span className="text-4xl lg:text-5xl font-black text-orange-500 leading-none w-12 shrink-0">
+                  {i}
+                </span>
+                <div>
+                  <h3 className="text-lg lg:text-xl font-black text-white mb-2">
+                    {(t as any)(`challenge.public.howStep${i}Title`)}
+                  </h3>
+                  <p className="text-gray-400 leading-relaxed">
+                    {withFees(`challenge.public.howStep${i}Body`)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-10 text-xl font-bold text-white leading-relaxed border-l-2 border-yellow-400 pl-6">
+            {t('challenge.public.howConclusion')}
           </p>
         </div>
       </section>
 
       {/* ── 3. MEET THE CEO ── */}
-      <section className="relative w-full overflow-hidden">
-        <div className="relative w-full" style={{ aspectRatio: '3 / 4' }}>
+      <section className="border-t border-gray-900 lg:grid lg:grid-cols-2">
+        {/* Photo */}
+        <div className="relative" style={{ minHeight: '520px' }}>
           <Image
             src="/ckwant-challenge.png"
             alt={t('challenge.public.ceoAlt')}
@@ -557,142 +613,243 @@ function PreVotingScreen({ settings, phase }: {
             className="object-cover object-top"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-8">
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-black" />
+          {/* Mobile caption overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-8 lg:hidden">
             <p className="text-xs font-mono tracking-widest text-yellow-400 uppercase mb-2">
               {t('challenge.public.ceoRoleLabel')}
             </p>
-            <p className="text-4xl font-black text-white leading-tight">
-              {t('challenge.public.ceoName')}
+            <p className="text-3xl font-black text-white">{t('challenge.public.ceoPhotoCaption')}</p>
+            <p className="text-2xl font-black text-yellow-400 mt-1">{t('challenge.public.ceoPhotoCaptionBold')}</p>
+          </div>
+        </div>
+        {/* Text — desktop only */}
+        <div className="px-6 py-12 lg:px-12 lg:py-20 bg-black flex flex-col justify-center">
+          <p className="text-xs font-mono tracking-widest text-yellow-400 uppercase mb-4">
+            {t('challenge.public.ceoRoleLabel')}
+          </p>
+          <h2 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-8">
+            {t('challenge.public.ceoWaiting')}
+          </h2>
+          <div className="space-y-4 text-gray-400 leading-relaxed text-base lg:text-lg">
+            <p>{t('challenge.public.ceoStory1')}</p>
+            <p>{t('challenge.public.ceoStory2')}</p>
+            <p>{t('challenge.public.ceoStory3')}</p>
+            <p className="text-white font-medium">{t('challenge.public.ceoStory4')}</p>
+          </div>
+          <div className="mt-10 pt-8 border-t border-gray-800">
+            <p className="text-gray-500 text-sm leading-relaxed">
+              {t('challenge.public.ceoPhotoCaption')}
             </p>
-            <p className="text-xl text-gray-300 mt-1">
-              {t('challenge.public.ceoLooks')}
-            </p>
-            <p className="text-sm text-gray-500 font-mono mt-3">
-              {t('challenge.public.ceoDetail')}
+            <p className="text-2xl font-black text-yellow-400 mt-2">
+              {t('challenge.public.ceoPhotoCaptionBold')}
             </p>
           </div>
         </div>
       </section>
 
       {/* ── 4. HOW TO JOIN ── */}
-      <section className="border-t border-gray-900 px-6 py-20">
-        <div className="max-w-md mx-auto">
+      <section className="border-t border-gray-900 px-6 py-20 lg:py-28">
+        <div className="max-w-4xl mx-auto">
           <p className="text-xs font-mono tracking-[0.35em] text-orange-500 uppercase mb-4">
             {t('challenge.public.joinEyebrow')}
           </p>
-          <h3 className="text-4xl font-black text-white uppercase leading-tight mb-12">
+          <h3 className="text-4xl lg:text-5xl font-black text-white uppercase leading-tight mb-3">
             {t('challenge.public.joinTitle')}
           </h3>
-          {([
-            t('challenge.public.joinStep1'),
-            t('challenge.public.joinStep2'),
-            t('challenge.public.joinStep3'),
-            t('challenge.public.joinStep4'),
-          ] as string[]).map((step, i) => (
-            <div key={i} className="flex gap-5 mb-8 items-start">
-              <span className="text-5xl font-black text-orange-500 leading-none w-10 shrink-0">
-                {i + 1}
-              </span>
-              <div className="border-l border-gray-800 pl-5 pt-1">
-                <p className="text-lg text-white font-medium leading-snug">{step}</p>
-              </div>
+          <p className="text-xl text-yellow-400 font-bold mb-12">
+            {t('challenge.public.joinHeadline')}
+          </p>
+
+          {/* Two paths */}
+          <div className="grid lg:grid-cols-2 gap-6 mb-6">
+            <div className="p-6 lg:p-8 bg-gray-950 border border-orange-500/30 rounded-2xl">
+              <p className="text-orange-500 font-black text-lg mb-3">
+                {t('challenge.public.joinShopTitle')}
+              </p>
+              <p className="text-gray-400 leading-relaxed">
+                {t('challenge.public.joinShopBody')}
+              </p>
             </div>
-          ))}
+            <div className="p-6 lg:p-8 bg-gray-950 border border-yellow-400/30 rounded-2xl">
+              <p className="text-yellow-400 font-black text-lg mb-3">
+                {t('challenge.public.joinBarberTitle')}
+              </p>
+              <p className="text-gray-400 leading-relaxed">
+                {t('challenge.public.joinBarberBody')}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="p-6 lg:p-8 bg-gray-950 border border-gray-800 rounded-2xl">
+              <p className="text-white font-black text-lg mb-3">
+                {t('challenge.public.joinCommonTitle')}
+              </p>
+              <p className="text-gray-400 leading-relaxed">
+                {t('challenge.public.joinCommonBody')}
+              </p>
+            </div>
+            <div className="p-6 lg:p-8 bg-gray-950 border border-gray-800 rounded-2xl">
+              <p className="text-gray-400 leading-relaxed">
+                {t('challenge.public.joinPaymentBody')}
+              </p>
+            </div>
+            <div className="p-6 lg:p-8 bg-gray-950 border border-gray-800 rounded-2xl">
+              <p className="text-gray-400 leading-relaxed">
+                {t('challenge.public.joinVotingBody')}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── 5. CHALLENGE STEPS ── */}
-      <section className="bg-gray-950 border-t border-gray-900 px-6 py-20">
-        <div className="max-w-md mx-auto">
+      <section className="bg-gray-950 border-t border-gray-900 px-6 py-20 lg:py-28">
+        <div className="max-w-4xl mx-auto">
           <p className="text-xs font-mono tracking-[0.35em] text-yellow-400 uppercase mb-4">
             {t('challenge.public.stepsEyebrow')}
           </p>
-          <h3 className="text-4xl font-black text-white uppercase leading-tight mb-12">
+          <h3 className="text-4xl lg:text-5xl font-black text-white uppercase leading-tight mb-12">
             {t('challenge.public.stepsTitle')}
           </h3>
-          {([
-            { text: t('challenge.public.stepsStep1'), color: 'orange' },
-            { text: t('challenge.public.stepsStep2'), color: 'yellow' },
-            { text: t('challenge.public.stepsStep3'), color: 'orange' },
-            { text: t('challenge.public.stepsStep4'), color: 'yellow' },
-            { text: t('challenge.public.stepsStep5'), color: 'orange' },
-            { text: t('challenge.public.stepsStep6'), color: 'yellow' },
-          ] as { text: string; color: string }[]).map((step, i) => (
-            <div key={i} className="flex gap-4 mb-6 items-start">
+
+          <div className="grid lg:grid-cols-2 gap-4 mb-12">
+            {([1,2,3,4,5,6] as const).map(i => (
               <div
-                className={`w-10 h-10 shrink-0 rounded border-2 flex items-center justify-center text-sm font-black ${
-                  step.color === 'orange'
-                    ? 'border-orange-500 text-orange-500'
-                    : 'border-yellow-400 text-yellow-400'
+                key={i}
+                className={`p-6 rounded-2xl border bg-black ${
+                  i % 2 !== 0 ? 'border-orange-500/30' : 'border-yellow-400/30'
                 }`}
               >
-                {i + 1}
+                <div
+                  className={`w-10 h-10 rounded border-2 flex items-center justify-center text-sm font-black mb-4 ${
+                    i % 2 !== 0
+                      ? 'border-orange-500 text-orange-500'
+                      : 'border-yellow-400 text-yellow-400'
+                  }`}
+                >
+                  {i}
+                </div>
+                <h4 className="text-white font-black text-lg mb-2">
+                  {(t as any)(`challenge.public.stepsStep${i}Title`)}
+                </h4>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  {withFees(`challenge.public.stepsStep${i}Body`)}
+                </p>
               </div>
-              <p className="text-white text-base leading-snug pt-2 font-medium">
-                {step.text}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          <div className="border-t border-gray-800 pt-8 space-y-4">
+            {([1,2,3] as const).map(i => (
+              <div key={i} className="flex items-start gap-4">
+                <span className="text-yellow-400 mt-1 shrink-0 font-black">→</span>
+                <p className="text-white font-medium leading-relaxed">
+                  {(t as any)(`challenge.public.stepsExtra${i}`)}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* ── 6. TIMELINE ── */}
-      <section className="border-t border-gray-900 px-6 py-20">
-        <div className="max-w-md mx-auto">
-          <h3 className="text-4xl font-black text-yellow-400 leading-tight mb-4">
-            {t('challenge.public.timelineTitle1')}
-          </h3>
-          <div className="w-full h-px bg-gray-800 my-6" />
-          <h3 className="text-4xl font-black text-yellow-400 leading-tight mb-8">
-            {t('challenge.public.timelineTitle2')}
-          </h3>
-          <p className="text-lg text-gray-300 leading-relaxed">
-            {t('challenge.public.timelineVote')}{' '}
-            <span className="text-white font-bold">
-              {t('challenge.public.timelineVoteBold')}
-            </span>{' '}
-            {t('challenge.public.timelineVote2')}
-          </p>
+      <section className="border-t border-gray-900 px-6 py-20 lg:py-28">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid lg:grid-cols-3 gap-10 lg:gap-8">
+            <div>
+              <p className="text-7xl font-black text-yellow-400 leading-none mb-4">3</p>
+              <h4 className="text-xl font-black text-white mb-4">
+                {t('challenge.public.timelineWhy3Title')}
+              </h4>
+              <p className="text-gray-400 leading-relaxed">
+                {t('challenge.public.timelineWhy3Body')}
+              </p>
+            </div>
+            <div>
+              <p className="text-7xl font-black text-yellow-400 leading-none mb-4">77</p>
+              <h4 className="text-xl font-black text-white mb-4">
+                {t('challenge.public.timelineWhy77Title')}
+              </h4>
+              <p className="text-gray-400 leading-relaxed">
+                {t('challenge.public.timelineWhy77Body')}
+              </p>
+            </div>
+            <div>
+              <p className="text-4xl font-black text-yellow-400 leading-none mb-4">WIN</p>
+              <h4 className="text-xl font-black text-white mb-3">
+                {t('challenge.public.timelineWinTitle')}
+              </h4>
+              <p className="text-gray-400 leading-relaxed mb-4">
+                {t('challenge.public.timelineWinBody')}
+              </p>
+              <ul className="space-y-2">
+                {([1,2,3,4,5] as const).map(i => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-yellow-400 mt-1 shrink-0">—</span>
+                    <span className="text-gray-300 text-sm leading-relaxed">
+                      {(t as any)(`challenge.public.timelineWinList${i}`)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── 7. LIVE ANNOUNCEMENT ── */}
-      <section className="border-t border-gray-900 px-6 py-20 relative overflow-hidden">
+      <section className="border-t border-gray-900 px-6 py-20 lg:py-28 relative overflow-hidden">
         <div className="absolute top-5 right-5 w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-        <div className="max-w-md mx-auto">
+        <div className="max-w-4xl mx-auto">
           <p className="text-xs font-mono tracking-widest text-gray-500 uppercase mb-6">
             {t('challenge.public.announcementLabel')}
           </p>
-          <p className="text-xl text-white font-bold leading-snug mb-8">
-            {t('challenge.public.announcementBody')}
+          <h2 className="text-3xl lg:text-5xl font-black text-yellow-400 leading-tight mb-12">
+            {t('challenge.public.announcementTagline')}
+          </h2>
+          <div className="grid lg:grid-cols-3 gap-4 mb-12">
+            {(['Barbers','Clients','Spain'] as const).map(key => (
+              <div key={key} className="p-6 bg-gray-950 rounded-2xl border border-gray-800">
+                <p className="text-white leading-relaxed text-sm">
+                  {(t as any)(`challenge.public.announcementFor${key}`)}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="text-xl text-white font-bold mb-12">
+            {t('challenge.public.announcementConclusion')}
           </p>
-          <p className="text-7xl font-black text-white tracking-tight leading-none">
-            {settings.eventDate
-              ? new Date(settings.eventDate).toLocaleDateString('es-ES', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                }).replace(/\//g, '.')
-              : '17.09.2026'}
+          <p className="text-6xl lg:text-9xl font-black text-white tracking-tight leading-none">
+            {eventDateFormatted}
           </p>
         </div>
       </section>
 
       {/* ── 8. CTA ── */}
-      <section className="bg-yellow-400 px-6 py-24">
-        <div className="max-w-md mx-auto text-center">
-          <h2 className="text-5xl font-black text-black leading-tight uppercase mb-4">
+      <section className="bg-yellow-400 px-6 py-24 lg:py-32">
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="text-black/70 font-bold text-lg mb-1">
+            {t('challenge.public.ctaTagline')}
+          </p>
+          <p className="text-black/50 text-base mb-12">
+            {t('challenge.public.ctaPrizes')}
+          </p>
+          <h2 className="text-5xl lg:text-7xl font-black text-black leading-tight uppercase mb-6">
             {t('challenge.public.ctaLine1')}
             <br />
             {t('challenge.public.ctaLine2')}
             <br />
             {t('challenge.public.ctaLine3')}
           </h2>
-          <p className="text-black/50 text-sm font-medium mb-10 tracking-wide">
-            {t('challenge.public.ctaSub')}
+          <p className="text-2xl font-black text-black mb-2">
+            {t('challenge.public.ctaQuestion')}
           </p>
-          <div className="flex flex-col gap-3">
+          <p className="text-black/60 mb-10">
+            {t('challenge.public.ctaUrgency')}
+          </p>
+          <div className="flex flex-col gap-3 max-w-sm mx-auto">
             <a
               href="/dashboard/barber/challenge"
               className="block w-full py-5 px-8 bg-black text-yellow-400 font-black text-lg uppercase tracking-wider rounded-xl hover:bg-gray-900 transition-colors"
@@ -706,14 +863,17 @@ function PreVotingScreen({ settings, phase }: {
               {t('challenge.public.ctaShopFinal')}
             </a>
           </div>
-          <p className="text-black/30 text-xs font-mono mt-8 tracking-widest">
+          <p className="text-black/50 text-sm mt-10 leading-relaxed">
+            {t('challenge.public.ctaMission')}
+          </p>
+          <p className="text-black/30 text-xs font-mono mt-4 tracking-widest">
             {t('challenge.public.ctaUrl')}
           </p>
         </div>
       </section>
 
     </div>
-  );
+  )
 }
 
 function SubmissionGrid({
