@@ -92,7 +92,7 @@ export default function ChallengeHomepageBox() {
     if (appUser.ownsShop) {
       return { label: t('landing.challenge.ctaSubmit'), href: '/dashboard/shop/challenge' };
     }
-    return { label: t('landing.challenge.ctaWaitVote'), href: '/about' };
+    return { label: t('landing.challenge.ctaWaitVote'), href: '/challenge' };
   }
 
   const cta = getCTA();
