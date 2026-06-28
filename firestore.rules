@@ -256,6 +256,13 @@ service cloud.firestore {
               .hasOnly(['challengeVotedForShop'])
             && incoming().challengeVotedForShop is string
           )
+          ||
+          (
+            isAdmin()
+            && request.auth.uid != userId
+            && incoming().diff(existing()).affectedKeys()
+                 .hasOnly(['challengeVotedForBarber', 'challengeVotedForShop'])
+          )
         );
 
       allow delete: if (
