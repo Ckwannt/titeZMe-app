@@ -222,6 +222,7 @@ export const challengeSettingsSchema = z.object({
   publicLeaderboardEnabled: z.boolean().optional(),
   feeBarber: z.number().nonnegative().optional(),
   feeShop: z.number().nonnegative().optional(),
+  ivaRate: z.number().nonnegative().optional(),
   prizeBarberValue: z.number().nonnegative().optional(),
   prizeShopValue: z.number().nonnegative().optional(),
   showHomepageBox: z.boolean().optional(),

@@ -234,6 +234,9 @@ export default function ChallengePaymentTab({ mode }: Props) {
   // ---- Payment form ----
 
   const fee = mode === 'barber' ? settings.feeBarber : settings.feeShop;
+  const ivaRate = settings.ivaRate ?? 21;
+  const ivaAmount = fee != null ? parseFloat(((fee * ivaRate) / 100).toFixed(2)) : null;
+  const totalAmount = fee != null ? parseFloat((fee + (fee * ivaRate) / 100).toFixed(2)) : null;
   const reference = declaredReference || buildPaymentReference(submission);
 
   const amtNum = Number(declaredAmount);
@@ -259,8 +262,21 @@ export default function ChallengePaymentTab({ mode }: Props) {
         <div className="text-[11px] font-extrabold text-[#888] uppercase tracking-wider mb-2">
           {t('challenge.payment.feeLabel')}
         </div>
-        <div className="text-4xl font-black text-brand-yellow mb-2">
-          {typeof fee === 'number' ? `€${fee}` : '—'}
+        <div className="flex flex-col gap-2 w-full max-w-xs">
+          <div className="flex justify-between text-sm text-gray-300">
+            <span>Entry fee</span>
+            <span>{fee != null ? `€${fee.toFixed(2)}` : '—'}</span>
+          </div>
+          <div className="flex justify-between text-sm text-gray-300">
+            <span>IVA ({ivaRate}%)</span>
+            <span>{ivaAmount != null ? `€${ivaAmount}` : '—'}</span>
+          </div>
+          <div className="border-t border-gray-600 pt-2 flex justify-between font-bold text-white text-base">
+            <span>Total to pay</span>
+            <span className="text-brand-yellow">
+              {totalAmount != null ? `€${totalAmount.toFixed(2)}` : '—'}
+            </span>
+          </div>
         </div>
         <p className="text-[#888] text-[12px]">
           {t('challenge.payment.feeHint')}
