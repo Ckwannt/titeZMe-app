@@ -917,20 +917,18 @@ export default function AdminChallengePage() {
                   <input type="number" min={0} value={feeShop}
                     onChange={e => setFeeShop(Number(e.target.value))} style={inputStyle} />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium text-gray-300">
-                    IVA rate (%)
-                  </label>
+                <div>
+                  <label style={fieldLabel}>IVA rate (%)</label>
                   <input
                     type="number"
                     value={ivaRate}
                     onChange={e => setIvaRate(Number(e.target.value))}
-                    className="bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white w-32"
+                    style={inputStyle}
                     min={0}
                     max={100}
                     step={0.1}
                   />
-                  <span className="text-xs text-gray-500">
+                  <span style={{ fontSize: 11, color: '#888', marginTop: 4, display: 'block' }}>
                     Applied to both barber and shop fees
                   </span>
                 </div>
