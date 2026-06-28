@@ -717,6 +717,23 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
   const referencePhotos = settings.referencePhotos || [];
   const referenceLabels = settings.referencePhotoLabels || ['back', 'left', 'right', 'front'];
 
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error('Download failed:', err);
+    }
+  };
+
   return (
     <div className="p-6 md:p-10 animate-fadeUp max-w-[840px]">
       <h1 className="text-2xl font-black mb-2">{t('challenge.submission.pageTitle')}</h1>
@@ -792,9 +809,10 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
                   <span className="text-[11px] text-[#888] font-bold uppercase">{referenceLabels[i] || `ref ${i + 1}`}</span>
                   <a
                     href={url}
-                    download
-                    target="_blank"
-                    rel="noreferrer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDownload(url, `ckwant-photo-${i + 1}.jpg`);
+                    }}
                     className="text-brand-yellow text-[11px] font-extrabold hover:underline"
                   >
                     {t('challenge.submission.download')}
