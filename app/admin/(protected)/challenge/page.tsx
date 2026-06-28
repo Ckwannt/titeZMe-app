@@ -64,6 +64,7 @@ export default function AdminChallengePage() {
   const [publicLeaderboardEnabled, setPublicLeaderboardEnabled] = useState(false);
   const [feeBarber, setFeeBarber] = useState(19);
   const [feeShop, setFeeShop] = useState(49);
+  const [ivaRate, setIvaRate] = useState(21);
   const [prizeBarberValue, setPrizeBarberValue] = useState(12000);
   const [prizeShopValue, setPrizeShopValue] = useState(100000);
   const [eventDate, setEventDate] = useState('2026-09-17T20:00:00+02:00');
@@ -107,6 +108,7 @@ export default function AdminChallengePage() {
           if (typeof d.publicLeaderboardEnabled === 'boolean') setPublicLeaderboardEnabled(d.publicLeaderboardEnabled);
           if (typeof d.feeBarber === 'number') setFeeBarber(d.feeBarber);
           if (typeof d.feeShop === 'number') setFeeShop(d.feeShop);
+          if (typeof d.ivaRate === 'number') setIvaRate(d.ivaRate);
           if (typeof d.prizeBarberValue === 'number') setPrizeBarberValue(d.prizeBarberValue);
           if (typeof d.prizeShopValue === 'number') setPrizeShopValue(d.prizeShopValue);
           if (d.eventDate) setEventDate(d.eventDate);
@@ -336,6 +338,7 @@ export default function AdminChallengePage() {
           publicLeaderboardEnabled,
           feeBarber,
           feeShop,
+          ivaRate,
           prizeBarberValue,
           prizeShopValue,
           eventDate,
@@ -913,6 +916,23 @@ export default function AdminChallengePage() {
                   <label style={fieldLabel}>Entry fee — barbershops (€)</label>
                   <input type="number" min={0} value={feeShop}
                     onChange={e => setFeeShop(Number(e.target.value))} style={inputStyle} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-gray-300">
+                    IVA rate (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={ivaRate}
+                    onChange={e => setIvaRate(Number(e.target.value))}
+                    className="bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white w-32"
+                    min={0}
+                    max={100}
+                    step={0.1}
+                  />
+                  <span className="text-xs text-gray-500">
+                    Applied to both barber and shop fees
+                  </span>
                 </div>
                 <div>
                   <label style={fieldLabel}>Prize value — barbers (€)</label>
