@@ -18,7 +18,7 @@ export default function Page() {
   return (
     <ChallengeLocationGate
       country={appUser?.country}
-      settingsHref="/dashboard/barber?tab=settings"
+      settingsHref="/dashboard/barber/settings"
     >
       <ChallengeSubmissionTab mode="barber" />
     </ChallengeLocationGate>

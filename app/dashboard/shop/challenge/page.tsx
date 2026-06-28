@@ -30,7 +30,7 @@ export default function Page() {
   return (
     <ChallengeLocationGate
       country={shopCountry}
-      settingsHref="/dashboard/shop?tab=settings"
+      settingsHref="/dashboard/shop/settings"
     >
       <ChallengeSubmissionTab mode="shop" />
     </ChallengeLocationGate>
