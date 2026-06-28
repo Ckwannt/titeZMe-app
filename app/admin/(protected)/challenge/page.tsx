@@ -6,6 +6,7 @@ import {
   doc, getDoc, setDoc,
   collection, query, orderBy, limit, startAfter, where,
   getDocs, addDoc, updateDoc, increment,
+  deleteDoc, writeBatch, deleteField,
 } from 'firebase/firestore';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
@@ -261,6 +262,33 @@ export default function AdminChallengePage() {
       setActioning(null);
     }
   }
+
+  const handleDelete = async (sub: ChallengeSubmission & { id: string }) => {
+    if (!confirm('Delete this submission permanently? Votes will also be removed. This cannot be undone.')) return;
+    try {
+      const votesSnap = await getDocs(
+        query(
+          collection(db, 'challengeVotes'),
+          where('submissionId', '==', sub.id)
+        )
+      );
+      const batch = writeBatch(db);
+      votesSnap.docs.forEach(voteDoc => {
+        batch.update(doc(db, 'users', voteDoc.data().voterUid), {
+          [`challengeVotedFor${sub.type === 'barber' ? 'Barber' : 'Shop'}`]: deleteField()
+        });
+        batch.delete(voteDoc.ref);
+      });
+
+      batch.delete(doc(db, 'challengeSubmissions', sub.id));
+      await batch.commit();
+
+      setSubmissions(prev => prev.filter(s => s.id !== sub.id));
+    } catch (err) {
+      console.error('Failed to delete submission:', err);
+      alert('Failed to delete submission. Try again.');
+    }
+  };
 
   const switchTab = useCallback((tab: TabKey) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -728,6 +756,16 @@ export default function AdminChallengePage() {
                       </div>
                     </div>
                   )}
+
+                  {/* DELETE — all statuses */}
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <button
+                      onClick={() => handleDelete(sub)}
+                      className="text-xs text-red-500 hover:text-red-400 underline"
+                    >
+                      Delete submission permanently
+                    </button>
+                  </div>
 
                   {/* AWAITING PAYMENT */}
                   {sub.status === 'awaiting_payment' && (
