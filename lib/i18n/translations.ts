@@ -980,6 +980,7 @@ const translations = {
         noCountryTitle: 'Where are you based?',
         noCountryBody:
           'Add your country to your profile to see if you qualify for the titeZMe Challenge.',
+        goToSettings: 'Go to settings',
       },
     },
     cookies: {
@@ -2701,6 +2702,7 @@ const translations = {
         noCountryTitle: 'Où êtes-vous basé ?',
         noCountryBody:
           'Ajoutez votre pays dans votre profil pour voir si vous êtes éligible au titeZMe Challenge.',
+        goToSettings: 'Aller aux paramètres',
       },
     },
     cookies: {
@@ -4422,6 +4424,7 @@ const translations = {
         noCountryTitle: '¿Dónde estás ubicado?',
         noCountryBody:
           'Añade tu país en tu perfil para ver si calificas para el titeZMe Challenge.',
+        goToSettings: 'Ir a ajustes',
       },
     },
     cookies: {

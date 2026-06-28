@@ -28,7 +28,10 @@ export default function Page() {
   const shopCountry = shopSnap?.data()?.address?.country;
 
   return (
-    <ChallengeLocationGate country={shopCountry}>
+    <ChallengeLocationGate
+      country={shopCountry}
+      settingsHref="/dashboard/shop?tab=settings"
+    >
       <ChallengeSubmissionTab mode="shop" />
     </ChallengeLocationGate>
   );

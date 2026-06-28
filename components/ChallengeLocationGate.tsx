@@ -33,18 +33,26 @@ function getCountryDisplay(country: string): string {
 
 interface Props {
   country: string | undefined | null;
+  settingsHref: string;
   children: React.ReactNode;
 }
 
-export default function ChallengeLocationGate({ country, children }: Props) {
+export default function ChallengeLocationGate({ country, settingsHref, children }: Props) {
   const { t } = useLang();
 
-  if (isSpain(country)) {
+  const normalizedCountry =
+    !country ||
+    country.trim().toLowerCase() === 'unknown' ||
+    country.trim() === ''
+      ? undefined
+      : country.trim();
+
+  if (isSpain(normalizedCountry)) {
     return <>{children}</>;
   }
 
-  if (country) {
-    const displayName = getCountryDisplay(country);
+  if (normalizedCountry) {
+    const displayName = getCountryDisplay(normalizedCountry);
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
         <div className="text-6xl mb-6">🌍</div>
@@ -69,6 +77,12 @@ export default function ChallengeLocationGate({ country, children }: Props) {
       <p className="text-[#888] text-sm max-w-sm leading-relaxed">
         {t('challenge.locationGate.noCountryBody')}
       </p>
+      <a
+        href={settingsHref}
+        className="mt-4 inline-block px-4 py-2 bg-brand-yellow text-black text-sm font-bold rounded hover:opacity-90"
+      >
+        {t('challenge.locationGate.goToSettings')}
+      </a>
     </div>
   );
 }
