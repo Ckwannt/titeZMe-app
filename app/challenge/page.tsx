@@ -495,10 +495,10 @@ function PreVotingScreen({ settings, phase }: {
           <p className="text-xs font-mono tracking-[0.35em] text-yellow-400 uppercase mb-10">
             {t('challenge.public.heroEyebrow')}
           </p>
-          <div className="lg:grid lg:grid-cols-2 lg:gap-20 items-start">
+          <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-20 items-start">
 
             {/* Left — tagline + possibilities */}
-            <div>
+            <div className="order-last lg:order-first">
               <h1 className="text-4xl lg:text-6xl font-black text-yellow-400 leading-tight mb-8">
                 {t('challenge.public.heroTagline')}
               </h1>
@@ -517,7 +517,7 @@ function PreVotingScreen({ settings, phase }: {
             </div>
 
             {/* Right — prize box + countdown + CTAs */}
-            <div className="mt-12 lg:mt-0">
+            <div className="order-first lg:order-last mt-0 mb-10 lg:mb-0">
               <div className="border border-yellow-400/20 rounded-2xl p-8 bg-gray-950">
                 <div className="mb-8">
                   <p className="text-6xl lg:text-7xl font-black text-yellow-400 leading-none">
