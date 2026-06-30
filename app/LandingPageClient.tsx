@@ -88,9 +88,9 @@ export default function LandingPageClient({
             </div>
 
             <h1 className="text-6xl md:text-[88px] font-black leading-[0.95] tracking-tight mb-8">
-              Find your <br className="hidden md:block"/>
-              <span className="text-brand-yellow">perfect cut.</span><br/>
-              <span className="text-[#333]">Right now.</span>
+              {t('landing.heroH1a')} <br className="hidden md:block"/>
+              <span className="text-brand-yellow">{t('landing.heroH1b')}</span><br/>
+              <span className="text-[#333]">{t('landing.heroH1c')}</span>
             </h1>
 
             <p className="text-lg text-gray-400 font-bold mb-10 max-w-[480px] leading-relaxed">

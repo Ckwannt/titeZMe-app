@@ -628,7 +628,10 @@ const translations = {
     landing: {
       statBarbers: '2,400+ barbers · 18 cities · live now',
       heroTitle: 'Find your perfect cut. Right now.',
-      heroDesc: 'Top-rated barbers in your city. Real availability. Cash only — no fees, no apps, no nonsense. Book in under 30 seconds.',
+      heroH1a: 'Find your barber.',
+      heroH1b: 'Book your cut.',
+      heroH1c: 'No waiting.',
+      heroDesc: 'The barbers people actually trust, all in one place. Pick your city, pick your barber, book in seconds.',
       barbersLabel: 'Barbers',
       avgRatingLabel: 'Avg rating',
       bookedTodayLabel: 'Booked today',
@@ -2348,6 +2351,9 @@ const translations = {
       holidaysSaveNote: "L'ajout de jours fériés les enregistre dans les Fermetures spéciales ci-dessus. Cliquez sur \"Enregistrer\" pour sauvegarder.",
     },
     landing: {
+      heroH1a: 'Find your barber.',
+      heroH1b: 'Book your cut.',
+      heroH1c: 'No waiting.',
       statBarbers: '2 400+ barbiers · 18 villes · en direct',
       heroTitle: 'Trouvez votre coupe parfaite. Maintenant.',
       heroDesc: 'Les meilleurs barbiers de votre ville. Disponibilité en temps réel. Paiement en espèces — zéro frais, zéro app, zéro prise de tête. Réservez en moins de 30 secondes.',
@@ -4070,6 +4076,9 @@ const translations = {
       holidaysSaveNote: 'Añadir festivos los guarda en Cierres especiales. Haz clic en "Guardar" para persistir.',
     },
     landing: {
+      heroH1a: 'Find your barber.',
+      heroH1b: 'Book your cut.',
+      heroH1c: 'No waiting.',
       statBarbers: '2.400+ barberos · 18 ciudades · en directo',
       heroTitle: 'Encuentra tu corte perfecto. Ahora mismo.',
       heroDesc: 'Los mejores barberos de tu ciudad. Disponibilidad real. Solo efectivo — sin comisiones, sin apps, sin complicaciones. Reserva en menos de 30 segundos.',
