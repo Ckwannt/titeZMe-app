@@ -349,13 +349,13 @@ export default function ChallengePaymentTab({ mode }: Props) {
             value={declaredAmount}
             onChange={e => setDeclaredAmount(e.target.value)}
             className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl p-3 text-sm text-white placeholder-[#555] focus:border-brand-yellow focus:outline-none transition-colors"
-            placeholder={typeof fee === 'number' ? String(fee) : '0.00'}
+            placeholder={typeof totalAmount === 'number' ? String(totalAmount) : '0.00'}
           />
           <p className="text-[11px] text-[#666] mt-2">
             {t('challenge.payment.amountHint')}{' '}
             {typeof fee === 'number' && (
               <span className="text-white font-bold">
-                {t('challenge.payment.amountExpected').replace('{n}', String(fee))}
+                {t('challenge.payment.amountExpected').replace('{n}', String(totalAmount))}
               </span>
             )}
           </p>
