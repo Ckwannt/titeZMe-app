@@ -290,7 +290,7 @@ export default function LandingPageClient({
                   <h3 className="text-xl font-black text-white mb-1">{city.city}</h3>
                   <div className="text-xs font-bold text-gray-500 mb-6">
                     {isLive
-                      ? `${city.barbers} barber${city.barbers !== 1 ? 's' : ''}${city.shops > 0 ? ` · ${city.shops} shop${city.shops !== 1 ? 's' : ''}` : ''}`
+                      ? `${city.barbers} ${t(city.barbers === 1 ? 'landing.cityBarberSingular' : 'landing.cityBarberPlural')}${city.shops > 0 ? ` · ${city.shops} ${t(city.shops === 1 ? 'landing.cityShopSingular' : 'landing.cityShopPlural')}` : ''}`
                       : t('status.comingSoon')}
                   </div>
                   {isLive ? (
