@@ -461,7 +461,7 @@ export default function ForShopsPage() {
         target="_blank"
         rel="noopener noreferrer"
         className="whatsapp-btn"
-        title="Habla con nosotros"
+        title={t('forShops.whatsappTooltip')}
       >
         💬
       </a>
