@@ -135,56 +135,17 @@ export default function LandingPageClient({
       </section>
 
       {/* ── SOCIAL PROOF ────────────────────────────────────────────────────── */}
-      <section className="bg-[#050505] py-24 px-6 border-y border-[#1a1a1a]">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="grid lg:grid-cols-[1fr_2.5fr] gap-12">
-            <div>
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{t('landing.socialProof')}</div>
-              <h2 className="text-5xl font-black leading-[1.1] mb-2">{t('landing.realClients')}</h2>
-              <h2 className="text-4xl font-bold text-gray-500 mb-8">{t('landing.realTalk')}</h2>
-              <div className="bg-[#0f0f0f] p-6 rounded-3xl border border-[#1a1a1a] inline-block">
-                <div className="text-5xl font-black text-brand-yellow mb-1">4.9</div>
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wide">Overall Rating</div>
-              </div>
-            </div>
-            <div className="grid sm:grid-cols-3 gap-4">
-              {[
-                { n: 'Sarah K.', r: "Booked in 30 seconds. Best fade I've had in years. No one showed up late. This is how it should work.", i: 'SK' },
-                { n: 'Marco B.', r: 'Finally a platform that respects the barber AND the client. Carlos manages his slots properly. Top tier.', i: 'MB' },
-                { n: 'Emma W.', r: "Found a barber who speaks Arabic AND does proper fades in Madrid. TiteZMe solved something I'd been struggling with for months.", i: 'EW' },
-              ].map((rev, i) => (
-                <div key={i} className="bg-[#111] border border-[#2a2a2a] p-6 rounded-3xl flex flex-col justify-between">
-                  <div>
-                    <div className="flex gap-1 text-brand-yellow mb-4 text-xs">★★★★★</div>
-                    <p className="text-sm font-bold text-gray-300 leading-relaxed mb-6">&quot;{rev.r}&quot;</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center text-[10px] font-black text-gray-400">{rev.i}</div>
-                    <div className="text-xs font-bold text-white uppercase tracking-wider">{rev.n}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 bg-[#111] border border-[#2a2a2a] p-6 rounded-3xl">
-            <div className="flex flex-col items-center justify-center border-r border-[#2a2a2a]/50">
-              <div className="text-3xl font-black text-brand-yellow mb-1">4.9</div>
-              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center">avg rating</div>
-            </div>
-            <div className="flex flex-col items-center justify-center border-r border-[#2a2a2a]/50 px-4 w-full">
-              <div className="w-full flex items-center gap-2 mb-1"><span className="text-[10px] text-gray-500">5★</span><div className="h-1.5 flex-1 bg-[#2a2a2a] rounded-full overflow-hidden"><div className="w-[87%] h-full bg-brand-yellow"></div></div></div>
-              <div className="w-full flex items-center gap-2 mb-1"><span className="text-[10px] text-gray-500">4★</span><div className="h-1.5 flex-1 bg-[#2a2a2a] rounded-full overflow-hidden"><div className="w-[10%] h-full bg-brand-yellow opacity-50"></div></div></div>
-              <div className="w-full flex items-center gap-2"><span className="text-[10px] text-gray-500">3★</span><div className="h-1.5 flex-1 bg-[#2a2a2a] rounded-full overflow-hidden"><div className="w-[3%] h-full bg-brand-yellow opacity-25"></div></div></div>
-            </div>
-            <div className="flex flex-col items-center justify-center border-r border-[#2a2a2a]/50">
-              <div className="text-3xl font-black text-white mb-1">11,400+</div>
-              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center">bookings made</div>
-            </div>
-            <div className="flex flex-col items-center justify-center">
-              <div className="text-3xl font-black text-white mb-1">98%</div>
-              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center">completion rate</div>
-            </div>
-          </div>
+      <section className="px-6 py-20 bg-[#050505]">
+        <div className="max-w-5xl mx-auto text-center">
+          <p className="text-xs font-mono tracking-[0.35em] text-brand-yellow uppercase mb-6">
+            {t('landing.earlyAccessLabel')}
+          </p>
+          <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
+            {t('landing.earlyAccessTitle')}
+          </h2>
+          <p className="text-lg text-gray-400 max-w-xl mx-auto">
+            {t('landing.earlyAccessDesc')}
+          </p>
         </div>
       </section>
 
