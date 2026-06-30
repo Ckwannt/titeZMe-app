@@ -621,6 +621,17 @@ export default function AdminChallengePage() {
                       </div>
                       <div style={{ fontSize: 14, color: '#fff' }}>
                         {sub.declaredAmount != null ? `€${sub.declaredAmount}` : '—'}
+                        {(() => {
+                          const expectedFee = sub.type === 'barber' ? feeBarber : feeShop;
+                          const expectedTotal = typeof expectedFee === 'number'
+                            ? parseFloat((expectedFee + (expectedFee * ivaRate) / 100).toFixed(2))
+                            : null;
+                          return expectedTotal != null ? (
+                            <span style={{ marginLeft: 8, fontSize: 12, color: '#888' }}>
+                              (expected €{expectedTotal})
+                            </span>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                     <div>
