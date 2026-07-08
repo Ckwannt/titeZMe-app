@@ -29,10 +29,14 @@ export default function ClientDashboardLayout({ children }: { children: React.Re
     }
   }, [user, appUser, loading, router]);
 
-  const navItems = [
+  const navItems: { href: string; icon: string; label: string; soon?: boolean }[] = [
     { href: '/dashboard/client/bookings', icon: '📅', label: t('clientDash.myBookings') },
+    { href: '/dashboard/client/my-look', icon: '📸', label: t('clientDash.myLookTitle'), soon: true },
     { href: '/dashboard/client/favorites', icon: '♡', label: t('clientDash.favorites') },
+    { href: '/dashboard/client/titeZMe-artist', icon: '✨', label: t('clientDash.titeZMeArtistTitle'), soon: true },
+    { href: '/dashboard/client/gift-a-cut', icon: '🎁', label: t('clientDash.giftACutTitle'), soon: true },
     { href: '/dashboard/client/reviews', icon: '★', label: t('clientDash.reviews') },
+    { href: '/dashboard/client/badges', icon: '🏅', label: t('clientDash.badgesTitle'), soon: true },
     { href: '/contact', icon: '✉', label: t('clientDash.support') },
     { href: '/dashboard/client/settings', icon: '⚙️', label: t('clientDash.settings') },
   ];
@@ -73,6 +77,11 @@ export default function ClientDashboardLayout({ children }: { children: React.Re
               }`}
             >
               <span>{l.icon}</span> {l.label}
+              {l.soon && (
+                <span className="text-[9px] text-[#555] ml-1 uppercase tracking-wider">
+                  {t('landing.soon')}
+                </span>
+              )}
             </Link>
           ))}
         </div>
