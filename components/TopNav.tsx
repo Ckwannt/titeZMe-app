@@ -371,7 +371,8 @@ export function TopNav() {
         </div>
       </div>
 
-      {/* ROW 2: Ticker */}
+      {/* ROW 2: Ticker — hidden on dashboard routes to reclaim vertical space */}
+      {!pathname.startsWith('/dashboard') && (
       <div className="bg-[#111111] border-b border-[#1E1E1E] py-2.5 px-6 flex items-center justify-between overflow-hidden relative">
         <div className="flex-1 overflow-hidden relative flex items-center">
           <div className="animate-[marquee_20s_linear_infinite] whitespace-nowrap text-xs font-bold text-[#888580] flex gap-4">
@@ -397,6 +398,7 @@ export function TopNav() {
           </div>
         </div>
       </div>
+      )}
 
       {/* MOBILE DRAWER — full screen, shown when menuOpen */}
       {menuOpen && (

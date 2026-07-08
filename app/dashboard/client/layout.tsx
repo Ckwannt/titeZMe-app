@@ -92,9 +92,30 @@ export default function ClientDashboardLayout({ children }: { children: React.Re
         </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto max-h-[calc(100vh-53px)]">
+      <main className="flex-1 overflow-y-auto max-h-[calc(100vh-53px)] pb-[60px] md:pb-0">
         {children}
       </main>
+
+      {/* Mobile bottom tab bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[#111] border-t border-[#1e1e1e] h-[60px] flex md:hidden z-40">
+        {[
+          { href: '/dashboard/client/bookings', label: t('clientDash.myBookings') },
+          { href: '/dashboard/client/favorites', label: t('clientDash.favorites') },
+          { href: '/dashboard/client/reviews', label: t('clientDash.reviews') },
+          { href: '/dashboard/client/settings', label: t('clientDash.settings') },
+          { href: '/contact', label: t('barberLayout.navMore') },
+        ].map(item => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-bold transition-colors ${
+              isActive(item.href) ? 'text-brand-yellow' : 'text-[#555]'
+            }`}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
