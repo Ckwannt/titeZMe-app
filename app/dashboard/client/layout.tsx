@@ -31,6 +31,7 @@ export default function ClientDashboardLayout({ children }: { children: React.Re
 
   const navItems: { href: string; icon: string; label: string; soon?: boolean }[] = [
     { href: '/dashboard/client/bookings', icon: '', label: t('clientDash.myBookings') },
+    { href: '/dashboard/client/messages', icon: '', label: t('clientDash.messagesTitle'), soon: true },
     { href: '/dashboard/client/my-look', icon: '', label: t('clientDash.myLookTitle'), soon: true },
     { href: '/dashboard/client/favorites', icon: '', label: t('clientDash.favorites') },
     { href: '/dashboard/client/titeZMe-artist', icon: '', label: t('clientDash.titeZMeArtistNavLabel'), soon: true },
