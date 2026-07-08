@@ -32,6 +32,7 @@ export default function ClientDashboardLayout({ children }: { children: React.Re
   const navItems = [
     { href: '/dashboard/client/bookings', icon: '📅', label: t('clientDash.myBookings') },
     { href: '/dashboard/client/favorites', icon: '♡', label: t('clientDash.favorites') },
+    { href: '/dashboard/client/reviews', icon: '★', label: t('clientDash.reviews') },
     { href: '/dashboard/client/settings', icon: '⚙️', label: t('clientDash.settings') },
   ];
 
