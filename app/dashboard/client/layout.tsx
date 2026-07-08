@@ -76,7 +76,7 @@ export default function ClientDashboardLayout({ children }: { children: React.Re
                 isActive(l.href) ? 'bg-[#1a1a1a] text-brand-yellow' : 'text-[#888] hover:bg-[#1a1a1a] hover:text-white'
               }`}
             >
-              <span>{l.icon}</span> {l.label}
+              {l.label}
               {l.soon && (
                 <span className="text-[9px] text-[#555] ml-1 uppercase tracking-wider">
                   {t('nav.soon')}
