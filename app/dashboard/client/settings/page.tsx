@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
 import { DeleteAccountButton } from '@/components/DeleteAccountButton';
 import { toast } from '@/lib/toast';
 import Link from 'next/link';
@@ -30,8 +29,7 @@ import Image from 'next/image';
 export default function ClientSettings() {
   const { user, appUser, loading, refreshUser } = useAuth();
   const { t } = useLang();
-  const router = useRouter();
-  
+
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
@@ -47,12 +45,6 @@ export default function ClientSettings() {
   const [languageOptions, setLanguageOptions] = useState<{value: string; label: string}[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!loading && (!user || appUser?.role !== 'client')) {
-      router.replace('/login');
-    }
-  }, [user, appUser, loading, router]);
 
   useEffect(() => {
     if (appUser) {
@@ -237,50 +229,8 @@ export default function ClientSettings() {
   if (loading) return <div className="p-10 text-center animate-pulse text-brand-text-secondary">{t('misc.loading')}</div>;
 
   return (
-    <div className="flex min-h-[calc(100vh-53px)] flex-col md:flex-row">
-      <div className="w-full md:w-[220px] md:border-r border-brand-border p-6 shrink-0 flex flex-col">
-        <div className="flex items-center gap-3 mb-7 px-2">
-          {appUser?.photoUrl ? (
-            <Image 
-              src={appUser.photoUrl} 
-              alt="Profile" 
-              width={40} 
-              height={40} 
-              className="w-10 h-10 rounded-xl object-cover" 
-              style={{ objectFit: 'contain' }} 
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2a2a2a] to-[#111] flex items-center justify-center font-black text-base text-white">
-              {appUser?.firstName?.[0] || "C"}
-            </div>
-          )}
-          <div>
-            <div className="font-extrabold text-sm">{appUser?.firstName} {appUser?.lastName?.charAt(0)}.</div>
-            <div className="text-[11px] text-brand-text-secondary font-bold">{t('clientDash.clientRole')}</div>
-          </div>
-        </div>
-        
-        <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
-          <button 
-            onClick={() => router.push('/dashboard/client')}
-            className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 text-[#888] hover:bg-[#1a1a1a] hover:text-white`}
-          >
-            <span>📅</span> {t('clientDash.myBookings')}
-          </button>
-          <button 
-            className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 bg-[#1a1a1a] text-brand-yellow`}
-          >
-            <span>⚙️</span> {t('clientDash.settings')}
-          </button>
-        </div>
-
-        <div className="mt-auto hidden md:block">
-          <DeleteAccountButton role="client" />
-        </div>
-      </div>
-
-      <div className="flex-1 p-6 md:p-8 md:px-10 overflow-y-auto max-h-[calc(100vh-53px)]">
-        <div className="animate-fadeUp max-w-[700px]">
+    <div className="p-6 md:p-8 md:px-10">
+      <div className="animate-fadeUp max-w-[700px]">
           <h2 className="text-2xl font-black mb-6">{t('clientDash.settings')}</h2>
 
           <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 mb-8">
@@ -487,6 +437,5 @@ export default function ClientSettings() {
 
         </div>
       </div>
-    </div>
-  );
+    );
 }
