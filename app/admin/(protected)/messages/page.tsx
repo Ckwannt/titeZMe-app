@@ -9,6 +9,8 @@ interface ContactMessage {
   name: string;
   email: string;
   role: string;
+  subject: string;
+  type: string;
   message: string;
   createdAt: { seconds: number } | null;
   read: boolean;
@@ -42,6 +44,8 @@ export default function AdminMessagesPage() {
             name: data.name || '',
             email: data.email || '',
             role: data.role || '',
+            subject: data.subject || '',
+            type: data.type || '',
             message: data.message || '',
             createdAt: data.createdAt || null,
             read: data.read === true,
@@ -123,6 +127,39 @@ export default function AdminMessagesPage() {
                   >
                     {msg.role}
                   </span>
+                  {msg.subject && (
+                    <span
+                      style={{
+                        color: '#aaa',
+                        background: '#1a1a1a',
+                        border: '1px solid #2a2a2a',
+                        borderRadius: 6,
+                        fontSize: 11,
+                        padding: '2px 8px',
+                        marginLeft: 6,
+                      }}
+                    >
+                      {msg.subject}
+                    </span>
+                  )}
+                  {msg.type && (
+                    <span
+                      style={{
+                        color: msg.type === 'support' ? '#22C55E' : '#888',
+                        background: msg.type === 'support' ? '#0a1a0f' : '#151515',
+                        border: `1px solid ${msg.type === 'support' ? '#1f5c3a' : '#2a2a2a'}`,
+                        borderRadius: 6,
+                        fontSize: 11,
+                        padding: '2px 8px',
+                        marginLeft: 6,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {msg.type}
+                    </span>
+                  )}
                 </div>
                 <span style={{ color: '#666', fontSize: 12 }}>{formatTimestamp(msg.createdAt)}</span>
               </div>

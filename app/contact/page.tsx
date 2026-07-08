@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLang } from '@/lib/i18n/LangContext';
+import { useAuth } from '@/lib/auth-context';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -16,7 +17,24 @@ const INITIAL_FORM = {
 
 export default function ContactPage() {
   const { t } = useLang();
+  const { user, appUser } = useAuth();
   const [form, setForm] = useState(INITIAL_FORM);
+  const [prefilled, setPrefilled] = useState(false);
+
+  useEffect(() => {
+    if (prefilled) return;
+    if (!appUser && !user) return;
+    const fullName = [appUser?.firstName, appUser?.lastName].filter(Boolean).join(' ').trim();
+    const email = appUser?.email || user?.email || '';
+    if (!fullName && !email) return;
+    setForm(f => ({
+      ...f,
+      name: f.name || fullName,
+      email: f.email || email,
+      role: f.role === 'client' && appUser?.role === 'barber' ? 'barber' : f.role,
+    }));
+    setPrefilled(true);
+  }, [user, appUser, prefilled]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
@@ -34,6 +52,7 @@ export default function ContactPage() {
         role: form.role,
         subject: form.subject,
         message: form.message.trim().slice(0, 2000),
+        type: user ? 'support' : 'public',
         createdAt: serverTimestamp(),
         read: false,
       });
