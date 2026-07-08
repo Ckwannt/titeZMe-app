@@ -72,14 +72,14 @@ export default function ClientDashboardLayout({ children }: { children: React.Re
             <Link
               key={l.href}
               href={l.href}
-              className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 ${
+              className={`flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors shrink-0 whitespace-nowrap ${
                 isActive(l.href) ? 'bg-[#1a1a1a] text-brand-yellow' : 'text-[#888] hover:bg-[#1a1a1a] hover:text-white'
               }`}
             >
               <span>{l.icon}</span> {l.label}
               {l.soon && (
                 <span className="text-[9px] text-[#555] ml-1 uppercase tracking-wider">
-                  {t('landing.soon')}
+                  {t('nav.soon')}
                 </span>
               )}
             </Link>
