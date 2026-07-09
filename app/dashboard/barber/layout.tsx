@@ -267,7 +267,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
       </div>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto max-h-[calc(100vh-53px)]">
+      <main className="flex-1 overflow-y-auto max-h-[calc(100vh-53px)] pb-[60px] md:pb-0">
         {children}
       </main>
 
