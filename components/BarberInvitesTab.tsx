@@ -21,8 +21,8 @@ export function BarberInvitesTab() {
   // Fetch barber profile for barberCode
   useEffect(() => {
     if (!user) return;
-    getDoc(doc(db, 'barberProfiles', user.uid)).then(snap => {
-      if (snap.exists()) setBarberCode(snap.data().barberCode || '');
+    getDoc(doc(db, 'professionalProfiles', user.uid)).then(snap => {
+      if (snap.exists()) setBarberCode(snap.data().professionalCode || '');
     });
   }, [user]);
 
@@ -44,7 +44,7 @@ export function BarberInvitesTab() {
       const batch = writeBatch(db);
       const currentTime = Date.now();
       batch.update(doc(db, 'invites', invite.id), { status: 'accepted', respondedAt: currentTime });
-      batch.update(doc(db, 'barberProfiles', user.uid), { shopId: invite.shopId });
+      batch.update(doc(db, 'professionalProfiles', user.uid), { businessId: invite.shopId });
       const notifRef = doc(collection(db, 'notifications'));
       batch.set(notifRef, {
         userId: invite.shopId,
@@ -68,7 +68,7 @@ export function BarberInvitesTab() {
     try {
       if (!keep) {
         const batch = writeBatch(db);
-        batch.update(doc(db, 'barberProfiles', user.uid), { isSolo: false });
+        batch.update(doc(db, 'professionalProfiles', user.uid), { isSolo: false });
         await batch.commit();
       }
       setShowSoloModal(null);
@@ -80,10 +80,10 @@ export function BarberInvitesTab() {
 
   const handleAccept = async (invite: any) => {
     if (!user) return;
-    const bSnap = await getDocs(query(collection(db, 'barberProfiles'), where('userId', '==', user.uid)));
+    const bSnap = await getDocs(query(collection(db, 'professionalProfiles'), where('userId', '==', user.uid)));
     if (!bSnap.empty) {
       const bData = bSnap.docs[0].data();
-      if (bData.shopId && bData.shopId !== invite.shopId) {
+      if (bData.businessId && bData.businessId !== invite.shopId) {
         setShowWarningModal(invite);
         return;
       }

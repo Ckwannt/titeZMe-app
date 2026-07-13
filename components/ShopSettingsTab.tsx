@@ -20,7 +20,7 @@ const Select = dynamic(
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
-import { barbershopUpdateSchema } from "@/lib/schemas";
+import { businessUpdateSchema } from "@/lib/schemas";
 import { sanitizeText, sanitizeHandle, sanitizeUrl } from '@/lib/sanitize';
 import { useLang } from '@/lib/i18n/LangContext';
 
@@ -199,7 +199,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
         async () => {
           try {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ coverPhotoUrl: downloadURL }));
+            await updateDoc(doc(db, 'businesses', user.uid), businessUpdateSchema.parse({ coverPhotoUrl: downloadURL }));
             setLocalPhotoUrl(downloadURL);
             mutateShop();
             setSuccessMsg(t('success.shopPhotoUpdated'));
@@ -251,7 +251,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
         async () => {
           try {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ logoUrl: downloadURL }));
+            await updateDoc(doc(db, 'businesses', user.uid), businessUpdateSchema.parse({ logoUrl: downloadURL }));
             setLocalLogoUrl(downloadURL);
             mutateShop();
             setSuccessMsg(t('success.shopPhotoUpdated'));
@@ -276,7 +276,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     } catch {
       // ignore if file doesn't exist in storage
     }
-    await updateDoc(doc(db, 'barbershops', user.uid), { coverPhotoUrl: deleteField() });
+    await updateDoc(doc(db, 'businesses', user.uid), { coverPhotoUrl: deleteField() });
     setLocalPhotoUrl('');
     mutateShop();
     setSuccessMsg(t('success.shopPhotoUpdated'));
@@ -289,7 +289,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     } catch {
       // ignore if file doesn't exist in storage
     }
-    await updateDoc(doc(db, 'barbershops', user.uid), { logoUrl: deleteField() });
+    await updateDoc(doc(db, 'businesses', user.uid), { logoUrl: deleteField() });
     setLocalLogoUrl('');
     mutateShop();
     setSuccessMsg(t('success.shopPhotoUpdated'));
@@ -310,7 +310,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       const cityStr = selectedCityOption ? selectedCityOption.value : "";
       const countryStr = selectedCountry ? selectedCountry.value : "";
 
-      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({
+      await updateDoc(doc(db, 'businesses', user.uid), businessUpdateSchema.parse({
               name: sanitizeText(formData.name, 100),
               contactEmail: shop.contactEmail,
               contactPhone: phoneStr,
@@ -341,7 +341,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({
+      await updateDoc(doc(db, 'businesses', user.uid), businessUpdateSchema.parse({
               instagram: sanitizeHandle(socialData.instagram),
               facebook: sanitizeHandle(socialData.facebook),
               tiktok: sanitizeHandle(socialData.tiktok),
@@ -360,7 +360,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     setSavingMaps(true);
     setErrorMsg(''); setSuccessMsg('');
     try {
-      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({ googleMapsUrl: sanitizeUrl(googleMapsUrl) }));
+      await updateDoc(doc(db, 'businesses', user.uid), businessUpdateSchema.parse({ googleMapsUrl: sanitizeUrl(googleMapsUrl) }));
       mutateShop();
       setSuccessMsg(t('success.mapsLinkSaved'));
     } catch (e) {
@@ -375,7 +375,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
     setSavingChairRental(true);
     setErrorMsg(''); setSuccessMsg('');
     try {
-      await updateDoc(doc(db, 'barbershops', user.uid), {
+      await updateDoc(doc(db, 'businesses', user.uid), {
         rentsChairs,
         availableChairsForRent: rentsChairs
           ? Math.min(
@@ -416,12 +416,11 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       const { collection, getDocs, query, where, writeBatch } = await import('firebase/firestore');
       const batch = writeBatch(db);
       
-      // 1. Update all barbers
-      const barbersSnap = await getDocs(query(collection(db, 'barberProfiles'), where('shopId', '==', user?.uid)));
+      // 1. Detach all professionals who belonged to this business
+      const barbersSnap = await getDocs(query(collection(db, 'professionalProfiles'), where('businessId', '==', user?.uid)));
       for (const d of barbersSnap.docs) {
         batch.update(d.ref, {
-          shopId: null,
-          isSolo: true
+          businessId: null,
         });
         const notifRef = doc(
           collection(db, 'notifications')
@@ -493,12 +492,12 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       // 4. Delete schedule
       batch.delete(doc(db, 'schedules', `${user!.uid}_shard_0`));
 
-      // 5. Delete shop
-      batch.delete(doc(db, 'barbershops', user!.uid));
+      // 5. Delete business
+      batch.delete(doc(db, 'businesses', user!.uid));
 
-      // 6 & 7. Update users and barbers collection for owner
+      // 6 & 7. Update the owner's user + professional profile
       batch.update(doc(db, 'users', user!.uid), { ownsShop: false });
-      batch.update(doc(db, 'barberProfiles', user!.uid), { ownsShop: false, shopId: null });
+      batch.update(doc(db, 'professionalProfiles', user!.uid), { ownsBusiness: false, businessId: null });
 
       await batch.commit();
 

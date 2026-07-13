@@ -56,7 +56,7 @@ export function ShopTeamTab() {
   // ── Active team (real-time) ────────────────────────────────────────────────
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, 'barberProfiles'), where('shopId', '==', user.uid));
+    const q = query(collection(db, 'professionalProfiles'), where('businessId', '==', user.uid));
     const unsub = onSnapshot(q, (snap) => {
       const barbers = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
       setActiveBarbers(barbers);
@@ -119,7 +119,7 @@ export function ShopTeamTab() {
     setFoundBarber(null);
 
     try {
-      const q = query(collection(db, 'barberProfiles'), where('barberCode', '==', normalised));
+      const q = query(collection(db, 'professionalProfiles'), where('professionalCode', '==', normalised));
       const snap = await getDocs(q);
 
       if (snap.empty) {
@@ -166,14 +166,14 @@ export function ShopTeamTab() {
         setLoading(false);
         return;
       }
-      if (foundBarber.shopId === user.uid) {
+      if (foundBarber.businessId === user.uid) {
         setErrorMsg(t('errors.barberAlreadyOnTeam'));
         setLoading(false);
         return;
       }
 
-      const shopQ = await getDocs(query(collection(db, 'barbershops'), where('ownerId', '==', user.uid)));
-      const shopName = shopQ.empty ? (appUser?.firstName ? `${appUser.firstName}'s Shop` : 'Unknown Shop') : shopQ.docs[0].data().name;
+      const businessSnap = await getDoc(doc(db, 'businesses', user.uid));
+      const shopName = businessSnap.exists() ? businessSnap.data().name : (appUser?.firstName ? `${appUser.firstName}'s Shop` : 'Unknown Shop');
 
       const currentTime = Date.now();
       await addDoc(collection(db, 'invites'), inviteSchema.parse({
@@ -216,10 +216,8 @@ export function ShopTeamTab() {
     if (!user) return;
     setRemoving(true);
     try {
-      await updateDoc(doc(db, 'barberProfiles', barberId), {
-        shopId: null,
-        isSolo: true,
-        ownsShop: false,
+      await updateDoc(doc(db, 'professionalProfiles', barberId), {
+        businessId: null,
       });
       // Cancel any pending invites
       const invQ = query(collection(db, 'invites'), where('shopId', '==', user.uid), where('barberId', '==', barberId));
@@ -250,8 +248,8 @@ export function ShopTeamTab() {
   // ── Invite status label ────────────────────────────────────────────────────
   const getInviteStatus = () => {
     if (!foundBarber) return null;
-    if (foundBarber.shopId === user?.uid) return 'already_here';
-    if (foundBarber.shopId && foundBarber.shopId !== user?.uid) return 'in_other_shop';
+    if (foundBarber.businessId === user?.uid) return 'already_here';
+    if (foundBarber.businessId && foundBarber.businessId !== user?.uid) return 'in_other_shop';
     return 'available';
   };
 
