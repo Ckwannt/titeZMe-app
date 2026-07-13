@@ -138,7 +138,7 @@ export default function ShopProfilePage() {
 
   useEffect(() => {
     if (!shopId || isFake) return;
-    const unsub = onSnapshot(doc(db, 'barbershops', shopId), snap => {
+    const unsub = onSnapshot(doc(db, 'businesses', shopId), snap => {
       setShop(snap.exists() ? ({ id: snap.id, ...snap.data() } as ShopData) : null);
     });
     return () => unsub();
@@ -147,8 +147,8 @@ export default function ShopProfilePage() {
   useEffect(() => {
     if (!shopId || isFake) return;
     const q = query(
-      collection(db, 'barberProfiles'),
-      where('shopId', '==', shopId),
+      collection(db, 'professionalProfiles'),
+      where('businessId', '==', shopId),
       where('isLive', '==', true),
     );
     const unsub = onSnapshot(q, snap => {
@@ -302,7 +302,7 @@ export default function ShopProfilePage() {
     }
     if (!appUser?.isOnboarded) {
       router.push(
-        appUser?.role === 'barber'
+        appUser?.role === 'professional'
           ? '/onboarding/barber'
           : '/onboarding/client'
       );

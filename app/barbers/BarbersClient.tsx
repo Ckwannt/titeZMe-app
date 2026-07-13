@@ -64,7 +64,7 @@ async function fetchBarbers(): Promise<BarberCardItem[]> {
   const [response, featuredSnap] = await Promise.all([
     algoliaClient.search({
       requests: [{
-        indexName: 'barbers',
+        indexName: 'professionals',
         query:     '',
         filters:
           'isLive:true AND ' +
@@ -74,7 +74,7 @@ async function fetchBarbers(): Promise<BarberCardItem[]> {
       }],
     }),
     getDocs(firestoreQuery(
-      collection(db, 'barberProfiles'),
+      collection(db, 'professionalProfiles'),
       where('isFeatured', '==', true),
       limit(50),
     )),
@@ -97,7 +97,7 @@ async function fetchBarbers(): Promise<BarberCardItem[]> {
     languages:      hit.languages      || [],
     vibes:          hit.vibes          || [],
     currency:       hit.currency       || 'EUR',
-    barberCode:     hit.barberCode     || '',
+    barberCode:     hit.professionalCode || '',
     street:         '',
     minPrice:       hit.minPrice       || 0,
     isFeatured:     featuredIds.has(hit.objectID),

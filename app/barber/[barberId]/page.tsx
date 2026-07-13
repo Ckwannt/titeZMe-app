@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export async function generateStaticParams() {
   try {
     const snap = await adminDb
-      .collection('barberProfiles')
+      .collection('professionalProfiles')
       .where('isLive', '==', true)
       .orderBy('rating', 'desc')
       .limit(20)
@@ -30,7 +30,7 @@ export async function generateMetadata({
   try {
     const { barberId } = await params;
     const [profileDoc, userDoc] = await Promise.all([
-      adminDb.collection('barberProfiles').doc(barberId).get(),
+      adminDb.collection('professionalProfiles').doc(barberId).get(),
       adminDb.collection('users').doc(barberId).get(),
     ]);
 
@@ -132,7 +132,7 @@ export default async function BarberProfilePage({
 
   try {
     const [profileDoc, userDoc, scheduleDoc] = await Promise.all([
-      adminDb.collection('barberProfiles').doc(barberId).get(),
+      adminDb.collection('professionalProfiles').doc(barberId).get(),
       adminDb.collection('users').doc(barberId).get(),
       adminDb.collection('schedules').doc(getScheduleDocId(barberId)).get(),
     ]);
@@ -146,7 +146,7 @@ export default async function BarberProfilePage({
     const pData = profileData as any;
     const uData = userData as any;
 
-    // Heal: if barberProfiles is missing public display fields, copy them
+    // Heal: if professionalProfiles is missing public display fields, copy them
     // from users doc automatically. Fixes existing barbers who completed
     // onboarding before the security migration.
     if (!pData.firstName && uData.firstName) {
@@ -161,11 +161,11 @@ export default async function BarberProfilePage({
       if (Object.keys(healData).length > 0) {
         try {
           await adminDb
-            .collection('barberProfiles')
+            .collection('professionalProfiles')
             .doc(barberId)
             .update(healData);
           Object.assign(pData, healData);
-          console.log('[heal] barberProfiles healed for:', barberId, healData);
+          console.log('[heal] professionalProfiles healed for:', barberId, healData);
         } catch (healErr) {
           console.error('[heal] FAILED for:', barberId, healErr);
           // Apply in memory even if Firestore write failed so the name
@@ -183,8 +183,8 @@ export default async function BarberProfilePage({
 
     // Fetch shop if barber belongs to one
     let shopData: any = null;
-    if ((profileData as any).shopId) {
-      const shopDoc = await adminDb.collection('barbershops').doc((profileData as any).shopId).get();
+    if ((profileData as any).businessId) {
+      const shopDoc = await adminDb.collection('businesses').doc((profileData as any).businessId).get();
       if (shopDoc.exists) shopData = { id: shopDoc.id, ...shopDoc.data() };
     }
 

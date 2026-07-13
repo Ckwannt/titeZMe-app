@@ -29,7 +29,7 @@ type BarberDoc = {
   clientele?: string[];
   languages?: string[];
   isSolo?: boolean;
-  shopId?: string | null;
+  businessId?: string | null;
   rating?: number;
   reviewCount?: number;
   totalCuts?: number;
@@ -183,13 +183,13 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   const { data, isLoading } = useQuery({
     queryKey: ['barberPublicProfile', barberId],
     queryFn: async () => {
-      const pSnap = await getDoc(doc(db, 'barberProfiles', barberId));
+      const pSnap = await getDoc(doc(db, 'professionalProfiles', barberId));
       if (!pSnap.exists()) return null;
       const profile = { id: pSnap.id, ...pSnap.data() } as BarberDoc;
       const userProfile = (pSnap.data() ?? {}) as UserDoc;
       let shop: ShopDoc | null = null;
-      if (profile.shopId) {
-        const shopSnap = await getDoc(doc(db, 'barbershops', profile.shopId));
+      if (profile.businessId) {
+        const shopSnap = await getDoc(doc(db, 'businesses', profile.businessId));
         if (shopSnap.exists()) shop = { id: shopSnap.id, ...shopSnap.data() } as ShopDoc;
       }
       return { profile, userProfile, shop };
@@ -216,7 +216,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
   useEffect(() => {
     const providerId =
-      bookingContext === 'shop' && data?.profile?.shopId ? data.profile.shopId : barberId;
+      bookingContext === 'shop' && data?.profile?.businessId ? data.profile.businessId : barberId;
     const providerType = bookingContext === 'shop' ? 'shop' : 'barber';
     const q = query(
       collection(db, 'services'),
@@ -229,7 +229,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
       setServices(snap.docs.map(d => ({ id: d.id, ...d.data() } as ServiceDoc)));
     });
     return () => unsub();
-  }, [barberId, bookingContext, data?.profile?.shopId]);
+  }, [barberId, bookingContext, data?.profile?.businessId]);
 
   // ─── real-time reviews ────────────────────────────────────────────────────────
   // New reviews appear on the public profile the moment a client submits them.
@@ -265,8 +265,8 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
   }, [barberId]);
 
   useEffect(() => {
-    if (data?.profile) setBookingContext(data.profile.isSolo ? 'solo' : 'shop');
-  }, [data?.profile?.isSolo]);
+    if (data?.profile) setBookingContext(!data.profile.businessId ? 'solo' : 'shop');
+  }, [data?.profile?.businessId]);
 
   useEffect(() => {
     setMounted(true);
@@ -333,7 +333,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
     if (appUser?.role === 'admin') { toast.error(t('profile.adminCannotBook')); return; }
     if (appUser?.uid === barberId) { toast.error(t('profile.cannotBookSelf')); return; }
     if (!appUser?.isOnboarded) {
-      router.push(appUser?.role === 'barber' ? '/onboarding/barber' : '/onboarding/client');
+      router.push(appUser?.role === 'professional' ? '/onboarding/barber' : '/onboarding/client');
       return;
     }
     if (!profile?.isLive) { toast.error(t('profile.notAcceptingBookings')); return; }
@@ -495,13 +495,13 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
                       {shop.googleMapsUrl && (
                         <a href={shop.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-brand-yellow hover:underline text-xs">Get directions</a>
                       )}
-                      <Link href={`/shop/${profile.shopId}`} className="text-[#666] hover:text-white text-xs transition-colors">· 🏪 {shop.name}</Link>
+                      <Link href={`/shop/${profile.businessId}`} className="text-[#666] hover:text-white text-xs transition-colors">· 🏪 {shop.name}</Link>
                     </>
                   ) : (
                     <span>📍 {userProfile?.city}{userProfile?.country ? `, ${userProfile.country}` : ''}</span>
                   )}
                 </div>
-                {shop && profile.isSolo && <div className="text-xs text-[#555] mt-0.5">{t('profile.alsoSoloBookings')}</div>}
+                {shop && !profile.businessId && <div className="text-xs text-[#555] mt-0.5">{t('profile.alsoSoloBookings')}</div>}
 
                 <div className="flex flex-wrap items-center gap-3 mt-2 text-sm font-bold">
                   {(profile.reviewCount || 0) > 0 ? (
@@ -652,7 +652,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
             <div>
               <h3 className="font-extrabold text-[11px] tracking-widest text-[#666] uppercase mb-4">{t('profile.servicesAndPrices')}</h3>
 
-              {profile.isSolo && profile.shopId && shop && (
+              {!profile.businessId && profile.businessId && shop && (
                 <div className="flex gap-2 mb-4">
                   <button onClick={() => setBookingContext('solo')}
                     className={`px-4 py-2 rounded-full text-xs font-bold border transition-colors ${bookingContext === 'solo' ? 'bg-brand-yellow text-[#0a0a0a] border-brand-yellow' : 'border-[#2a2a2a] text-[#888] hover:text-white'}`}

@@ -55,7 +55,7 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['bookProfile', barberId],
     queryFn: async () => {
-      const pSnap = await getDoc(doc(db, 'barberProfiles', barberId));
+      const pSnap = await getDoc(doc(db, 'professionalProfiles', barberId));
       if (!pSnap.exists()) return null;
       const pData = pSnap.data() as any;
       const uSnap = await getDoc(doc(db, 'users', barberId));
@@ -77,8 +77,8 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
 
   useEffect(() => {
     if (profile && step === 1) {
-      if (!(profile.isSolo && profile.shopId)) {
-        setBookingContext(profile.shopId && !profile.isSolo ? 'shop' : 'solo');
+      if (!(!profile.businessId && profile.businessId)) {
+        setBookingContext(profile.businessId && !(!profile.businessId) ? 'shop' : 'solo');
         setStep(2);
       }
     }
@@ -91,10 +91,10 @@ export default function BookingPage({ params }: { params: Promise<{ barberId: st
   }, [user, router]);
 
 const { data: services = [], isLoading: loadingServices } = useQuery({
-    queryKey: ['bookServices', barberId, bookingContext, profile?.shopId],
+    queryKey: ['bookServices', barberId, bookingContext, profile?.businessId],
     queryFn: async () => {
       if (!profile) return [];
-      const providerId = bookingContext === 'shop' && profile.shopId ? profile.shopId : barberId;
+      const providerId = bookingContext === 'shop' && profile.businessId ? profile.businessId : barberId;
       const pType = bookingContext === 'shop' ? 'shop' : 'barber';
       
       const qSvc = query(collection(db, 'services'), where('providerId', '==', providerId), where('providerType', '==', pType));
@@ -254,7 +254,7 @@ const { data: services = [], isLoading: loadingServices } = useQuery({
           clientName,
           barberId: barberId,
           barberName: `${profile?.user?.firstName || ''} ${profile?.user?.lastName || ''}`.trim() || null,
-          shopId: profile.shopId || null,
+          shopId: profile.businessId || null,
           bookingContext,
           serviceIds: selectedServices.map(s => s.id),
           serviceNames: selectedServices.map(s => s.name),
