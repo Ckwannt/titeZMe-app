@@ -52,8 +52,6 @@ type ShopCard = {
   country: string;
   city: string;
   street: string;
-  barberCount: number;
-  languages: string[];
   isOpenNow: boolean;
   openLabel: string;
   openColor: string;
@@ -67,7 +65,7 @@ type ShopCard = {
 
 async function fetchShops(): Promise<ShopCard[]> {
   const snap = await getDocs(query(
-    collection(db, 'barbershops'),
+    collection(db, 'businesses'),
     where('status', '==', 'active'),
     limit(100),
   ));
@@ -88,14 +86,6 @@ async function fetchShops(): Promise<ShopCard[]> {
     )))),
   ]);
 
-  // Batch fetch barber profiles for language aggregation
-  const allBarberIds = [...new Set(shops.flatMap((s: any) => (s.barbers as string[]) || []))];
-  const barberMap: Record<string, any> = {};
-  if (allBarberIds.length > 0) {
-    const bSnaps = await Promise.all(allBarberIds.map(id => getDoc(doc(db, 'barberProfiles', id))));
-    bSnaps.forEach((s, i) => { if (s.exists()) barberMap[allBarberIds[i]] = s.data(); });
-  }
-
   return shops.map((s: any, i: number) => {
     const sched = scheduleSnaps[i].exists() ? (scheduleSnaps[i].data() as any) : null;
     const shopCity = s.address?.city || '';
@@ -104,10 +94,6 @@ async function fetchShops(): Promise<ShopCard[]> {
     const prices = serviceSnaps[i].docs
       .map(d => Number((d.data() as any).price) || 0)
       .filter(n => n > 0);
-    const barberIds: string[] = s.barbers || [];
-    const languages = [
-      ...new Set(barberIds.flatMap(id => (barberMap[id]?.languages as string[]) || [])),
-    ];
 
     return {
       id: s.id,
@@ -116,8 +102,6 @@ async function fetchShops(): Promise<ShopCard[]> {
       country: shopCountry,
       city: shopCity,
       street: s.address?.street || '',
-      barberCount: barberIds.length,
-      languages,
       isOpenNow: status.isOpen,
       openLabel: status.label,
       openColor: status.color,

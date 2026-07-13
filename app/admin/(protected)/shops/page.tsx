@@ -19,7 +19,7 @@ interface EnrichedShop {
   city?: string;
   ownerId?: string;
   ownerName?: string;
-  barbers?: string[];
+  barberCount?: number;
   createdAt?: number;
   coverPhotoUrl?: string;
 }
@@ -87,7 +87,21 @@ export default function AdminShopsPage() {
     async function fetchShops() {
       setLoading(true);
       try {
-        const snap = await getDocs(collection(db, 'barbershops'));
+        const [snap, profSnap] = await Promise.all([
+          getDocs(collection(db, 'businesses')),
+          getDocs(collection(db, 'professionalProfiles')),
+        ]);
+
+        // Team membership lives on each professional's businessId (the old
+        // barbers[] array no longer exists). Group once, count per business.
+        const teamCountByBusiness: Record<string, number> = {};
+        profSnap.docs.forEach((p) => {
+          const businessId = (p.data() as Record<string, unknown>).businessId;
+          if (typeof businessId === 'string' && businessId) {
+            teamCountByBusiness[businessId] = (teamCountByBusiness[businessId] || 0) + 1;
+          }
+        });
+
         const enriched: EnrichedShop[] = await Promise.all(
           snap.docs.map(async (shopDoc) => {
             const data = shopDoc.data() as Record<string, unknown>;
@@ -112,7 +126,7 @@ export default function AdminShopsPage() {
               city: (data.address as Record<string, string> | undefined)?.city || (data.city as string | undefined),
               ownerId,
               ownerName,
-              barbers: data.barbers as string[] | undefined,
+              barberCount: teamCountByBusiness[shopDoc.id] ?? 0,
               createdAt: data.createdAt as number | undefined,
               coverPhotoUrl: data.coverPhotoUrl as string | undefined,
             };
@@ -283,7 +297,7 @@ export default function AdminShopsPage() {
 
               {/* Team size */}
               <div style={{ fontSize: 12, color: '#555', flexShrink: 0 }}>
-                {(shop.barbers?.length ?? 0)} barber{(shop.barbers?.length ?? 0) !== 1 ? 's' : ''}
+                {(shop.barberCount ?? 0)} barber{(shop.barberCount ?? 0) !== 1 ? 's' : ''}
               </div>
 
               {/* Joined */}
