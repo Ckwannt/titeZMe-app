@@ -197,27 +197,27 @@ export async function deleteClientAccount(uid: string): Promise<void> {
 /**
  * Delete a barber account.
  *
- *   1. Read barberProfile to learn shop membership.
+ *   1. Read professionalProfile to learn business membership.
  *   2. Cancel future bookings + notify clients.
  *   3. Anonymize past bookings (barberId, barberName).
  *      shopId is left UNTOUCHED — shop's historical cut count is preserved.
  *   4. Delete reviews this barber received (no profile to show them on).
  *   5. Anonymize reviews this barber left as a client.
- *   6. If in a shop, remove from team + notify owner.
+ *   6. If in a business, notify the owner.
  *   7. Delete services owned by this barber.
  *   8. Delete schedule shard.
  *   9. Delete notifications addressed to this user.
- *  10. Delete barberProfiles/{uid}.
+ *  10. Delete professionalProfiles/{uid}.
  *  11. Delete users/{uid}.
  *  12. Delete Firebase Auth (LAST).
  */
 export async function deleteBarberAccount(uid: string): Promise<void> {
   const mgr = new BatchManager();
 
-  // 1. Read barber profile to check shop membership
-  const profileSnap = await getDoc(doc(db, 'barberProfiles', uid));
+  // 1. Read professional profile to check business membership
+  const profileSnap = await getDoc(doc(db, 'professionalProfiles', uid));
   const profile = profileSnap.exists() ? profileSnap.data() : null;
-  const shopId: string | null = profile?.shopId || null;
+  const businessId: string | null = profile?.businessId || null;
 
   // 2. Cancel future bookings + notify clients
   const futureBookings = await getDocs(query(
@@ -279,19 +279,18 @@ export async function deleteBarberAccount(uid: string): Promise<void> {
     });
   }
 
-  // 6. Remove from shop team + notify owner. Skipped if no shop or shop gone.
-  if (shopId) {
-    const shopSnap = await getDoc(doc(db, 'barbershops', shopId));
-    if (shopSnap.exists()) {
-      const shopData = shopSnap.data();
-      const barbers = (shopData.barbers || []) as string[];
-      await mgr.update(doc(db, 'barbershops', shopId), {
-        barbers: barbers.filter((b: string) => b !== uid),
-      });
+  // 6. Notify the business owner. Membership lives on this professional's own
+  //    profile (businessId), which is deleted at step 10 — so there is no
+  //    shop-side team array to maintain. Skipped if not in a business or the
+  //    business is already gone.
+  if (businessId) {
+    const businessSnap = await getDoc(doc(db, 'businesses', businessId));
+    if (businessSnap.exists()) {
+      const businessData = businessSnap.data();
 
       const notifRef = doc(collection(db, 'notifications'));
       await mgr.set(notifRef, {
-        userId: shopData.ownerId,
+        userId: businessData.ownerId,
         type: 'barber_left_shop',
         message: 'A barber on your team deleted their account and was removed from your shop.',
         read: false,
@@ -322,8 +321,8 @@ export async function deleteBarberAccount(uid: string): Promise<void> {
     await mgr.delete(d.ref);
   }
 
-  // 10. Delete barber profile
-  await mgr.delete(doc(db, 'barberProfiles', uid));
+  // 10. Delete professional profile
+  await mgr.delete(doc(db, 'professionalProfiles', uid));
 
   // 11. Delete user doc
   await mgr.delete(doc(db, 'users', uid));
@@ -341,38 +340,40 @@ export async function deleteBarberAccount(uid: string): Promise<void> {
  * Delete a shop-owner account. Two-phase:
  *
  *  PHASE 1 — shop teardown:
- *   1. Notify all team barbers, flip them to solo (shopId: null, isSolo: true).
- *      Their personal totalCuts on barberProfile stays intact.
+ *   1. Notify all team members, clear their businessId (querying
+ *      professionalProfiles by businessId). Their personal totalCuts stays intact.
  *   2. Cancel future shop bookings + notify clients.
  *   3. Anonymize past shop bookings (shopId, shopName).
  *      barberId is left UNTOUCHED so each barber's personal cut history
  *      points at their real record.
  *   4. Delete shop services.
- *   5. Delete barbershops/{shopId}.
+ *   5. Delete businesses/{shopId}.
  *
  *  PHASE 2 — owner's own barber account:
  *   6. Delegate to deleteBarberAccount(uid) which deletes the owner's
- *      barberProfile / services / schedule / user doc and the Firebase Auth
- *      user. The team-removal step inside deleteBarberAccount is auto-skipped
- *      because the shop doc no longer exists (shopSnap.exists() === false).
+ *      professionalProfile / services / schedule / user doc and the Firebase
+ *      Auth user. The owner-notification step inside deleteBarberAccount is
+ *      auto-skipped because the business doc no longer exists.
  */
 export async function deleteShopOwnerAccount(uid: string, shopId: string): Promise<void> {
   const mgr = new BatchManager();
 
-  // 1. Read shop to fetch its barber team
-  const shopSnap = await getDoc(doc(db, 'barbershops', shopId));
-  const shopBarbers: string[] = shopSnap.exists()
-    ? ((shopSnap.data().barbers || []) as string[])
-    : [];
+  // 1. Query team members by businessId. The barbers[] array no longer exists;
+  //    membership lives on each professional's own profile.
+  const teamSnap = await getDocs(query(
+    collection(db, 'professionalProfiles'),
+    where('businessId', '==', shopId)
+  ));
 
-  // 2. Notify each team barber + set them solo. Skip the owner — their
-  //    barber doc gets handled by the deleteBarberAccount() call below.
-  for (const barberId of shopBarbers) {
+  // 2. Notify each team member + clear their businessId. Skip the owner — their
+  //    profile gets handled by the deleteBarberAccount() call below. Per
+  //    firestore.rules the owner may only clear businessId (not isSolo).
+  for (const memberDoc of teamSnap.docs) {
+    const barberId = memberDoc.id;
     if (barberId === uid) continue;
 
-    await mgr.update(doc(db, 'barberProfiles', barberId), {
-      shopId: null,
-      isSolo: true,
+    await mgr.update(doc(db, 'professionalProfiles', barberId), {
+      businessId: null,
     });
 
     const notifRef = doc(collection(db, 'notifications'));
@@ -434,8 +435,8 @@ export async function deleteShopOwnerAccount(uid: string, shopId: string): Promi
     await mgr.delete(d.ref);
   }
 
-  // 6. Delete shop doc itself
-  await mgr.delete(doc(db, 'barbershops', shopId));
+  // 6. Delete business doc itself
+  await mgr.delete(doc(db, 'businesses', shopId));
 
   // Commit shop-related changes
   await mgr.commit();
