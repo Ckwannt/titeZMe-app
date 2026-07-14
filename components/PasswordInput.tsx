@@ -38,7 +38,10 @@ export function PasswordInput({
         required={required}
         autoComplete={autoComplete}
         className={className}
-        style={style ? { ...style, paddingRight: '44px', width: '100%', boxSizing: 'border-box' } : undefined}
+        style={{
+          boxSizing: 'border-box',
+          ...(style ? { ...style, paddingRight: '44px', width: '100%' } : {}),
+        }}
       />
       <button
         type="button"

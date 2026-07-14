@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from 'next/link';
+import { track } from '@vercel/analytics';
 
 import { useRouter } from "next/navigation";
 import { doc, collection, setDoc, updateDoc, query, where, getDocs, getDoc } from "firebase/firestore";
@@ -22,6 +23,21 @@ export default function BarberOnboarding() {
   const totalSteps = 4;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Funnel tracking. launchedRef flips true only on a successful launch so the
+  // unmount cleanup can tell a genuine abandon from a completed flow. stepRef
+  // mirrors `step` so the mount-only cleanup reads the latest step without
+  // re-subscribing the effect on every step change (which would misfire).
+  const launchedRef = useRef(false);
+  const stepRef = useRef(step);
+  useEffect(() => { stepRef.current = step; }, [step]);
+  useEffect(() => {
+    return () => {
+      if (!launchedRef.current) {
+        track('onboarding_abandoned', { step: stepRef.current, role: 'professional' });
+      }
+    };
+  }, []);
 
   // Step 1
   // firstName / lastName are editable so barbers coming in via Google with no
@@ -287,6 +303,13 @@ export default function BarberOnboarding() {
       } catch(e: any) { throw new Error("Step 4: User confirmation flag failed - " + e.message); }
 
       // await batch.commit(); // Batch replaced to help debug
+      launchedRef.current = true;
+      track('profile_launched', {
+        time_to_launch_seconds: appUser?.createdAt
+          ? Math.round((Date.now() - appUser.createdAt) / 1000)
+          : 0,
+        role: 'professional',
+      });
       window.location.href = '/dashboard/barber';
 
     } catch (err: any) {
@@ -629,7 +652,10 @@ export default function BarberOnboarding() {
           {step > 1 ? (
             <button className="bg-transparent text-white border-[1.5px] border-[#2a2a2a] px-6 py-3 rounded-full font-extrabold text-sm transition-all hover:border-[#555]" onClick={() => setStep(s => s - 1)}>{t('booking.back')}</button>
           ) : <div />}
-          <button className="bg-brand-yellow text-[#0a0a0a] px-7 py-3 rounded-full font-black text-sm transition-all hover:-translate-y-px" onClick={() => setStep(s => s + 1)}>
+          <button className="bg-brand-yellow text-[#0a0a0a] px-7 py-3 rounded-full font-black text-sm transition-all hover:-translate-y-px" onClick={() => {
+            track('onboarding_step_completed', { step, role: 'professional' });
+            setStep(s => s + 1);
+          }}>
             {step === 3 ? t('onboarding.reviewLaunch') : t('onboarding.continueStep')}
           </button>
         </div>

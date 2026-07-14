@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { track } from '@vercel/analytics';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
@@ -19,6 +20,19 @@ export default function ClientOnboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Funnel tracking. Client onboarding is a single step, so there is no
+  // step_completed event here — only abandon (unmount before completion) and
+  // launch. launchedRef flips true on success so the unmount cleanup can tell
+  // a genuine abandon from a completed flow.
+  const launchedRef = useRef(false);
+  useEffect(() => {
+    return () => {
+      if (!launchedRef.current) {
+        track('onboarding_abandoned', { step: 1, role: 'client' });
+      }
+    };
+  }, []);
 
   // firstName / lastName are editable so users coming in via Google with no
   // displayName aren't permanently stuck in the onboarding loop.
@@ -148,6 +162,13 @@ export default function ClientOnboarding() {
             }));
       
       // Reload so that AuthContext fetches the updated isOnboarded state
+      launchedRef.current = true;
+      track('profile_launched', {
+        time_to_launch_seconds: appUser?.createdAt
+          ? Math.round((Date.now() - appUser.createdAt) / 1000)
+          : 0,
+        role: 'client',
+      });
       window.location.href = '/dashboard/client';
     } catch (err: any) {
       console.error(err);

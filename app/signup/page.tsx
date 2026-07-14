@@ -11,6 +11,21 @@ import { useAuth } from '@/lib/auth-context';
 import { PasswordInput } from '@/components/PasswordInput';
 import { VerifyEmailGate } from '@/components/VerifyEmailGate';
 import { useLang } from '@/lib/i18n/LangContext';
+import { track } from '@vercel/analytics';
+
+// Small hardcoded blocklist of the most common/guessable passwords. This is a
+// UX guardrail on top of Firebase's own minimum-length enforcement (see the
+// security note in the Pass 2 report) — matched case-insensitively.
+const COMMON_PASSWORDS = new Set([
+  'password', 'password1', 'password123', '12345678', '123456789', '1234567890',
+  'qwerty123', 'qwertyuiop', 'letmein', 'admin123', 'iloveyou', '111111',
+  '11111111', '00000000', 'aaaaaaaa', 'abc12345', 'abcd1234', 'changeme',
+  'welcome1', 'welcome123', 'football1', 'monkey123', 'sunshine', 'princess1',
+  'dragon123', 'trustno1', 'superman1', 'batman123', 'baseball1', 'whatever1',
+]);
+
+const isCommonPassword = (pass: string): boolean =>
+  COMMON_PASSWORDS.has(pass.toLowerCase());
 
 export default function SignupPage() {
   const router = useRouter();
@@ -31,7 +46,16 @@ export default function SignupPage() {
   const [emailError, setEmailError] = useState('');
   const [firstNameValid, setFirstNameValid] = useState<boolean | null>(null);
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const { t } = useLang();
+
+  // Funnel: fire once when the signup form is first shown, with the role that
+  // is preselected at mount (defaults to 'client').
+  useEffect(() => {
+    track('signup_form_viewed', { role_preselected: role });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) return null;
   if (user && !submitAttempted) {
@@ -83,6 +107,9 @@ export default function SignupPage() {
   };
 
   const handleGoogleSignIn = async () => {
+    if (googleSubmitting) return;
+    setGoogleSubmitting(true);
+    track('signup_submitted', { method: 'google', role });
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -123,9 +150,15 @@ export default function SignupPage() {
         setTimeout(() => { router.replace('/login'); }, 2000);
         return;
       }
+      if (error.code === 'auth/network-request-failed') {
+        setErrorStatus(t('errors.connectionError'));
+        return;
+      }
       if (error.code !== 'auth/popup-closed-by-user') {
         setErrorStatus(t('errors.googleSignInFailed'));
       }
+    } finally {
+      setGoogleSubmitting(false);
     }
   };
 
@@ -149,6 +182,8 @@ export default function SignupPage() {
       setErrorStatus(t('errors.passwordsNoMatch'));
       return;
     }
+
+    track('signup_submitted', { method: 'email', role });
 
     setIsSubmitting(true);
     setErrorStatus('');
@@ -269,6 +304,7 @@ export default function SignupPage() {
       <button
         type="button"
         onClick={handleGoogleSignIn}
+        disabled={googleSubmitting}
         style={{
           width: '100%',
           padding: '12px',
@@ -279,7 +315,8 @@ export default function SignupPage() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: '10px',
-          cursor: 'pointer',
+          cursor: googleSubmitting ? 'default' : 'pointer',
+          opacity: googleSubmitting ? 0.6 : 1,
           fontSize: '13px',
           fontWeight: 800,
           fontFamily: 'Nunito, sans-serif',
@@ -293,7 +330,7 @@ export default function SignupPage() {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
-        {t('buttons.continueWithGoogle')}
+        {googleSubmitting ? t('forms.creatingAccount') : t('buttons.continueWithGoogle')}
       </button>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
@@ -457,7 +494,17 @@ export default function SignupPage() {
               {t('errors.passwordTooShort')} ({password.length}/8)
             </div>
           )}
-          {password.length >= 8 && (
+          {password.length >= 8 && isCommonPassword(password) && (
+            <div style={{ fontSize: '11px', color: '#EF4444', marginTop: '4px' }}>
+              {t('errors.passwordTooCommon')}
+            </div>
+          )}
+          {password.length >= 8 && !isCommonPassword(password) && getPasswordStrength(password).score < 2 && (
+            <div style={{ fontSize: '11px', color: '#F97316', marginTop: '4px' }}>
+              {t('forms.passwordStrengthenHint')}
+            </div>
+          )}
+          {password.length >= 8 && !isCommonPassword(password) && getPasswordStrength(password).score >= 2 && (
             <div style={{ fontSize: '11px', color: '#22C55E', marginTop: '4px' }}>
               {t('misc.passwordLooksGood')}
             </div>
@@ -478,22 +525,13 @@ export default function SignupPage() {
                 }
               }}
               placeholder={t('forms.confirmPasswordPlaceholder')}
-              style={{
-                background: '#141414',
-                border: passwordMatch === null
-                  ? '1px solid #2a2a2a'
+              className={`w-full bg-[#141414] border-[1.5px] rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors focus:border-brand-yellow ${
+                passwordMatch === null
+                  ? 'border-[#2a2a2a]'
                   : passwordMatch
-                    ? '1px solid #22C55E'
-                    : '1px solid #EF4444',
-                borderRadius: '10px',
-                padding: '12px 44px 12px 16px',
-                color: '#fff',
-                fontSize: '16px',
-                fontFamily: 'Nunito, sans-serif',
-                outline: 'none',
-                width: '100%',
-                transition: 'border-color 0.2s'
-              }}
+                    ? 'border-[#22C55E]'
+                    : 'border-[#EF4444]'
+              }`}
             />
             {passwordMatch === true && (
               <div style={{
@@ -539,51 +577,86 @@ export default function SignupPage() {
                 {t('nav.login')} →
               </Link>
             )}
+            {!showLoginLink && (
+              <button
+                type="button"
+                onClick={() => { setErrorStatus(''); setShowLoginLink(false); }}
+                style={{
+                  display: 'block',
+                  marginTop: '8px',
+                  color: '#F5C518',
+                  fontWeight: 800,
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontFamily: 'Nunito, sans-serif',
+                }}
+              >
+                {t('buttons.tryAgain')}
+              </button>
+            )}
           </div>
         )}
 
+        {/* Explicit consent — must be checked before the account can be created.
+            Links open in a new tab; stopPropagation keeps a link click from also
+            toggling the checkbox via the wrapping <label>. */}
+        <label style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '10px',
+          cursor: 'pointer',
+          fontSize: '11px',
+          color: '#888',
+          lineHeight: 1.6,
+          fontFamily: 'Nunito, sans-serif',
+          marginTop: '4px',
+        }}>
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={e => setTermsAccepted(e.target.checked)}
+            style={{
+              width: '16px',
+              height: '16px',
+              accentColor: '#F5C518',
+              marginTop: '1px',
+              flexShrink: 0,
+              cursor: 'pointer',
+            }}
+          />
+          <span>
+            {t('misc.byCreatingAccount')}{' '}
+            <a
+              href="/terms"
+              target="_blank"
+              onClick={e => e.stopPropagation()}
+              style={{ color: '#F5C518', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+            >
+              {t('misc.termsOfService')}
+            </a>
+            {' '}{t('misc.and')}{' '}
+            <a
+              href="/privacy"
+              target="_blank"
+              onClick={e => e.stopPropagation()}
+              style={{ color: '#F5C518', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+            >
+              {t('misc.privacyPolicy')}
+            </a>
+            .
+          </span>
+        </label>
+
         <button
           type="submit"
-          disabled={isSubmitting || !!emailError || email.length === 0 || password.length < 8 || firstName.length === 0}
+          disabled={isSubmitting || !!emailError || email.length === 0 || password.length < 8 || firstName.length === 0 || lastName.length === 0 || isCommonPassword(password) || getPasswordStrength(password).score < 2 || !termsAccepted}
           className="bg-brand-yellow text-[#0a0a0a] w-full mt-4 px-7 py-3.5 rounded-full font-black text-[15px] transition-all hover:opacity-90 disabled:opacity-50"
         >
           {isSubmitting ? t('forms.creatingAccount') : t('buttons.createAccount')}
         </button>
-
-        <div style={{
-          fontSize: '11px',
-          color: '#444',
-          textAlign: 'center',
-          lineHeight: 1.6,
-          fontFamily: 'Nunito, sans-serif',
-          marginTop: '12px'
-        }}>
-          {t('misc.byCreatingAccount')}{' '}
-          <a
-            href="/terms"
-            target="_blank"
-            style={{
-              color: '#666',
-              textDecoration: 'underline',
-              textUnderlineOffset: '2px'
-            }}
-          >
-            {t('misc.termsOfService')}
-          </a>
-          {' '}{t('misc.and')}{' '}
-          <a
-            href="/privacy"
-            target="_blank"
-            style={{
-              color: '#666',
-              textDecoration: 'underline',
-              textUnderlineOffset: '2px'
-            }}
-          >
-            {t('misc.privacyPolicy')}
-          </a>
-          .
-        </div>
 
         <div className="text-center mt-6 text-sm text-brand-text-secondary">
           {t('headings.alreadyHaveAccount')} <Link href="/login" className="text-white font-extrabold hover:text-brand-yellow transition-colors">{t('nav.login')}</Link>

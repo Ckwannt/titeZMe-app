@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useLang } from '@/lib/i18n/LangContext';
+import { track } from '@vercel/analytics';
 
 interface VerifyEmailGateProps {
   /**
@@ -36,6 +37,10 @@ export function VerifyEmailGate({ onVerified, email, mode = 'default' }: VerifyE
   const onVerifiedRef = useRef(onVerified);
   useEffect(() => { onVerifiedRef.current = onVerified; }, [onVerified]);
 
+  // Funnel: capture when the verify gate first mounted so we can report how
+  // long the user took to verify once auto-detect confirms it.
+  const gateMountedAtRef = useRef<number>(Date.now());
+
   // AUTO-DETECT (cross-tab / cross-device): reload the auth user every 4s and
   // fire onVerified() the moment emailVerified flips true. Clears on success
   // and on unmount.
@@ -54,6 +59,9 @@ export function VerifyEmailGate({ onVerified, email, mode = 'default' }: VerifyE
           // otherwise leave the next protected write denied until the token
           // naturally refreshes (~1h) or the user re-logs in.
           try { await auth.currentUser.getIdToken(true); } catch { /* non-fatal */ }
+          track('email_verified', {
+            time_to_verify_seconds: Math.round((Date.now() - gateMountedAtRef.current) / 1000),
+          });
           onVerifiedRef.current();
         }
       } catch {
