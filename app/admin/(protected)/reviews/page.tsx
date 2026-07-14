@@ -89,7 +89,7 @@ export default function AdminReviewsPage() {
           Array.from(providerIds).map(async (pid) => {
             try {
               // Try barberProfiles first, fall back to users
-              const profileSnap = await getDoc(doc(db, 'barberProfiles', pid));
+              const profileSnap = await getDoc(doc(db, 'professionalProfiles', pid));
               if (profileSnap.exists()) {
                 const pd = profileSnap.data() as Record<string, unknown>;
                 if (pd.firstName || pd.lastName) {
@@ -154,7 +154,7 @@ export default function AdminReviewsPage() {
         newCount > 0
           ? Number((ratings.reduce((a, b) => a + b, 0) / newCount).toFixed(1))
           : 0;
-      await updateDoc(doc(db, 'barberProfiles', barberId), {
+      await updateDoc(doc(db, 'professionalProfiles', barberId), {
         rating: newRating,
         reviewCount: newCount,
       });

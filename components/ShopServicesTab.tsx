@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { collection, addDoc, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { barbershopUpdateSchema, serviceSchema } from "@/lib/schemas";
+import { businessUpdateSchema, serviceSchema } from "@/lib/schemas";
 import { useLang } from '@/lib/i18n/LangContext';
 
 function getCurrencySymbol(c?: string): string {
@@ -94,7 +94,7 @@ export function ShopServicesTab({ services = [], mutateServices, shop, mutateSho
     if (!user) return;
     setIsSavingTitz(true);
     try {
-      await updateDoc(doc(db, 'barbershops', user.uid), barbershopUpdateSchema.parse({
+      await updateDoc(doc(db, 'businesses', user.uid), businessUpdateSchema.parse({
         titeZMeCut: { durationMinutes: Number(titzData.duration), price: Number(titzData.price), currency: shop?.currency || 'EUR' },
       }));
       mutateShop();

@@ -36,7 +36,7 @@ interface ShopData {
   country?: string;
 }
 
-interface BarberProfile {
+interface ProfessionalProfile {
   id: string;
   firstName?: string;
   lastName?: string;
@@ -122,11 +122,11 @@ function getWeekRange(): { start: string; end: string } {
   return { start: fmt(mon), end: fmt(sun) };
 }
 
-function barberInitials(b: BarberProfile): string {
+function barberInitials(b: ProfessionalProfile): string {
   return (b.firstName?.[0] ?? "?").toUpperCase();
 }
 
-function barberFullName(b: BarberProfile, fallback: string): string {
+function barberFullName(b: ProfessionalProfile, fallback: string): string {
   return `${b.firstName ?? ""} ${b.lastName ?? ""}`.trim() || fallback;
 }
 
@@ -139,7 +139,7 @@ export default function ShopOverviewPage() {
   const router = useRouter();
 
   const [shop, setShop] = useState<ShopData | null>(null);
-  const [barbers, setBarbers] = useState<BarberProfile[]>([]);
+  const [barbers, setBarbers] = useState<ProfessionalProfile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [schedules, setSchedules] = useState<Record<string, BarberSchedule>>({});
@@ -154,7 +154,7 @@ export default function ShopOverviewPage() {
   // ── Fetch shop (one-time) ──
   useEffect(() => {
     if (!user) return;
-    getDoc(doc(db, "barbershops", user.uid)).then((snap) => {
+    getDoc(doc(db, "businesses", user.uid)).then((snap) => {
       if (snap.exists()) setShop(snap.data() as ShopData);
     });
   }, [user]);
@@ -162,9 +162,9 @@ export default function ShopOverviewPage() {
   // ── Live: barbers ──
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, "barberProfiles"), where("shopId", "==", user.uid));
+    const q = query(collection(db, "professionalProfiles"), where("businessId", "==", user.uid));
     const unsub = onSnapshot(q, (snap) => {
-      setBarbers(snap.docs.map((d) => ({ id: d.id, ...d.data() } as BarberProfile)));
+      setBarbers(snap.docs.map((d) => ({ id: d.id, ...d.data() } as ProfessionalProfile)));
     });
     return unsub;
   }, [user]);

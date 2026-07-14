@@ -20,7 +20,7 @@ export default function ClientDashboardLayout({ children }: { children: React.Re
       router.replace('/login');
       return;
     }
-    if (appUser?.role === 'barber') {
+    if (appUser?.role === 'professional') {
       router.replace('/dashboard/barber');
       return;
     }

@@ -14,7 +14,7 @@ import {
 } from '@/lib/delete-account';
 
 interface DeleteAccountButtonProps {
-  role: 'client' | 'barber';
+  role: 'client' | 'professional';
 }
 
 const clientMessage = `This cannot be undone.
@@ -64,14 +64,14 @@ export function DeleteAccountButton({ role }: DeleteAccountButtonProps) {
     try {
       if (appUser.role === 'client') {
         await deleteClientAccount(user.uid);
-      } else if (appUser.role === 'barber') {
-        const profileSnap = await getDoc(doc(db, 'barberProfiles', user.uid));
+      } else if (appUser.role === 'professional') {
+        const profileSnap = await getDoc(doc(db, 'professionalProfiles', user.uid));
         const profile = profileSnap.data();
-        const shopId = profile?.shopId || null;
-        const ownsShop = profile?.ownsShop || false;
+        const businessId = profile?.businessId || null;
+        const ownsBusiness = profile?.ownsBusiness || false;
 
-        if (ownsShop && shopId) {
-          await deleteShopOwnerAccount(user.uid, shopId);
+        if (ownsBusiness && businessId) {
+          await deleteShopOwnerAccount(user.uid, businessId);
         } else {
           await deleteBarberAccount(user.uid);
         }
@@ -165,7 +165,7 @@ export function DeleteAccountButton({ role }: DeleteAccountButtonProps) {
                 fontFamily: 'Nunito, sans-serif',
               }}
             >
-              {role === 'client' ? 'Delete your account?' : 'Delete your barber account?'}
+              {role === 'client' ? 'Delete your account?' : 'Delete your professional account?'}
             </div>
 
             <div

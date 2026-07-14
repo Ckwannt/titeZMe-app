@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 import Select from "react-select";
 // country-state-city loaded dynamically to avoid bundling 1.8 MB on initial load
-import { barberUpdateSchema, userUpdateSchema, barbershopSchema } from "@/lib/schemas";
+import { professionalProfileUpdateSchema, userUpdateSchema, businessSchema } from "@/lib/schemas";
 import { sanitizeText, sanitizeUrl } from '@/lib/sanitize';
 import { useLang } from '@/lib/i18n/LangContext';
 
@@ -100,7 +100,7 @@ export default function CreateShopPage() {
 
   if (loading) return null;
 
-  if (!user || appUser?.role !== 'barber') {
+  if (!user || appUser?.role !== 'professional') {
     router.replace('/');
     return null;
   }
@@ -121,14 +121,14 @@ export default function CreateShopPage() {
     setErrorStatus('');
 
     try {
-      const shopRef = doc(db, 'barbershops', user.uid);
-      await setDoc(shopRef, barbershopSchema.parse({
+      const shopRef = doc(db, 'businesses', user.uid);
+      await setDoc(shopRef, businessSchema.parse({
               ownerId: user.uid,
               name: sanitizeText(name, 100),
               contactPhone: `+${phoneCode.value} ${phoneNumberInput}`,
               address: {
                 street: street,
-                number: buildingNumber,
+                buildingNumber: buildingNumber,
                 postalCode: postalCode,
                 floor: floor || '',
                 city: selectedCityOption.value,
@@ -138,7 +138,6 @@ export default function CreateShopPage() {
               description: sanitizeText(description, 2000),
               photos: [],
               status: 'pending',
-              barbers: [],
               createdAt: Date.now()
             }));
 
@@ -147,10 +146,10 @@ export default function CreateShopPage() {
               ownsShop: true
             }));
 
-      const profileRef = doc(db, 'barberProfiles', user.uid);
-      await updateDoc(profileRef, barberUpdateSchema.parse({
-              ownsShop: true,
-              shopId: user.uid
+      const profileRef = doc(db, 'professionalProfiles', user.uid);
+      await updateDoc(profileRef, professionalProfileUpdateSchema.parse({
+              ownsBusiness: true,
+              businessId: user.uid
             }));
 
       router.push('/dashboard/shop');

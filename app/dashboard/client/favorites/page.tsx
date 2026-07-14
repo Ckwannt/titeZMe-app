@@ -33,7 +33,7 @@ export default function ClientFavorites() {
     queryFn: async () => {
       if (favoriteIds.length === 0) return [];
       const snaps = await Promise.all(
-        favoriteIds.map(id => getDoc(doc(db, 'barberProfiles', id)))
+        favoriteIds.map(id => getDoc(doc(db, 'professionalProfiles', id)))
       );
       return snaps
         .filter(s => s.exists())

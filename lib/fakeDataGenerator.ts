@@ -214,7 +214,7 @@ export interface FakeBarber {
   firstName: string;
   lastName: string;
   photoUrl: string;
-  role: 'barber';
+  role: 'professional';
   isFake: true;
   city: string;
   country: 'ES';
@@ -280,7 +280,7 @@ export function generateFakeBarbers(count: number): FakeBarber[] {
       firstName,
       lastName,
       photoUrl: photo,
-      role: 'barber',
+      role: 'professional',
       isFake: true,
       city: cityEntry.city,
       country: 'ES',

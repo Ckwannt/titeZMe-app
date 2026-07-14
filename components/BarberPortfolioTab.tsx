@@ -6,7 +6,7 @@ import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { db, storage } from '@/lib/firebase';
 import { ref, deleteObject } from 'firebase/storage';
 import Image from 'next/image';
-import { barberUpdateSchema } from "@/lib/schemas";
+import { professionalProfileUpdateSchema } from "@/lib/schemas";
 import { toast } from '@/lib/toast';
 import { useLang } from '@/lib/i18n/LangContext';
 
@@ -30,7 +30,7 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
     try {
       const fileRef = ref(storage, photoUrl);
       await deleteObject(fileRef).catch(console.error);
-      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ photos: newPhotos }));
+      await updateDoc(doc(db, 'professionalProfiles', user.uid), professionalProfileUpdateSchema.parse({ photos: newPhotos }));
       mutateProfile();
     } catch (e) {
       console.error(e);
@@ -43,7 +43,7 @@ export function BarberPortfolioTab({ profile, mutateProfile }: BarberPortfolioTa
     try {
       const fileRef = ref(storage, videoUrl);
       await deleteObject(fileRef).catch(console.error);
-      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ videos: newVideos }));
+      await updateDoc(doc(db, 'professionalProfiles', user.uid), professionalProfileUpdateSchema.parse({ videos: newVideos }));
       mutateProfile();
     } catch (e) {
       console.error(e);

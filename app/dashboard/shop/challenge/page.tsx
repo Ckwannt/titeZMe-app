@@ -12,7 +12,7 @@ export default function Page() {
 
   const { data: shopSnap, isLoading: shopLoading } = useQuery({
     queryKey: ['shop', user?.uid],
-    queryFn: () => getDoc(doc(db, 'barbershops', user!.uid)),
+    queryFn: () => getDoc(doc(db, 'businesses', user!.uid)),
     enabled: !!user?.uid,
     staleTime: 5 * 60 * 1000,
   });

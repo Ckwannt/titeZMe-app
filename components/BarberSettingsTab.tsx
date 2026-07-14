@@ -22,7 +22,7 @@ const Select = dynamic(
 import Image from "next/image";
 import Link from "next/link";
 import imageCompression from "browser-image-compression";
-import { userUpdateSchema, barberUpdateSchema } from "@/lib/schemas";
+import { userUpdateSchema, professionalProfileUpdateSchema } from "@/lib/schemas";
 import { sanitizeText, sanitizeHandle } from '@/lib/sanitize';
 import { invalidateBarber } from '@/lib/invalidate';
 import { getLanguageOptions } from '@/lib/languages';
@@ -251,7 +251,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
           try {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
             await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({ photoUrl: downloadURL }));
-            await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ profilePhotoUrl: downloadURL }));
+            await updateDoc(doc(db, 'professionalProfiles', user.uid), professionalProfileUpdateSchema.parse({ profilePhotoUrl: downloadURL }));
             setLocalPhotoUrl(downloadURL);
             mutateProfile();
             invalidateBarber(user.uid);
@@ -290,7 +290,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
               country: countryStr,
               languages: langArr
             }));
-      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({
+      await updateDoc(doc(db, 'professionalProfiles', user.uid), professionalProfileUpdateSchema.parse({
               phone: phoneStr,
               city: cityStr,
               country: countryStr,
@@ -313,7 +313,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({
+      await updateDoc(doc(db, 'professionalProfiles', user.uid), professionalProfileUpdateSchema.parse({
               instagram: sanitizeHandle(socialData.instagram),
               facebook: sanitizeHandle(socialData.facebook),
               tiktok: sanitizeHandle(socialData.tiktok),
@@ -333,7 +333,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     if (!user) return;
     setSavingProfile(true);
     try {
-      await updateDoc(doc(db, 'barberProfiles', user.uid), { specialties, vibes: vibe, clientele });
+      await updateDoc(doc(db, 'professionalProfiles', user.uid), { specialties, vibes: vibe, clientele });
       mutateProfile();
       invalidateBarber(user.uid);
       setSuccessMsg(t('success.barberProfileUpdated'));
@@ -349,7 +349,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({
+      await updateDoc(doc(db, 'professionalProfiles', user.uid), professionalProfileUpdateSchema.parse({
         experienceStartYear: Number(experienceStartYear),
         dateOfBirth,
         experienceLocked: true,
@@ -370,7 +370,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
     setSavingSetup(true);
     setErrorMsg(''); setSuccessMsg('');
     try {
-      await updateDoc(doc(db, 'barberProfiles', user.uid), { hasEquipment, lookingForChair });
+      await updateDoc(doc(db, 'professionalProfiles', user.uid), { hasEquipment, lookingForChair });
       mutateProfile();
       invalidateBarber(user.uid);
       setSuccessMsg(t('success.barberProfileUpdated'));
@@ -396,7 +396,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
   const handleToggleShowPhone = async (val: boolean) => {
     if (!user) return;
     setShowPhone(val);
-    try { await updateDoc(doc(db, 'barberProfiles', user.uid), { showPhone: val }); } catch (e) { console.error(e); }
+    try { await updateDoc(doc(db, 'professionalProfiles', user.uid), { showPhone: val }); } catch (e) { console.error(e); }
   };
 
   // Section G — password reset
@@ -881,7 +881,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
 
                     // 3. Remove barber from shop's barbers array
                     batch.update(
-                      doc(db, 'barbershops', currentShopId),
+                      doc(db, 'businesses', currentShopId),
                       { barbers: arrayRemove(user!.uid) }
                     );
 
@@ -896,7 +896,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
                   }
 
                   // 5. Update barber profile
-                  batch.update(doc(db, 'barberProfiles', user!.uid), {
+                  batch.update(doc(db, 'professionalProfiles', user!.uid), {
                     shopId: null,
                     isSolo: true,
                   });
@@ -961,7 +961,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
                     setSavingIsSolo(true);
                     try {
                       const { updateDoc, doc } = await import('firebase/firestore');
-                      await updateDoc(doc(db, 'barberProfiles', user.uid), { isSolo: false });
+                      await updateDoc(doc(db, 'professionalProfiles', user.uid), { isSolo: false });
                       mutateProfile();
                     } catch (err) {
                       console.error(err);
@@ -979,7 +979,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
                   setSavingIsSolo(true);
                   try {
                     const { updateDoc, doc } = await import('firebase/firestore');
-                    await updateDoc(doc(db, 'barberProfiles', user.uid), { isSolo: true });
+                    await updateDoc(doc(db, 'professionalProfiles', user.uid), { isSolo: true });
                     mutateProfile();
                   } catch (err) {
                     console.error(err);
@@ -1192,7 +1192,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
         <h2 className="text-lg font-black text-brand-red mb-2">{t('headings.deleteAccount')}</h2>
         <p className="text-[#888] text-sm mb-6">{t('settings.deleteBarberAccountDesc')}</p>
         <div className="w-max">
-          <DeleteAccountButton role="barber" />
+          <DeleteAccountButton role="professional" />
         </div>
       </section>
     </div>

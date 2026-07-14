@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { barberUpdateSchema } from "@/lib/schemas";
+import { professionalProfileUpdateSchema } from "@/lib/schemas";
 import { useLang } from "@/lib/i18n/LangContext";
 
 function getCurrencySymbol(currency?: string): string {
@@ -47,7 +47,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.uid],
     queryFn: async () => {
-      const snap = await getDoc(doc(db, 'barberProfiles', user!.uid));
+      const snap = await getDoc(doc(db, 'professionalProfiles', user!.uid));
       return snap.exists() ? snap.data() : null;
     },
     enabled: !!user
@@ -87,16 +87,16 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
     { label: t('barberLayout.profileItemAvailability'), path: '/dashboard/barber/availability', done: hasAvailability, pct: 15 },
     { label: t('barberLayout.profileItemLanguages'), path: '/dashboard/barber/settings', done: (profile?.languages?.length || 0) > 0, pct: 10 },
     { label: t('barberLayout.profileItemSpecialties'), path: '/dashboard/barber/settings', done: (profile?.specialties?.length || 0) > 0, pct: 10 },
-    { label: t('barberLayout.profileItemVibe'), path: '/dashboard/barber/settings', done: (profile?.vibes?.length || 0) > 0, pct: 10 },
-    { label: t('barberLayout.profileItemBarberCode'), path: '/dashboard/barber/settings', done: !!(profile?.barberCode), pct: 5 },
+    { label: t('barberLayout.profileItemVibe'), path: '/dashboard/barber/settings', done: (profile?.vibe?.length || 0) > 0, pct: 10 },
+    { label: t('barberLayout.profileItemBarberCode'), path: '/dashboard/barber/settings', done: !!(profile?.professionalCode), pct: 5 },
   ];
   const profilePct = profileItems.filter(item => item.done).reduce((s, item) => s + item.pct, 0);
   const missingItems = profileItems.filter(item => !item.done).slice(0, 3);
   const completedOver24hAgo = !!profile?.profileCompletedAt && Date.now() - (profile.profileCompletedAt as number) > 86400000;
 
   const handleCopyCode = () => {
-    if (profile?.barberCode) {
-      navigator.clipboard.writeText(profile.barberCode);
+    if (profile?.professionalCode) {
+      navigator.clipboard.writeText(profile.professionalCode);
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
     }
@@ -105,7 +105,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
   const saveLiveStatus = async (isLive: boolean) => {
     if (!user) return;
     try {
-      await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ isLive }));
+      await updateDoc(doc(db, 'professionalProfiles', user.uid), professionalProfileUpdateSchema.parse({ isLive }));
       queryClient.invalidateQueries({ queryKey: ['profile', user?.uid] });
       setToastMessage(isLive ? t('barberLayout.nowAcceptingBookings') : t('barberLayout.bookingsPaused'));
       setTimeout(() => setToastMessage(''), 3000);
@@ -153,11 +153,11 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
           </div>
         </div>
 
-        {profile?.barberCode && (
+        {profile?.professionalCode && (
           <div className="mb-7 px-2">
             <div className="text-[10px] font-extrabold text-brand-text-secondary uppercase tracking-wider mb-1">{t('forms.yourBarberCode')}</div>
             <div className="flex items-center justify-between bg-[#141414] border border-[#2a2a2a] rounded-lg p-2">
-              <span className="font-mono text-xs font-black text-brand-yellow">{profile.barberCode}</span>
+              <span className="font-mono text-xs font-black text-brand-yellow">{profile.professionalCode}</span>
               <button
                 onClick={handleCopyCode}
                 className="text-xs text-[#888] hover:text-white transition-colors p-1"
@@ -208,7 +208,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
             >
               <span>🏪</span> {t('barberLayout.manageMyShop')}
             </Link>
-          ) : !profile?.shopId ? (
+          ) : !profile?.businessId ? (
             <Link
               href="/dashboard/barber/create-shop"
               className="flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors text-white bg-[#1a1a1a] hover:bg-[#2a2a2a]"
@@ -217,7 +217,7 @@ export default function BarberDashboardLayout({ children }: { children: React.Re
             </Link>
           ) : (
             <Link
-              href={`/shop/${profile?.shopId}`}
+              href={`/shop/${profile?.businessId}`}
               className="flex items-center text-left gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-colors text-white bg-[#1a1a1a] hover:bg-[#2a2a2a]"
             >
               <span>🏪</span> {t('barberLayout.myShop')}

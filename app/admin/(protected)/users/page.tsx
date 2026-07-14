@@ -23,7 +23,7 @@ export default function AdminUsersPage() {
         snap.docs.forEach((d) => {
           const role = d.data().role;
           if (role === 'client') clients++;
-          else if (role === 'barber') barbers++;
+          else if (role === 'professional') barbers++;
         });
         setStats({ total: snap.size, clients, barbers });
         setLoading(false);

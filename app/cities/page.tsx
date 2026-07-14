@@ -16,7 +16,7 @@ export default function CitiesPage() {
       try {
         const snap = await getDocs(
           query(
-            collection(db, 'barberProfiles'),
+            collection(db, 'professionalProfiles'),
             where('isLive', '==', true)
           )
         );

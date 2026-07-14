@@ -224,7 +224,7 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
   const router = useRouter();
   const { t } = useLang();
 
-  const dualEligible = appUser?.role === 'barber' && appUser?.ownsShop === true;
+  const dualEligible = appUser?.role === 'professional' && appUser?.ownsShop === true;
 
   const [submitMode, setSubmitMode] = useState<Mode>(mode);
   const [settings, setSettings] = useState<ChallengeSettingsData | null>(null);
@@ -422,14 +422,14 @@ export default function ChallengeSubmissionTab({ mode }: Props) {
       let shopId: string | undefined;
 
       if (submitMode === 'barber') {
-        const profileSnap = await getDoc(doc(db, 'barberProfiles', user.uid));
+        const profileSnap = await getDoc(doc(db, 'professionalProfiles', user.uid));
         const profile = profileSnap.exists() ? (profileSnap.data() as any) : null;
         submitterName = `${appUser.firstName || ''} ${appUser.lastName || ''}`.trim();
         submitterCity = profile?.city || appUser.city || '';
         submitterAvatarUrl = profile?.profilePhotoUrl || appUser.photoUrl || '';
         barberCode = profile?.barberCode || appUser.barberCode;
       } else {
-        const shopSnap = await getDoc(doc(db, 'barbershops', user.uid));
+        const shopSnap = await getDoc(doc(db, 'businesses', user.uid));
         const shop = shopSnap.exists() ? (shopSnap.data() as any) : null;
         submitterName = shop?.name
           || `${appUser?.firstName || ''} ${appUser?.lastName || ''}`.trim()

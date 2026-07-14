@@ -14,10 +14,10 @@ setGlobalOptions({ region: 'europe-west2' });
 
 const DATABASE_ID =
   'titezme-prod';
-const ALGOLIA_INDEX = 'barbers';
-const ALGOLIA_SHOP_INDEX = 'barbershops';
-const ALGOLIA_CHALLENGE_BARBERS_INDEX = 'challenge_barbers';
-const ALGOLIA_CHALLENGE_SHOPS_INDEX = 'challenge_shops';
+const ALGOLIA_INDEX = 'professionals';
+const ALGOLIA_SHOP_INDEX = 'businesses';
+const ALGOLIA_CHALLENGE_BARBERS_INDEX = 'challenge_professionals';
+const ALGOLIA_CHALLENGE_SHOPS_INDEX = 'challenge_businesses';
 
 admin.initializeApp();
 const db = getFirestore(admin.app(), DATABASE_ID);
@@ -29,17 +29,17 @@ function getAlgoliaClient() {
   );
 }
 
-async function syncBarberToAlgolia(
-  barberId: string
+async function syncProfessionalToAlgolia(
+  professionalId: string
 ): Promise<void> {
   const profileRef = db
-    .collection('barberProfiles')
-    .doc(barberId);
+    .collection('professionalProfiles')
+    .doc(professionalId);
   const profileSnap = await profileRef.get();
   if (!profileSnap.exists) return;
   const profile = profileSnap.data() || {};
 
-  // Skip if barber is not live or not approved
+  // Skip if professional is not live or not approved
   if (
     !profile.isLive ||
     profile.approvalStatus !== 'approved'
@@ -49,7 +49,7 @@ async function syncBarberToAlgolia(
     try {
       await getAlgoliaClient().deleteObject({
         indexName: ALGOLIA_INDEX,
-        objectID: barberId,
+        objectID: professionalId,
       });
     } catch {
       // Not in index — that's fine
@@ -60,7 +60,7 @@ async function syncBarberToAlgolia(
   // Get name and photo from users doc
   const userSnap = await db
     .collection('users')
-    .doc(barberId)
+    .doc(professionalId)
     .get();
   const user = userSnap.exists
     ? userSnap.data() || {}
@@ -69,7 +69,7 @@ async function syncBarberToAlgolia(
   // Get min price from services
   const servicesSnap = await db
     .collection('services')
-    .where('providerId', '==', barberId)
+    .where('providerId', '==', professionalId)
     .get();
   let minPrice = profile.titeZMeCut?.price || 0;
   servicesSnap.forEach((doc) => {
@@ -85,7 +85,7 @@ async function syncBarberToAlgolia(
   // Get schedule for open hours
   const schedSnap = await db
     .collection('schedules')
-    .doc(`${barberId}_shard_0`)
+    .doc(`${professionalId}_shard_0`)
     .get();
   const sched = schedSnap.exists
     ? schedSnap.data() || {}
@@ -98,32 +98,32 @@ async function syncBarberToAlgolia(
     sched.weeklyHours?.closesAt || '18:00';
 
   const record = {
-    objectID:       barberId,
-    firstName:      user.firstName || '',
-    lastName:       user.lastName  || '',
+    objectID:        professionalId,
+    firstName:       user.firstName || '',
+    lastName:        user.lastName  || '',
     fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
     photoUrl:
       profile.profilePhotoUrl ||
       user.photoUrl            ||
       '',
-    city:           profile.city     || '',
-    country:        profile.country  || '',
-    languages:      profile.languages  || [],
-    specialties:    profile.specialties || [],
-    vibes:          profile.vibes       || [],
-    rating:         profile.rating      || 0,
+    city:            profile.city     || '',
+    country:         profile.country  || '',
+    languages:       profile.languages   || [],
+    specialties:     profile.specialties || [],
+    vibes:           profile.vibe        || [],
+    rating:          profile.rating      || 0,
     reviewCount:
       profile.reviewCount ||
       profile.totalReviews ||
       0,
     minPrice,
-    currency:       profile.currency || '€',
-    barberCode:     profile.barberCode || '',
-    isLive:         profile.isLive,
-    approvalStatus: profile.approvalStatus,
-    isSolo:         profile.isSolo !== false,
-    shopId:         profile.shopId || null,
-    titeZMeCut:     profile.titeZMeCut || null,
+    currency:         profile.currency || '€',
+    professionalCode: profile.professionalCode || '',
+    isLive:           profile.isLive,
+    approvalStatus:   profile.approvalStatus,
+    isSolo:           profile.businessId == null,
+    businessId:       profile.businessId || null,
+    titeZMeCut:       profile.titeZMeCut || null,
     weeklyDays,
     opensAt,
     closesAt,
@@ -137,20 +137,20 @@ async function syncBarberToAlgolia(
   });
 }
 
-export const onBarberUpdated = onDocumentWritten(
+export const onProfessionalUpdated = onDocumentWritten(
   {
-    document: 'barberProfiles/{barberId}',
+    document: 'professionalProfiles/{professionalId}',
     database: DATABASE_ID,
   },
   async (event) => {
-    const barberId = event.params.barberId;
+    const professionalId = event.params.professionalId;
 
     // Handle deletion
     if (!event.data?.after.exists) {
       try {
         await getAlgoliaClient().deleteObject({
           indexName: ALGOLIA_INDEX,
-          objectID: barberId,
+          objectID: professionalId,
         });
       } catch {
         // Not in index — that's fine
@@ -158,9 +158,9 @@ export const onBarberUpdated = onDocumentWritten(
       return;
     }
 
-    await syncBarberToAlgolia(barberId);
+    await syncProfessionalToAlgolia(professionalId);
 
-    // ── Self-healing: when a real barber gets approved, hide one fake ─────
+    // ── Self-healing: when a real professional gets approved, hide one fake ─
     const before = event.data?.before.data();
     const after = event.data?.after.data();
     if (
@@ -170,7 +170,7 @@ export const onBarberUpdated = onDocumentWritten(
     ) {
       const city = after?.city || '';
       let fakeQuery = await db
-        .collection('barberProfiles')
+        .collection('professionalProfiles')
         .where('isFake', '==', true)
         .where('isVisible', '==', true)
         .where('city', '==', city)
@@ -179,7 +179,7 @@ export const onBarberUpdated = onDocumentWritten(
 
       if (fakeQuery.empty) {
         fakeQuery = await db
-          .collection('barberProfiles')
+          .collection('professionalProfiles')
           .where('isFake', '==', true)
           .where('isVisible', '==', true)
           .limit(1)
@@ -210,14 +210,14 @@ export const onBookingComplete = onDocumentUpdated(
 
       const batch = db.batch();
 
-      // Increment totalCuts for barber
-      const profileRef = db.collection('barberProfiles').doc(barberId);
+      // Increment totalCuts for professional
+      const profileRef = db.collection('professionalProfiles').doc(barberId);
       batch.set(profileRef, { totalCuts: FieldValue.increment(1) }, { merge: true });
 
-      // If shopId exists, increment totalBookings for shop
+      // If shopId (business id) exists on the booking, increment totalBookings on the business
       if (after.shopId) {
-        const shopRef = db.collection('barbershops').doc(after.shopId);
-        batch.set(shopRef, { totalBookings: FieldValue.increment(1) }, { merge: true });
+        const businessRef = db.collection('businesses').doc(after.shopId);
+        batch.set(businessRef, { totalBookings: FieldValue.increment(1) }, { merge: true });
       }
 
       // Update Aggregation document
@@ -270,7 +270,7 @@ export const onReviewCreated = onDocumentCreated(
     const barberId = review.providerId;
     if (!barberId) return;
 
-    const profileRef = db.collection('barberProfiles').doc(barberId);
+    const profileRef = db.collection('professionalProfiles').doc(barberId);
 
     await db.runTransaction(async (transaction) => {
       const profileSnap = await transaction.get(profileRef);
@@ -331,19 +331,19 @@ export const onUserDeleted = functionsV1
 
     // Cleanup basic profile data
     const userRef = db.collection('users').doc(uid);
-    const profileRef = db.collection('barberProfiles').doc(uid);
-    const shopRef = db.collection('barbershops').doc(uid);
+    const profileRef = db.collection('professionalProfiles').doc(uid);
+    const businessRef = db.collection('businesses').doc(uid);
     const scheduleRef = db.collection('schedules').doc(`${uid}_shard_0`);
 
     batch.delete(userRef);
     batch.delete(profileRef);
-    batch.delete(shopRef);
+    batch.delete(businessRef);
     batch.delete(scheduleRef);
 
     await batch.commit();
 
-    // Cancel pending/confirmed bookings for this barber.
-    // For in-app deletions, deleteBarberAccount() already
+    // Cancel pending/confirmed bookings for this professional.
+    // For in-app deletions, the account-deletion flow already
     // cancelled these before reaching here — the query
     // returns empty and this block is a no-op.
     // For admin Console or SDK deletions that bypass the
@@ -368,7 +368,7 @@ export const onUserDeleted = functionsV1
         const notifRef = db.collection('notifications').doc();
         cleanupBatch.set(notifRef, {
           userId: bookingDoc.data().clientId,
-          message: 'A barber you booked has deleted their account. Your booking was cancelled.',
+          message: 'A professional you booked has deleted their account. Your booking was cancelled.',
           read: false,
           createdAt: now,
           linkTo: '/dashboard/client',
@@ -384,7 +384,7 @@ export const onUserDeleted = functionsV1
     console.log(`Successfully cleaned up data for deleted user ${uid}`);
 });
 
-export const onBarberServiceUpdated = onDocumentWritten(
+export const onProfessionalServiceUpdated = onDocumentWritten(
   {
     document: 'services/{serviceId}',
     database: DATABASE_ID,
@@ -393,32 +393,32 @@ export const onBarberServiceUpdated = onDocumentWritten(
     const data = event.data?.after.exists
       ? event.data.after.data()
       : event.data?.before.data();
-    // Skip sync for fake-barber service writes
+    // Skip sync for fake-professional service writes
     // (fakes are static, syncing once via profile write is enough)
     if (data?.isFake === true) {
       return;
     }
     if (data && data.providerId) {
-      await syncBarberToAlgolia(data.providerId);
+      await syncProfessionalToAlgolia(data.providerId);
     }
   }
 );
 
-export const onBarberScheduleUpdated = onDocumentWritten(
+export const onProfessionalScheduleUpdated = onDocumentWritten(
   {
     document: 'schedules/{scheduleId}',
     database: DATABASE_ID,
   },
   async (event) => {
-    const barberId = event.params.scheduleId
+    const professionalId = event.params.scheduleId
       .replace('_shard_0', '');
-    // For fake-barber schedule writes, skip re-sync
+    // For fake-professional schedule writes, skip re-sync
     // (schedule itself doesn't carry isFake — check parent profile)
-    const profileSnap = await db.collection('barberProfiles').doc(barberId).get();
+    const profileSnap = await db.collection('professionalProfiles').doc(professionalId).get();
     if (profileSnap.exists && profileSnap.data()?.isFake === true) {
       return;
     }
-    await syncBarberToAlgolia(barberId);
+    await syncProfessionalToAlgolia(professionalId);
   }
 );
 
@@ -555,12 +555,20 @@ export const onChallengeVoteCreated = onDocumentCreated(
 );
 
 // ─────────────────────────────────────────────────────────────────────
-// Barbershops — Algolia sync
+// Businesses — Algolia sync
 // ─────────────────────────────────────────────────────────────────────
-async function syncShopToAlgolia(shopId: string, data: FirebaseFirestore.DocumentData): Promise<void> {
+async function syncBusinessToAlgolia(businessId: string, data: FirebaseFirestore.DocumentData): Promise<void> {
   const address = data.address || {};
+
+  // barbersCount is now derived by querying professionalProfiles
+  // (the `barbers[]` array on the business doc was dropped in Phase 2).
+  const teamSnap = await db
+    .collection('professionalProfiles')
+    .where('businessId', '==', businessId)
+    .get();
+
   const record = {
-    objectID: shopId,
+    objectID: businessId,
     ownerId: data.ownerId || '',
     name: data.name || '',
     city: address.city || '',
@@ -569,7 +577,7 @@ async function syncShopToAlgolia(shopId: string, data: FirebaseFirestore.Documen
     logoUrl: data.logoUrl || '',
     coverPhotoUrl: data.coverPhotoUrl || '',
     description: data.description || '',
-    barbersCount: Array.isArray(data.barbers) ? data.barbers.length : 0,
+    barbersCount: teamSnap.size,
     status: data.status || '',
   };
 
@@ -579,13 +587,13 @@ async function syncShopToAlgolia(shopId: string, data: FirebaseFirestore.Documen
   });
 }
 
-export const onBarbershopWritten = onDocumentWritten(
+export const onBusinessWritten = onDocumentWritten(
   {
-    document: 'barbershops/{shopId}',
+    document: 'businesses/{businessId}',
     database: DATABASE_ID,
   },
   async (event) => {
-    const shopId = event.params.shopId;
+    const businessId = event.params.businessId;
     const after = event.data?.after.exists ? event.data.after.data() : null;
 
     // Deletion → remove from index
@@ -593,7 +601,7 @@ export const onBarbershopWritten = onDocumentWritten(
       try {
         await getAlgoliaClient().deleteObject({
           indexName: ALGOLIA_SHOP_INDEX,
-          objectID: shopId,
+          objectID: businessId,
         });
       } catch {
         // Not in index — that's fine
@@ -602,7 +610,7 @@ export const onBarbershopWritten = onDocumentWritten(
     }
 
     if (after.status === 'active') {
-      await syncShopToAlgolia(shopId, after);
+      await syncBusinessToAlgolia(businessId, after);
       return;
     }
 
@@ -610,7 +618,7 @@ export const onBarbershopWritten = onDocumentWritten(
       try {
         await getAlgoliaClient().deleteObject({
           indexName: ALGOLIA_SHOP_INDEX,
-          objectID: shopId,
+          objectID: businessId,
         });
       } catch {
         // Not in index — that's fine

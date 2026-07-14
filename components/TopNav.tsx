@@ -294,7 +294,7 @@ export function TopNav() {
               <NotificationBell />
               <div>
                 {appUser?.role === 'client' && <Link href="/dashboard/client" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">{t('nav.dashboard')}</Link>}
-                {appUser?.role === 'barber' && <Link href="/dashboard/barber" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">{t('nav.dashboard')}</Link>}
+                {appUser?.role === 'professional' && <Link href="/dashboard/barber" className="text-sm font-bold text-[#888580] hover:text-[#F0EDE8] transition-colors mr-4">{t('nav.dashboard')}</Link>}
               </div>
               <button
                 onClick={handleLogout}
@@ -489,7 +489,7 @@ export function TopNav() {
             ) : (
               <>
                 <a
-                  href={appUser?.role === 'barber' ? '/dashboard/barber' : '/dashboard/client'}
+                  href={appUser?.role === 'professional' ? '/dashboard/barber' : '/dashboard/client'}
                   onClick={() => setMenuOpen(false)}
                   style={{
                     background: '#F5C518',

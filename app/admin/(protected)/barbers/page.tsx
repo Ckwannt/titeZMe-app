@@ -127,7 +127,7 @@ export default function AdminBarbersPage() {
     async function fetchBarbers() {
       setLoading(true);
       try {
-        const snap = await getDocs(collection(db, 'barberProfiles'));
+        const snap = await getDocs(collection(db, 'professionalProfiles'));
         const enriched: EnrichedBarber[] = await Promise.all(
           snap.docs.map(async (profileDoc) => {
             const data = profileDoc.data() as Record<string, unknown>;

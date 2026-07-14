@@ -23,8 +23,8 @@ export async function POST(req: Request) {
     // Run all Firestore queries in parallel before batching
     const [shopBarbersSnap, invitesByShopSnap, invitesByBarberSnap, shopServicesSnap, barberServicesSnap] =
       await Promise.all([
-        // Barbers who were in this user's shop → clear their shopId
-        db.collection('barberProfiles').where('shopId', '==', uid).get(),
+        // Professionals who were in this user's business → clear their businessId
+        db.collection('professionalProfiles').where('businessId', '==', uid).get(),
         // Invites this shop owner sent
         db.collection('invites').where('shopId', '==', uid).get(),
         // Invites this barber received
@@ -37,12 +37,12 @@ export async function POST(req: Request) {
 
     const batch = db.batch();
 
-    // 1. Nullify shopId on all barbers who belonged to this shop
-    shopBarbersSnap.forEach(d => batch.update(d.ref, { shopId: null }));
+    // 1. Nullify businessId on all professionals who belonged to this business
+    shopBarbersSnap.forEach(d => batch.update(d.ref, { businessId: null }));
 
-    // 2. Delete the barbershop document if this user owned a shop
+    // 2. Delete the business document if this user owned one
     if (ownsShop) {
-      batch.delete(db.collection('barbershops').doc(uid));
+      batch.delete(db.collection('businesses').doc(uid));
     }
 
     // 3. Delete all invites sent by this shop
@@ -57,8 +57,8 @@ export async function POST(req: Request) {
     // 6. Delete barber services
     barberServicesSnap.forEach(d => batch.delete(d.ref));
 
-    // 7. Delete barberProfiles/{uid}
-    batch.delete(db.collection('barberProfiles').doc(uid));
+    // 7. Delete professionalProfiles/{uid}
+    batch.delete(db.collection('professionalProfiles').doc(uid));
 
     // 8. Delete users/{uid}
     batch.delete(db.collection('users').doc(uid));

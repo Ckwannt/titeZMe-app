@@ -3,7 +3,7 @@ import { z } from "zod";
 export const userSchema = z.object({
   uid: z.string().optional(),
   email: z.string().email().optional(),
-  role: z.enum(['client', 'barber']).optional(),
+  role: z.enum(['client', 'professional', 'admin']).optional(),
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
   isOnboarded: z.boolean().optional(),
@@ -24,59 +24,102 @@ export type User = z.infer<typeof userSchema>;
 export const userUpdateSchema = userSchema.partial();
 export type UserUpdate = z.infer<typeof userUpdateSchema>;
 
-export const barberSchema = z.object({
-  userId: z.string().optional(),
-  isLive: z.boolean().optional(),
-  isSolo: z.boolean().optional(),
-  shopId: z.string().nullable().optional(),
-  bio: z.string().optional(),
-  city: z.string().optional(),
-  country: z.string().optional(),
-  languages: z.array(z.string()).optional(),
-  rating: z.number().optional(),
-  reviewCount: z.number().optional(),
-  totalCuts: z.number().optional(),
-  photos: z.array(z.string()).optional(),
-  videos: z.array(z.string()).optional(),
+export const professionalProfileSchema = z.object({
+  userId: z.string(),
+  profession: z.string(),
+  verificationLevel: z.enum(['self_declared', 'licensed']),
+  isBookable: z.boolean(),
+  bio: z.string(),
+  city: z.string(),
+  country: z.string(),
+  languages: z.array(z.string()),
+  isLive: z.boolean(),
+  approvalStatus: z.enum(['pending', 'approved', 'rejected']),
+  rating: z.number(),
+  reviewCount: z.number(),
+  totalCuts: z.number(),
+  photos: z.array(z.string()),
+  videos: z.array(z.string()),
   profilePhotoUrl: z.string().optional(),
   instagram: z.string().optional(),
   facebook: z.string().optional(),
   tiktok: z.string().optional(),
+  professionalCode: z.string(),
+  businessId: z.string().nullable(),
+  canManage: z.boolean(),
+  ownsBusiness: z.boolean(),
+  currency: z.string(),
+  vibe: z.array(z.string()),
+  specialties: z.array(z.string()),
+  clientele: z.array(z.string()),
+  showPhone: z.boolean().optional(),
+  titeZMeCut: z.object({
+    durationMinutes: z.number(),
+    price: z.number(),
+    currency: z.string().optional(),
+  }).optional(),
   experienceStartYear: z.number().int().min(1950).max(new Date().getFullYear()).optional(),
   dateOfBirth: z.string().optional(),
   experienceLocked: z.boolean().optional(),
   experienceVerified: z.boolean().optional(),
-  createdAt: z.number().optional(),
-}).passthrough();
+  hasEquipment: z.boolean().optional(),
+  lookingForChair: z.boolean().optional(),
+  isFake: z.boolean().optional(),
+  isVisible: z.boolean().optional(),
+  isDeleted: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
+  featuredUntil: z.number().optional(),
+  profileCompletedAt: z.number().optional(),
+  createdAt: z.number(),
+});
 
-export type Barber = z.infer<typeof barberSchema>;
+export type Professional = z.infer<typeof professionalProfileSchema>;
 
-export const barberUpdateSchema = barberSchema.partial();
-export type BarberUpdate = z.infer<typeof barberUpdateSchema>;
+export const professionalProfileUpdateSchema = professionalProfileSchema.partial();
+export type ProfessionalUpdate = z.infer<typeof professionalProfileUpdateSchema>;
 
-export const barbershopSchema = z.object({
-  ownerId: z.string().optional(),
-  name: z.string().optional(),
+export const businessSchema = z.object({
+  ownerId: z.string(),
+  type: z.string(),
+  name: z.string(),
+  contactPhone: z.string().optional(),
+  contactPhoneCountryCode: z.string().optional(),
+  contactEmail: z.string().email().optional(),
+  description: z.string().optional(),
   address: z.object({
     street: z.string().optional(),
+    buildingNumber: z.string().optional(),
+    floor: z.string().optional(),
+    floorSuite: z.string().optional(),
     city: z.string().optional(),
     country: z.string().optional(),
-  }).optional(),
-  phone: z.string().optional(),
-  phoneCountryCode: z.string().optional(),
+    postalCode: z.string().optional(),
+  }),
   coverPhotoUrl: z.string().optional(),
-  photos: z.array(z.string()).optional(),
-  videos: z.array(z.string()).optional(),
-  amenities: z.array(z.string()).optional(),
+  photos: z.array(z.string()),
+  videos: z.array(z.string()),
+  status: z.enum(['active', 'inactive', 'suspended']),
+  instagram: z.string().optional(),
+  tiktok: z.string().optional(),
+  facebook: z.string().optional(),
+  googleMapsUrl: z.string().optional(),
+  amenities: z.array(z.string()),
   chairsCount: z.number().int().min(1).max(99).optional(),
   establishedYear: z.number().int().min(1900).max(new Date().getFullYear()).optional(),
-  createdAt: z.number().optional(),
-}).passthrough();
+  logoUrl: z.string().optional(),
+  availableChairsForRent: z.number().int().nonnegative().optional(),
+  rentsChairs: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
+  featuredUntil: z.number().optional(),
+  totalBookings: z.number().int().nonnegative().optional(),
+  currency: z.string(),
+  createdAt: z.number(),
+});
 
-export type Barbershop = z.infer<typeof barbershopSchema>;
+export type Business = z.infer<typeof businessSchema>;
 
-export const barbershopUpdateSchema = barbershopSchema.partial();
-export type BarbershopUpdate = z.infer<typeof barbershopUpdateSchema>;
+export const businessUpdateSchema = businessSchema.partial();
+export type BusinessUpdate = z.infer<typeof businessUpdateSchema>;
 
 export const bookingSchema = z.object({
   barberId: z.string().optional(),

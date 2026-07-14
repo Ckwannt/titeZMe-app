@@ -56,7 +56,7 @@ export default function AdminFeaturedPage() {
 
   async function loadFeaturedBarbers(): Promise<FeaturedBarber[]> {
     const snap = await getDocs(
-      query(collection(db, 'barberProfiles'), where('isFeatured', '==', true))
+      query(collection(db, 'professionalProfiles'), where('isFeatured', '==', true))
     );
     const barbers: FeaturedBarber[] = await Promise.all(
       snap.docs.map(async (d) => {
@@ -89,7 +89,7 @@ export default function AdminFeaturedPage() {
 
   async function loadFeaturedShops(): Promise<FeaturedShop[]> {
     const snap = await getDocs(
-      query(collection(db, 'barbershops'), where('isFeatured', '==', true))
+      query(collection(db, 'businesses'), where('isFeatured', '==', true))
     );
     return snap.docs.map((d) => {
       const data = d.data() as Record<string, unknown>;
@@ -112,10 +112,10 @@ export default function AdminFeaturedPage() {
 
     const batch = writeBatch(db);
     expiredBarbers.forEach((b) => {
-      batch.update(doc(db, 'barberProfiles', b.id), { isFeatured: false, featuredUntil: null });
+      batch.update(doc(db, 'professionalProfiles', b.id), { isFeatured: false, featuredUntil: null });
     });
     expiredShops.forEach((s) => {
-      batch.update(doc(db, 'barbershops', s.id), { isFeatured: false, featuredUntil: null });
+      batch.update(doc(db, 'businesses', s.id), { isFeatured: false, featuredUntil: null });
     });
     await batch.commit();
 
@@ -137,9 +137,9 @@ export default function AdminFeaturedPage() {
       try {
         const [fb, allBarbersSnap, fs, allShopsSnap] = await Promise.all([
           loadFeaturedBarbers(),
-          getDocs(query(collection(db, 'barberProfiles'), where('isLive', '==', true))),
+          getDocs(query(collection(db, 'professionalProfiles'), where('isLive', '==', true))),
           loadFeaturedShops(),
-          getDocs(query(collection(db, 'barbershops'), where('status', '==', 'active'))),
+          getDocs(query(collection(db, 'businesses'), where('status', '==', 'active'))),
         ]);
 
         setFeaturedBarbers(fb);
@@ -227,7 +227,7 @@ export default function AdminFeaturedPage() {
     setSavingId(barber.id);
     try {
       const until = Date.now() + 30 * 24 * 60 * 60 * 1000;
-      await updateDoc(doc(db, 'barberProfiles', barber.id), {
+      await updateDoc(doc(db, 'professionalProfiles', barber.id), {
         isFeatured: true,
         featuredUntil: until,
       });
@@ -247,7 +247,7 @@ export default function AdminFeaturedPage() {
   async function removeFeaturedBarber(barberId: string) {
     setSavingId(barberId);
     try {
-      await updateDoc(doc(db, 'barberProfiles', barberId), {
+      await updateDoc(doc(db, 'professionalProfiles', barberId), {
         isFeatured: false,
         featuredUntil: null,
       });
@@ -265,7 +265,7 @@ export default function AdminFeaturedPage() {
     setSavingId(shop.id);
     try {
       const until = Date.now() + 30 * 24 * 60 * 60 * 1000;
-      await updateDoc(doc(db, 'barbershops', shop.id), {
+      await updateDoc(doc(db, 'businesses', shop.id), {
         isFeatured: true,
         featuredUntil: until,
       });
@@ -285,7 +285,7 @@ export default function AdminFeaturedPage() {
   async function removeFeaturedShop(shopId: string) {
     setSavingId(shopId);
     try {
-      await updateDoc(doc(db, 'barbershops', shopId), {
+      await updateDoc(doc(db, 'businesses', shopId), {
         isFeatured: false,
         featuredUntil: null,
       });

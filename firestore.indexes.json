@@ -143,7 +143,36 @@
         { "fieldPath": "price",         "order": "ASCENDING" },
         { "fieldPath": "__name__",      "order": "ASCENDING" }
       ]
-    }
+    },
+    { "collectionGroup": "professionalProfiles", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "isLive", "order": "ASCENDING" },
+      { "fieldPath": "approvalStatus", "order": "ASCENDING" },
+      { "fieldPath": "rating", "order": "DESCENDING" }
+    ]},
+    { "collectionGroup": "professionalProfiles", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "isLive", "order": "ASCENDING" },
+      { "fieldPath": "isSolo", "order": "ASCENDING" },
+      { "fieldPath": "rating", "order": "DESCENDING" }
+    ]},
+    { "collectionGroup": "professionalProfiles", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "approvalStatus", "order": "ASCENDING" },
+      { "fieldPath": "createdAt", "order": "DESCENDING" }
+    ]},
+    { "collectionGroup": "professionalProfiles", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "isDeleted", "order": "ASCENDING" },
+      { "fieldPath": "isLive", "order": "ASCENDING" },
+      { "fieldPath": "isSolo", "order": "ASCENDING" }
+    ]},
+    { "collectionGroup": "professionalProfiles", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "isDeleted", "order": "ASCENDING" },
+      { "fieldPath": "isLive", "order": "ASCENDING" },
+      { "fieldPath": "createdAt", "order": "DESCENDING" }
+    ]},
+    { "collectionGroup": "professionalProfiles", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "isLive", "order": "ASCENDING" },
+      { "fieldPath": "isSolo", "order": "ASCENDING" },
+      { "fieldPath": "approvalStatus", "order": "ASCENDING" }
+    ]}
   ],
   "fieldOverrides": []
 }

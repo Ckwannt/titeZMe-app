@@ -81,7 +81,7 @@ export default function ClientBookings() {
           if (b.bookingContext === 'shop' && b.shopId) {
             if (!shopCacheRef.current[b.shopId]) {
               try {
-                const shopSnap = await getDoc(doc(db, 'barbershops', b.shopId));
+                const shopSnap = await getDoc(doc(db, 'businesses', b.shopId));
                 if (shopSnap.exists()) {
                   shopCacheRef.current[b.shopId] = shopSnap.data() as ShopCache;
                 }

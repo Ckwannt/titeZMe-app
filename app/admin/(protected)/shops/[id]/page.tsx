@@ -111,7 +111,7 @@ export default function AdminShopDetailPage({ params }: ShopDetailPageProps) {
   async function loadData() {
     setLoading(true);
     try {
-      const shopSnap = await getDoc(doc(db, 'barbershops', id));
+      const shopSnap = await getDoc(doc(db, 'businesses', id));
       if (!shopSnap.exists()) {
         setLoading(false);
         return;
@@ -131,7 +131,7 @@ export default function AdminShopDetailPage({ params }: ShopDetailPageProps) {
             limit(5)
           )
         ),
-        getDocs(query(collection(db, 'barberProfiles'), where('shopId', '==', id))),
+        getDocs(query(collection(db, 'professionalProfiles'), where('businessId', '==', id))),
       ]);
 
       if (ownerSnap && ownerSnap.exists()) {
@@ -174,7 +174,7 @@ export default function AdminShopDetailPage({ params }: ShopDetailPageProps) {
     if (!user || !shop) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'barbershops', id), {
+      await updateDoc(doc(db, 'businesses', id), {
         status: 'active',
         approvedAt: Date.now(),
         rejectionReason: null,
@@ -208,7 +208,7 @@ export default function AdminShopDetailPage({ params }: ShopDetailPageProps) {
     if (!user || !rejectionReason.trim() || !shop) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'barbershops', id), {
+      await updateDoc(doc(db, 'businesses', id), {
         status: 'rejected',
         rejectionReason: rejectionReason.trim(),
         rejectedAt: Date.now(),
@@ -243,7 +243,7 @@ export default function AdminShopDetailPage({ params }: ShopDetailPageProps) {
     if (!user || !shop) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'barbershops', id), {
+      await updateDoc(doc(db, 'businesses', id), {
         status: 'suspended',
         suspendedAt: Date.now(),
       });
@@ -269,7 +269,7 @@ export default function AdminShopDetailPage({ params }: ShopDetailPageProps) {
   async function handleReactivate() {
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'barbershops', id), { status: 'active' });
+      await updateDoc(doc(db, 'businesses', id), { status: 'active' });
       toast.success('Shop reactivated');
       await loadData();
     } catch (err) {

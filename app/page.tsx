@@ -13,7 +13,7 @@ import LandingPageClient from './LandingPageClient';
 async function fetchFeaturedBarbers() {
   try {
     const snap = await getDocs(query(
-      collection(db, 'barberProfiles'),
+      collection(db, 'professionalProfiles'),
       where('isLive', '==', true),
       where('isSolo', '==', true),
       where('approvalStatus', '==', 'approved'),
@@ -127,8 +127,8 @@ function normalizeCity(raw: string): string {
 async function fetchCitiesData(): Promise<{ city: string; barbers: number; shops: number }[]> {
   try {
     const [shopsSnap, barbersSnap] = await Promise.all([
-      getDocs(query(collection(db, 'barbershops'), where('status', '==', 'active'), limit(100))),
-      getDocs(query(collection(db, 'barberProfiles'), where('isLive', '==', true), limit(200))),
+      getDocs(query(collection(db, 'businesses'), where('status', '==', 'active'), limit(100))),
+      getDocs(query(collection(db, 'professionalProfiles'), where('isLive', '==', true), limit(200))),
     ]);
     const bc: Record<string, number> = {};
     const sc: Record<string, number> = {};

@@ -74,7 +74,7 @@ export default function ShopBookingsPage() {
   // Fetch shop currency
   useEffect(() => {
     if (!user) return;
-    getDoc(doc(db, 'barbershops', user.uid)).then(s => {
+    getDoc(doc(db, 'businesses', user.uid)).then(s => {
       if (s.exists()) setShopCurrency(s.data().currency || 'EUR');
     });
   }, [user]);

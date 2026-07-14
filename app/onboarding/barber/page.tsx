@@ -9,7 +9,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import Select from "react-select";
 // country-state-city loaded dynamically to avoid bundling ~2 MB on initial load
-import { userUpdateSchema, scheduleSchema, barberSchema } from "@/lib/schemas";
+import { userUpdateSchema, scheduleSchema, professionalProfileSchema } from "@/lib/schemas";
 import { sanitizeText } from '@/lib/sanitize';
 import { getLanguageOptions } from '@/lib/languages';
 import { useLang } from '@/lib/i18n/LangContext';
@@ -142,12 +142,12 @@ export default function BarberOnboarding() {
     setIsSubmitting(true);
     setErrorMsg('');
     try {
-      const profileRef = doc(db, 'barberProfiles', user.uid);
+      const profileRef = doc(db, 'professionalProfiles', user.uid);
       const existingProfileSnap = await getDoc(profileRef);
       const existingProfile = existingProfileSnap.exists()
         ? existingProfileSnap.data() : null;
       const existingBarberCode =
-        existingProfile?.barberCode ?? null;
+        existingProfile?.professionalCode ?? null;
       const existingApprovalStatus =
         existingProfile?.approvalStatus === 'approved'
           ? 'approved'
@@ -159,7 +159,7 @@ export default function BarberOnboarding() {
       const userRef = doc(db, 'users', user.uid);
       try {
         await setDoc(userRef, userUpdateSchema.parse({
-                  role: 'barber'
+                  role: 'professional'
                 }), { merge: true });
       } catch (e: any) { 
         throw new Error("Step 0: Data Integrity Setup failed - " + e.message); 
@@ -172,7 +172,7 @@ export default function BarberOnboarding() {
         while (!isUnique) {
           const randomString = Math.random().toString(36).substring(2, 8).toUpperCase();
           uniqueCode = `TZB-${randomString}`;
-          const q = query(collection(db, 'barberProfiles'), where('barberCode', '==', uniqueCode));
+          const q = query(collection(db, 'professionalProfiles'), where('professionalCode', '==', uniqueCode));
           const qs = await getDocs(q);
           if (qs.empty) {
             isUnique = true;
@@ -182,23 +182,22 @@ export default function BarberOnboarding() {
 
       // 1. BarberProfile
       // [DEBUG] Build payload separately so we can log it BEFORE the write attempt.
-      const profileData = barberSchema.parse({
+      const profileData = professionalProfileSchema.parse({
         userId: user.uid,
         bio: sanitizeText(bio || "Professional barber.", 2000),
         city: selectedCityOption ? selectedCityOption.value : "Unknown",
         country: selectedCountry ? selectedCountry.value : "Unknown",
         phone: phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null,
         languages: selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : ["English"],
-        vibes: vibe,
+        vibe: vibe,
         specialties: specialty,
         clientele: clientele,
-        barberCode: uniqueCode,
+        professionalCode: uniqueCode,
         titeZMeCut: {
           durationMinutes: parseInt(titzData.duration || "45"),
           price: parseFloat(titzData.price || "20")
         },
-        isSolo: true,
-        shopId: null,
+        businessId: null,
         rating: 0,
         totalCuts: 0,
         reviewCount: 0,
@@ -260,6 +259,8 @@ export default function BarberOnboarding() {
             await setDoc(newServiceRef, {
               providerId: user.uid,
               providerType: 'barber',
+              // NOTE: providerType literal stays as 'barber' for now — Service.providerType
+              // enum is out of scope for the Professional/Business migration (Phase 2 Q5).
               name: sanitizeText(svc.name, 100),
               duration: parseInt((svc as any).duration || (svc as any).dur || "30"),
               price: parseFloat(svc.price || "0"),

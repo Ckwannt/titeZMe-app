@@ -31,7 +31,7 @@ export default function ContactPage() {
       ...f,
       name: f.name || fullName,
       email: f.email || email,
-      role: f.role === 'client' && appUser?.role === 'barber' ? 'barber' : f.role,
+      role: f.role === 'client' && appUser?.role === 'professional' ? 'professional' : f.role,
     }));
     setPrefilled(true);
   }, [user, appUser, prefilled]);

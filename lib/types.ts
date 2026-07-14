@@ -1,39 +1,58 @@
 // ─── Firestore document interfaces for titeZMe ────────────────────────────────
 
-export interface BarberProfile {
+export interface ProfessionalProfile {
   userId: string;
+  profession: string;
+  verificationLevel: 'self_declared' | 'licensed';
+  isBookable: boolean;
   bio: string;
   city: string;
-  isLive: boolean;
-  isSolo: boolean;
-  ownsShop: boolean;
-  shopId: string | null;
+  country: string;
   languages: string[];
-  vibe: string[];
-  specialties: string[];
-  clientele: string[];
-  photos: string[];
+  isLive: boolean;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
   rating: number;
   reviewCount: number;
   totalCuts: number;
-  barberCode: string;
-  currency: string;
+  photos: string[];
+  videos: string[];
   profilePhotoUrl?: string;
   instagram?: string;
-  tiktok?: string;
   facebook?: string;
+  tiktok?: string;
+  professionalCode: string;
+  businessId: string | null;
+  canManage: boolean;
+  ownsBusiness: boolean;
+  currency: string;
+  vibe: string[];
+  specialties: string[];
+  clientele: string[];
   showPhone?: boolean;
   titeZMeCut?: {
     durationMinutes: number;
     price: number;
     currency?: string;
   };
+  experienceStartYear?: number;
+  dateOfBirth?: string;
+  experienceLocked?: boolean;
+  experienceVerified?: boolean;
+  hasEquipment?: boolean;
+  lookingForChair?: boolean;
+  isFake?: boolean;
+  isVisible?: boolean;
+  isDeleted?: boolean;
+  isFeatured?: boolean;
+  featuredUntil?: number;
+  profileCompletedAt?: number;
+  createdAt: number;
 }
 
 export interface UserDocument {
   uid: string;
   email: string;
-  role: 'client' | 'barber' | 'admin';
+  role: 'client' | 'professional' | 'admin';
   firstName: string;
   lastName: string;
   city: string;
@@ -54,37 +73,42 @@ export interface UserDocument {
   challengeVotedForShop?: string;
 }
 
-export interface Barbershop {
+export interface Business {
   ownerId: string;
+  type: string;
   name: string;
   contactPhone?: string;
+  contactPhoneCountryCode?: string;
   contactEmail?: string;
   description?: string;
   address: {
-    street: string;
+    street?: string;
     buildingNumber?: string;
     floor?: string;
     floorSuite?: string;
-    city: string;
-    country: string;
+    city?: string;
+    country?: string;
     postalCode?: string;
   };
   coverPhotoUrl?: string;
   photos: string[];
-  videos?: string[];
+  videos: string[];
   status: 'active' | 'inactive' | 'suspended';
   instagram?: string;
   tiktok?: string;
   facebook?: string;
   googleMapsUrl?: string;
+  amenities: string[];
+  chairsCount?: number;
+  establishedYear?: number;
+  logoUrl?: string;
+  availableChairsForRent?: number;
+  rentsChairs?: boolean;
+  isFeatured?: boolean;
+  featuredUntil?: number;
+  totalBookings?: number;
   currency: string;
-  barbers?: string[];
   createdAt: number;
-  titeZMeCut?: {
-    durationMinutes: number;
-    price: number;
-    currency?: string;
-  };
 }
 
 export interface Service {

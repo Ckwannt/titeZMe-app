@@ -26,7 +26,7 @@ interface BarberDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-interface BarberProfile {
+interface ProfessionalProfile {
   approvalStatus?: string;
   isLive?: boolean;
   city?: string;
@@ -166,7 +166,7 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
   const router = useRouter();
   const { user } = useAuth();
 
-  const [profile, setProfile] = useState<BarberProfile | null>(null);
+  const [profile, setProfile] = useState<ProfessionalProfile | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -179,7 +179,7 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
     setLoading(true);
     try {
       const [profileSnap, userSnap, bookingsSnap, reviewsSnap] = await Promise.all([
-        getDoc(doc(db, 'barberProfiles', id)),
+        getDoc(doc(db, 'professionalProfiles', id)),
         getDoc(doc(db, 'users', id)),
         getDocs(
           query(
@@ -200,7 +200,7 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
       ]);
 
       if (profileSnap.exists()) {
-        setProfile(profileSnap.data() as BarberProfile);
+        setProfile(profileSnap.data() as ProfessionalProfile);
       }
       if (userSnap.exists()) {
         setUserData(userSnap.data() as UserData);
@@ -233,7 +233,7 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
     if (!user) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'barberProfiles', id), {
+      await updateDoc(doc(db, 'professionalProfiles', id), {
         approvalStatus: 'approved',
         isLive: true,
         approvedAt: Date.now(),
@@ -267,7 +267,7 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
     if (!user || !rejectionReason.trim()) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'barberProfiles', id), {
+      await updateDoc(doc(db, 'professionalProfiles', id), {
         approvalStatus: 'rejected',
         isLive: false,
         rejectionReason: rejectionReason.trim(),
@@ -301,7 +301,7 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
     if (!user) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'barberProfiles', id), {
+      await updateDoc(doc(db, 'professionalProfiles', id), {
         approvalStatus: 'suspended',
         isLive: false,
         suspendedAt: Date.now(),
@@ -372,7 +372,7 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
     if (!user) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'barberProfiles', id), {
+      await updateDoc(doc(db, 'professionalProfiles', id), {
         approvalStatus: 'approved',
         isLive: true,
       });
@@ -405,7 +405,7 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
     if (!user) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'barberProfiles', id), {
+      await updateDoc(doc(db, 'professionalProfiles', id), {
         experienceVerified: true,
       });
       await addDoc(collection(db, 'adminLogs'), {
@@ -428,7 +428,7 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
     if (!user) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'barberProfiles', id), {
+      await updateDoc(doc(db, 'professionalProfiles', id), {
         experienceVerified: false,
         experienceLocked: false,
       });
@@ -469,7 +469,7 @@ export default function AdminBarberDetailPage({ params }: BarberDetailPageProps)
         newCount > 0
           ? Number((ratings.reduce((a, b) => a + b, 0) / newCount).toFixed(1))
           : 0;
-      await updateDoc(doc(db, 'barberProfiles', barberId), {
+      await updateDoc(doc(db, 'professionalProfiles', barberId), {
         rating: newRating,
         reviewCount: newCount,
       });

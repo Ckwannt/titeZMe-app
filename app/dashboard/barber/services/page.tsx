@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { collection, doc, query, where, updateDoc, deleteDoc, setDoc, getDoc, getDocs, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { barberUpdateSchema } from "@/lib/schemas";
+import { professionalProfileUpdateSchema } from "@/lib/schemas";
 import { safeFirestore } from '@/lib/firebase-helpers';
 import { sanitizeText } from '@/lib/sanitize';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -49,7 +49,7 @@ export default function ServicesPage() {
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.uid],
-    queryFn: async () => { const s = await getDoc(doc(db, 'barberProfiles', user!.uid)); const d = s.exists() ? s.data() : null; if (d?.titeZMeCut) setTitzData({ duration: d.titeZMeCut.durationMinutes?.toString() || '45', price: d.titeZMeCut.price?.toString() || '20' }); return d; },
+    queryFn: async () => { const s = await getDoc(doc(db, 'professionalProfiles', user!.uid)); const d = s.exists() ? s.data() : null; if (d?.titeZMeCut) setTitzData({ duration: d.titeZMeCut.durationMinutes?.toString() || '45', price: d.titeZMeCut.price?.toString() || '20' }); return d; },
     enabled: !!user,
   });
 
@@ -68,7 +68,7 @@ export default function ServicesPage() {
 
   const saveTitzCut = async () => {
     if (!user) return; setIsSavingTitz(true);
-    try { await updateDoc(doc(db, 'barberProfiles', user.uid), barberUpdateSchema.parse({ titeZMeCut: { durationMinutes: parseInt(titzData.duration) || 45, price: parseFloat(titzData.price) || 20, currency: serviceCurrency } })); mutateProfile(); } catch (e) { console.error(e); }
+    try { await updateDoc(doc(db, 'professionalProfiles', user.uid), professionalProfileUpdateSchema.parse({ titeZMeCut: { durationMinutes: parseInt(titzData.duration) || 45, price: parseFloat(titzData.price) || 20, currency: serviceCurrency } })); mutateProfile(); } catch (e) { console.error(e); }
     setIsSavingTitz(false);
   };
 
@@ -123,7 +123,7 @@ export default function ServicesPage() {
 
   const updateServiceCurrency = async (newCurrency: string) => {
     if (!user) return; setServiceCurrency(newCurrency);
-    try { await updateDoc(doc(db, 'barberProfiles', user.uid), { currency: newCurrency }); mutateProfile(); toast(t('barberDash.currencyUpdated').replace('{currency}', newCurrency)); } catch (e) { console.error(e); }
+    try { await updateDoc(doc(db, 'professionalProfiles', user.uid), { currency: newCurrency }); mutateProfile(); toast(t('barberDash.currencyUpdated').replace('{currency}', newCurrency)); } catch (e) { console.error(e); }
   };
 
   const svcSym = getCurrencySymbol(serviceCurrency);

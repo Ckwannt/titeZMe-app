@@ -51,7 +51,7 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
 
   const { data: shop } = useQuery({
     queryKey: ['shop', user?.uid],
-    queryFn: async () => { const s = await getDoc(doc(db, 'barbershops', user!.uid)); return s.exists() ? s.data() : null; },
+    queryFn: async () => { const s = await getDoc(doc(db, 'businesses', user!.uid)); return s.exists() ? s.data() : null; },
     enabled: !!user,
   });
 
@@ -137,7 +137,7 @@ export default function ShopDashboardLayout({ children }: { children: React.Reac
           ))}
         </div>
 
-        {appUser?.role === 'barber' && (
+        {appUser?.role === 'professional' && (
           <div className="hidden md:block mt-6 pt-6 border-t border-brand-border">
             <Link href="/dashboard/barber" className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-[13px] font-bold text-[#888] hover:bg-[#1a1a1a] hover:text-white transition-colors">
               <span>✂️</span> {t('shopDash.myBarberDashboard')}

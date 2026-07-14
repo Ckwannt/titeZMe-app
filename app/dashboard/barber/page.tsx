@@ -7,7 +7,7 @@ import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { bookingUpdateSchema, notificationSchema, barberUpdateSchema } from "@/lib/schemas";
+import { bookingUpdateSchema, notificationSchema, professionalProfileUpdateSchema } from "@/lib/schemas";
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from 'recharts';
 import { getLocalDateString, getTimezoneFromLocation } from '@/lib/schedule-utils';
 import { cleanupBookingLock } from '@/lib/booking-lock-utils';
@@ -78,7 +78,7 @@ export default function BarberDashboardPage() {
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.uid],
     queryFn: async () => {
-      const snap = await getDoc(doc(db, 'barberProfiles', user!.uid));
+      const snap = await getDoc(doc(db, 'professionalProfiles', user!.uid));
       return snap.exists() ? snap.data() : null;
     },
     enabled: !!user
@@ -340,8 +340,8 @@ export default function BarberDashboardPage() {
     { label: '⏰ Set your availability', tab: 'Availability', done: hasAvailability, pct: 15 },
     { label: '🗣 Add your languages', tab: 'Settings', done: (profile?.languages?.length || 0) > 0, pct: 10 },
     { label: '✂️ Add specialties', tab: 'Settings', done: (profile?.specialties?.length || 0) > 0, pct: 10 },
-    { label: '😎 Set your vibe', tab: 'Settings', done: (profile?.vibes?.length || 0) > 0, pct: 10 },
-    { label: '🔑 Barber code generated', tab: 'Settings', done: !!(profile?.barberCode), pct: 5 },
+    { label: '😎 Set your vibe', tab: 'Settings', done: (profile?.vibe?.length || 0) > 0, pct: 10 },
+    { label: '🔑 Barber code generated', tab: 'Settings', done: !!(profile?.professionalCode), pct: 5 },
   ];
   const profilePct = profileItems.filter(item => item.done).reduce((s, item) => s + item.pct, 0);
   const missingItems = profileItems.filter(item => !item.done).slice(0, 3);
@@ -349,7 +349,7 @@ export default function BarberDashboardPage() {
 
   useEffect(() => {
     if (!user?.uid || !profile || profilePct < 100 || profile.profileCompletedAt) return;
-    updateDoc(doc(db, 'barberProfiles', user.uid), { profileCompletedAt: Date.now() }).catch(console.error);
+    updateDoc(doc(db, 'professionalProfiles', user.uid), { profileCompletedAt: Date.now() }).catch(console.error);
   }, [user?.uid, profile, profilePct]);
 
   const tabPaths: Record<string, string> = {
@@ -413,7 +413,7 @@ export default function BarberDashboardPage() {
     const handleResubmit = async () => {
       if (!user) return;
       try {
-        await updateDoc(doc(db, 'barberProfiles', user.uid), {
+        await updateDoc(doc(db, 'professionalProfiles', user.uid), {
           approvalStatus: 'pending',
           rejectionReason: null,
         });

@@ -69,7 +69,7 @@ export default function ShopEarningsPage() {
   // Fetch shop info
   useEffect(() => {
     if (!user) return;
-    getDoc(doc(db, 'barbershops', user.uid)).then(s => {
+    getDoc(doc(db, 'businesses', user.uid)).then(s => {
       if (s.exists()) setShopCurrency(s.data().currency || 'EUR');
     });
   }, [user]);
@@ -87,7 +87,7 @@ export default function ShopEarningsPage() {
   // Active barbers
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, 'barberProfiles'), where('shopId', '==', user.uid));
+    const q = query(collection(db, 'professionalProfiles'), where('businessId', '==', user.uid));
     const unsub = onSnapshot(q, async snap => {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
       setBarbers(list);

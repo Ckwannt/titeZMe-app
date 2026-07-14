@@ -13,7 +13,7 @@ import { userUpdateSchema } from "@/lib/schemas";
 export interface AppUser {
   uid: string;
   email: string;
-  role: 'client' | 'barber' | 'admin';
+  role: 'client' | 'professional' | 'admin';
   firstName: string;
   lastName: string;
   isOnboarded: boolean;
@@ -99,8 +99,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             let userData = docSnap.data() as AppUser;
             
             // Heal Check
-            if (userData.role === 'barber' && !userData.isOnboarded) {
-              const profileRef = doc(db, 'barberProfiles', firebaseUser.uid);
+            if (userData.role === 'professional' && !userData.isOnboarded) {
+              const profileRef = doc(db, 'professionalProfiles', firebaseUser.uid);
               const profileSnap = await getDoc(profileRef);
               if (profileSnap.exists()) {
                 try {
@@ -114,14 +114,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             // Heal: if users doc is missing phone/city/country,
-            // copy them from the barberProfile so isProfileComplete()
-            // stops returning false for a fully-onboarded barber.
+            // copy them from the professionalProfile so isProfileComplete()
+            // stops returning false for a fully-onboarded professional.
             if (
-              userData.role === 'barber' &&
+              userData.role === 'professional' &&
               userData.isOnboarded === true &&
               (!userData.phone?.trim() || !userData.city?.trim() || !userData.country?.trim())
             ) {
-              const profileRef = doc(db, 'barberProfiles', firebaseUser.uid);
+              const profileRef = doc(db, 'professionalProfiles', firebaseUser.uid);
               const profileSnap = await getDoc(profileRef);
               if (profileSnap.exists()) {
                 const p = profileSnap.data();
@@ -135,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     await updateDoc(docRef, updates);
                     Object.assign(userData, updates);
                   } catch (e) {
-                    console.error("Failed to heal phone/city/country from barberProfile", e);
+                    console.error("Failed to heal phone/city/country from professionalProfile", e);
                   }
                 }
               }

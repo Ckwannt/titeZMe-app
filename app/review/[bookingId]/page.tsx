@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc, addD
 import { db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/lib/toast';
-import { notificationSchema, barberUpdateSchema } from "@/lib/schemas";
+import { notificationSchema } from "@/lib/schemas";
 import { sanitizeText } from '@/lib/sanitize';
 import { useLang } from '@/lib/i18n/LangContext';
 

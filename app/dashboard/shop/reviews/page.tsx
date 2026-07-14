@@ -40,7 +40,7 @@ export default function ShopReviewsPage() {
   // Fetch barbers + their names
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, 'barberProfiles'), where('shopId', '==', user.uid));
+    const q = query(collection(db, 'professionalProfiles'), where('businessId', '==', user.uid));
     const unsub = onSnapshot(q, async (snap) => {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
       setBarbers(list);

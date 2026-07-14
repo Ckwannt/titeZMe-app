@@ -11,7 +11,7 @@ export default function PortfolioPage() {
   const queryClient = useQueryClient();
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.uid],
-    queryFn: async () => { const s = await getDoc(doc(db, 'barberProfiles', user!.uid)); return s.exists() ? s.data() : null; },
+    queryFn: async () => { const s = await getDoc(doc(db, 'professionalProfiles', user!.uid)); return s.exists() ? s.data() : null; },
     enabled: !!user,
   });
   const mutateProfile = () => queryClient.invalidateQueries({ queryKey: ['profile', user?.uid] });

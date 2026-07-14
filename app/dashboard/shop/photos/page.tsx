@@ -9,7 +9,7 @@ export default function ShopPhotosPage() {
   const queryClient = useQueryClient();
   const { data: shop } = useQuery({
     queryKey: ['shop', user?.uid],
-    queryFn: async () => { const s = await getDoc(doc(db, 'barbershops', user!.uid)); return s.exists() ? s.data() : null; },
+    queryFn: async () => { const s = await getDoc(doc(db, 'businesses', user!.uid)); return s.exists() ? s.data() : null; },
     enabled: !!user,
   });
   const mutateShop = () => queryClient.invalidateQueries({ queryKey: ['shop', user?.uid] });

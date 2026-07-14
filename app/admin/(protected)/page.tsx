@@ -20,7 +20,7 @@ async function migrateApprovalStatus() {
   const FLAG = 'tzm_migrated_approval_status_v1';
   if (typeof window !== 'undefined' && localStorage.getItem(FLAG)) return;
   try {
-    const snap = await getDocs(collection(db, 'barberProfiles'));
+    const snap = await getDocs(collection(db, 'professionalProfiles'));
     const batch = writeBatch(db);
     let count = 0;
     snap.docs.forEach((d) => {
@@ -28,7 +28,7 @@ async function migrateApprovalStatus() {
       if (!data.approvalStatus) {
         // Live barbers are already approved; offline ones need review
         const status = data.isLive ? 'approved' : 'pending';
-        batch.update(doc(db, 'barberProfiles', d.id), { approvalStatus: status });
+        batch.update(doc(db, 'professionalProfiles', d.id), { approvalStatus: status });
         count++;
       }
     });
@@ -134,23 +134,23 @@ export default function AdminOverviewPage() {
 
     // ── onSnapshot listeners for the 4 stats that change most often ──────────
     const unsubPending = onSnapshot(
-      query(collection(db, 'barberProfiles'), where('approvalStatus', '==', 'pending')),
+      query(collection(db, 'professionalProfiles'), where('approvalStatus', '==', 'pending')),
       (snap) => setStats((prev) => ({ ...prev, pendingBarbers: snap.size }))
     );
     const unsubLive = onSnapshot(
-      query(collection(db, 'barberProfiles'), where('isLive', '==', true)),
+      query(collection(db, 'professionalProfiles'), where('isLive', '==', true)),
       (snap) => setStats((prev) => ({ ...prev, liveBarbers: snap.size }))
     );
     const unsubShops = onSnapshot(
-      query(collection(db, 'barbershops'), where('status', '==', 'active')),
+      query(collection(db, 'businesses'), where('status', '==', 'active')),
       (snap) => setStats((prev) => ({ ...prev, activeShops: snap.size }))
     );
     const unsubSuspended = onSnapshot(
-      query(collection(db, 'barberProfiles'), where('approvalStatus', '==', 'suspended')),
+      query(collection(db, 'professionalProfiles'), where('approvalStatus', '==', 'suspended')),
       (snap) => setStats((prev) => ({ ...prev, suspendedAccounts: snap.size }))
     );
     const unsubExperience = onSnapshot(
-      query(collection(db, 'barberProfiles'), where('experienceLocked', '==', true)),
+      query(collection(db, 'professionalProfiles'), where('experienceLocked', '==', true)),
       (snap) => {
         const count = snap.docs.filter((d) => d.data().experienceVerified !== true).length;
         setStats((prev) => ({ ...prev, experiencePending: count }));

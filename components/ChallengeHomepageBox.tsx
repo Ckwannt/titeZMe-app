@@ -86,7 +86,7 @@ export default function ChallengeHomepageBox() {
     if (phase === 'voting') {
       return { label: t('landing.challenge.ctaVote'), href: '/challenge' };
     }
-    if (appUser.role === 'barber' && !appUser.ownsShop) {
+    if (appUser.role === 'professional' && !appUser.ownsShop) {
       return { label: t('landing.challenge.ctaSubmit'), href: '/dashboard/barber/challenge' };
     }
     if (appUser.ownsShop) {

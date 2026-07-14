@@ -67,7 +67,7 @@ export default function BookingsPage() {
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.uid],
-    queryFn: async () => { const s = await getDoc(doc(db, 'barberProfiles', user!.uid)); return s.exists() ? s.data() : null; },
+    queryFn: async () => { const s = await getDoc(doc(db, 'professionalProfiles', user!.uid)); return s.exists() ? s.data() : null; },
     enabled: !!user,
   });
 
@@ -181,7 +181,7 @@ export default function BookingsPage() {
         const avgResponseMinutes = Math.round(
           ((profile?.avgResponseMinutes ?? responseTimeMinutes) * 0.7) + (responseTimeMinutes * 0.3)
         );
-        updateDoc(doc(db, 'barberProfiles', user.uid), {
+        updateDoc(doc(db, 'professionalProfiles', user.uid), {
           lastResponseTimeMinutes: responseTimeMinutes,
           avgResponseMinutes,
         }).catch(e => console.error('Response time update failed:', e));

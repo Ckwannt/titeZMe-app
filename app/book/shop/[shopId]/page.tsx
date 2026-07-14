@@ -123,7 +123,7 @@ export default function ShopBookingPage() {
       return;
     }
     if (appUser && !appUser.isOnboarded) {
-      router.replace(appUser?.role === 'barber' ? '/onboarding/barber' : '/onboarding/client');
+      router.replace(appUser?.role === 'professional' ? '/onboarding/barber' : '/onboarding/client');
     }
   }, [user, appUser, router, shopId]);
 
@@ -137,15 +137,15 @@ export default function ShopBookingPage() {
       setLoading(true);
       try {
         // 1. Shop
-        const shopSnap = await getDoc(doc(db, 'barbershops', shopId));
+        const shopSnap = await getDoc(doc(db, 'businesses', shopId));
         const shopData: ShopData | null = shopSnap.exists()
           ? ({ id: shopSnap.id, ...(shopSnap.data() as any) })
           : null;
 
         // 2. Live team barbers
         const barberSnap = await getDocs(query(
-          collection(db, 'barberProfiles'),
-          where('shopId', '==', shopId),
+          collection(db, 'professionalProfiles'),
+          where('businessId', '==', shopId),
           where('isLive', '==', true),
         ));
         const rawBarbers = barberSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
@@ -363,7 +363,7 @@ export default function ShopBookingPage() {
 
       toast.success(t('booking.bookingSuccess'));
       await new Promise(r => setTimeout(r, 800));
-      router.push(appUser?.role === 'barber' ? '/dashboard/barber/bookings' : '/dashboard/client');
+      router.push(appUser?.role === 'professional' ? '/dashboard/barber/bookings' : '/dashboard/client');
     } catch (e: any) {
       console.error(e);
       if (e?.message === 'OVERLAP') {

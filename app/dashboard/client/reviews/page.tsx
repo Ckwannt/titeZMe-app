@@ -50,7 +50,7 @@ export default function ClientReviews() {
       const enriched = await Promise.all(raw.map(async (r) => {
         try {
           if (r.providerType === 'shop') {
-            const s = await getDoc(doc(db, 'barbershops', r.providerId));
+            const s = await getDoc(doc(db, 'businesses', r.providerId));
             if (!s.exists()) return { ...r, providerMissing: true };
             const data = s.data() as any;
             return {
@@ -59,7 +59,7 @@ export default function ClientReviews() {
               providerPhoto: data.logoUrl || data.coverPhotoUrl,
             };
           } else {
-            const p = await getDoc(doc(db, 'barberProfiles', r.providerId));
+            const p = await getDoc(doc(db, 'professionalProfiles', r.providerId));
             if (!p.exists()) return { ...r, providerMissing: true };
             const data = p.data() as any;
             const name = `${data.firstName || ''} ${data.lastName || ''}`.trim();
