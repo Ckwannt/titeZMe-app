@@ -500,7 +500,8 @@ export default function BarberOnboarding() {
                 } 
                 value={selectedCityOption}
                 onChange={setSelectedCityOption}
-                isDisabled={!selectedCountry}
+                isDisabled={!selectedCountry || !csc}
+                isLoading={!csc}
                 styles={selectStyles}
                 placeholder="City..."
               />
@@ -711,7 +712,7 @@ export default function BarberOnboarding() {
             <button
               disabled={isSubmitting}
               onClick={handleLaunch}
-              className="bg-brand-yellow text-[#0a0a0a] w-full flex justify-center text-base px-7 py-4 rounded-full font-black transition-all hover:-translate-y-px disabled:opacity-50"
+              className="bg-brand-yellow text-[#0a0a0a] flex justify-center text-base px-7 py-4 rounded-full font-black transition-all hover:-translate-y-px disabled:opacity-50"
             >
               {isSubmitting ? t('onboarding.launching') : t('onboarding.launchProfile')}
             </button>
