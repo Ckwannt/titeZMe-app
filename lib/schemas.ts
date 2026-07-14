@@ -27,7 +27,7 @@ export type UserUpdate = z.infer<typeof userUpdateSchema>;
 export const professionalProfileSchema = z.object({
   userId: z.string(),
   profession: z.string(),
-  verificationLevel: z.enum(['self_declared', 'licensed']),
+  professionTier: z.enum(['artist', 'specialist']),
   isBookable: z.boolean(),
   bio: z.string(),
   city: z.string(),

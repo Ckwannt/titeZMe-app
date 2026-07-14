@@ -220,7 +220,15 @@ export default function BarberOnboarding() {
         photos: [],
         isLive: false,
         isOnboarded: true,
-        approvalStatus: 'pending'
+        approvalStatus: 'pending',
+        profession: 'barber',
+        professionTier: 'artist',
+        isBookable: false,
+        videos: [],
+        canManage: true,
+        ownsBusiness: false,
+        currency: 'EUR',
+        createdAt: Date.now()
       });
       try {
         await setDoc(

@@ -3,7 +3,7 @@
 export interface ProfessionalProfile {
   userId: string;
   profession: string;
-  verificationLevel: 'self_declared' | 'licensed';
+  professionTier: 'artist' | 'specialist';
   isBookable: boolean;
   bio: string;
   city: string;

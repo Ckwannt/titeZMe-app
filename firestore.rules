@@ -55,10 +55,10 @@ service cloud.firestore {
     }
 
     function isValidProfessionalProfile(data) {
-      return data.keys().hasAll(['userId', 'profession', 'verificationLevel', 'isBookable', 'bio', 'city', 'country', 'isLive', 'approvalStatus'])
+      return data.keys().hasAll(['userId', 'profession', 'professionTier', 'isBookable', 'bio', 'city', 'country', 'isLive', 'approvalStatus'])
         && data.userId is string && data.userId.size() <= 128
         && data.profession is string && data.profession.size() > 0 && data.profession.size() <= 50
-        && data.verificationLevel in ['self_declared', 'licensed']
+        && data.professionTier in ['artist', 'specialist']
         && data.isBookable is bool
         && data.bio is string && data.bio.size() <= 2000
         && data.city is string && data.city.size() <= 100
