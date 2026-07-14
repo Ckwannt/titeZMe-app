@@ -17,3 +17,8 @@ service-account.json.json
 AGENTS.md
 user-onboarding-audit.pdf
 cors.json
+backup/
+scripts/backup-before-wipe.ts
+scripts/count-titezme-prod.ts
+scripts/inspect-challenge-submissions.ts
+scripts/wipe-barber-shop-data.ts
