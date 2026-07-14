@@ -124,6 +124,7 @@ export default function CreateShopPage() {
       const shopRef = doc(db, 'businesses', user.uid);
       await setDoc(shopRef, businessSchema.parse({
               ownerId: user.uid,
+              type: 'barbershop',
               name: sanitizeText(name, 100),
               contactPhone: `+${phoneCode.value} ${phoneNumberInput}`,
               address: {
@@ -137,7 +138,10 @@ export default function CreateShopPage() {
               googleMapsUrl: sanitizeUrl(googleMapsUrl),
               description: sanitizeText(description, 2000),
               photos: [],
-              status: 'pending',
+              videos: [],
+              amenities: [],
+              currency: 'EUR',
+              status: 'inactive',
               createdAt: Date.now()
             }));
 
