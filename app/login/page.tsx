@@ -55,7 +55,7 @@ export default function LoginPage() {
     if (!user.emailVerified && appUser?.role !== 'admin') {
       const dest = appUser?.isOnboarded
         ? (appUser?.role === 'professional' ? '/dashboard/barber' : '/dashboard/client')
-        : (appUser?.role === 'professional' ? '/onboarding/barber' : '/onboarding/client');
+        : (appUser?.role === 'professional' ? '/onboarding/professional' : '/onboarding/client');
       return <VerifyEmailGate onVerified={() => router.push(dest)} />;
     }
     router.replace('/');
@@ -94,7 +94,7 @@ export default function LoginPage() {
         setVerifyDest(
           userData.isOnboarded
             ? (userData.role === 'professional' ? '/dashboard/barber' : '/dashboard/client')
-            : (userData.role === 'professional' ? '/onboarding/barber' : '/onboarding/client')
+            : (userData.role === 'professional' ? '/onboarding/professional' : '/onboarding/client')
         );
         setShowVerifyGate(true);
         return;
@@ -109,7 +109,7 @@ export default function LoginPage() {
       if (userData.role === 'admin') {
         router.replace('/admin');
       } else if (userData.role === 'professional') {
-        router.replace(userData.isOnboarded ? '/dashboard/barber' : '/onboarding/barber');
+        router.replace(userData.isOnboarded ? '/dashboard/barber' : '/onboarding/professional');
       } else {
         router.replace(userData.isOnboarded ? '/dashboard/client' : '/onboarding/client');
       }
@@ -161,7 +161,7 @@ export default function LoginPage() {
           setVerifyDest(
             udata.isOnboarded
               ? (udata.role === 'professional' ? '/dashboard/barber' : '/dashboard/client')
-              : (udata.role === 'professional' ? '/onboarding/barber' : '/onboarding/client')
+              : (udata.role === 'professional' ? '/onboarding/professional' : '/onboarding/client')
           );
           setShowVerifyGate(true);
           setIsSubmitting(false);
@@ -182,7 +182,7 @@ export default function LoginPage() {
           if (udata.isOnboarded) {
             router.push('/dashboard/barber');
           } else {
-            router.push('/onboarding/barber');
+            router.push('/onboarding/professional');
           }
         }
         else router.push('/');

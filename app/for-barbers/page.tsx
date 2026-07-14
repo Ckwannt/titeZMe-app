@@ -42,7 +42,7 @@ export default function ForBarbersPage() {
         }}>
           {t('forBarbers.heroSubtitle')}
         </p>
-        <a href="/onboarding/barber" style={{
+        <a href="/onboarding/professional" style={{
           background: '#F5C518',
           color: '#0a0a0a',
           padding: '16px 36px',
@@ -242,7 +242,7 @@ export default function ForBarbersPage() {
         <p style={{ fontSize: '15px', color: '#555', marginBottom: '32px' }}>
           {t('forBarbers.ctaSubtitle')}
         </p>
-        <a href="/onboarding/barber" style={{
+        <a href="/onboarding/professional" style={{
           background: '#F5C518',
           color: '#0a0a0a',
           padding: '16px 36px',

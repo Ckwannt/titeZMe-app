@@ -238,7 +238,7 @@ export default function AboutPage() {
           }}>
             Find a barber →
           </a>
-          <a href="/onboarding/barber" style={{
+          <a href="/onboarding/professional" style={{
             background: 'transparent',
             color: '#fff',
             padding: '14px 28px',

@@ -69,7 +69,7 @@ export default function SignupPage() {
         email={email}
         onVerified={() => {
           if (role === 'professional') {
-            router.push('/onboarding/barber');
+            router.push('/onboarding/professional');
           } else {
             router.push('/onboarding/client');
           }
@@ -140,7 +140,7 @@ export default function SignupPage() {
 
       // Route straight to onboarding — never to dashboard
       if (role === 'professional') {
-        router.replace('/onboarding/barber');
+        router.replace('/onboarding/professional');
       } else {
         router.replace('/onboarding/client');
       }

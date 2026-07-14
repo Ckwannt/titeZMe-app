@@ -123,7 +123,7 @@ export default function ShopBookingPage() {
       return;
     }
     if (appUser && !appUser.isOnboarded) {
-      router.replace(appUser?.role === 'professional' ? '/onboarding/barber' : '/onboarding/client');
+      router.replace(appUser?.role === 'professional' ? '/onboarding/professional' : '/onboarding/client');
     }
   }, [user, appUser, router, shopId]);
 

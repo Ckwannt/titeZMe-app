@@ -303,7 +303,7 @@ export default function ShopProfilePage() {
     if (!appUser?.isOnboarded) {
       router.push(
         appUser?.role === 'professional'
-          ? '/onboarding/barber'
+          ? '/onboarding/professional'
           : '/onboarding/client'
       );
       return;

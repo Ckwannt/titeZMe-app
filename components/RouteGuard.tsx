@@ -111,7 +111,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
       if (appUser.role === 'client') {
         router.replace('/onboarding/client');
       } else if (appUser.role === 'professional') {
-        router.replace('/onboarding/barber');
+        router.replace('/onboarding/professional');
       }
       setAuthorized(false);
       setChecking(false);
@@ -128,7 +128,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
       !pathname.startsWith('/onboarding')
     ) {
       const redirectPath = appUser.role === 'professional'
-        ? '/onboarding/barber'
+        ? '/onboarding/professional'
         : '/onboarding/client';
       router.replace(redirectPath);
       setAuthorized(false);

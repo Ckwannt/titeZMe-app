@@ -333,7 +333,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
     if (appUser?.role === 'admin') { toast.error(t('profile.adminCannotBook')); return; }
     if (appUser?.uid === barberId) { toast.error(t('profile.cannotBookSelf')); return; }
     if (!appUser?.isOnboarded) {
-      router.push(appUser?.role === 'professional' ? '/onboarding/barber' : '/onboarding/client');
+      router.push(appUser?.role === 'professional' ? '/onboarding/professional' : '/onboarding/client');
       return;
     }
     if (!profile?.isLive) { toast.error(t('profile.notAcceptingBookings')); return; }
