@@ -8,13 +8,14 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { PasswordInput } from '@/components/PasswordInput';
+import { VerifyEmailGate } from '@/components/VerifyEmailGate';
 import { useLang } from '@/lib/i18n/LangContext';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect');
-  const { user, loading } = useAuth();
+  const { user, appUser, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorStatus, setErrorStatus] = useState('');
@@ -22,6 +23,8 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [barberCount, setBarberCount] = useState<number | null>(null);
   const [showSignUpLink, setShowSignUpLink] = useState(false);
+  const [showVerifyGate, setShowVerifyGate] = useState(false);
+  const [verifyDest, setVerifyDest] = useState('/');
   const { t } = useLang();
 
   useEffect(() => {
@@ -39,7 +42,21 @@ export default function LoginPage() {
   }, []);
 
   if (loading) return null;
+  // An unverified user who just authenticated is held at the verify gate —
+  // this must take precedence over the "already signed in → home" redirect
+  // below, otherwise the newly-set `user` would bounce them to '/'.
+  if (showVerifyGate) {
+    return <VerifyEmailGate onVerified={() => router.push(verifyDest)} />;
+  }
   if (user) {
+    // An already-signed-in but unverified non-admin (e.g. bounced here by
+    // RouteGuard) lands on the verify gate rather than being sent home.
+    if (!user.emailVerified && appUser?.role !== 'admin') {
+      const dest = appUser?.isOnboarded
+        ? (appUser?.role === 'professional' ? '/dashboard/barber' : '/dashboard/client')
+        : (appUser?.role === 'professional' ? '/onboarding/barber' : '/onboarding/client');
+      return <VerifyEmailGate onVerified={() => router.push(dest)} />;
+    }
     router.replace('/');
     return null;
   }
@@ -67,6 +84,19 @@ export default function LoginPage() {
 
       const userData = userDoc.data()!;
 
+      // Verification gate — block unverified users before any dashboard /
+      // onboarding redirect. Admins are exempt (they authenticate via
+      // /admin/login and are seeded as verified).
+      if (userData.role !== 'admin' && !user.emailVerified) {
+        setVerifyDest(
+          userData.isOnboarded
+            ? (userData.role === 'professional' ? '/dashboard/barber' : '/dashboard/client')
+            : (userData.role === 'professional' ? '/onboarding/barber' : '/onboarding/client')
+        );
+        setShowVerifyGate(true);
+        return;
+      }
+
       const safeRedirect = redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('/admin');
       if (safeRedirect) {
         router.replace(redirectTo);
@@ -75,7 +105,7 @@ export default function LoginPage() {
 
       if (userData.role === 'admin') {
         router.replace('/admin');
-      } else if (userData.role === 'barber') {
+      } else if (userData.role === 'professional') {
         router.replace(userData.isOnboarded ? '/dashboard/barber' : '/onboarding/barber');
       } else {
         router.replace(userData.isOnboarded ? '/dashboard/client' : '/onboarding/client');
@@ -114,6 +144,21 @@ export default function LoginPage() {
           setIsSubmitting(false);
           return;
         }
+
+        // Verification gate — unverified users are held at the verify screen
+        // (auto-detects verification, offers resend) before any dashboard /
+        // onboarding redirect is allowed to run.
+        if (!userCredential.user.emailVerified) {
+          setVerifyDest(
+            udata.isOnboarded
+              ? (udata.role === 'professional' ? '/dashboard/barber' : '/dashboard/client')
+              : (udata.role === 'professional' ? '/onboarding/barber' : '/onboarding/client')
+          );
+          setShowVerifyGate(true);
+          setIsSubmitting(false);
+          return;
+        }
+
         const safeRedirect = redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('/admin');
         if (safeRedirect) {
           router.replace(redirectTo);
@@ -124,7 +169,7 @@ export default function LoginPage() {
           if (udata.isOnboarded) router.push('/dashboard/client');
           else router.push('/onboarding/client');
         }
-        else if (udata.role === 'barber') {
+        else if (udata.role === 'professional') {
           if (udata.isOnboarded) {
             router.push('/dashboard/barber');
           } else {

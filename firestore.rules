@@ -45,7 +45,7 @@ service cloud.firestore {
       return data.keys().hasAll(['uid', 'email', 'role', 'firstName', 'lastName', 'createdAt', 'isOnboarded'])
         && data.uid is string && data.uid.size() <= 128
         && data.email is string && data.email.size() <= 256
-        && data.role in ['client', 'barber', 'admin']
+        && data.role in ['client', 'professional', 'admin']
         && data.firstName is string && data.firstName.size() <= 100
         && data.lastName is string && data.lastName.size() <= 100
         && data.createdAt is number
@@ -54,23 +54,30 @@ service cloud.firestore {
         && data.get('favoriteBarbers', []) is list;
     }
 
-    function isValidBarberProfile(data) {
-      return data.keys().hasAll(['userId', 'bio', 'city', 'isLive'])
+    function isValidProfessionalProfile(data) {
+      return data.keys().hasAll(['userId', 'profession', 'verificationLevel', 'isBookable', 'bio', 'city', 'country', 'isLive', 'approvalStatus'])
         && data.userId is string && data.userId.size() <= 128
+        && data.profession is string && data.profession.size() > 0 && data.profession.size() <= 50
+        && data.verificationLevel in ['self_declared', 'licensed']
+        && data.isBookable is bool
         && data.bio is string && data.bio.size() <= 2000
         && data.city is string && data.city.size() <= 100
+        && data.country is string && data.country.size() <= 100
+        && data.isLive is bool
+        && data.approvalStatus in ['pending', 'approved', 'rejected']
         && data.get('languages', []) is list
-        && data.get('vibes', []) is list
+        && data.get('vibe', []) is list
         && data.get('specialties', []) is list
+        && data.get('clientele', []) is list
         && data.get('photos', []) is list
-        && data.get('isSolo', true) is bool
-        && (data.get('shopId', null) == null || data.get('shopId', null) is string)
-        && (data.get('ownsShop', false) is bool)
+        && data.get('videos', []) is list
+        && (data.get('businessId', null) == null || data.get('businessId', null) is string)
+        && (data.get('canManage', false) is bool)
+        && (data.get('ownsBusiness', false) is bool)
         && (data.get('rating', 0) is number || data.get('rating', 0) is float)
         && data.get('totalCuts', 0) is number
         && data.get('reviewCount', 0) is number
-        && data.isLive is bool
-        && (data.get('barberCode', '') == '' || (data.get('barberCode', '') is string && data.get('barberCode', '').matches('^TZB-[A-Z0-9]{6}$')));
+        && (data.get('professionalCode', '') is string);
     }
 
     function isValidSchedule(data) {
@@ -79,30 +86,6 @@ service cloud.firestore {
         && data.timezone is string && data.timezone.size() <= 50
         && data.weeklyHours is map
         && data.blockedDates is list;
-    }
-
-    // NOTE: isValidBarbershop is defined but no longer called in the barbershops rules.
-    // Removed from create/update to fix Zod schema stripping address sub-fields
-    // (number, postalCode, floor) before Firestore sees the document.
-    function isValidBarbershop(data) {
-      return data.keys().hasAll(['ownerId', 'name', 'contactPhone', 'address', 'status', 'createdAt'])
-        && data.ownerId is string && data.ownerId.size() <= 128
-        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
-        && data.contactPhone is string && data.contactPhone.size() <= 50
-        && data.address is map
-        && data.address.keys().hasAll(['street', 'city', 'country', 'number', 'postalCode', 'floor'])
-        && data.address.street is string && data.address.street.size() <= 200
-        && data.address.city is string && data.address.city.size() <= 100
-        && data.address.country is string && data.address.country.size() <= 100
-        && data.address.number is string && data.address.number.size() <= 50
-        && data.address.postalCode is string && data.address.postalCode.size() <= 50
-        && data.address.floor is string && data.address.floor.size() <= 100
-        && data.get('googleMapsUrl', '') is string
-        && data.get('description', '') is string && data.get('description', '').size() <= 2000
-        && data.get('photos', []) is list
-        && data.get('barbers', []) is list
-        && data.status in ['active', 'inactive', 'suspended']
-        && data.createdAt is number;
     }
 
     function isValidService(data) {
@@ -208,7 +191,7 @@ service cloud.firestore {
             request.auth.uid == userId
             && isValidUser(incoming())
             && incoming().uid == request.auth.uid
-            && incoming().role in ['client', 'barber']
+            && incoming().role in ['client', 'professional']
           )
         );
 
@@ -220,7 +203,7 @@ service cloud.firestore {
             && incoming().uid == existing().uid
             && (
               incoming().role == existing().role
-              || incoming().role == 'barber'
+              || incoming().role == 'professional'
             )
           )
           ||
@@ -271,16 +254,22 @@ service cloud.firestore {
       );
     }
 
-    // Barber Profiles
-    match /barberProfiles/{profileId} {
+    // Professional Profiles
+    match /professionalProfiles/{profileId} {
       allow read: if true;
 
+      // NOTE: isOnboarded is intentionally NOT required here. The professional
+      // profile is created DURING onboarding (onboarding/barber handleLaunch
+      // Step 1), before the users doc's isOnboarded flag is flipped true
+      // (Step 4). Requiring it would deadlock onboarding. Verified email is
+      // still enforced (the user must verify before reaching onboarding).
       allow create: if isSignedIn()
         && (
           isAdmin()
           || (
             request.auth.uid == incoming().userId
-            && isValidBarberProfile(incoming())
+            && isValidProfessionalProfile(incoming())
+            && request.auth.token.email_verified == true
           )
         );
 
@@ -288,10 +277,10 @@ service cloud.firestore {
         isAdmin()
         || (
           isSignedIn()
-          && (existing().get('barberCode', '') == '' || incoming().get('barberCode', '') == existing().get('barberCode', ''))
+          && (existing().get('professionalCode', '') == '' || incoming().get('professionalCode', '') == existing().get('professionalCode', ''))
           && (
             request.auth.uid == existing().userId
-            && isValidBarberProfile(incoming())
+            && isValidProfessionalProfile(incoming())
             && incoming().userId == existing().userId
             && incoming().approvalStatus == existing().approvalStatus
             && incoming().isLive == existing().isLive
@@ -305,18 +294,18 @@ service cloud.firestore {
             )
           )
         )
-        // Shop owner setting a former team member solo during shop deletion.
-        // Limited to (shopId, isSolo) and only when the new shopId is null
-        // and the existing shopId is the shop the requester owns.
+        // Business owner clearing a professional's businessId when
+        // removing them from the team. Limited to businessId only,
+        // and only when new businessId is null and the existing
+        // businessId is a business the requester owns.
         || (
           isSignedIn()
-          && existing().shopId != null
-          && existing().shopId is string
-          && exists(/databases/$(database)/documents/barbershops/$(existing().shopId))
-          && request.auth.uid == get(/databases/$(database)/documents/barbershops/$(existing().shopId)).data.ownerId
-          && incoming().shopId == null
-          && incoming().isSolo == true
-          && incoming().diff(existing()).affectedKeys().hasOnly(['shopId', 'isSolo'])
+          && existing().businessId != null
+          && existing().businessId is string
+          && exists(/databases/$(database)/documents/businesses/$(existing().businessId))
+          && request.auth.uid == get(/databases/$(database)/documents/businesses/$(existing().businessId)).data.ownerId
+          && incoming().businessId == null
+          && incoming().diff(existing()).affectedKeys().hasOnly(['businessId'])
         )
       );
 
@@ -350,17 +339,22 @@ service cloud.firestore {
       );
     }
 
-    // Barbershops — ONLY SECTION CHANGED FROM ORIGINAL
-    // Fix: removed isValidBarbershop() from create/update because barbershopSchema.parse()
-    // in create-shop/page.tsx strips address.number, address.postalCode, address.floor
-    // before Firestore sees the document, causing the validation to always fail.
-    match /barbershops/{shopId} {
+    // Businesses
+    // Note: team-member self-remove no longer needs a special path here —
+    // in the new model a professional leaves a business by setting their
+    // own professionalProfiles/{uid}.businessId = null, which is handled
+    // by the primary update rule on the professionalProfiles matcher.
+    match /businesses/{businessId} {
       allow read: if true;
 
       allow create: if isSignedIn()
         && (
           isAdmin()
-          || request.auth.uid == incoming().ownerId
+          || (
+            request.auth.uid == incoming().ownerId
+            && request.auth.token.email_verified == true
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOnboarded == true
+          )
         );
 
       allow update: if (
@@ -369,15 +363,6 @@ service cloud.firestore {
           isSignedIn()
           && request.auth.uid == existing().ownerId
           && incoming().ownerId == existing().ownerId
-        )
-        // Team barber removing themselves from the shop's `barbers` array
-        // during their own account deletion. Limited to the barbers field;
-        // requester must be in the current list and absent from the new one.
-        || (
-          isSignedIn()
-          && (request.auth.uid in existing().get('barbers', []))
-          && !(request.auth.uid in incoming().get('barbers', []))
-          && incoming().diff(existing()).affectedKeys().hasOnly(['barbers'])
         )
       );
 
@@ -391,13 +376,18 @@ service cloud.firestore {
     match /services/{serviceId} {
       allow read: if true;
 
+      // NOTE: isOnboarded is intentionally NOT required here. Initial services
+      // are created DURING onboarding (onboarding/barber handleLaunch Step 3),
+      // before isOnboarded is flipped true (Step 4). Verified email is still
+      // enforced.
       allow create: if isSignedIn()
         && (
           isAdmin()
           || (
             request.auth.uid == incoming().providerId
             && isValidService(incoming())
-            && exists(/databases/$(database)/documents/barberProfiles/$(request.auth.uid))
+            && exists(/databases/$(database)/documents/professionalProfiles/$(request.auth.uid))
+            && request.auth.token.email_verified == true
           )
         );
 
@@ -428,7 +418,7 @@ service cloud.firestore {
         && incoming().barberId is string
         && incoming().status == 'pending'
         && incoming().shopId == request.auth.uid
-        && exists(/databases/$(database)/documents/barbershops/$(request.auth.uid));
+        && exists(/databases/$(database)/documents/businesses/$(request.auth.uid));
 
       allow update: if isSignedIn()
         && (
@@ -465,6 +455,8 @@ service cloud.firestore {
       // uses serviceIds (array), not serviceId (string). Adding that check
       // caused every booking creation to fail with permission-denied.
       allow create: if isSignedIn()
+        && request.auth.token.email_verified == true
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isOnboarded == true
         && request.auth.uid == incoming().clientId
         && request.auth.uid != incoming().barberId
         && incoming().status == 'pending'
@@ -474,8 +466,8 @@ service cloud.firestore {
         && incoming().date is string
         && incoming().startTime is string
         && incoming().barberId is string
-        && get(/databases/$(database)/documents/barberProfiles/$(incoming().barberId)).data.isLive == true
-        && get(/databases/$(database)/documents/barberProfiles/$(incoming().barberId)).data.approvalStatus == 'approved'
+        && get(/databases/$(database)/documents/professionalProfiles/$(incoming().barberId)).data.isLive == true
+        && get(/databases/$(database)/documents/professionalProfiles/$(incoming().barberId)).data.approvalStatus == 'approved'
         && incoming().appointmentTimestamp is number
         && incoming().appointmentTimestamp > request.time.toMillis()
         && exists(/databases/$(database)/documents/schedules/$(incoming().barberId + '_shard_0'));
@@ -544,24 +536,24 @@ service cloud.firestore {
           && incoming().diff(existing()).affectedKeys()
              .hasOnly(['barberId', 'barberName'])
         )
-        // Shop deletion — owner cancels future shop booking with a reason
+        // Business deletion — owner cancels future booking with a reason
         || (
           isSignedIn()
           && existing().shopId != null
           && existing().shopId is string
-          && exists(/databases/$(database)/documents/barbershops/$(existing().shopId))
-          && request.auth.uid == get(/databases/$(database)/documents/barbershops/$(existing().shopId)).data.ownerId
+          && exists(/databases/$(database)/documents/businesses/$(existing().shopId))
+          && request.auth.uid == get(/databases/$(database)/documents/businesses/$(existing().shopId)).data.ownerId
           && incoming().status == 'cancelled'
           && incoming().diff(existing()).affectedKeys()
              .hasOnly(['status', 'updatedAt', 'cancellationReason'])
         )
-        // Shop deletion — owner anonymizes past shop booking
+        // Business deletion — owner anonymizes past booking
         || (
           isSignedIn()
           && existing().shopId != null
           && existing().shopId is string
-          && exists(/databases/$(database)/documents/barbershops/$(existing().shopId))
-          && request.auth.uid == get(/databases/$(database)/documents/barbershops/$(existing().shopId)).data.ownerId
+          && exists(/databases/$(database)/documents/businesses/$(existing().shopId))
+          && request.auth.uid == get(/databases/$(database)/documents/businesses/$(existing().shopId)).data.ownerId
           && incoming().shopId == 'deleted_shop'
           && incoming().shopName == 'Deleted Shop'
           && incoming().diff(existing()).affectedKeys()
@@ -583,7 +575,7 @@ service cloud.firestore {
             request.auth.uid == incoming().clientId
             && incoming().providerId != request.auth.uid
             && isValidReview(incoming())
-            && exists(/databases/$(database)/documents/barberProfiles/$(incoming().providerId))
+            && exists(/databases/$(database)/documents/professionalProfiles/$(incoming().providerId))
             && exists(/databases/$(database)/documents/bookings/$(incoming().bookingId))
             && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.clientId == request.auth.uid
             && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.status == 'completed'
@@ -668,12 +660,6 @@ service cloud.firestore {
         && (
           isAdmin()
           || incoming().userId == request.auth.uid
-          || (
-            incoming().type == 'shop_deleted'
-            && exists(/databases/$(database)/documents/barbershops/$(request.auth.uid))
-            && get(/databases/$(database)/documents/barbershops/$(request.auth.uid)).data.ownerId == request.auth.uid
-            && incoming().userId in get(/databases/$(database)/documents/barbershops/$(request.auth.uid)).data.get('barbers', [])
-          )
           || (
             incoming().type == 'booking_cancelled'
             && incoming().bookingId is string

@@ -90,6 +90,17 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Email-verification gate (UI-layer defense in depth; the real,
+    // unspoofable enforcement lives in firestore.rules). A signed-in but
+    // unverified non-admin user cannot reach any protected route — send them
+    // to /login, which renders the verify gate (auto-detect + resend).
+    if (!user.emailVerified && appUser?.role !== 'admin') {
+      setAuthorized(false);
+      setChecking(false);
+      router.replace('/login');
+      return;
+    }
+
     // Onboarding redirect — preserve existing behaviour
     if (appUser && !appUser.isOnboarded &&
         appUser.role !== 'admin' &&
@@ -99,7 +110,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
         pathname !== '/signup') {
       if (appUser.role === 'client') {
         router.replace('/onboarding/client');
-      } else if (appUser.role === 'barber') {
+      } else if (appUser.role === 'professional') {
         router.replace('/onboarding/barber');
       }
       setAuthorized(false);
@@ -116,7 +127,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
       !isProfileComplete(appUser) &&
       !pathname.startsWith('/onboarding')
     ) {
-      const redirectPath = appUser.role === 'barber'
+      const redirectPath = appUser.role === 'professional'
         ? '/onboarding/barber'
         : '/onboarding/client';
       router.replace(redirectPath);

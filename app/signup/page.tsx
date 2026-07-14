@@ -3,19 +3,19 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, GoogleAuthProvider, signInWithPopup, signOut, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { userSchema } from '@/lib/schemas';
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { PasswordInput } from '@/components/PasswordInput';
-import { toast } from '@/lib/toast';
+import { VerifyEmailGate } from '@/components/VerifyEmailGate';
 import { useLang } from '@/lib/i18n/LangContext';
 
 export default function SignupPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [role, setRole] = useState<'client' | 'barber'>('client');
+  const [role, setRole] = useState<'client' | 'professional'>('client');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -23,6 +23,7 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);
   const [errorStatus, setErrorStatus] = useState('');
+  const [showLoginLink, setShowLoginLink] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [honeypot, setHoneypot] = useState('');
@@ -40,67 +41,16 @@ export default function SignupPage() {
 
   if (emailVerified) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: '#0A0A0A',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: 'Nunito, sans-serif',
-        padding: '20px'
-      }}>
-        <div style={{
-          background: '#111',
-          border: '1px solid #1e1e1e',
-          borderRadius: '20px',
-          padding: '40px',
-          maxWidth: '400px',
-          width: '100%',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>✉️</div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>
-            {t('misc.checkEmail')}
-          </div>
-          <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.7', marginBottom: '24px' }}>
-            {t('misc.sentVerificationTo')}
-            <span style={{ color: '#F5C518', display: 'block', marginTop: '4px' }}>
-              {email}
-            </span>
-            {t('misc.clickToActivate')}
-          </div>
-          <div style={{ fontSize: '11px', color: '#444', marginBottom: '16px' }}>
-            {t('misc.didntReceive')}
-          </div>
-          <button
-            onClick={async () => {
-              await sendEmailVerification(auth.currentUser!);
-              toast.success(t('success.verificationResent'));
-            }}
-            style={{
-              background: 'transparent',
-              border: '1px solid #2a2a2a',
-              color: '#888',
-              borderRadius: '99px',
-              padding: '10px 20px',
-              fontSize: '12px',
-              fontWeight: 800,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              marginBottom: '12px',
-              width: '100%'
-            }}
-          >
-            {t('buttons.resendVerification')}
-          </button>
-          <Link
-            href="/login"
-            style={{ color: '#555', fontSize: '11px', textDecoration: 'none' }}
-          >
-            {t('buttons.alreadyVerified')} →
-          </Link>
-        </div>
-      </div>
+      <VerifyEmailGate
+        email={email}
+        onVerified={() => {
+          if (role === 'professional') {
+            router.push('/onboarding/barber');
+          } else {
+            router.push('/onboarding/client');
+          }
+        }}
+      />
     );
   }
 
@@ -162,7 +112,7 @@ export default function SignupPage() {
       });
 
       // Route straight to onboarding — never to dashboard
-      if (role === 'barber') {
+      if (role === 'professional') {
         router.replace('/onboarding/barber');
       } else {
         router.replace('/onboarding/client');
@@ -202,6 +152,7 @@ export default function SignupPage() {
 
     setIsSubmitting(true);
     setErrorStatus('');
+    setShowLoginLink(false);
 
     try {
       // 1. Create auth user
@@ -230,6 +181,24 @@ export default function SignupPage() {
 
     } catch (err: any) {
       console.error("Signup validation or save error:", err);
+
+      // Same-email unverified re-signup: if an account already exists for this
+      // email, guide the user to log in (Step 4's login gate will drop them
+      // back into the verify screen if they're still unverified) instead of
+      // showing the generic "already in use" copy.
+      if (err.code === 'auth/email-already-in-use') {
+        try {
+          const methods = await fetchSignInMethodsForEmail(auth, email);
+          if (methods.length > 0) {
+            setErrorStatus("You've already started signing up with this email. Log in to continue verifying.");
+            setShowLoginLink(true);
+            return;
+          }
+        } catch {
+          // fetch failed — fall through to the generic message below.
+        }
+      }
+
       const getFriendlyError = (code: string): string => {
         switch (code) {
           case 'auth/email-already-in-use':
@@ -269,7 +238,7 @@ export default function SignupPage() {
         <div className="flex gap-2">
           {[
             { id: 'client', label: t('contactPage.roleClient'), icon: '👤' },
-            { id: 'barber', label: t('contactPage.roleBarber'), icon: '✂️' },
+            { id: 'professional', label: t('contactPage.roleBarber'), icon: '✂️' },
           ].map(r => (
             <button
               key={r.id}
@@ -556,6 +525,20 @@ export default function SignupPage() {
         {errorStatus && (
           <div className="bg-[#1a0808] border border-[#3b1a1a] text-brand-red rounded-xl px-4 py-3 text-xs font-bold leading-tight">
             {errorStatus}
+            {showLoginLink && (
+              <Link
+                href="/login"
+                style={{
+                  display: 'block',
+                  marginTop: '8px',
+                  color: '#F5C518',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                }}
+              >
+                {t('nav.login')} →
+              </Link>
+            )}
           </div>
         )}
 
