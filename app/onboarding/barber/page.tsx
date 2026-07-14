@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { track } from '@vercel/analytics';
 
 import { useRouter } from "next/navigation";
-import { doc, collection, setDoc, updateDoc, query, where, getDocs, getDoc } from "firebase/firestore";
+import { doc, collection, setDoc, updateDoc, deleteDoc, query, where, getDocs, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import Select from "react-select";
@@ -66,6 +66,26 @@ export default function BarberOnboarding() {
   const [csc, setCsc] = useState<any>(null);
   const [languageOptions, setLanguageOptions] = useState<{value: string; label: string}[]>([]);
 
+  const saveDraftAndGoToStep = async (newStep: number) => {
+    if (user) {
+      try {
+        await setDoc(doc(db, 'onboardingDrafts', user.uid), {
+          firstName, lastName, bio,
+          selectedCountry, selectedCityOption,
+          phoneCode, phoneNumberInput, selectedLanguages,
+          vibe, days, specialty, clientele,
+          servicesData, titzData,
+          lastStep: newStep,
+          updatedAt: Date.now(),
+        }, { merge: true });
+      } catch (err) {
+        console.error('Draft autosave failed:', err);
+        // Non-blocking — don't stop navigation if the autosave fails
+      }
+    }
+    setStep(newStep);
+  };
+
   useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
   useEffect(() => { getLanguageOptions().then(setLanguageOptions); }, []);
 
@@ -75,6 +95,37 @@ export default function BarberOnboarding() {
     if (appUser?.lastName && !lastName) setLastName(appUser.lastName);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appUser?.firstName, appUser?.lastName]);
+
+  useEffect(() => {
+    const loadDraft = async () => {
+      if (!user) return;
+      try {
+        const draftSnap = await getDoc(doc(db, 'onboardingDrafts', user.uid));
+        if (draftSnap.exists()) {
+          const d = draftSnap.data();
+          if (d.firstName) setFirstName(d.firstName);
+          if (d.lastName) setLastName(d.lastName);
+          if (d.bio) setBio(d.bio);
+          if (d.selectedCountry) setSelectedCountry(d.selectedCountry);
+          if (d.selectedCityOption) setSelectedCityOption(d.selectedCityOption);
+          if (d.phoneCode) setPhoneCode(d.phoneCode);
+          if (d.phoneNumberInput) setPhoneNumberInput(d.phoneNumberInput);
+          if (d.selectedLanguages) setSelectedLanguages(d.selectedLanguages);
+          if (d.vibe) setVibe(d.vibe);
+          if (d.days) setDays(d.days);
+          if (d.specialty) setSpecialty(d.specialty);
+          if (d.clientele) setClientele(d.clientele);
+          if (d.servicesData) setServicesData(d.servicesData);
+          if (d.titzData) setTitzData(d.titzData);
+          if (d.lastStep) setStep(d.lastStep);
+        }
+      } catch (err) {
+        console.error('Draft load failed:', err);
+        // Non-blocking — onboarding still starts fresh if this fails
+      }
+    };
+    loadDraft();
+  }, [user]);
 
   const toggleVibe = (v: string) => setVibe(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]);
   const toggleSpec = (s: string) => setSpecialty(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
@@ -311,6 +362,12 @@ export default function BarberOnboarding() {
       } catch(e: any) { throw new Error("Step 4: User confirmation flag failed - " + e.message); }
 
       // await batch.commit(); // Batch replaced to help debug
+      try {
+        await deleteDoc(doc(db, 'onboardingDrafts', user.uid));
+      } catch (err) {
+        console.error('Draft cleanup failed (non-blocking):', err);
+      }
+
       launchedRef.current = true;
       track('profile_launched', {
         time_to_launch_seconds: appUser?.createdAt
@@ -644,13 +701,21 @@ export default function BarberOnboarding() {
             </div>
           )}
 
-          <button 
-            disabled={isSubmitting}
-            onClick={handleLaunch} 
-            className="bg-brand-yellow text-[#0a0a0a] w-full flex justify-center text-base px-7 py-4 rounded-full font-black transition-all hover:-translate-y-px disabled:opacity-50"
-          >
-            {isSubmitting ? t('onboarding.launching') : t('onboarding.launchProfile')}
-          </button>
+          <div className="flex justify-between mt-7">
+            <button
+              className="bg-transparent text-white border-[1.5px] border-[#2a2a2a] px-6 py-3 rounded-full font-extrabold text-sm transition-all hover:border-[#555]"
+              onClick={() => saveDraftAndGoToStep(3)}
+            >
+              {t('booking.back')}
+            </button>
+            <button
+              disabled={isSubmitting}
+              onClick={handleLaunch}
+              className="bg-brand-yellow text-[#0a0a0a] w-full flex justify-center text-base px-7 py-4 rounded-full font-black transition-all hover:-translate-y-px disabled:opacity-50"
+            >
+              {isSubmitting ? t('onboarding.launching') : t('onboarding.launchProfile')}
+            </button>
+          </div>
         </div>
       )}
 
@@ -658,11 +723,11 @@ export default function BarberOnboarding() {
       {step < 4 && (
         <div className="flex justify-between mt-7">
           {step > 1 ? (
-            <button className="bg-transparent text-white border-[1.5px] border-[#2a2a2a] px-6 py-3 rounded-full font-extrabold text-sm transition-all hover:border-[#555]" onClick={() => setStep(s => s - 1)}>{t('booking.back')}</button>
+            <button className="bg-transparent text-white border-[1.5px] border-[#2a2a2a] px-6 py-3 rounded-full font-extrabold text-sm transition-all hover:border-[#555]" onClick={() => saveDraftAndGoToStep(step - 1)}>{t('booking.back')}</button>
           ) : <div />}
           <button className="bg-brand-yellow text-[#0a0a0a] px-7 py-3 rounded-full font-black text-sm transition-all hover:-translate-y-px" onClick={() => {
             track('onboarding_step_completed', { step, role: 'professional' });
-            setStep(s => s + 1);
+            saveDraftAndGoToStep(step + 1);
           }}>
             {step === 3 ? t('onboarding.reviewLaunch') : t('onboarding.continueStep')}
           </button>

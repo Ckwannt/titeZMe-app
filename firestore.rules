@@ -315,6 +315,13 @@ service cloud.firestore {
       );
     }
 
+    // Onboarding drafts — per-user autosave of in-progress onboarding.
+    // Owner-only read/write/delete, keyed by the user's own uid.
+    match /onboardingDrafts/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId && isValidId(userId);
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
     // Schedules
     match /schedules/{userId} {
       allow read: if true;
