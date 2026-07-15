@@ -310,7 +310,6 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       const phoneStr = phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null;
       const cityStr = selectedCityOption ? selectedCityOption.value : "";
       const countryStr = selectedCountry ? selectedCountry.value : "";
-      const stateStr = selectedState ? selectedState.value : undefined;
 
       await updateDoc(doc(db, 'businesses', user.uid), businessUpdateSchema.parse({
               name: sanitizeText(formData.name, 100),
@@ -318,7 +317,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
               contactPhone: phoneStr,
               address: {
                 country: countryStr,
-                state: stateStr,
+                ...(selectedState ? { state: selectedState.value } : {}),
                 city: cityStr,
                 street: formData.street,
                 buildingNumber: formData.buildingNumber,
@@ -326,8 +325,8 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
                 floorSuite: formData.floorSuite
               },
               description: sanitizeText(formData.description, 300),
-              chairsCount: formData.chairsCount ? Number(formData.chairsCount) : undefined,
-              establishedYear: formData.establishedYear ? Number(formData.establishedYear) : undefined,
+              ...(formData.chairsCount ? { chairsCount: Number(formData.chairsCount) } : {}),
+              ...(formData.establishedYear ? { establishedYear: Number(formData.establishedYear) } : {}),
             }));
       mutateShop();
       setSuccessMsg(t('success.shopInfoSaved'));

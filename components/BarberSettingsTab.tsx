@@ -296,7 +296,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       await updateDoc(doc(db, 'professionalProfiles', user.uid), professionalProfileUpdateSchema.parse({
               phone: phoneStr,
               city: cityStr,
-              state: stateStr,
+              ...(selectedState ? { state: selectedState.value } : {}),
               country: countryStr,
               bio: sanitizeText(formData.bio, 500),
               languages: langArr,

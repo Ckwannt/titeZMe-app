@@ -134,7 +134,7 @@ export default function CreateShopPage() {
                 postalCode: postalCode,
                 floor: floor || '',
                 city: selectedCityOption.value,
-                state: selectedState ? selectedState.value : undefined,
+                ...(selectedState ? { state: selectedState.value } : {}),
                 country: selectedCountry.value
               },
               googleMapsUrl: sanitizeUrl(googleMapsUrl),
