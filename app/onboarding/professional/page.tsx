@@ -21,7 +21,7 @@ export default function BarberOnboarding() {
   const { user, appUser } = useAuth();
   const { t } = useLang();
   const [step, setStep] = useState(1);
-  const totalSteps = 6;
+  const totalSteps = 7;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -57,6 +57,8 @@ export default function BarberOnboarding() {
   // Step 2 — capability cards (flow-control only; not persisted as profile fields)
   const [offersServices, setOffersServices] = useState(false);
   const [partOfBusiness, setPartOfBusiness] = useState(false);
+  // Step 6 — business choice (null = not yet chosen; gates Continue on that step)
+  const [createBusinessNow, setCreateBusinessNow] = useState<boolean | null>(null);
 
   // Step 3 — profession picker (drives dynamic specialties + persisted profession/tier)
   const [selectedProfession, setSelectedProfession] = useState<string>('');
@@ -82,7 +84,7 @@ export default function BarberOnboarding() {
           firstName, lastName, bio,
           selectedCountry, selectedState, selectedCityOption,
           phoneCode, phoneNumberInput, selectedLanguages,
-          offersServices, partOfBusiness,
+          offersServices, partOfBusiness, createBusinessNow,
           selectedProfession,
           vibe, days, specialty, clientele,
           servicesData, titzData,
@@ -101,13 +103,23 @@ export default function BarberOnboarding() {
   // services. If they don't, Step 2 jumps straight to Go Live (5), and Back
   // from 5 returns to 4 (if services) or 2 (if not).
   const getNextStep = (current: number): number => {
-    if (current === 2) return offersServices ? 3 : 6;
+    if (current === 2) {
+      if (offersServices) return 3;
+      if (partOfBusiness) return 6;
+      return 7;
+    }
+    if (current === 5) return partOfBusiness ? 6 : 7;
     return current + 1;
   };
 
   const getPrevStep = (current: number): number => {
-    if (current === 4) return 3;
+    if (current === 7) {
+      if (partOfBusiness) return 6;
+      if (offersServices) return 5;
+      return 2;
+    }
     if (current === 6) return offersServices ? 5 : 2;
+    if (current === 3 && !offersServices) return 2;
     return current - 1;
   };
 
@@ -139,6 +151,7 @@ export default function BarberOnboarding() {
           if (d.selectedLanguages) setSelectedLanguages(d.selectedLanguages);
           if (typeof d.offersServices === 'boolean') setOffersServices(d.offersServices);
           if (typeof d.partOfBusiness === 'boolean') setPartOfBusiness(d.partOfBusiness);
+          if (typeof d.createBusinessNow === 'boolean') setCreateBusinessNow(d.createBusinessNow);
           if (d.selectedProfession) setSelectedProfession(d.selectedProfession);
           if (d.vibe) setVibe(d.vibe);
           if (d.days) setDays(d.days);
@@ -410,7 +423,9 @@ export default function BarberOnboarding() {
           : 0,
         role: 'professional',
       });
-      window.location.href = '/dashboard/barber';
+      window.location.href = createBusinessNow
+        ? '/dashboard/barber/create-shop'
+        : '/dashboard/barber';
 
     } catch (err: any) {
       console.error(err);
@@ -419,7 +434,7 @@ export default function BarberOnboarding() {
     }
   };
 
-  const stepTitles = [t('onboarding.basicInfo'), t('onboarding.howWouldYouUse'), t('onboarding.chooseProfession'), t('onboarding.yourVibe'), t('booking.services'), t('onboarding.goLive')];
+  const stepTitles = [t('onboarding.basicInfo'), t('onboarding.howWouldYouUse'), t('onboarding.chooseProfession'), t('onboarding.yourVibe'), t('booking.services'), t('onboarding.yourBusiness'), t('onboarding.goLive')];
 
   return (
     <div className="max-w-[560px] mx-auto p-6 md:p-8">
@@ -771,8 +786,40 @@ export default function BarberOnboarding() {
         </div>
       )}
 
-      {/* STEP 6: Go Live */}
-      {step === 6 && (
+      {/* STEP 6: Your Business (only when part of a business) */}
+      {step === 6 && partOfBusiness && (
+        <div className="animate-fadeUp">
+          <h2 className="text-2xl font-black mb-2.5">{t('onboarding.yourBusiness')}</h2>
+          <p className="text-brand-text-secondary text-sm mb-5 leading-[1.7]">
+            {t('onboarding.businessQuestion')}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button
+              onClick={() => setCreateBusinessNow(true)}
+              className={`rounded-[10px] p-4 text-left border-2 transition-all cursor-pointer ${
+                createBusinessNow === true
+                  ? "border-brand-yellow bg-[#1a1500] text-brand-yellow"
+                  : "border-[#2a2a2a] bg-[#141414] text-[#888] hover:border-[#444] hover:text-white"
+              }`}
+            >
+              <div className="text-sm mb-1 font-extrabold">🏢 {t('onboarding.createNow')}</div>
+            </button>
+            <button
+              onClick={() => setCreateBusinessNow(false)}
+              className={`rounded-[10px] p-4 text-left border-2 transition-all cursor-pointer ${
+                createBusinessNow === false
+                  ? "border-brand-yellow bg-[#1a1500] text-brand-yellow"
+                  : "border-[#2a2a2a] bg-[#141414] text-[#888] hover:border-[#444] hover:text-white"
+              }`}
+            >
+              <div className="text-sm mb-1 font-extrabold">⏱️ {t('onboarding.setUpLater')}</div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 7: Go Live */}
+      {step === 7 && (
         <div className="animate-fadeUp text-center">
           <div className="text-[56px] mb-4">🚀</div>
           <h2 className="text-2xl font-black mb-2.5">{t('onboarding.readyToGoLive')}</h2>
@@ -801,7 +848,7 @@ export default function BarberOnboarding() {
           <div className="flex justify-between mt-7">
             <button
               className="bg-transparent text-white border-[1.5px] border-[#2a2a2a] px-6 py-3 rounded-full font-extrabold text-sm transition-all hover:border-[#555]"
-              onClick={() => saveDraftAndGoToStep(getPrevStep(6))}
+              onClick={() => saveDraftAndGoToStep(getPrevStep(7))}
             >
               {t('booking.back')}
             </button>
@@ -817,20 +864,20 @@ export default function BarberOnboarding() {
       )}
 
       {/* Navigation */}
-      {step < 6 && (
+      {step < 7 && (
         <div className="flex justify-between mt-7">
           {step > 1 ? (
             <button className="bg-transparent text-white border-[1.5px] border-[#2a2a2a] px-6 py-3 rounded-full font-extrabold text-sm transition-all hover:border-[#555]" onClick={() => saveDraftAndGoToStep(getPrevStep(step))}>{t('booking.back')}</button>
           ) : <div />}
           <button
-            disabled={(step === 2 && !offersServices && !partOfBusiness) || (step === 3 && !selectedProfession)}
+            disabled={(step === 2 && !offersServices && !partOfBusiness) || (step === 3 && !selectedProfession) || (step === 6 && createBusinessNow === null)}
             className="bg-brand-yellow text-[#0a0a0a] px-7 py-3 rounded-full font-black text-sm transition-all hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             onClick={() => {
               track('onboarding_step_completed', { step, role: 'professional' });
               saveDraftAndGoToStep(getNextStep(step));
             }}
           >
-            {getNextStep(step) === 6 ? t('onboarding.reviewLaunch') : t('onboarding.continueStep')}
+            {getNextStep(step) === 7 ? t('onboarding.reviewLaunch') : t('onboarding.continueStep')}
           </button>
         </div>
       )}
