@@ -32,6 +32,7 @@ export const professionalProfileSchema = z.object({
   bio: z.string(),
   city: z.string(),
   country: z.string(),
+  state: z.string().optional(),
   languages: z.array(z.string()),
   isLive: z.boolean(),
   approvalStatus: z.enum(['pending', 'approved', 'rejected']),

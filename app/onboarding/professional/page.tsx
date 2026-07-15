@@ -47,6 +47,7 @@ export default function BarberOnboarding() {
   const [lastName, setLastName] = useState(appUser?.lastName || '');
   const [bio, setBio] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [selectedState, setSelectedState] = useState<any>(null);
   const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
   const [phoneCode, setPhoneCode] = useState<any>(null);
   const [phoneNumberInput, setPhoneNumberInput] = useState("");
@@ -71,7 +72,7 @@ export default function BarberOnboarding() {
       try {
         await setDoc(doc(db, 'onboardingDrafts', user.uid), {
           firstName, lastName, bio,
-          selectedCountry, selectedCityOption,
+          selectedCountry, selectedState, selectedCityOption,
           phoneCode, phoneNumberInput, selectedLanguages,
           vibe, days, specialty, clientele,
           servicesData, titzData,
@@ -107,6 +108,7 @@ export default function BarberOnboarding() {
           if (d.lastName) setLastName(d.lastName);
           if (d.bio) setBio(d.bio);
           if (d.selectedCountry) setSelectedCountry(d.selectedCountry);
+          if (d.selectedState) setSelectedState(d.selectedState);
           if (d.selectedCityOption) setSelectedCityOption(d.selectedCityOption);
           if (d.phoneCode) setPhoneCode(d.phoneCode);
           if (d.phoneNumberInput) setPhoneNumberInput(d.phoneNumberInput);
@@ -254,6 +256,7 @@ export default function BarberOnboarding() {
         bio: sanitizeText(bio || "Professional barber.", 2000),
         city: selectedCityOption ? selectedCityOption.value : "Unknown",
         country: selectedCountry ? selectedCountry.value : "Unknown",
+        state: selectedState ? selectedState.value : undefined,
         phone: phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null,
         languages: selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : ["English"],
         vibe: vibe,
@@ -358,6 +361,7 @@ export default function BarberOnboarding() {
           phoneCountryCode: phoneCode?.value || undefined,
           city: selectedCityOption?.value || 'Unknown',
           country: selectedCountry?.value || 'Unknown',
+          state: selectedState?.value || undefined,
         }));
       } catch(e: any) { throw new Error("Step 4: User confirmation flag failed - " + e.message); }
 
@@ -479,18 +483,37 @@ export default function BarberOnboarding() {
           </div>
           <div>
             <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('onboarding.location')}</label>
-            <div className="grid grid-cols-2 gap-3">
-              <Select 
-                options={countryOptions} 
+            <div className="grid grid-cols-3 gap-3">
+              <Select
+                options={countryOptions}
                 value={selectedCountry}
                 onChange={(option) => {
                   setSelectedCountry(option);
+                  setSelectedState(null);
                   setSelectedCityOption(null);
                 }}
                 styles={selectStyles}
                 placeholder="Country..."
               />
-              <Select 
+              <Select
+                options={selectedCountry && csc ?
+                  (csc.State.getStatesOfCountry(selectedCountry.value) ?? []).map((s: any) => ({
+                    value: s.isoCode,
+                    label: s.name
+                  }))
+                  : []
+                }
+                value={selectedState}
+                onChange={(option) => {
+                  setSelectedState(option);
+                  setSelectedCityOption(null);
+                }}
+                isDisabled={!selectedCountry || !csc}
+                isLoading={!csc}
+                styles={selectStyles}
+                placeholder="Region..."
+              />
+              <Select
                 options={selectedCountry && csc ?
                   (csc.City.getCitiesOfCountry(selectedCountry.value) ?? []).map((c: any) => ({
                     value: c.name,

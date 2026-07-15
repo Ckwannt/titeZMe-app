@@ -8,6 +8,7 @@ export interface ProfessionalProfile {
   bio: string;
   city: string;
   country: string;
+  state?: string;
   languages: string[];
   isLive: boolean;
   approvalStatus: 'pending' | 'approved' | 'rejected';
