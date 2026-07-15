@@ -16,6 +16,7 @@ export type BarberCard = {
   firstName: string;
   lastName: string;
   country: string;
+  state?: string;
   city: string;
   street: string;
   languages: string[];

@@ -94,6 +94,7 @@ async function fetchBarbers(): Promise<BarberCardItem[]> {
     photoUrl:       hit.photoUrl       || '',
     city:           hit.city           || '',
     country:        hit.country        || '',
+    state:          hit.state          || '',
     languages:      hit.languages      || [],
     vibes:          hit.vibes          || [],
     currency:       hit.currency       || 'EUR',
@@ -179,10 +180,11 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   const showFakes = useShowFakeUIData();
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
+  const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   // country = ISO code (e.g. "ES") to match barberProfiles storage format.
   // countryDisplay = full name for the UI badge (e.g. "Spain").
-  const [activeFilter, setActiveFilter] = useState<{ city: string; country: string; countryDisplay?: string } | null>(null);
+  const [activeFilter, setActiveFilter] = useState<{ city: string; state: string; country: string; countryDisplay?: string } | null>(null);
   const [geoCity, setGeoCity] = useState('');
   const [geoCountry, setGeoCountry] = useState('');
   const [geoApplied, setGeoApplied] = useState(false);
@@ -221,7 +223,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
               setCountryName(found.name);
               setSelectedCity(city);
               // Use ISO code for filter (matches barberProfiles.country format)
-              setActiveFilter({ city, country: found.isoCode, countryDisplay: found.name });
+              setActiveFilter({ city, state: '', country: found.isoCode, countryDisplay: found.name });
               setGeoApplied(true);
             }
           }
@@ -252,6 +254,10 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   const { t } = useLang();
 
   const countries = useMemo(() => csc ? csc.Country.getAllCountries() : [], [csc]);
+  const states = useMemo(() => {
+    if (!csc || !countryCode) return [];
+    return csc.State.getStatesOfCountry(countryCode) ?? [];
+  }, [csc, countryCode]);
   const cities = useMemo(() => {
     if (!csc || !countryCode) return [];
     return csc.City.getCitiesOfCountry(countryCode) ?? [];
@@ -280,7 +286,11 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
         const countryMatch =
           !activeFilter.country ||
           b.country.toLowerCase() === activeFilter.country.toLowerCase();
-        return cityMatch && countryMatch;
+        // State/Region: exact ISO-code comparison ("CT" === "CT") — controlled list, not free text
+        const stateMatch =
+          !activeFilter.state ||
+          (b.state || '').toLowerCase() === activeFilter.state.toLowerCase();
+        return cityMatch && countryMatch && stateMatch;
       });
     }
 
@@ -303,8 +313,8 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
 
   const handleSearch = () => {
     setActiveFilter(
-      countryCode || selectedCity
-        ? { city: selectedCity, country: countryCode, countryDisplay: countryName }
+      countryCode || selectedState || selectedCity
+        ? { city: selectedCity, state: selectedState, country: countryCode, countryDisplay: countryName }
         : null
     );
     setPage(1);
@@ -313,6 +323,7 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
   const clearAll = () => {
     setActiveFilter(null);
     setSelectedCity('');
+    setSelectedState('');
     setCountryCode('');
     setCountryName('');
     setNameSearch('');
@@ -355,12 +366,21 @@ export default function BarbersClient({ initialBarbers }: BarbersClientProps = {
               const c = countries.find((c: any) => c.isoCode === e.target.value);
               setCountryCode(e.target.value);
               setCountryName(c?.name || '');
+              setSelectedState('');
               setSelectedCity('');
             }}
               className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors"
             >
               <option value="">{t('forms.chooseCountry')}</option>
               {countries.map((c: any) => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
+            </select>
+
+            <select value={selectedState} onChange={e => setSelectedState(e.target.value)}
+              disabled={!countryCode}
+              className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <option value="">Choose a region</option>
+              {states.map((s: any) => <option key={s.isoCode} value={s.isoCode}>{s.name}</option>)}
             </select>
 
             <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)}

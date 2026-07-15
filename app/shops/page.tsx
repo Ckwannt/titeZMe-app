@@ -50,6 +50,7 @@ type ShopCard = {
   name: string;
   coverPhotoUrl?: string;
   country: string;
+  state?: string;
   city: string;
   street: string;
   isOpenNow: boolean;
@@ -100,6 +101,7 @@ async function fetchShops(): Promise<ShopCard[]> {
       name: s.name || '',
       coverPhotoUrl: s.coverPhotoUrl,
       country: shopCountry,
+      state: s.address?.state || '',
       city: shopCity,
       street: s.address?.street || '',
       isOpenNow: status.isOpen,
@@ -164,8 +166,9 @@ export default function ShopsPage() {
   const showFakes = useShowFakeUIData();
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
+  const [selectedState, setSelectedState] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  const [activeFilter, setActiveFilter] = useState<{ city: string; country: string } | null>(null);
+  const [activeFilter, setActiveFilter] = useState<{ city: string; state: string; country: string } | null>(null);
   const [nameSearch, setNameSearch] = useState('');
   const debouncedNameSearch = useDebounce(nameSearch, 300);
   const [page, setPage] = useState(1);
@@ -206,7 +209,7 @@ export default function ShopsPage() {
               setCountryName(found.name);
               setSelectedCity(city);
               // Shops store address.country as full country name → compare by name
-              setActiveFilter({ city, country: found.name });
+              setActiveFilter({ city, state: '', country: found.name });
               setGeoCity(city);
               setGeoApplied(true);
             }
@@ -221,6 +224,10 @@ export default function ShopsPage() {
   }, []);
 
   const countries = useMemo(() => csc ? csc.Country.getAllCountries() : [], [csc]);
+  const states = useMemo(() => {
+    if (!csc || !countryCode) return [];
+    return csc.State.getStatesOfCountry(countryCode) ?? [];
+  }, [csc, countryCode]);
   const cities = useMemo(() => {
     if (!csc || !countryCode) return [];
     return csc.City.getCitiesOfCountry(countryCode) ?? [];
@@ -256,7 +263,11 @@ export default function ShopsPage() {
         const countryMatch =
           !activeFilter.country ||
           locationsMatch(s.country, activeFilter.country);
-        return cityMatch && countryMatch;
+        // State/Region: exact ISO-code comparison ("CT" === "CT") — controlled list, not free text
+        const stateMatch =
+          !activeFilter.state ||
+          (s.state || '').toLowerCase() === activeFilter.state.toLowerCase();
+        return cityMatch && countryMatch && stateMatch;
       });
     }
 
@@ -276,8 +287,8 @@ export default function ShopsPage() {
 
   const handleSearch = () => {
     setActiveFilter(
-      countryName || selectedCity
-        ? { city: selectedCity, country: countryName }
+      countryName || selectedState || selectedCity
+        ? { city: selectedCity, state: selectedState, country: countryName }
         : null
     );
     setPage(1);
@@ -286,6 +297,7 @@ export default function ShopsPage() {
   const clearAll = () => {
     setActiveFilter(null);
     setSelectedCity('');
+    setSelectedState('');
     setCountryCode('');
     setCountryName('');
     setNameSearch('');
@@ -324,12 +336,21 @@ export default function ShopsPage() {
                 const opt = countries.find((c: any) => c.isoCode === e.target.value);
                 setCountryCode(e.target.value);
                 setCountryName(opt?.name ?? '');
+                setSelectedState('');
                 setSelectedCity('');
               }}
               className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors"
             >
               <option value="">{t('forms.chooseCountryShops')}</option>
               {countries.map((c: any) => <option key={c.isoCode} value={c.isoCode}>{c.name}</option>)}
+            </select>
+
+            <select value={selectedState} onChange={e => setSelectedState(e.target.value)}
+              disabled={!countryCode}
+              className="flex-1 bg-[#111] border border-[#2a2a2a] text-white rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-brand-yellow transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <option value="">Choose a region</option>
+              {states.map((s: any) => <option key={s.isoCode} value={s.isoCode}>{s.name}</option>)}
             </select>
 
             <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)}

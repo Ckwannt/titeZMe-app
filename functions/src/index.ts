@@ -108,6 +108,7 @@ async function syncProfessionalToAlgolia(
       '',
     city:            profile.city     || '',
     country:         profile.country  || '',
+    state:           profile.state,
     languages:       profile.languages   || [],
     specialties:     profile.specialties || [],
     vibes:           profile.vibe        || [],
