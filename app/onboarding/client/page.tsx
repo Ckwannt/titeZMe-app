@@ -40,6 +40,7 @@ export default function ClientOnboarding() {
   const [lastName, setLastName] = useState(appUser?.lastName || '');
 
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [selectedState, setSelectedState] = useState<any>(null);
   const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
   const [phoneCode, setPhoneCode] = useState<any>(null);
   const [phoneNumberInput, setPhoneNumberInput] = useState("");
@@ -156,6 +157,7 @@ export default function ClientOnboarding() {
               phone: `+${phoneCode.value} ${phoneNumberInput}`,
               phoneCountryCode: phoneCode.value,
               country: selectedCountry.value,
+              state: selectedState ? selectedState.value : undefined,
               city: selectedCityOption.value,
               languages: selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : ["English"],
               isOnboarded: true
@@ -284,13 +286,14 @@ export default function ClientOnboarding() {
 
         <div>
           <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('onboarding.location')} <span className="text-brand-red">*</span></label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <Select 
-                options={countryOptions} 
+              <Select
+                options={countryOptions}
                 value={selectedCountry}
                 onChange={(option) => {
                   setSelectedCountry(option);
+                  setSelectedState(null);
                   setSelectedCityOption(null);
                 }}
                 styles={{
@@ -312,7 +315,38 @@ export default function ClientOnboarding() {
               )}
             </div>
             <div>
-              <Select 
+              <Select
+                options={selectedCountry && csc ?
+                  (csc.State.getStatesOfCountry(selectedCountry.value) ?? []).map((s: any) => ({
+                    value: s.isoCode,
+                    label: s.name
+                  }))
+                  : []
+                }
+                value={selectedState}
+                onChange={(option) => {
+                  setSelectedState(option);
+                  setSelectedCityOption(null);
+                }}
+                isDisabled={!selectedCountry || !csc}
+                isLoading={!csc}
+                styles={{
+                  ...selectStyles,
+                  control: (base: any, state: any) => ({
+                    ...base,
+                    background: '#141414',
+                    borderColor: state.isFocused ? '#FFD700' : '#2a2a2a',
+                    borderRadius: '0.75rem',
+                    padding: '8px',
+                    color: 'white',
+                    boxShadow: 'none',
+                  })
+                }}
+                placeholder="Region..."
+              />
+            </div>
+            <div>
+              <Select
                 options={selectedCountry && csc ?
                   (csc.City.getCitiesOfCountry(selectedCountry.value) ?? []).map((c: any) => ({
                     value: c.name,

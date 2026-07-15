@@ -62,6 +62,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
   const [phoneCode, setPhoneCode] = useState<any>(null);
   
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [selectedState, setSelectedState] = useState<any>(null);
   const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
   const [csc, setCsc] = useState<any>(null);
 
@@ -309,6 +310,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
       const phoneStr = phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null;
       const cityStr = selectedCityOption ? selectedCityOption.value : "";
       const countryStr = selectedCountry ? selectedCountry.value : "";
+      const stateStr = selectedState ? selectedState.value : undefined;
 
       await updateDoc(doc(db, 'businesses', user.uid), businessUpdateSchema.parse({
               name: sanitizeText(formData.name, 100),
@@ -316,6 +318,7 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
               contactPhone: phoneStr,
               address: {
                 country: countryStr,
+                state: stateStr,
                 city: cityStr,
                 street: formData.street,
                 buildingNumber: formData.buildingNumber,
@@ -644,18 +647,40 @@ export function ShopSettingsTab({ shop, mutateShop }: ShopSettingsTabProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.country')}</label>
-            <Select 
-              options={countryOptions} 
+            <Select
+              options={countryOptions}
               value={selectedCountry}
               onChange={(option: any) => {
                 setSelectedCountry(option);
+                setSelectedState(null);
                 setSelectedCityOption(null);
               }}
               styles={selectStyles}
               placeholder="Country..."
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Region</label>
+            <Select
+              options={selectedCountry && csc ?
+                (csc.State.getStatesOfCountry(selectedCountry.value) ?? []).map((s: any) => ({
+                  value: s.isoCode,
+                  label: s.name
+                }))
+                : []
+              }
+              value={selectedState}
+              onChange={(option: any) => {
+                setSelectedState(option);
+                setSelectedCityOption(null);
+              }}
+              isDisabled={!selectedCountry || !csc}
+              isLoading={!csc}
+              styles={selectStyles}
+              placeholder="Region..."
             />
           </div>
           <div>

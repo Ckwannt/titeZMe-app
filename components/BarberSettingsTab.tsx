@@ -59,6 +59,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
   const [languageOptions, setLanguageOptions] = useState<{value: string; label: string}[]>([]);
 
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [selectedState, setSelectedState] = useState<any>(null);
   const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
   const [selectedLanguages, setSelectedLanguages] = useState<any>([]);
 
@@ -279,6 +280,7 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
       const phoneStr = phoneCode && phoneNumberInput ? `+${phoneCode.value} ${phoneNumberInput}` : null;
       const cityStr = selectedCityOption ? selectedCityOption.value : "";
       const countryStr = selectedCountry ? selectedCountry.value : "";
+      const stateStr = selectedState ? selectedState.value : undefined;
       const langArr = selectedLanguages.length ? selectedLanguages.map((l: any) => l.value) : [];
 
       await updateDoc(doc(db, 'users', user.uid), userUpdateSchema.parse({
@@ -287,12 +289,14 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
               phone: phoneStr,
               phoneCountryCode: phoneCode ? phoneCode.value : null,
               city: cityStr,
+              state: stateStr,
               country: countryStr,
               languages: langArr
             }));
       await updateDoc(doc(db, 'professionalProfiles', user.uid), professionalProfileUpdateSchema.parse({
               phone: phoneStr,
               city: cityStr,
+              state: stateStr,
               country: countryStr,
               bio: sanitizeText(formData.bio, 500),
               languages: langArr,
@@ -594,18 +598,40 @@ export function BarberSettingsTab({ profile, mutateProfile }: BarberSettingsTabP
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">{t('forms.country')}</label>
-            <Select 
-              options={countryOptions} 
+            <Select
+              options={countryOptions}
               value={selectedCountry}
               onChange={(option: any) => {
                 setSelectedCountry(option);
+                setSelectedState(null);
                 setSelectedCityOption(null);
               }}
               styles={selectStyles}
               placeholder="Country..."
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#888] block mb-1.5 uppercase">Region</label>
+            <Select
+              options={selectedCountry && csc ?
+                (csc.State.getStatesOfCountry(selectedCountry.value) ?? []).map((s: any) => ({
+                  value: s.isoCode,
+                  label: s.name
+                }))
+                : []
+              }
+              value={selectedState}
+              onChange={(option: any) => {
+                setSelectedState(option);
+                setSelectedCityOption(null);
+              }}
+              isDisabled={!selectedCountry || !csc}
+              isLoading={!csc}
+              styles={selectStyles}
+              placeholder="Region..."
             />
           </div>
           <div>

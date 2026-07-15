@@ -24,6 +24,7 @@ export default function CreateShopPage() {
   const [phoneNumberInput, setPhoneNumberInput] = useState("");
 
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
+  const [selectedState, setSelectedState] = useState<any>(null);
   const [selectedCityOption, setSelectedCityOption] = useState<any>(null);
 
   const [street, setStreet] = useState('');
@@ -133,7 +134,8 @@ export default function CreateShopPage() {
                 postalCode: postalCode,
                 floor: floor || '',
                 city: selectedCityOption.value,
-                country: selectedCountry.label.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]\s*/g, '')
+                state: selectedState ? selectedState.value : undefined,
+                country: selectedCountry.value
               },
               googleMapsUrl: sanitizeUrl(googleMapsUrl),
               description: sanitizeText(description, 2000),
@@ -219,18 +221,40 @@ export default function CreateShopPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">{t('forms.country')} <span className="text-brand-red">*</span></label>
-              <Select 
-                options={countryOptions} 
+              <Select
+                options={countryOptions}
                 value={selectedCountry}
                 onChange={(option) => {
                   setSelectedCountry(option);
+                  setSelectedState(null);
                   setSelectedCityOption(null);
                 }}
                 styles={selectStyles}
                 placeholder={t('forms.countryPlaceholder')}
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-extrabold text-brand-text-secondary block mb-1.5">Region</label>
+              <Select
+                options={selectedCountry && csc ?
+                  (csc.State.getStatesOfCountry(selectedCountry.value) ?? []).map((s: any) => ({
+                    value: s.isoCode,
+                    label: s.name
+                  }))
+                  : []
+                }
+                value={selectedState}
+                onChange={(option) => {
+                  setSelectedState(option);
+                  setSelectedCityOption(null);
+                }}
+                isDisabled={!selectedCountry || !csc}
+                isLoading={!csc}
+                styles={selectStyles}
+                placeholder="Region..."
               />
             </div>
             <div>
