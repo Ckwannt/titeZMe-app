@@ -20,7 +20,7 @@ export default function BarberOnboarding() {
   const { user, appUser } = useAuth();
   const { t } = useLang();
   const [step, setStep] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = 5;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -52,13 +52,17 @@ export default function BarberOnboarding() {
   const [phoneCode, setPhoneCode] = useState<any>(null);
   const [phoneNumberInput, setPhoneNumberInput] = useState("");
   const [selectedLanguages, setSelectedLanguages] = useState<any>([]);
-  
-  // Step 2
+
+  // Step 2 — capability cards (flow-control only; not persisted as profile fields)
+  const [offersServices, setOffersServices] = useState(false);
+  const [partOfBusiness, setPartOfBusiness] = useState(false);
+
+  // Step 3
   const [vibe, setVibe] = useState<string[]>([]);
   const [days, setDays] = useState(["Mon", "Tue", "Wed", "Thu", "Fri"]);
   const [specialty, setSpecialty] = useState<string[]>([]);
   const [clientele, setClientele] = useState<string[]>([]);
-  // Step 3
+  // Step 4
   const [servicesData, setServicesData] = useState([
     { name: "Skin Fade", duration: "45", price: "18" }, 
     { name: "Classic Cut", duration: "30", price: "14" }
@@ -74,6 +78,7 @@ export default function BarberOnboarding() {
           firstName, lastName, bio,
           selectedCountry, selectedState, selectedCityOption,
           phoneCode, phoneNumberInput, selectedLanguages,
+          offersServices, partOfBusiness,
           vibe, days, specialty, clientele,
           servicesData, titzData,
           lastStep: newStep,
@@ -85,6 +90,20 @@ export default function BarberOnboarding() {
       }
     }
     setStep(newStep);
+  };
+
+  // Conditional flow: Vibe (3) and Services (4) only exist when the pro offers
+  // services. If they don't, Step 2 jumps straight to Go Live (5), and Back
+  // from 5 returns to 4 (if services) or 2 (if not).
+  const getNextStep = (current: number): number => {
+    if (current === 2) return offersServices ? 3 : 5;
+    return current + 1;
+  };
+
+  const getPrevStep = (current: number): number => {
+    if (current === 3) return 2;
+    if (current === 5) return offersServices ? 4 : 2;
+    return current - 1;
   };
 
   useEffect(() => { import('country-state-city').then(m => setCsc(m)); }, []);
@@ -113,6 +132,8 @@ export default function BarberOnboarding() {
           if (d.phoneCode) setPhoneCode(d.phoneCode);
           if (d.phoneNumberInput) setPhoneNumberInput(d.phoneNumberInput);
           if (d.selectedLanguages) setSelectedLanguages(d.selectedLanguages);
+          if (typeof d.offersServices === 'boolean') setOffersServices(d.offersServices);
+          if (typeof d.partOfBusiness === 'boolean') setPartOfBusiness(d.partOfBusiness);
           if (d.vibe) setVibe(d.vibe);
           if (d.days) setDays(d.days);
           if (d.specialty) setSpecialty(d.specialty);
@@ -388,7 +409,7 @@ export default function BarberOnboarding() {
     }
   };
 
-  const stepTitles = [t('onboarding.basicInfo'), t('onboarding.yourVibe'), t('booking.services'), t('onboarding.goLive')];
+  const stepTitles = [t('onboarding.basicInfo'), t('onboarding.howWouldYouUse'), t('onboarding.yourVibe'), t('booking.services'), t('onboarding.goLive')];
 
   return (
     <div className="max-w-[560px] mx-auto p-6 md:p-8">
@@ -548,8 +569,41 @@ export default function BarberOnboarding() {
         </div>
       )}
 
-      {/* STEP 2: Vibe */}
+      {/* STEP 2: How would you like to use titeZMe? (capability cards) */}
       {step === 2 && (
+        <div className="animate-fadeUp">
+          <p className="text-brand-text-secondary text-sm mb-5 leading-[1.7]">
+            {t('onboarding.howWouldYouUse')}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button
+              onClick={() => setOffersServices(!offersServices)}
+              className={`rounded-[10px] p-4 text-left border-2 transition-all cursor-pointer ${
+                offersServices
+                  ? "border-brand-yellow bg-[#1a1500] text-brand-yellow"
+                  : "border-[#2a2a2a] bg-[#141414] text-[#888] hover:border-[#444] hover:text-white"
+              }`}
+            >
+              <div className="text-sm mb-1 font-extrabold">💼 {t('onboarding.offerServices')}</div>
+              <div className="text-[11px] opacity-70 font-bold">{t('onboarding.offerServicesDesc')}</div>
+            </button>
+            <button
+              onClick={() => setPartOfBusiness(!partOfBusiness)}
+              className={`rounded-[10px] p-4 text-left border-2 transition-all cursor-pointer ${
+                partOfBusiness
+                  ? "border-brand-yellow bg-[#1a1500] text-brand-yellow"
+                  : "border-[#2a2a2a] bg-[#141414] text-[#888] hover:border-[#444] hover:text-white"
+              }`}
+            >
+              <div className="text-sm mb-1 font-extrabold">🏢 {t('onboarding.partOfBusiness')}</div>
+              <div className="text-[11px] opacity-70 font-bold">{t('onboarding.partOfBusinessDesc')}</div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3: Vibe */}
+      {step === 3 && (
         <div className="animate-fadeUp">
           <p className="text-brand-text-secondary text-sm mb-5 leading-[1.7]">
             {t('onboarding.vibeDesc')}
@@ -648,8 +702,8 @@ export default function BarberOnboarding() {
         </div>
       )}
 
-      {/* STEP 3: Services */}
-      {step === 3 && (
+      {/* STEP 4: Services */}
+      {step === 4 && (
         <div className="animate-fadeUp flex flex-col gap-3.5">
           <div className="bg-[#0d1a2e] border border-[#1e3a5f] rounded-xl p-3.5 text-[13px] text-[#93c5fd]">
             ℹ️ Add the services you offer. You can edit these anytime from your dashboard.
@@ -698,8 +752,8 @@ export default function BarberOnboarding() {
         </div>
       )}
 
-      {/* STEP 4: Go Live */}
-      {step === 4 && (
+      {/* STEP 5: Go Live */}
+      {step === 5 && (
         <div className="animate-fadeUp text-center">
           <div className="text-[56px] mb-4">🚀</div>
           <h2 className="text-2xl font-black mb-2.5">{t('onboarding.readyToGoLive')}</h2>
@@ -728,7 +782,7 @@ export default function BarberOnboarding() {
           <div className="flex justify-between mt-7">
             <button
               className="bg-transparent text-white border-[1.5px] border-[#2a2a2a] px-6 py-3 rounded-full font-extrabold text-sm transition-all hover:border-[#555]"
-              onClick={() => saveDraftAndGoToStep(3)}
+              onClick={() => saveDraftAndGoToStep(getPrevStep(5))}
             >
               {t('booking.back')}
             </button>
@@ -744,16 +798,20 @@ export default function BarberOnboarding() {
       )}
 
       {/* Navigation */}
-      {step < 4 && (
+      {step < 5 && (
         <div className="flex justify-between mt-7">
           {step > 1 ? (
-            <button className="bg-transparent text-white border-[1.5px] border-[#2a2a2a] px-6 py-3 rounded-full font-extrabold text-sm transition-all hover:border-[#555]" onClick={() => saveDraftAndGoToStep(step - 1)}>{t('booking.back')}</button>
+            <button className="bg-transparent text-white border-[1.5px] border-[#2a2a2a] px-6 py-3 rounded-full font-extrabold text-sm transition-all hover:border-[#555]" onClick={() => saveDraftAndGoToStep(getPrevStep(step))}>{t('booking.back')}</button>
           ) : <div />}
-          <button className="bg-brand-yellow text-[#0a0a0a] px-7 py-3 rounded-full font-black text-sm transition-all hover:-translate-y-px" onClick={() => {
-            track('onboarding_step_completed', { step, role: 'professional' });
-            saveDraftAndGoToStep(step + 1);
-          }}>
-            {step === 3 ? t('onboarding.reviewLaunch') : t('onboarding.continueStep')}
+          <button
+            disabled={step === 2 && !offersServices && !partOfBusiness}
+            className="bg-brand-yellow text-[#0a0a0a] px-7 py-3 rounded-full font-black text-sm transition-all hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+            onClick={() => {
+              track('onboarding_step_completed', { step, role: 'professional' });
+              saveDraftAndGoToStep(getNextStep(step));
+            }}
+          >
+            {getNextStep(step) === 5 ? t('onboarding.reviewLaunch') : t('onboarding.continueStep')}
           </button>
         </div>
       )}
