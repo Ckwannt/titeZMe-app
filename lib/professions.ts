@@ -12,9 +12,8 @@
 //
 // Source of truth: titeZMe-profession-taxonomy.md (categories/colors/tiers/
 // business types/emoji) + titeZMe-translations-en-es.md (ids + EN/ES labels).
-// Scope: the 27 professions fully specified in the EN/ES doc. The 18 "expansion
-// draft" professions are intentionally omitted until their ids/specialty
-// ids/Spanish are defined.
+// Scope: all 45 professions — the original 27 plus the 18 expansion professions
+// (ids/specialty ids/EN-ES translations now defined) — are present and enabled.
 
 export interface Category {
   id: string;
