@@ -93,6 +93,7 @@ export const businessSchema = z.object({
     floor: z.string().optional(),
     floorSuite: z.string().optional(),
     city: z.string().optional(),
+    state: z.string().optional(),
     country: z.string().optional(),
     postalCode: z.string().optional(),
   }),

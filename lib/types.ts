@@ -57,6 +57,7 @@ export interface UserDocument {
   firstName: string;
   lastName: string;
   city: string;
+  state?: string;
   country: string;
   photoUrl?: string;
   phone?: string;
@@ -88,6 +89,7 @@ export interface Business {
     floor?: string;
     floorSuite?: string;
     city?: string;
+    state?: string;
     country?: string;
     postalCode?: string;
   };
