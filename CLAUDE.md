@@ -42,7 +42,7 @@ Three user roles: client, barber, shop owner (barber who owns a shop).
 ## Critical Version Locks — NEVER CHANGE
 
 ```
-next:       exactly "15.3.1"
+next:       exactly "15.3.6"
 react:      exactly "18.3.1"
 react-dom:  exactly "18.3.1"
 uuid:       exactly "11.0.3"

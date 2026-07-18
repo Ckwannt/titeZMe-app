@@ -34,7 +34,7 @@ export default function ClientDashboardLayout({ children }: { children: React.Re
     { href: '/dashboard/client/messages', icon: '', label: t('clientDash.messagesTitle'), soon: true },
     { href: '/dashboard/client/my-look', icon: '', label: t('clientDash.myLookTitle'), soon: true },
     { href: '/dashboard/client/favorites', icon: '', label: t('clientDash.favorites') },
-    { href: '/dashboard/client/titeZMe-artist', icon: '', label: t('clientDash.titeZMeArtistNavLabel'), soon: true },
+    { href: '/dashboard/client/titiza', icon: '', label: t('clientDash.titizaNavLabel') },
     { href: '/dashboard/client/gift-a-cut', icon: '', label: t('clientDash.giftACutTitle'), soon: true },
     { href: '/dashboard/client/reviews', icon: '', label: t('clientDash.reviews') },
     { href: '/dashboard/client/badges', icon: '', label: t('clientDash.badgesTitle'), soon: true },

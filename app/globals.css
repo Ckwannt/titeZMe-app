@@ -18,6 +18,32 @@
   --animate-fadeIn: fadeIn 0.4s ease both;
   --animate-pulse: pulse 0.6s ease;
   --animate-marquee: marquee 20s linear infinite;
+
+  /* ---- Titiza page design tokens (scoped in use to /dashboard/client/titiza) ---- */
+  --color-background: oklch(0.16 0.008 60);
+  --color-foreground: oklch(0.96 0.006 80);
+  --color-card: oklch(0.21 0.01 65 / 55%);
+  --color-card-foreground: oklch(0.96 0.006 80);
+  --color-secondary: oklch(0.26 0.01 65);
+  --color-secondary-foreground: oklch(0.96 0.006 80);
+  --color-muted-foreground: oklch(0.72 0.02 78);
+  --color-border: oklch(0.85 0.09 85 / 12%);
+  --color-primary: oklch(0.82 0.13 85);
+  --color-primary-foreground: oklch(0.18 0.02 70);
+  --color-gold: oklch(0.82 0.13 85);
+  --color-gold-soft: oklch(0.88 0.09 88);
+  --color-gold-muted: oklch(0.72 0.08 82);
+
+  /* Cormorant Garamond is loaded only on the Titiza route via next/font
+     (--font-titiza-serif); elsewhere this degrades to a system serif. */
+  --font-serif: var(--font-titiza-serif), ui-serif, Georgia, "Times New Roman", serif;
+}
+
+/* Raw custom props for direct var() references inside Titiza CSS below */
+:root {
+  --gold: oklch(0.82 0.13 85);
+  --gold-soft: oklch(0.88 0.09 88);
+  --gold-muted: oklch(0.72 0.08 82);
 }
 
 @keyframes marquee {
@@ -60,5 +86,99 @@ select {
 @media (max-width: 767px) {
   .hidden-mobile {
     display: none !important;
+  }
+}
+
+/* ============================================================================
+   Titiza page — ambient / breathing animations + glass utilities
+   Used only by /dashboard/client/titiza and its components.
+   ========================================================================== */
+@keyframes titiza-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-14px); }
+}
+
+@keyframes titiza-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.06); }
+}
+
+@keyframes titiza-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(3%, -4%, 0) scale(1.08); }
+  66% { transform: translate3d(-3%, 3%, 0) scale(0.96); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes titiza-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes titiza-fade-up {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-titiza-float {
+  animation: titiza-float 7s ease-in-out infinite;
+}
+.animate-titiza-breathe {
+  animation: titiza-breathe 6s ease-in-out infinite;
+}
+.animate-titiza-drift {
+  animation: titiza-drift 22s ease-in-out infinite;
+}
+.animate-titiza-fade-up {
+  animation: titiza-fade-up 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.titiza-shimmer-text {
+  background: linear-gradient(
+    100deg,
+    var(--gold-muted) 0%,
+    var(--gold-soft) 25%,
+    oklch(0.98 0.02 90) 50%,
+    var(--gold-soft) 75%,
+    var(--gold-muted) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: titiza-shimmer 8s linear infinite;
+}
+
+.titiza-glass {
+  background: linear-gradient(
+    160deg,
+    oklch(0.28 0.012 70 / 45%) 0%,
+    oklch(0.19 0.01 65 / 35%) 100%
+  );
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  border: 1px solid oklch(0.85 0.09 85 / 12%);
+}
+
+.titiza-glass-hover {
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.5s ease,
+    box-shadow 0.5s ease;
+}
+.titiza-glass-hover:hover {
+  transform: translateY(-6px);
+  border-color: oklch(0.85 0.09 85 / 28%);
+  box-shadow: 0 30px 80px -40px oklch(0.82 0.13 85 / 35%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-titiza-float,
+  .animate-titiza-breathe,
+  .animate-titiza-drift,
+  .animate-titiza-fade-up,
+  .titiza-shimmer-text {
+    animation: none;
   }
 }
