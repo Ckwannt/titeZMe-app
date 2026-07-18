@@ -1,7 +1,11 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import type { MutableRefObject } from 'react'
 import { OrbitLabels } from './orbit-labels'
+import type { TitizaCoreApi } from './titiza-core-scene'
+
+export type { TitizaCoreApi }
 
 /**
  * TitizaCore — the swappable "center component".
@@ -18,6 +22,15 @@ const TitizaCoreScene = dynamic(() => import('./titiza-core-scene'), {
   loading: () => <CoreFallback />,
 })
 
+type TitizaCoreProps = {
+  /** Play the one-time birth animation (first-visit only). */
+  genesis?: boolean
+  /** Fires once when the orb has fully resolved into its resting state. */
+  onGenesisComplete?: () => void
+  /** Populated by the scene with imperative reaction triggers. */
+  apiRef?: MutableRefObject<TitizaCoreApi | null>
+}
+
 function CoreFallback() {
   return (
     <div className="absolute inset-0 flex items-center justify-center">
@@ -26,7 +39,7 @@ function CoreFallback() {
   )
 }
 
-export function TitizaCore() {
+export function TitizaCore({ genesis, onGenesisComplete, apiRef }: TitizaCoreProps) {
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[720px]">
       {/* Ambient light bloom behind the presence */}
@@ -42,7 +55,11 @@ export function TitizaCore() {
 
       {/* The 3D presence */}
       <div className="absolute inset-0">
-        <TitizaCoreScene />
+        <TitizaCoreScene
+          genesis={genesis}
+          onGenesisComplete={onGenesisComplete}
+          apiRef={apiRef}
+        />
       </div>
 
       {/* Soft floating context labels around the presence */}

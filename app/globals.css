@@ -120,6 +120,13 @@ select {
   100% { opacity: 1; transform: translateY(0); }
 }
 
+/* Opacity-only reveal — used by the genesis greeting, the "Let's Begin" CTA
+   and the genesis→dashboard cross-fade. No slide (spec: opacity only). */
+@keyframes titiza-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
 .animate-titiza-float {
   animation: titiza-float 7s ease-in-out infinite;
 }
@@ -131,6 +138,9 @@ select {
 }
 .animate-titiza-fade-up {
   animation: titiza-fade-up 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-titiza-fade-in {
+  animation: titiza-fade-in 0.6s ease-out both;
 }
 
 .titiza-shimmer-text {

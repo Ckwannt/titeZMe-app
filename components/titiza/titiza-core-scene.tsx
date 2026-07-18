@@ -33,11 +33,44 @@
  * dependency for the 3D layer. The visual design is unchanged.
  */
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type MutableRefObject } from 'react'
 import * as THREE from 'three'
 
 const GOLD = new THREE.Color('#e8c47a')
 const GOLD_BRIGHT = new THREE.Color('#f7e6b4')
+
+/**
+ * Imperative reactions the hero can trigger on the living orb. These are
+ * intentionally NOT tied to hover/click — the orb is never interactive
+ * (Frozen Decision #4). They are timed against the greeting choreography.
+ */
+export type TitizaCoreApi = {
+  /** Brief sustained brighten (~10-15%) — the eye-contact reaction. */
+  reactEyeContact: () => void
+  /** Quick, small pulse — a heartbeat, distinct from the §3.4 genesis ring. */
+  reactPulse: () => void
+}
+
+type TitizaCoreSceneProps = {
+  /** Play the one-time birth animation. When false the orb mounts already alive. */
+  genesis?: boolean
+  /** Fires once, when the orb has fully resolved into its resting state. */
+  onGenesisComplete?: () => void
+  /** Populated by the scene with imperative reaction triggers. */
+  apiRef?: MutableRefObject<TitizaCoreApi | null>
+}
+
+/* Easing helpers for the genesis timeline (no animation library). */
+const easeOutCubic = (p: number) => 1 - Math.pow(1 - p, 3)
+const easeInOutCubic = (p: number) =>
+  p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2
+/** Back-out spring: overshoots ~1.1 then settles to 1. */
+const backOut = (p: number) => {
+  const s = 1.70158
+  const q = p - 1
+  return 1 + q * q * ((s + 1) * q + s)
+}
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
 
 /* Shared GLSL for the Fresnel-lit, gently displacing glass membranes. */
 const SHELL_VERTEX = /* glsl */ `
@@ -155,12 +188,26 @@ function makeOrbitalRing(opts: {
   return { mesh, material, radius, speed, baseOpacity: opacity }
 }
 
-export default function TitizaCoreScene() {
+export default function TitizaCoreScene({
+  genesis = false,
+  onGenesisComplete,
+  apiRef,
+}: TitizaCoreSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  // Keep the latest onGenesisComplete without re-running the (heavy) scene
+  // effect, whose dependency array is intentionally empty.
+  const onGenesisCompleteRef = useRef(onGenesisComplete)
+  onGenesisCompleteRef.current = onGenesisComplete
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
+
+    const prefersReduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches
+    // Whether the birth sequence runs at all this mount.
+    const doGenesis = genesis
 
     /* -------------------------- renderer + camera ------------------------- */
     const renderer = new THREE.WebGLRenderer({
@@ -335,6 +382,102 @@ export default function TitizaCoreScene() {
     const particles = new THREE.Points(particleGeo, particleMat)
     floatGroup.add(particles)
 
+    /* 7. persistent ambient orbiters — "dust around a planet". ~10 tiny motes
+          on slow orbits that live for as long as the orb does (both the
+          genesis path and the repeat-visit path). Distinct from the genesis
+          burst (which plays once) and from the inflow stream (which flows
+          inward). Added to floatGroup so they ride along once the orb is alive
+          and inherit the birth reveal. */
+    const DUST_COUNT = 10
+    const dustPos = new Float32Array(DUST_COUNT * 3)
+    const dustDir = new Float32Array(DUST_COUNT * 3)
+    const dustRadius = new Float32Array(DUST_COUNT)
+    const dustPhase = new Float32Array(DUST_COUNT)
+    for (let i = 0; i < DUST_COUNT; i++) {
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.acos(2 * Math.random() - 1)
+      dustDir[i * 3] = Math.sin(phi) * Math.cos(theta)
+      dustDir[i * 3 + 1] = Math.sin(phi) * Math.sin(theta)
+      dustDir[i * 3 + 2] = Math.cos(phi)
+      dustRadius[i] = 2.0 + Math.random() * 0.7
+      dustPhase[i] = Math.random() * Math.PI * 2
+      dustPos[i * 3] = dustDir[i * 3] * dustRadius[i]
+      dustPos[i * 3 + 1] = dustDir[i * 3 + 1] * dustRadius[i]
+      dustPos[i * 3 + 2] = dustDir[i * 3 + 2] * dustRadius[i]
+    }
+    const dustGeo = new THREE.BufferGeometry()
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3))
+    const dust = new THREE.Points(
+      dustGeo,
+      new THREE.PointsMaterial({
+        size: 0.03,
+        color: GOLD_BRIGHT,
+        transparent: true,
+        opacity: 0.55,
+        sizeAttenuation: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    )
+    floatGroup.add(dust)
+    // Reduced motion → orbit even slower.
+    const dustSpeed = prefersReduced ? 0.01 : 0.025
+
+    /* -------------------------- genesis-only objects ---------------------- */
+    // The birth-particle burst: motes converge from a loose sphere into the
+    // core. Parked at the center (radius 0) until revealed, so before the
+    // spawn phase they read as a single seed point. Added to `rig` (not
+    // floatGroup) so the birth is not scaled away while the orb resolves.
+    const G_COUNT = 140
+    const gDir = new Float32Array(G_COUNT * 3)
+    const gTarget = new Float32Array(G_COUNT)
+    const gPos = new Float32Array(G_COUNT * 3)
+    for (let i = 0; i < G_COUNT; i++) {
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.acos(2 * Math.random() - 1)
+      gDir[i * 3] = Math.sin(phi) * Math.cos(theta)
+      gDir[i * 3 + 1] = Math.sin(phi) * Math.sin(theta)
+      gDir[i * 3 + 2] = Math.cos(phi)
+      gTarget[i] = 1.2 + Math.random() * 0.7
+      // start collapsed at center
+      gPos[i * 3] = 0
+      gPos[i * 3 + 1] = 0
+      gPos[i * 3 + 2] = 0
+    }
+    const genesisGeo = new THREE.BufferGeometry()
+    genesisGeo.setAttribute('position', new THREE.BufferAttribute(gPos, 3))
+    const genesisMat = new THREE.PointsMaterial({
+      size: 0.05,
+      color: GOLD_BRIGHT,
+      transparent: true,
+      opacity: 0,
+      sizeAttenuation: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+    const genesisBurst = new THREE.Points(genesisGeo, genesisMat)
+    genesisBurst.visible = doGenesis
+    rig.add(genesisBurst)
+
+    // One-shot expanding ring pulse as the orb resolves (§3.4).
+    const genesisRingMat = new THREE.MeshBasicMaterial({
+      color: GOLD_BRIGHT,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+    const genesisRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1, 0.02, 16, 128),
+      genesisRingMat,
+    )
+    genesisRing.rotation.x = Math.PI / 2.2
+    genesisRing.visible = doGenesis
+    rig.add(genesisRing)
+
+    // The orb is born hidden on the genesis path; already full-size otherwise.
+    floatGroup.scale.setScalar(doGenesis ? 0 : 1)
+
     /* ----------------------- pointer (cursor) tracking -------------------- */
     // Normalized device coords relative to the canvas, matching r3f's pointer.
     const pointer = new THREE.Vector2(0, 0)
@@ -356,15 +499,117 @@ export default function TitizaCoreScene() {
     }
     window.addEventListener('resize', onResize)
 
+    /* ---------------------- imperative reactions (API) -------------------- */
+    // Eye-contact = a brief sustained brighten; pulse = a quick heartbeat.
+    // Both decay on their own in the loop. Reactions are muted under reduced
+    // motion (the brighten still applies faintly; the scale pulse is dropped).
+    let glowBoost = 0 // current brighten amount
+    let glowTarget = 0 // where brighten is easing toward
+    let pulseVal = 0 // quick heartbeat, decays fast
+    if (apiRef) {
+      apiRef.current = {
+        reactEyeContact: () => {
+          glowTarget = prefersReduced ? 0.06 : 0.13
+        },
+        reactPulse: () => {
+          if (!prefersReduced) pulseVal = 1
+        },
+      }
+    }
+
     /* --------------------------- animation loop --------------------------- */
     const clock = new THREE.Clock()
     const floatOffset = Math.random() * 10000
     let raf = 0
+    let genesisComplete = !doGenesis
+    const fireGenesisComplete = () => {
+      if (genesisComplete) return
+      genesisComplete = true
+      onGenesisCompleteRef.current?.()
+    }
 
     const animate = () => {
       raf = requestAnimationFrame(animate)
       const delta = clock.getDelta()
       const t = clock.elapsedTime
+
+      // ---- genesis birth sequence (plays once, drives floatGroup.scale) ----
+      if (doGenesis && !genesisComplete) {
+        const gt = t
+        const gArr = genesisGeo.attributes.position.array as Float32Array
+        if (prefersReduced) {
+          // Reduced motion: collapse to a ~1.5s scale/fade to the resting orb.
+          const p = clamp01(gt / 1.5)
+          floatGroup.scale.setScalar(easeOutCubic(p))
+          genesisBurst.visible = false
+          genesisRing.visible = false
+          if (gt >= 1.5) fireGenesisComplete()
+        } else if (gt < 0.8) {
+          // 0.0–0.8s — a single seed point fades in at center.
+          genesisMat.opacity = clamp01(gt / 0.8)
+          for (let i = 0; i < G_COUNT; i++) {
+            gArr[i * 3] = 0
+            gArr[i * 3 + 1] = 0
+            gArr[i * 3 + 2] = 0
+          }
+          genesisGeo.attributes.position.needsUpdate = true
+          floatGroup.scale.setScalar(0)
+        } else if (gt < 1.8) {
+          // 0.8–1.8s — points spawn on an accelerating (ease-in) curve into a
+          // loose sphere.
+          const p = (gt - 0.8) / 1.0
+          const eased = p * p
+          const revealCount = 1 + Math.floor(eased * (G_COUNT - 1))
+          genesisMat.opacity = 1
+          for (let i = 0; i < G_COUNT; i++) {
+            const r = i < revealCount ? gTarget[i] * eased : 0
+            gArr[i * 3] = gDir[i * 3] * r
+            gArr[i * 3 + 1] = gDir[i * 3 + 1] * r
+            gArr[i * 3 + 2] = gDir[i * 3 + 2] * r
+          }
+          genesisGeo.attributes.position.needsUpdate = true
+          floatGroup.scale.setScalar(0)
+        } else if (gt < 2.8) {
+          // 1.8–2.8s — points drift toward center (ease-in-out cubic), losing
+          // individual identity and fading as they blend into the glow.
+          const p = (gt - 1.8) / 1.0
+          const e = easeInOutCubic(p)
+          genesisMat.opacity = 1 - e
+          for (let i = 0; i < G_COUNT; i++) {
+            const r = THREE.MathUtils.lerp(gTarget[i], 0.2, e)
+            gArr[i * 3] = gDir[i * 3] * r
+            gArr[i * 3 + 1] = gDir[i * 3 + 1] * r
+            gArr[i * 3 + 2] = gDir[i * 3 + 2] * r
+          }
+          genesisGeo.attributes.position.needsUpdate = true
+          floatGroup.scale.setScalar(0)
+        } else if (gt < 4.5) {
+          // 2.8–4.5s — orb resolves to full size with a single expanding ring
+          // pulse and a slight spring overshoot-settle.
+          const p = clamp01((gt - 2.8) / 1.7)
+          genesisBurst.visible = false
+          floatGroup.scale.setScalar(Math.max(0, backOut(p)))
+          genesisRing.visible = true
+          genesisRing.scale.setScalar(1 + p * 2.4)
+          genesisRingMat.opacity = (1 - p) * 0.5
+        } else {
+          // 4.5s+ — hand off to the existing resting behavior.
+          floatGroup.scale.setScalar(1)
+          genesisBurst.visible = false
+          genesisRing.visible = false
+          fireGenesisComplete()
+        }
+      }
+
+      // ---- reaction envelopes (eye-contact brighten + quick pulse) ----
+      glowBoost = THREE.MathUtils.damp(glowBoost, glowTarget, 6, delta)
+      glowTarget = THREE.MathUtils.damp(glowTarget, 0, 0.5, delta) // slow release
+      pulseVal = THREE.MathUtils.damp(pulseVal, 0, 9, delta) // quick release
+
+      // ambient orbiters — slow rotation + faint radius breathing
+      dust.rotation.y = t * dustSpeed * 2
+      dust.rotation.x = Math.sin(t * 0.05) * 0.3
+      dust.scale.setScalar(1 + Math.sin(t * 0.3) * 0.03)
 
       // PresenceRig — calm rotation toward the cursor + subtle parallax drift
       const targetY = pointer.x * 0.35
@@ -381,15 +626,18 @@ export default function TitizaCoreScene() {
       floatGroup.rotation.z = (Math.sin(tf / 4) / 20) * 0.18
       floatGroup.position.y = (Math.sin(tf / 4) / 10) * 0.45
 
-      // inner glow — breathing scale + opacity
+      // inner glow — breathing scale + opacity (lifted by eye-contact brighten)
       const glowScale = 0.72 + Math.sin(t * 0.75) * 0.05
       innerGlow.scale.setScalar(glowScale)
-      ;(innerGlow.material as THREE.MeshBasicMaterial).opacity = 0.34 + Math.sin(t * 0.75) * 0.1
+      ;(innerGlow.material as THREE.MeshBasicMaterial).opacity =
+        (0.34 + Math.sin(t * 0.75) * 0.1) * (1 + glowBoost)
 
       // core heart — slow spin, breathe, inner-light pulse
+      // (+ eye-contact brighten on emissive, + quick heartbeat on scale/emissive)
       coreHeart.rotation.y = -t * 0.14
-      coreHeart.scale.setScalar(0.55 + Math.sin(t * 0.7) * 0.028)
-      coreMat.emissiveIntensity = 0.65 + Math.sin(t * 0.7) * 0.22
+      coreHeart.scale.setScalar(0.55 + Math.sin(t * 0.7) * 0.028 + pulseVal * 0.06)
+      coreMat.emissiveIntensity =
+        (0.65 + Math.sin(t * 0.7) * 0.22) * (1 + glowBoost) + pulseVal * 0.4
 
       // energy shells — flowing uniforms + rotation + breathing scale
       const shellScale = 1 + Math.sin(t * 0.55) * 0.045
@@ -441,6 +689,7 @@ export default function TitizaCoreScene() {
     /* ------------------------------ cleanup ------------------------------- */
     return () => {
       cancelAnimationFrame(raf)
+      if (apiRef) apiRef.current = null
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('resize', onResize)
 

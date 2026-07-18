@@ -6,7 +6,7 @@ import {
   onAuthStateChanged,
   signOut
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, type Timestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { userUpdateSchema } from "@/lib/schemas";
 
@@ -39,6 +39,16 @@ export interface AppUser {
   rating?: number;
   reviewCount?: number;
   totalCuts?: number;
+  /**
+   * Titiza first-meeting state. Absent === user has never met Titiza
+   * (hasMet is treated as false). Written by lib/titiza-utils.ts.
+   */
+  titiza?: {
+    hasMet: boolean;
+    firstMetAt?: Timestamp;
+    lastVisitAt?: Timestamp;
+    introVersion?: number;
+  };
   [key: string]: any;
 }
 
