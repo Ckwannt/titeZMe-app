@@ -30,11 +30,15 @@ export function PathAnalysis({
   const [beat, setBeat] = useState<Beat>('ack')
   const [exitLineShown, setExitLineShown] = useState(false)
   const timersRef = useRef<number[]>([])
+  // The grid unmounts when this path opens; move focus here so keyboard/AT
+  // users aren't dropped to <body> (§11).
+  const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const timers = timersRef.current
     const d = (ms: number) => (reducedMotion ? 0 : ms)
 
+    rootRef.current?.focus()
     apiRef.current?.reactEyeContact() // soft brighten as Titiza acknowledges
 
     // acknowledgment holds through a beat of silence, then the invitation, then
@@ -67,7 +71,12 @@ export function PathAnalysis({
   }
 
   return (
-    <div className="mt-8 flex w-full max-w-md flex-col items-center text-center">
+    <div
+      ref={rootRef}
+      tabIndex={-1}
+      aria-live="polite"
+      className="mt-8 flex w-full max-w-md flex-col items-center text-center focus:outline-none"
+    >
       {beat !== 'exiting' && (
         <div className="animate-titiza-fade-in">
           <p className="font-serif text-4xl font-light text-foreground">

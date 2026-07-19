@@ -141,7 +141,10 @@ export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowPro
       {/* Question + tiles — the selection surface. Recedes once a path opens. */}
       {!revealed && (
         <>
-          <div className="-mt-2 flex max-w-xl flex-col items-center">
+          <div
+            aria-live="polite"
+            className="-mt-2 flex max-w-xl flex-col items-center"
+          >
             {line1Shown && (
               <h2 className="animate-titiza-fade-in font-serif text-3xl font-light text-foreground sm:text-4xl">
                 What would you like us to work on today?

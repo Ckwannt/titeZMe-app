@@ -11,7 +11,7 @@
  * feature flag keeps real users out of this screen, so inert CTAs are fine.
  */
 
-import { useEffect, type MutableRefObject } from 'react'
+import { useEffect, useRef, type MutableRefObject } from 'react'
 import type { TitizaCoreApi } from './titiza-core'
 
 interface PathDirectProps {
@@ -21,7 +21,12 @@ interface PathDirectProps {
 }
 
 export function PathDirect({ categoryName, apiRef }: PathDirectProps) {
+  // The grid unmounts when this path opens; move focus here so keyboard/AT
+  // users aren't dropped to <body> (§11).
+  const rootRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
+    rootRef.current?.focus()
     apiRef.current?.reactEyeContact() // soft brighten as the panel resolves
   }, [apiRef])
 
@@ -41,7 +46,12 @@ export function PathDirect({ categoryName, apiRef }: PathDirectProps) {
   }
 
   return (
-    <div className="mt-8 flex w-full max-w-md flex-col items-center text-center">
+    <div
+      ref={rootRef}
+      tabIndex={-1}
+      aria-live="polite"
+      className="mt-8 flex w-full max-w-md flex-col items-center text-center focus:outline-none"
+    >
       <div className="titiza-glass w-full animate-titiza-fade-up rounded-2xl px-6 py-8">
         <h3 className="font-serif text-2xl font-light text-foreground">
           Continue with Professionals
