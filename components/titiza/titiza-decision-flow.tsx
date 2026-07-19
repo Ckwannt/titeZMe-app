@@ -14,8 +14,11 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
+import { useLang } from '@/lib/i18n/LangContext'
+import { getCategory } from '@/lib/professions'
 import { TitizaCore, type TitizaCoreApi } from './titiza-core'
 import { CategoryGrid } from './category-grid'
+import { PathAnalysis } from './path-analysis'
 
 interface TitizaDecisionFlowProps {
   /** First name for future personalized beats; unused copy in CP1. */
@@ -24,6 +27,7 @@ interface TitizaDecisionFlowProps {
 
 export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowProps) {
   void userName // reserved for later checkpoints
+  const { t } = useLang()
   const apiRef = useRef<TitizaCoreApi | null>(null)
   const timersRef = useRef<number[]>([])
 
@@ -110,6 +114,12 @@ export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowPro
     }
   }, [])
 
+  // Resolve the selection for the reveal stage. Path branch is on the field
+  // (titizaEntryMode), never the category name (Frozen Decision #1).
+  const selectedCategory = selectedId ? getCategory(selectedId) : null
+  const categoryName = selectedId ? t(`category.${selectedId}`) : ''
+  const revealed = stage === 'revealed'
+
   return (
     <div className="flex flex-col items-center text-center animate-titiza-fade-in">
       {/* Orb at the fixed upper anchor (~20-25% from top). Smaller than the
@@ -127,31 +137,44 @@ export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowPro
         <TitizaCore genesis={false} apiRef={apiRef} />
       </div>
 
-      {/* Titiza speaks. */}
-      <div className="-mt-2 flex max-w-xl flex-col items-center">
-        {line1Shown && (
-          <h2 className="animate-titiza-fade-in font-serif text-3xl font-light text-foreground sm:text-4xl">
-            What would you like us to work on today?
-          </h2>
-        )}
-        {seedShown && (
-          <div className="mt-3 animate-titiza-fade-in">
-            <p className="text-sm font-light leading-relaxed text-muted-foreground opacity-70">
-              Your Beauty Profile becomes more personal over time.
-            </p>
+      {/* Question + tiles — the selection surface. Recedes once a path opens. */}
+      {!revealed && (
+        <>
+          <div className="-mt-2 flex max-w-xl flex-col items-center">
+            {line1Shown && (
+              <h2 className="animate-titiza-fade-in font-serif text-3xl font-light text-foreground sm:text-4xl">
+                What would you like us to work on today?
+              </h2>
+            )}
+            {seedShown && (
+              <div className="mt-3 animate-titiza-fade-in">
+                <p className="text-sm font-light leading-relaxed text-muted-foreground opacity-70">
+                  Your Beauty Profile becomes more personal over time.
+                </p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Category tiles (§5). */}
-      {tilesShown && (
-        <div className="mt-12 w-full max-w-xl animate-titiza-fade-in">
-          <CategoryGrid
-            selectedId={selectedId}
-            locked={stage !== 'choosing'}
-            onSelect={handleSelect}
-          />
-        </div>
+          {/* Category tiles (§5). */}
+          {tilesShown && (
+            <div className="mt-12 w-full max-w-xl animate-titiza-fade-in">
+              <CategoryGrid
+                selectedId={selectedId}
+                locked={stage !== 'choosing'}
+                onSelect={handleSelect}
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Path A — guided analysis (§7.1). Path B (§7.2) arrives in CP5. */}
+      {revealed && selectedCategory?.titizaEntryMode === 'analysis' && (
+        <PathAnalysis
+          categoryName={categoryName}
+          reducedMotion={reducedMotion}
+          apiRef={apiRef}
+        />
       )}
     </div>
   )
