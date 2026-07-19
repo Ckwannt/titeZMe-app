@@ -19,6 +19,7 @@ import { getCategory } from '@/lib/professions'
 import { TitizaCore, type TitizaCoreApi } from './titiza-core'
 import { CategoryGrid } from './category-grid'
 import { PathAnalysis } from './path-analysis'
+import { PathDirect } from './path-direct'
 
 interface TitizaDecisionFlowProps {
   /** First name for future personalized beats; unused copy in CP1. */
@@ -168,13 +169,18 @@ export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowPro
         </>
       )}
 
-      {/* Path A — guided analysis (§7.1). Path B (§7.2) arrives in CP5. */}
+      {/* Path A — guided analysis (§7.1). */}
       {revealed && selectedCategory?.titizaEntryMode === 'analysis' && (
         <PathAnalysis
           categoryName={categoryName}
           reducedMotion={reducedMotion}
           apiRef={apiRef}
         />
+      )}
+
+      {/* Path B — continue with professionals (§7.2). */}
+      {revealed && selectedCategory?.titizaEntryMode === 'direct' && (
+        <PathDirect categoryName={categoryName} apiRef={apiRef} />
       )}
     </div>
   )
