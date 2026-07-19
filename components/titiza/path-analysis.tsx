@@ -13,7 +13,7 @@
 import { useEffect, useRef, useState, type MutableRefObject } from 'react'
 import type { TitizaCoreApi } from './titiza-core'
 
-type Beat = 'ack' | 'invite' | 'card' | 'exiting'
+type Beat = 'ack' | 'invite1' | 'invite2' | 'card' | 'exiting'
 
 interface PathAnalysisProps {
   /** Localized category label, e.g. "Hair". */
@@ -41,10 +41,11 @@ export function PathAnalysis({
     rootRef.current?.focus()
     apiRef.current?.reactEyeContact() // soft brighten as Titiza acknowledges
 
-    // acknowledgment holds through a beat of silence, then the invitation, then
-    // the analysis card resolves in.
-    timers.push(window.setTimeout(() => setBeat('invite'), d(2200)))
-    timers.push(window.setTimeout(() => setBeat('card'), d(4000)))
+    // acknowledgment holds through a beat of silence, then the two invitation
+    // beats (~600ms apart, §7.1 step 3), then the analysis card resolves in.
+    timers.push(window.setTimeout(() => setBeat('invite1'), d(2200)))
+    timers.push(window.setTimeout(() => setBeat('invite2'), d(2800)))
+    timers.push(window.setTimeout(() => setBeat('card'), d(4200)))
 
     return () => timers.forEach((id) => clearTimeout(id))
   }, [apiRef, reducedMotion])
@@ -88,12 +89,17 @@ export function PathAnalysis({
         </div>
       )}
 
-      {/* Invitation beat. NOTE: exact copy is defined in UX spec §7.1, which is
-          not present in the repo — this line is provisional and should be
-          reconciled against the frozen spec. */}
-      {(beat === 'invite' || beat === 'card') && (
+      {/* Invitation beats (UX spec §7.1, step 3) — two separate beats ~600ms
+          apart, each holding once revealed. */}
+      {(beat === 'invite1' || beat === 'invite2' || beat === 'card') && (
         <p className="mt-6 animate-titiza-fade-in text-base font-light leading-relaxed text-muted-foreground">
-          Let&apos;s take a closer look, together.
+          The best recommendations start with understanding your{' '}
+          {categoryName.toLowerCase()}.
+        </p>
+      )}
+      {(beat === 'invite2' || beat === 'card') && (
+        <p className="mt-3 animate-titiza-fade-in text-base font-light leading-relaxed text-muted-foreground">
+          Let&apos;s create your Beauty Profile.
         </p>
       )}
 
