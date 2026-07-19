@@ -15,6 +15,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { TitizaCore, type TitizaCoreApi } from './titiza-core'
+import { CategoryGrid } from './category-grid'
 
 interface TitizaDecisionFlowProps {
   /** First name for future personalized beats; unused copy in CP1. */
@@ -35,6 +36,15 @@ export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowPro
   // §4 greeting beats.
   const [line1Shown, setLine1Shown] = useState(false)
   const [seedShown, setSeedShown] = useState(false)
+  // §5 tiles reveal (just after the seed line) + current selection.
+  const [tilesShown, setTilesShown] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  // A tile was chosen. Checkpoints 3-5 extend this (thinking moment, Path A/B);
+  // for now it records the selection so the grid can show its selected state.
+  const handleSelect = (categoryId: string) => {
+    setSelectedId(categoryId)
+  }
 
   useEffect(() => {
     const prefersReduced = window.matchMedia(
@@ -59,6 +69,10 @@ export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowPro
     )
     timers.push(
       window.setTimeout(() => setSeedShown(true), prefersReduced ? 0 : 1500),
+    )
+    // Tiles arrive just after the seed line (§5).
+    timers.push(
+      window.setTimeout(() => setTilesShown(true), prefersReduced ? 0 : 1800),
     )
 
     return () => {
@@ -99,6 +113,13 @@ export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowPro
           </div>
         )}
       </div>
+
+      {/* Category tiles (§5). */}
+      {tilesShown && (
+        <div className="mt-12 w-full max-w-xl animate-titiza-fade-in">
+          <CategoryGrid selectedId={selectedId} onSelect={handleSelect} />
+        </div>
+      )}
     </div>
   )
 }
