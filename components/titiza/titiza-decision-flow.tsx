@@ -32,6 +32,7 @@ export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowPro
   // snaps straight to the anchor (no travel).
   const [anchored, setAnchored] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
+  const reducedRef = useRef(false) // readable inside event handlers
 
   // §4 greeting beats.
   const [line1Shown, setLine1Shown] = useState(false)
@@ -40,10 +41,37 @@ export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowPro
   const [tilesShown, setTilesShown] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  // A tile was chosen. Checkpoints 3-5 extend this (thinking moment, Path A/B);
-  // for now it records the selection so the grid can show its selected state.
+  // §6 thinking moment. 'choosing' → a tile is live; 'thinking' → the brief
+  // pause after a selection; 'revealed' → thinking done, Path A/B takes over
+  // (built in checkpoints 4-5).
+  const [stage, setStage] = useState<'choosing' | 'thinking' | 'revealed'>(
+    'choosing',
+  )
+  // Whether the thinking beat has already played this session — first play is
+  // 1.0s, every later one 0.6s (§6). Session-local, never Firestore.
+  const thinkingPlayedRef = useRef(false)
+
+  // A tile was chosen (§6): dim/lock the grid, react on the orb, hold the
+  // thinking beat, then hand off to the reveal stage.
   const handleSelect = (categoryId: string) => {
+    if (stage !== 'choosing') return
     setSelectedId(categoryId)
+    setStage('thinking')
+
+    // Orb reaction — existing API only (Frozen Decision #2). reactEyeContact is
+    // the sustained ~13% brighten; reactPulse adds the emphasis beat. Literal
+    // "particles quicken" (§6) would need a new scene method, which Decision #2
+    // disallows, so it's approximated by this pulse.
+    apiRef.current?.reactEyeContact()
+    apiRef.current?.reactPulse()
+
+    const first = !thinkingPlayedRef.current
+    thinkingPlayedRef.current = true
+    const duration = reducedRef.current ? 0 : first ? 1000 : 600 // §6
+
+    timersRef.current.push(
+      window.setTimeout(() => setStage('revealed'), duration),
+    )
   }
 
   useEffect(() => {
@@ -51,6 +79,7 @@ export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowPro
       '(prefers-reduced-motion: reduce)',
     ).matches
     setReducedMotion(prefersReduced)
+    reducedRef.current = prefersReduced
     const timers = timersRef.current
 
     // Trigger the reposition on the next frame so the transition actually runs.
@@ -117,7 +146,11 @@ export function TitizaDecisionFlow({ userName = 'there' }: TitizaDecisionFlowPro
       {/* Category tiles (§5). */}
       {tilesShown && (
         <div className="mt-12 w-full max-w-xl animate-titiza-fade-in">
-          <CategoryGrid selectedId={selectedId} onSelect={handleSelect} />
+          <CategoryGrid
+            selectedId={selectedId}
+            locked={stage !== 'choosing'}
+            onSelect={handleSelect}
+          />
         </div>
       )}
     </div>
