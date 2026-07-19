@@ -31,7 +31,15 @@ function envFlagOn(): boolean {
  * @param uid Firebase Auth UID of the current user (optional / may be undefined
  *            before auth resolves — treated as not-allowlisted).
  */
+// TEMPORARY: Phase 2 is enabled globally during solo testing. Re-gate this
+// before real signups exist — set back to false so the env flag + test-UID
+// allowlist below take over again. Typed as `boolean` (not the literal `true`)
+// so the original gating code stays reachable/live, just short-circuited.
+const TEMP_ENABLE_GLOBALLY: boolean = true;
+
 export function isTitizaPhase2Enabled(uid?: string | null): boolean {
+  if (TEMP_ENABLE_GLOBALLY) return true;
+
   if (envFlagOn()) return true;
   if (uid && PHASE2_TEST_UIDS.includes(uid)) return true;
   return false;
