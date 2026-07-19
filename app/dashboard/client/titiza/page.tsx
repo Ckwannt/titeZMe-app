@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Cormorant_Garamond } from 'next/font/google';
 import { useAuth } from '@/lib/auth-context';
 import { markTitizaMet, touchTitizaVisit } from '@/lib/titiza-utils';
+import { isTitizaPhase2Enabled } from '@/lib/titiza-phase2-flag';
 import { AmbientBackground } from '@/components/titiza/ambient-background';
 import { TitizaHero } from '@/components/titiza/titiza-hero';
+import { TitizaDecisionFlow } from '@/components/titiza/titiza-decision-flow';
 import { BeautyProfileCard } from '@/components/titiza/beauty-profile-card';
 import { FeatureCards } from '@/components/titiza/feature-cards';
 
@@ -17,7 +19,9 @@ const cormorant = Cormorant_Garamond({
   variable: '--font-titiza-serif',
 });
 
-type Phase = 'loading' | 'genesis' | 'dashboard';
+// 'phase2' is the flagged decision surface; when the flag is off, flagged
+// users never enter it and the flow behaves exactly as Phase 1 ('dashboard').
+type Phase = 'loading' | 'genesis' | 'dashboard' | 'phase2';
 
 export default function ClientTitizaPage() {
   const { appUser, user } = useAuth();
@@ -36,9 +40,12 @@ export default function ClientTitizaPage() {
     decidedRef.current = true;
 
     const hasMet = !!appUser.titiza?.hasMet;
+    const phase2 = isTitizaPhase2Enabled(user?.uid);
     if (hasMet) {
       isReturningRef.current = true;
-      setPhase('dashboard');
+      // Flagged users land on the Phase 2 decision surface; everyone else keeps
+      // the Phase 1 dashboard block (behavior unchanged when the flag is off).
+      setPhase(phase2 ? 'phase2' : 'dashboard');
       if (user?.uid) touchTitizaVisit(user.uid); // bump lastVisitAt (once)
     } else {
       setPhase('genesis');
@@ -47,10 +54,13 @@ export default function ClientTitizaPage() {
 
   const handleBegin = useCallback(() => {
     if (user?.uid) markTitizaMet(user.uid);
-    setPhase('dashboard'); // in-place cross-fade — no route change
+    // Behind the flag, "Let's Begin" transitions into the decision flow instead
+    // of the Phase 1 dashboard block. In-place cross-fade — no route change.
+    setPhase(isTitizaPhase2Enabled(user?.uid) ? 'phase2' : 'dashboard');
   }, [user]);
 
   const showDashboard = phase === 'dashboard';
+  const showPhase2 = phase === 'phase2';
 
   return (
     <div className={`${cormorant.variable} relative min-h-full overflow-hidden`}>
@@ -58,26 +68,32 @@ export default function ClientTitizaPage() {
 
       {phase !== 'loading' && (
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-20 px-6 pb-28 pt-16 sm:gap-24 sm:pt-24">
-          <TitizaHero
-            userName={firstName}
-            mode={showDashboard ? 'dashboard' : 'genesis'}
-            isReturning={isReturningRef.current}
-            onBegin={handleBegin}
-          />
+          {showPhase2 ? (
+            <TitizaDecisionFlow userName={firstName} />
+          ) : (
+            <>
+              <TitizaHero
+                userName={firstName}
+                mode={showDashboard ? 'dashboard' : 'genesis'}
+                isReturning={isReturningRef.current}
+                onBegin={handleBegin}
+              />
 
-          {showDashboard && (
-            <div className="flex flex-col gap-20 animate-titiza-fade-in sm:gap-24">
-              <BeautyProfileCard />
+              {showDashboard && (
+                <div className="flex flex-col gap-20 animate-titiza-fade-in sm:gap-24">
+                  <BeautyProfileCard />
 
-              <section className="flex flex-col gap-8">
-                <div className="text-center">
-                  <p className="text-xs font-medium uppercase tracking-[0.3em] text-gold-muted">
-                    The Titiza Experience
-                  </p>
+                  <section className="flex flex-col gap-8">
+                    <div className="text-center">
+                      <p className="text-xs font-medium uppercase tracking-[0.3em] text-gold-muted">
+                        The Titiza Experience
+                      </p>
+                    </div>
+                    <FeatureCards />
+                  </section>
                 </div>
-                <FeatureCards />
-              </section>
-            </div>
+              )}
+            </>
           )}
         </div>
       )}

@@ -19,6 +19,14 @@ export interface Category {
   id: string;
   color: string;
   emoji: string;
+  // Titiza Phase 2 (additive). Which post-selection path this category enters:
+  // 'analysis' → Path A guided Beauty Profile analysis; 'direct' → Path B
+  // browse professionals. Phase 2 code branches on THIS field, never on the
+  // category id/name (Frozen Decision #1).
+  titizaEntryMode: 'analysis' | 'direct';
+  // Sort weight for the Titiza decision screen — lower shows first. The five
+  // lowest surface as the initial tiles; the rest live behind "More…".
+  priority?: number;
 }
 
 export interface BusinessType {
@@ -34,24 +42,34 @@ export interface Profession {
   emoji: string;
   enabled: boolean;
   specialties: string[]; // specialty IDs — labels via translations.ts
+  // Titiza Phase 2 (additive, optional). Set on Hair-category professions to
+  // 'analysis'. Non-hair professions inherit 'direct' from their category
+  // (categories carry the authoritative titizaEntryMode the Phase 2 UI reads),
+  // so this stays optional to avoid touching the 39 unrelated entries.
+  titizaEntryMode?: 'analysis' | 'direct';
+  priority?: number;
 }
 
+// titizaEntryMode: 'analysis' only on Hair (Frozen Decision #1) — Hair is the
+// launch category with a real guided analysis. All others are 'direct'.
+// priority 1-5 (hair, skin, nails, dental, fitness) surface as the initial
+// tiles on the decision screen; 6+ live behind "More…".
 export const categories: Category[] = [
-  { id: 'hair', color: '#8B5E3C', emoji: '💇' },
-  { id: 'nails', color: '#E85D9E', emoji: '💅' },
-  { id: 'skin', color: '#F4A261', emoji: '🧴' },
-  { id: 'makeup', color: '#C77DFF', emoji: '💄' },
-  { id: 'tattoo', color: '#2B2D42', emoji: '🎨' },
-  { id: 'brows_lashes', color: '#6A4C93', emoji: '👁️' },
-  { id: 'waxing', color: '#F9C74F', emoji: '🪒' },
-  { id: 'massage', color: '#43AA8B', emoji: '💆' },
-  { id: 'fitness', color: '#F94144', emoji: '💪' },
-  { id: 'mental_health', color: '#577590', emoji: '🧠' },
-  { id: 'dental', color: '#2D9CDB', emoji: '🦷' },
-  { id: 'medical_aesthetics', color: '#F3722C', emoji: '💉' },
-  { id: 'alt_medicine', color: '#90BE6D', emoji: '🌿' },
-  { id: 'podiatry', color: '#4D908E', emoji: '🦶' },
-  { id: 'bridal_events', color: '#B76E79', emoji: '🎉' },
+  { id: 'hair', color: '#8B5E3C', emoji: '💇', titizaEntryMode: 'analysis', priority: 1 },
+  { id: 'skin', color: '#F4A261', emoji: '🧴', titizaEntryMode: 'direct', priority: 2 },
+  { id: 'nails', color: '#E85D9E', emoji: '💅', titizaEntryMode: 'direct', priority: 3 },
+  { id: 'dental', color: '#2D9CDB', emoji: '🦷', titizaEntryMode: 'direct', priority: 4 },
+  { id: 'fitness', color: '#F94144', emoji: '💪', titizaEntryMode: 'direct', priority: 5 },
+  { id: 'makeup', color: '#C77DFF', emoji: '💄', titizaEntryMode: 'direct', priority: 6 },
+  { id: 'tattoo', color: '#2B2D42', emoji: '🎨', titizaEntryMode: 'direct', priority: 7 },
+  { id: 'brows_lashes', color: '#6A4C93', emoji: '👁️', titizaEntryMode: 'direct', priority: 8 },
+  { id: 'waxing', color: '#F9C74F', emoji: '🪒', titizaEntryMode: 'direct', priority: 9 },
+  { id: 'massage', color: '#43AA8B', emoji: '💆', titizaEntryMode: 'direct', priority: 10 },
+  { id: 'mental_health', color: '#577590', emoji: '🧠', titizaEntryMode: 'direct', priority: 11 },
+  { id: 'medical_aesthetics', color: '#F3722C', emoji: '💉', titizaEntryMode: 'direct', priority: 12 },
+  { id: 'alt_medicine', color: '#90BE6D', emoji: '🌿', titizaEntryMode: 'direct', priority: 13 },
+  { id: 'podiatry', color: '#4D908E', emoji: '🦶', titizaEntryMode: 'direct', priority: 14 },
+  { id: 'bridal_events', color: '#B76E79', emoji: '🎉', titizaEntryMode: 'direct', priority: 15 },
 ];
 
 // Business type emoji reuses the parent profession's emoji (taxonomy doc).
@@ -88,6 +106,7 @@ export const professions: Profession[] = [
   {
     id: 'barber',
     categoryId: 'hair',
+    titizaEntryMode: 'analysis',
     tier: 'artist',
     defaultBusinessTypeId: 'barbershop',
     emoji: '💈',
@@ -102,6 +121,7 @@ export const professions: Profession[] = [
   {
     id: 'hairdresser',
     categoryId: 'hair',
+    titizaEntryMode: 'analysis',
     tier: 'artist',
     defaultBusinessTypeId: 'hair_salon',
     emoji: '💇',
@@ -114,6 +134,7 @@ export const professions: Profession[] = [
   {
     id: 'colorist',
     categoryId: 'hair',
+    titizaEntryMode: 'analysis',
     tier: 'artist',
     defaultBusinessTypeId: 'hair_salon',
     emoji: '🎨',
@@ -126,6 +147,7 @@ export const professions: Profession[] = [
   {
     id: 'trichologist',
     categoryId: 'hair',
+    titizaEntryMode: 'analysis',
     tier: 'specialist',
     defaultBusinessTypeId: 'trichology_clinic',
     emoji: '🔬',
@@ -404,6 +426,7 @@ export const professions: Profession[] = [
   {
     id: 'extensions_specialist',
     categoryId: 'hair',
+    titizaEntryMode: 'analysis',
     tier: 'artist',
     defaultBusinessTypeId: 'hair_salon',
     emoji: '💇',
@@ -416,6 +439,7 @@ export const professions: Profession[] = [
   {
     id: 'wig_specialist',
     categoryId: 'hair',
+    titizaEntryMode: 'analysis',
     tier: 'artist',
     defaultBusinessTypeId: 'hair_salon',
     emoji: '👱',
