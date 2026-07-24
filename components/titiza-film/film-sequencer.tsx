@@ -26,6 +26,8 @@ import { ProfessionalCard } from './professional-card'
 import { AnalysisCardsOrbit } from './analysis-cards-orbit'
 import { BeforeAfterSwap } from './before-after-swap'
 import { VerticalMontage } from './vertical-montage'
+import { ChatInputShell } from './chat-input-shell'
+import { ConversationStrip } from './conversation-strip'
 
 type OrbState = 'idle' | 'thinking' | 'bright'
 
@@ -59,6 +61,19 @@ type View =
       confirmText?: string
     }
   | { type: 'orbit'; at?: number; until?: number; chips: string[]; interval: number; travel: number }
+  | {
+      type: 'chat'
+      at?: number
+      until?: number
+      placeholder: string
+      chips: string[]
+      query: string
+      replyLines: string[]
+      typeAt: number
+      sendAt: number
+      replyStartAt: number
+      replyHold: number
+    }
   | { type: 'photo'; at?: number; until?: number }
   | { type: 'beforeAfter'; at?: number; until?: number; swapAt: number }
   | { type: 'montage'; at?: number; until?: number; words: string[]; interval: number }
@@ -107,6 +122,44 @@ const SCENES: Scene[] = [
           'Before I can help you...',
           'I need to understand you.',
         ],
+      },
+    ],
+  },
+  {
+    // Inserted between the birth (s2) and the beauty-profile check (s3).
+    // Simulated chat: the user asks, Titiza replies, and the orb reacts at the
+    // send moment (ring + brighten), not when the reply begins.
+    id: 's2b',
+    title: 'First Conversation',
+    duration: 11000,
+    orb: true,
+    orbEvents: [
+      { at: 3600, kind: 'ring' }, // the instant the user's line becomes a bubble
+      { at: 3600, kind: 'state', value: 'bright' },
+      { at: 5100, kind: 'state', value: 'idle' },
+    ],
+    views: [
+      {
+        type: 'chat',
+        at: 0,
+        placeholder: 'What would you like to improve today?',
+        chips: [
+          'Help me find a haircut that suits me',
+          'Why is my hair falling out?',
+          'Build my skincare routine',
+          'Recommend products for my skin',
+        ],
+        query: 'I want a haircut',
+        replyLines: [
+          'Absolutely.',
+          'Before I recommend a haircut, I need to understand your hair.',
+          'The best way to do that is with a professional hair analysis.',
+          "Let's start there.",
+        ],
+        typeAt: 2200,
+        sendAt: 3600,
+        replyStartAt: 4300,
+        replyHold: 1450,
       },
     ],
   },
@@ -427,6 +480,20 @@ export function FilmSequencer() {
 
   const local = (v: View) => sceneElapsed - (v.at ?? 0)
 
+  // Conversation strip — a continuity cue spanning the beauty-profile check
+  // (s3) and the analyst search (s4), fading out as the Dr. Sarah card appears
+  // (s4 @ 5200ms). Additive: the s3/s4 scene data itself is untouched.
+  const CARD_APPEARS_AT = 5200
+  let stripOpacity = 0
+  if (scene.id === 's3') {
+    stripOpacity = 1
+  } else if (scene.id === 's4') {
+    stripOpacity =
+      sceneElapsed < CARD_APPEARS_AT - 400
+        ? 1
+        : Math.max(0, (CARD_APPEARS_AT - sceneElapsed) / 400)
+  }
+
   return (
     <div className="fixed inset-0 z-[100] overflow-hidden bg-black text-white">
       {/* Orb layer — mounted continuously across s2–s11 (stable key) so the
@@ -504,9 +571,34 @@ export function FilmSequencer() {
             if (v.type === 'beforeAfter') {
               return <BeforeAfterSwap key={i} mode="swap" swapAt={v.swapAt} elapsed={e} />
             }
+            if (v.type === 'chat') {
+              return (
+                <ChatInputShell
+                  key={i}
+                  placeholder={v.placeholder}
+                  chips={v.chips}
+                  query={v.query}
+                  replyLines={v.replyLines}
+                  elapsed={e}
+                  typeAt={v.typeAt}
+                  sendAt={v.sendAt}
+                  replyStartAt={v.replyStartAt}
+                  replyHold={v.replyHold}
+                />
+              )
+            }
             return null
           })}
         </div>
+      )}
+
+      {/* Conversation strip — continuity cue across s3 and s4. */}
+      {stripOpacity > 0 && (
+        <ConversationStrip
+          userLine="I want a haircut"
+          titizaLine="Let's start there."
+          opacity={stripOpacity}
+        />
       )}
 
       {/* Full-screen title cards (s1, s5, end). */}
