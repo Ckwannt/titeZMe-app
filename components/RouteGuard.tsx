@@ -22,6 +22,7 @@ const PUBLIC_ROUTES = [
   '/privacy',
   '/cookies',
   '/admin/login',
+  '/preview/titiza-film',
 ];
 
 const PUBLIC_PREFIXES = [

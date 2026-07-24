@@ -29,6 +29,10 @@ type TitizaCoreProps = {
   onGenesisComplete?: () => void
   /** Populated by the scene with imperative reaction triggers. */
   apiRef?: MutableRefObject<TitizaCoreApi | null>
+  /** Held presence state — 'idle' (default), 'thinking', or 'bright'. */
+  sustainedState?: 'idle' | 'thinking' | 'bright'
+  /** Increment-to-fire, one-shot ring pulse. Unchanged/undefined = no-op. */
+  ringTrigger?: number
 }
 
 function CoreFallback() {
@@ -39,7 +43,13 @@ function CoreFallback() {
   )
 }
 
-export function TitizaCore({ genesis, onGenesisComplete, apiRef }: TitizaCoreProps) {
+export function TitizaCore({
+  genesis,
+  onGenesisComplete,
+  apiRef,
+  sustainedState,
+  ringTrigger,
+}: TitizaCoreProps) {
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[720px]">
       {/* Ambient light bloom behind the presence */}
@@ -59,6 +69,8 @@ export function TitizaCore({ genesis, onGenesisComplete, apiRef }: TitizaCorePro
           genesis={genesis}
           onGenesisComplete={onGenesisComplete}
           apiRef={apiRef}
+          sustainedState={sustainedState}
+          ringTrigger={ringTrigger}
         />
       </div>
 

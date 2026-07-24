@@ -58,6 +58,22 @@ type TitizaCoreSceneProps = {
   onGenesisComplete?: () => void
   /** Populated by the scene with imperative reaction triggers. */
   apiRef?: MutableRefObject<TitizaCoreApi | null>
+  /**
+   * Held presence state (additive; default 'idle' is a no-op that preserves
+   * the original resting behavior exactly):
+   *   - 'thinking' — a continuous low-amplitude energy loop that HOLDS while
+   *      active (distinct from reactPulse(), which is a single decaying shot).
+   *   - 'bright'   — glow held at an elevated level (~reactEyeContact
+   *      magnitude) while active; releases smoothly only when returned to
+   *      'idle'.
+   */
+  sustainedState?: 'idle' | 'thinking' | 'bright'
+  /**
+   * Increment-to-fire, one-shot ring pulse. Each time this number changes to a
+   * new value the scene spawns one expanding ring (same visual as the genesis
+   * ring) plus a brief glow tick. `undefined` / unchanged = no-op.
+   */
+  ringTrigger?: number
 }
 
 /* Easing helpers for the genesis timeline (no animation library). */
@@ -192,12 +208,20 @@ export default function TitizaCoreScene({
   genesis = false,
   onGenesisComplete,
   apiRef,
+  sustainedState = 'idle',
+  ringTrigger,
 }: TitizaCoreSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   // Keep the latest onGenesisComplete without re-running the (heavy) scene
   // effect, whose dependency array is intentionally empty.
   const onGenesisCompleteRef = useRef(onGenesisComplete)
   onGenesisCompleteRef.current = onGenesisComplete
+  // Live mirrors of the additive props so the empty-dep scene effect can read
+  // their latest values each frame without re-running (same pattern as above).
+  const sustainedStateRef = useRef(sustainedState)
+  sustainedStateRef.current = sustainedState
+  const ringTriggerRef = useRef(ringTrigger)
+  ringTriggerRef.current = ringTrigger
 
   useEffect(() => {
     const container = containerRef.current
@@ -341,6 +365,28 @@ export default function TitizaCoreScene({
     const heartbeat = new THREE.Mesh(new THREE.TorusGeometry(1, 0.02, 16, 128), heartbeatMat)
     floatGroup.add(heartbeat)
     const heartbeatPeriod = 8
+
+    /* one-shot trigger ring — fired by `ringTrigger` increments. Same look and
+       geometry as the genesis ring (§3.4) but wholly independent of the genesis
+       timeline, so it can pulse at any time without touching birth behavior. */
+    const triggerRingMat = new THREE.MeshBasicMaterial({
+      color: GOLD_BRIGHT,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+    const triggerRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1, 0.02, 16, 128),
+      triggerRingMat,
+    )
+    triggerRing.rotation.x = Math.PI / 2.2
+    triggerRing.visible = false
+    floatGroup.add(triggerRing)
+    let triggerRingT = -1 // elapsed seconds since last fire; < 0 = inactive
+    // Seed the change-detector with the value present at mount, so an initial
+    // ringTrigger (or its absence) never counts as a fire — only later changes.
+    let lastRingTrigger = ringTriggerRef.current
 
     /* 6. inflowing particle stream */
     const PARTICLE_COUNT = 900
@@ -601,6 +647,39 @@ export default function TitizaCoreScene({
         }
       }
 
+      // ---- held presence state (additive; 'idle' contributes nothing) ----
+      const heldState = sustainedStateRef.current
+      // 'bright' keeps glowTarget pinned at the eye-contact magnitude while
+      // active, so the existing glow machinery holds it up and — once the state
+      // returns to 'idle' — releases it smoothly via the slow-release line below.
+      if (heldState === 'bright') {
+        const brightHold = prefersReduced ? 0.06 : 0.13
+        if (glowTarget < brightHold) glowTarget = brightHold
+      }
+      // 'thinking' is a continuous low-amplitude loop that holds while active
+      // (0 when idle → no effect). Distinct from the one-shot pulseVal.
+      const thinking = heldState === 'thinking' && !prefersReduced ? 1 : 0
+      const thinkingWave = thinking * (0.5 + 0.5 * Math.sin(t * 4))
+
+      // ---- one-shot ring trigger (increment-to-fire) ----
+      if (ringTriggerRef.current !== lastRingTrigger) {
+        lastRingTrigger = ringTriggerRef.current
+        triggerRingT = 0 // (re)start the expanding ring
+        const tick = prefersReduced ? 0.06 : 0.13 // brief glow tick
+        if (glowTarget < tick) glowTarget = tick
+      }
+      if (triggerRingT >= 0) {
+        triggerRingT += delta
+        const p = clamp01(triggerRingT / 1.2)
+        triggerRing.visible = true
+        triggerRing.scale.setScalar(1 + p * 2.4)
+        triggerRingMat.opacity = (1 - p) * 0.5
+        if (p >= 1) {
+          triggerRing.visible = false
+          triggerRingT = -1
+        }
+      }
+
       // ---- reaction envelopes (eye-contact brighten + quick pulse) ----
       glowBoost = THREE.MathUtils.damp(glowBoost, glowTarget, 6, delta)
       glowTarget = THREE.MathUtils.damp(glowTarget, 0, 0.5, delta) // slow release
@@ -635,9 +714,13 @@ export default function TitizaCoreScene({
       // core heart — slow spin, breathe, inner-light pulse
       // (+ eye-contact brighten on emissive, + quick heartbeat on scale/emissive)
       coreHeart.rotation.y = -t * 0.14
-      coreHeart.scale.setScalar(0.55 + Math.sin(t * 0.7) * 0.028 + pulseVal * 0.06)
+      coreHeart.scale.setScalar(
+        0.55 + Math.sin(t * 0.7) * 0.028 + pulseVal * 0.06 + thinkingWave * 0.03,
+      )
       coreMat.emissiveIntensity =
-        (0.65 + Math.sin(t * 0.7) * 0.22) * (1 + glowBoost) + pulseVal * 0.4
+        (0.65 + Math.sin(t * 0.7) * 0.22) * (1 + glowBoost) +
+        pulseVal * 0.4 +
+        thinkingWave * 0.25
 
       // energy shells — flowing uniforms + rotation + breathing scale
       const shellScale = 1 + Math.sin(t * 0.55) * 0.045
