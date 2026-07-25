@@ -131,17 +131,22 @@ const SCENES: Scene[] = [
     // send moment (ring + brighten), not when the reply begins.
     id: 's2b',
     title: 'First Conversation',
-    duration: 11000,
+    // 12200 = ~1200ms lead (the orb's anchor transform settles) + the 11000ms
+    // conversation. The chat view is delayed to match (see `at` below), and the
+    // orb reactions are offset by the same lead so the send-bubble stays synced.
+    duration: 12200,
     orb: true,
     orbEvents: [
-      { at: 3600, kind: 'ring' }, // the instant the user's line becomes a bubble
-      { at: 3600, kind: 'state', value: 'bright' },
-      { at: 5100, kind: 'state', value: 'idle' },
+      { at: 4800, kind: 'ring' }, // the instant the user's line becomes a bubble
+      { at: 4800, kind: 'state', value: 'bright' },
+      { at: 6300, kind: 'state', value: 'idle' },
     ],
     views: [
       {
         type: 'chat',
-        at: 0,
+        // Wait for the orb's ~1100ms anchor transform to finish before the chat
+        // shell + prompts fade in (frozen decision #4).
+        at: 1200,
         placeholder: 'What would you like to improve today?',
         chips: [
           'Help me find a haircut that suits me',
@@ -480,6 +485,14 @@ export function FilmSequencer() {
 
   const local = (v: View) => sceneElapsed - (v.at ?? 0)
 
+  // Orb anchoring — once the birth greeting (s2) ends, the orb's WRAPPING
+  // container animates to a smaller top-center position and HOLDS there for
+  // every remaining scene (s2b → end). Purely a layout transform on the wrapper;
+  // the orb component itself is untouched. `anchored` flips true at the s2/s2b
+  // boundary and never flips back.
+  const anchorStart = starts[SCENES.findIndex((s) => s.id === 's2b')]
+  const anchored = elapsed >= anchorStart
+
   // Conversation strip — a continuity cue spanning the beauty-profile check
   // (s3) and the analyst search (s4), fading out as the Dr. Sarah card appears
   // (s4 @ 5200ms). Additive: the s3/s4 scene data itself is untouched.
@@ -500,7 +513,16 @@ export function FilmSequencer() {
           birth plays once and the WebGL context is never re-created. */}
       {scene.orb && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-[70vmin] max-w-[460px]">
+          <div
+            className="w-[70vmin] max-w-[460px]"
+            style={{
+              transition: 'transform 1100ms cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: anchored
+                ? 'translateY(-26vh) scale(0.74)'
+                : 'translateY(0) scale(1)',
+              willChange: 'transform',
+            }}
+          >
             <TitizaCore
               key="film-orb"
               genesis
