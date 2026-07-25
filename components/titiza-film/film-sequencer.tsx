@@ -44,9 +44,18 @@ type View =
       variant: 'intro' | 'timeskip' | 'end'
       primary: string
       secondary?: string
+      fadeIn: number
+      fadeOut: number
     }
   | { type: 'dialogue'; at?: number; until?: number; lines: string[]; hold: number }
-  | { type: 'typing'; at?: number; until?: number; lines: string[]; stagger: number }
+  | {
+      type: 'typing'
+      at?: number
+      until?: number
+      lines: string[]
+      stagger: number
+      revealDuration?: number
+    }
   | {
       type: 'card'
       at?: number
@@ -60,7 +69,17 @@ type View =
       confirmAt?: number
       confirmText?: string
     }
-  | { type: 'orbit'; at?: number; until?: number; chips: string[]; interval: number; travel: number }
+  | {
+      type: 'orbit'
+      at?: number
+      until?: number
+      chips: string[]
+      startStagger: number
+      appearDuration: number
+      pause: number
+      travelDuration: number
+      centerYVh: number
+    }
   | {
       type: 'chat'
       at?: number
@@ -69,14 +88,17 @@ type View =
       chips: string[]
       query: string
       replyLines: string[]
-      typeAt: number
+      chipsAt: number
+      chipStagger: number
+      typeStartAt: number
+      typeDuration: number
       sendAt: number
       replyStartAt: number
       replyHold: number
     }
   | { type: 'photo'; at?: number; until?: number }
   | { type: 'beforeAfter'; at?: number; until?: number; swapAt: number }
-  | { type: 'montage'; at?: number; until?: number; words: string[]; interval: number }
+  | { type: 'montage'; at?: number; until?: number; words: string[]; visibleDuration: number; overlap: number }
 
 type Scene = {
   id: string
@@ -99,7 +121,9 @@ const SCENES: Scene[] = [
     title: 'Black Screen',
     duration: 3000,
     orb: false,
-    views: [{ type: 'title', variant: 'intro', primary: 'Introducing', secondary: 'Titiza' }],
+    views: [
+      { type: 'title', variant: 'intro', primary: 'Introducing', secondary: 'Titiza', fadeIn: 600, fadeOut: 0 },
+    ],
   },
   {
     id: 's2',
@@ -131,21 +155,31 @@ const SCENES: Scene[] = [
     // send moment (ring + brighten), not when the reply begins.
     id: 's2b',
     title: 'First Conversation',
-    // 12200 = ~1200ms lead (the orb's anchor transform settles) + the 11000ms
-    // conversation. The chat view is delayed to match (see `at` below), and the
-    // orb reactions are offset by the same lead so the send-bubble stays synced.
-    duration: 12200,
+    // ~1200ms lead (the orb's anchor transform settles, then a 50ms breath)
+    // before the chat view mounts, + the conversation itself.
+    duration: 7600,
     orb: true,
     orbEvents: [
-      { at: 4800, kind: 'ring' }, // the instant the user's line becomes a bubble
+      // CHANGE 3 — a single SUBTLE pulse (ring only, no sustained brighten) the
+      // instant the user's line settles into the bubble (chat mount 1200 +
+      // sendAt 2550 + 300ms bubble lift = 4050).
+      { at: 4050, kind: 'ring' },
+      // CHANGE 4 — the orb brightens slightly WHILE each reply sentence appears
+      // (reply i at 1200 + 3100 + i*500), easing back to idle between them.
+      { at: 4300, kind: 'state', value: 'bright' },
+      { at: 4550, kind: 'state', value: 'idle' },
       { at: 4800, kind: 'state', value: 'bright' },
-      { at: 6300, kind: 'state', value: 'idle' },
+      { at: 5050, kind: 'state', value: 'idle' },
+      { at: 5300, kind: 'state', value: 'bright' },
+      { at: 5550, kind: 'state', value: 'idle' },
+      { at: 5800, kind: 'state', value: 'bright' },
+      { at: 6050, kind: 'state', value: 'idle' },
     ],
     views: [
       {
         type: 'chat',
-        // Wait for the orb's ~1100ms anchor transform to finish before the chat
-        // shell + prompts fade in (frozen decision #4).
+        // Waits for the orb's 900ms anchor transform (which starts 250ms into
+        // this scene) to fully complete before anything fades in (frozen #4).
         at: 1200,
         placeholder: 'What would you like to improve today?',
         chips: [
@@ -161,24 +195,32 @@ const SCENES: Scene[] = [
           'The best way to do that is with a professional hair analysis.',
           "Let's start there.",
         ],
-        typeAt: 2200,
-        sendAt: 3600,
-        replyStartAt: 4300,
-        replyHold: 1450,
+        // View-relative offsets: input rises in at 0, chips 250ms later (staggered
+        // 150ms), query types 1400–2300, +250ms pause → send 2550, reply from
+        // 3100 (250ms fade + 250ms pause per sentence).
+        chipsAt: 250,
+        chipStagger: 150,
+        typeStartAt: 1400,
+        typeDuration: 900,
+        sendAt: 2550,
+        replyStartAt: 3100,
+        replyHold: 500,
       },
     ],
   },
   {
     id: 's3',
     title: 'Learning About You',
-    duration: 10000,
+    duration: 5600,
     orb: true,
     views: [
       {
         type: 'typing',
         at: 0,
-        until: 6000,
-        stagger: 1200,
+        until: 1500,
+        // Each row appears separately, 250ms apart, each rising in over 250ms.
+        stagger: 250,
+        revealDuration: 250,
         lines: [
           'Checking your Beauty Profile...',
           'Hair... No Professional Analysis',
@@ -189,7 +231,7 @@ const SCENES: Scene[] = [
       },
       {
         type: 'dialogue',
-        at: 6200,
+        at: 1700,
         hold: 1900,
         lines: ["I don't know enough about your hair.", "Let's change that."],
       },
@@ -198,18 +240,19 @@ const SCENES: Scene[] = [
   {
     id: 's4',
     title: 'Finding the Right Analyst',
-    duration: 10000,
+    // ~25% shorter than the original 10000 — every step kept, pauses tightened.
+    duration: 7500,
     orb: true,
     orbEvents: [
       { at: 0, kind: 'state', value: 'thinking' },
-      { at: 5200, kind: 'state', value: 'idle' },
+      { at: 3600, kind: 'state', value: 'idle' },
     ],
     views: [
       {
         type: 'typing',
         at: 0,
-        until: 5000,
-        stagger: 1000,
+        until: 3400,
+        stagger: 700,
         lines: [
           'Searching nearby certified hair analysts...',
           'Checking certifications...',
@@ -220,45 +263,52 @@ const SCENES: Scene[] = [
       },
       {
         type: 'card',
-        at: 5200,
+        at: 3600,
         name: 'Dr. Sarah',
         role: 'Hair Analyst',
         meta: '2.3 km · English',
         rating: '★★★★★ · Tomorrow 10:30',
         button: 'Book Analysis',
-        pressAt: 3300, // scene ~8500ms
+        pressAt: 2400, // scene ~6000ms
       },
     ],
   },
   {
     id: 's5',
     title: 'Time Skip',
-    duration: 2000,
+    // Fade to black 250 + hold 900 + fade out 250.
+    duration: 1400,
     orb: true, // stays mounted (covered by the black title) to avoid a remount
-    views: [{ type: 'title', variant: 'timeskip', primary: 'A few days later.' }],
+    views: [
+      { type: 'title', variant: 'timeskip', primary: 'A few days later.', fadeIn: 250, fadeOut: 250 },
+    ],
   },
   {
     id: 's6',
     title: 'Titiza Learns',
-    duration: 12000,
+    duration: 6200,
     orb: true,
-    // One ring pulse per chip arrival (departure i*1300 + travel 2000).
+    // One ring pulse per chip absorption. Arrival = start (i*350) + appear 250
+    // + pause 200 + travel 800 = i*350 + 1250.
     orbEvents: [
-      { at: 2000, kind: 'ring' },
-      { at: 3300, kind: 'ring' },
-      { at: 4600, kind: 'ring' },
-      { at: 5900, kind: 'ring' },
-      { at: 7200, kind: 'ring' },
-      { at: 8500, kind: 'ring' },
-      { at: 9800, kind: 'ring' },
+      { at: 1250, kind: 'ring' },
+      { at: 1600, kind: 'ring' },
+      { at: 1950, kind: 'ring' },
+      { at: 2300, kind: 'ring' },
+      { at: 2650, kind: 'ring' },
+      { at: 3000, kind: 'ring' },
+      { at: 3350, kind: 'ring' },
     ],
     views: [
       {
         type: 'orbit',
         at: 0,
-        until: 9800,
-        interval: 1300,
-        travel: 2000,
+        until: 3600,
+        startStagger: 350,
+        appearDuration: 250,
+        pause: 200,
+        travelDuration: 800,
+        centerYVh: 24, // converge on the anchored orb (translateY -26vh from center)
         chips: [
           'Hair Density',
           'Hair Thickness',
@@ -271,8 +321,8 @@ const SCENES: Scene[] = [
       },
       {
         type: 'dialogue',
-        at: 9800,
-        hold: 1100,
+        at: 3700,
+        hold: 1200,
         lines: ['Now I understand your hair.', "Let's see what's possible."],
       },
     ],
@@ -310,35 +360,39 @@ const SCENES: Scene[] = [
   {
     id: 's8',
     title: 'Recommendation',
-    duration: 8000,
+    // Swap completes at ~2100 (mount 900 + 1200 cross-fade); the result then
+    // holds untouched for 1400ms before the dialogue — satisfying the ≥1200ms
+    // still-hold — and again after it, before s9.
+    duration: 6000,
     orb: true,
     views: [
       { type: 'beforeAfter', at: 900, swapAt: 0 },
-      { type: 'dialogue', at: 3500, hold: 3500, lines: ['I like this one.'] },
+      { type: 'dialogue', at: 3500, hold: 2500, lines: ['I like this one.'] },
     ],
   },
   {
     id: 's9',
     title: 'Finding the Right Barber',
-    duration: 11000,
+    // Search pacing tightened (every line kept), + a 1000ms hold after "Booked."
+    duration: 9600,
     orb: true,
     orbEvents: [
-      { at: 3400, kind: 'state', value: 'thinking' },
-      { at: 8600, kind: 'state', value: 'idle' },
+      { at: 2800, kind: 'state', value: 'thinking' },
+      { at: 6600, kind: 'state', value: 'idle' },
     ],
     views: [
       {
         type: 'dialogue',
         at: 0,
-        until: 3400,
-        hold: 1600,
+        until: 2800,
+        hold: 1300,
         lines: ['Great choice.', "Now let's find someone who can create it."],
       },
       {
         type: 'typing',
-        at: 3400,
-        until: 8600,
-        stagger: 850,
+        at: 2800,
+        until: 6600,
+        stagger: 650,
         lines: [
           'Searching...',
           'Specialists in this hairstyle',
@@ -350,13 +404,13 @@ const SCENES: Scene[] = [
       },
       {
         type: 'card',
-        at: 8600,
+        at: 6600,
         name: 'Alex Barber Studio',
         meta: '1.8 km · English',
         rating: '★★★★★ · Tomorrow 15:00',
         button: 'Book Appointment',
-        pressAt: 1600, // scene ~10200ms
-        confirmAt: 2000, // scene ~10600ms
+        pressAt: 1600, // scene ~8200ms
+        confirmAt: 2000, // scene ~8600ms ("Booked."), then +1000ms hold to 9600
         confirmText: 'Booked.',
       },
     ],
@@ -364,13 +418,16 @@ const SCENES: Scene[] = [
   {
     id: 's10',
     title: 'More Than Hair',
-    duration: 7000,
+    duration: 5200,
     orb: true,
     views: [
       {
         type: 'montage',
         at: 0,
-        interval: 900,
+        // Each word is visible ~950ms and overlaps the next by 150ms (step 800),
+        // so the sequence reads continuous rather than as discrete steps.
+        visibleDuration: 950,
+        overlap: 150,
         words: ['Hair', 'Skin & Facial', 'Dental', 'Nails', 'Fitness', 'More...'],
       },
     ],
@@ -378,17 +435,20 @@ const SCENES: Scene[] = [
   {
     id: 's11',
     title: 'Final Message',
-    duration: 9000,
+    // Line 1 (subtle breathing only) → 900ms → line 2 (orb brightens) → 1200ms
+    // → fade to black (handled by the end card that follows).
+    duration: 2400,
     orb: true,
     orbEvents: [
-      { at: 2600, kind: 'ring' },
-      { at: 2600, kind: 'state', value: 'bright' },
+      // No brightening until the second line arrives.
+      { at: 900, kind: 'ring' },
+      { at: 900, kind: 'state', value: 'bright' },
     ],
     views: [
       {
         type: 'dialogue',
         at: 0,
-        hold: 2600,
+        hold: 900,
         lines: ['The more I know about you...', 'The better I can help you.'],
       },
     ],
@@ -396,7 +456,8 @@ const SCENES: Scene[] = [
   {
     id: 'end',
     title: 'End Card',
-    duration: 4000,
+    // Fade in 400 + hold 2000 + fade out 400.
+    duration: 2800,
     orb: false,
     views: [
       {
@@ -404,6 +465,8 @@ const SCENES: Scene[] = [
         variant: 'end',
         primary: 'Titiza',
         secondary: 'Your Personal Beauty Intelligence',
+        fadeIn: 400,
+        fadeOut: 400,
       },
     ],
   },
@@ -490,13 +553,15 @@ export function FilmSequencer() {
   // every remaining scene (s2b → end). Purely a layout transform on the wrapper;
   // the orb component itself is untouched. `anchored` flips true at the s2/s2b
   // boundary and never flips back.
-  const anchorStart = starts[SCENES.findIndex((s) => s.id === 's2b')]
+  // Starts ~250ms after s2's birth dialogue resolves (i.e. 250ms into s2b), then
+  // the wrapper runs its 900ms transform; the chat view (at 1200) waits for it.
+  const anchorStart = starts[SCENES.findIndex((s) => s.id === 's2b')] + 250
   const anchored = elapsed >= anchorStart
 
   // Conversation strip — a continuity cue spanning the beauty-profile check
   // (s3) and the analyst search (s4), fading out as the Dr. Sarah card appears
-  // (s4 @ 5200ms). Additive: the s3/s4 scene data itself is untouched.
-  const CARD_APPEARS_AT = 5200
+  // (s4 @ 3600ms). Additive: the s3/s4 scene data itself is untouched.
+  const CARD_APPEARS_AT = 3600
   let stripOpacity = 0
   if (scene.id === 's3') {
     stripOpacity = 1
@@ -509,6 +574,17 @@ export function FilmSequencer() {
 
   return (
     <div className="fixed inset-0 z-[100] overflow-hidden bg-black text-white">
+      {/* Shared, eased keyframes for the film's small entrance motions. Scoped
+          here (inside components/titiza-film) rather than globals.css. */}
+      <style>{`
+        @keyframes filmFadeUp8 { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes filmFadeUp6 { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes filmInputIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes filmBubbleIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes filmChipIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes filmCardIn { from { opacity: 0; transform: scale(0.97); box-shadow: 0 0 0 rgba(0,0,0,0); } to { opacity: 1; transform: scale(1); box-shadow: 0 24px 60px -24px rgba(0,0,0,0.55); } }
+      `}</style>
+
       {/* Orb layer — mounted continuously across s2–s11 (stable key) so the
           birth plays once and the WebGL context is never re-created. */}
       {scene.orb && (
@@ -516,9 +592,9 @@ export function FilmSequencer() {
           <div
             className="w-[70vmin] max-w-[460px]"
             style={{
-              transition: 'transform 1100ms cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'transform 900ms cubic-bezier(0.4, 0, 0.2, 1)',
               transform: anchored
-                ? 'translateY(-26vh) scale(0.74)'
+                ? 'translateY(-26vh) scale(0.72)'
                 : 'translateY(0) scale(1)',
               willChange: 'transform',
             }}
@@ -539,8 +615,11 @@ export function FilmSequencer() {
           <AnalysisCardsOrbit
             key={`orbit-${i}`}
             chips={v.chips}
-            interval={v.interval}
-            travel={v.travel}
+            startStagger={v.startStagger}
+            appearDuration={v.appearDuration}
+            pause={v.pause}
+            travelDuration={v.travelDuration}
+            centerYVh={v.centerYVh}
             elapsed={local(v)}
           />
         ) : null,
@@ -553,7 +632,12 @@ export function FilmSequencer() {
             key={`montage-${i}`}
             className="absolute inset-0 z-10 flex items-center justify-center px-6"
           >
-            <VerticalMontage words={v.words} interval={v.interval} elapsed={local(v)} />
+            <VerticalMontage
+              words={v.words}
+              visibleDuration={v.visibleDuration}
+              overlap={v.overlap}
+              elapsed={local(v)}
+            />
           </div>
         ) : null,
       )}
@@ -568,7 +652,14 @@ export function FilmSequencer() {
             }
             if (v.type === 'typing') {
               return (
-                <TypingLines key={i} lines={v.lines} startAt={0} stagger={v.stagger} elapsed={e} />
+                <TypingLines
+                  key={i}
+                  lines={v.lines}
+                  startAt={0}
+                  stagger={v.stagger}
+                  elapsed={e}
+                  revealDuration={v.revealDuration}
+                />
               )
             }
             if (v.type === 'card') {
@@ -602,7 +693,10 @@ export function FilmSequencer() {
                   query={v.query}
                   replyLines={v.replyLines}
                   elapsed={e}
-                  typeAt={v.typeAt}
+                  chipsAt={v.chipsAt}
+                  chipStagger={v.chipStagger}
+                  typeStartAt={v.typeStartAt}
+                  typeDuration={v.typeDuration}
                   sendAt={v.sendAt}
                   replyStartAt={v.replyStartAt}
                   replyHold={v.replyHold}
@@ -631,6 +725,10 @@ export function FilmSequencer() {
             variant={v.variant}
             primary={v.primary}
             secondary={v.secondary}
+            elapsed={local(v)}
+            duration={scene.duration}
+            fadeIn={v.fadeIn}
+            fadeOut={v.fadeOut}
           />
         ) : null,
       )}

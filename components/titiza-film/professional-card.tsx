@@ -39,7 +39,7 @@ export function ProfessionalCard({
   return (
     <div
       className="w-full max-w-sm rounded-2xl border border-border bg-card/80 p-5 text-left backdrop-blur-md"
-      style={{ animation: 'fadeUp 0.6s ease both' }}
+      style={{ animation: 'filmCardIn 300ms cubic-bezier(0.4, 0, 0.2, 1) both' }}
     >
       <div className="flex items-center gap-4">
         <div
@@ -66,6 +66,8 @@ export function ProfessionalCard({
       <button
         type="button"
         tabIndex={-1}
+        // Fades in 120ms after the card (backwards fill keeps it hidden until then).
+        style={{ animation: 'filmChipIn 300ms cubic-bezier(0.4, 0, 0.2, 1) both', animationDelay: '120ms' }}
         className={`mt-5 w-full rounded-full border px-6 py-3 text-sm font-medium uppercase tracking-[0.2em] transition-colors duration-200 ${
           pressed
             ? 'border-gold bg-gold/20 text-gold-soft'

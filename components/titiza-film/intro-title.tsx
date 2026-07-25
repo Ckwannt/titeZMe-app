@@ -1,9 +1,10 @@
 'use client'
 
 /**
- * IntroTitle — full-screen black title cards (scenes s1, s5, end).
- * Copy is passed in from the sequencer's timeline data; this file only styles
- * the three variants. Fades in on mount via the global `fadeIn` keyframe.
+ * IntroTitle — full-screen black title cards (scenes s1, s5, end). Copy is
+ * timeline data; this file styles the three variants and drives their opacity
+ * from `elapsed` so each card can fade in, hold, and fade to black on its own
+ * schedule (e.g. s5 Time Skip: 250 / 900 / 250; end card: hold 2000 then out).
  */
 type IntroTitleProps = {
   variant: 'intro' | 'timeskip' | 'end'
@@ -11,13 +12,40 @@ type IntroTitleProps = {
   primary: string
   /** Optional secondary line (verbatim from the timeline). */
   secondary?: string
+  /** Scene-relative elapsed time in ms. */
+  elapsed: number
+  /** Total scene duration in ms (fade-out anchors to the end). */
+  duration: number
+  /** Fade-in duration in ms. */
+  fadeIn: number
+  /** Fade-out duration in ms (0 = hard cut at scene end). */
+  fadeOut: number
 }
 
-export function IntroTitle({ variant, primary, secondary }: IntroTitleProps) {
+const easeInOut = (p: number) =>
+  p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2
+
+export function IntroTitle({
+  variant,
+  primary,
+  secondary,
+  elapsed,
+  duration,
+  fadeIn,
+  fadeOut,
+}: IntroTitleProps) {
+  const rawOpacity =
+    elapsed < fadeIn
+      ? elapsed / fadeIn
+      : fadeOut > 0 && elapsed > duration - fadeOut
+        ? Math.max(0, (duration - elapsed) / fadeOut)
+        : 1
+  const opacity = easeInOut(Math.min(1, Math.max(0, rawOpacity)))
+
   return (
     <div
       className="absolute inset-0 z-[120] flex flex-col items-center justify-center bg-black px-6 text-center"
-      style={{ animation: 'fadeIn 0.8s ease both' }}
+      style={{ opacity }}
     >
       {variant === 'intro' && (
         <>

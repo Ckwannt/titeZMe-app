@@ -1,40 +1,59 @@
 'use client'
 
 /**
- * VerticalMontage — a quick sequential fade-in/out of single words or short
- * phrases (scene s10), `interval` ms apart, with no surrounding explanation.
- * Copy comes from timeline data.
+ * VerticalMontage — a continuous sequence of single words/phrases (scene s10).
+ * Each item fades + scales 98%→100% over `fade` ms and out again, and its slot
+ * overlaps the next by `overlap` ms so the montage reads as one flowing beat
+ * rather than discrete on/off steps. Items are absolutely centered so an
+ * outgoing and an incoming word cross-fade in place. Copy is timeline data.
  */
 type VerticalMontageProps = {
   words: string[]
-  /** Milliseconds each word occupies before the next replaces it. */
-  interval: number
+  /** How long each word stays fully/at-all present, in ms. */
+  visibleDuration: number
+  /** Overlap between consecutive words, in ms (the cross-fade window). */
+  overlap: number
   /** Scene-relative elapsed time in ms. */
   elapsed: number
 }
 
-export function VerticalMontage({ words, interval, elapsed }: VerticalMontageProps) {
-  const idx = Math.floor(elapsed / interval)
-  if (idx < 0 || idx >= words.length) return null
+const FADE = 250
+const easeInOut = (p: number) =>
+  p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2
 
-  // Ease opacity up then down within each word's slot.
-  const local = elapsed - idx * interval
-  const inEnd = interval * 0.25
-  const outStart = interval * 0.75
-  const opacity =
-    local < inEnd
-      ? local / inEnd
-      : local > outStart
-        ? Math.max(0, (interval - local) / (interval - outStart))
-        : 1
+export function VerticalMontage({
+  words,
+  visibleDuration,
+  overlap,
+  elapsed,
+}: VerticalMontageProps) {
+  const step = visibleDuration - overlap
 
   return (
-    <p
-      key={idx}
-      className="text-center font-serif text-4xl font-light tracking-tight text-foreground sm:text-5xl"
-      style={{ opacity }}
-    >
-      {words[idx]}
-    </p>
+    <div className="relative flex min-h-[1.4em] items-center justify-center">
+      {words.map((word, i) => {
+        const local = elapsed - i * step
+        if (local < 0 || local > visibleDuration) return null
+
+        const rawOpacity =
+          local < FADE
+            ? local / FADE
+            : local > visibleDuration - FADE
+              ? Math.max(0, (visibleDuration - local) / FADE)
+              : 1
+        const opacity = easeInOut(Math.min(1, rawOpacity))
+        const scale = 0.98 + 0.02 * (local < FADE ? easeInOut(local / FADE) : 1)
+
+        return (
+          <p
+            key={i}
+            className="absolute whitespace-nowrap text-center font-serif text-4xl font-light tracking-tight text-foreground sm:text-5xl"
+            style={{ opacity, transform: `scale(${scale})` }}
+          >
+            {word}
+          </p>
+        )
+      })}
+    </div>
   )
 }
