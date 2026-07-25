@@ -35,8 +35,12 @@ type ChatInputShellProps = {
   sendAt: number
   /** Offset at which Titiza's reply starts revealing, sentence by sentence. */
   replyStartAt: number
-  /** Milliseconds between consecutive reply-sentence reveals. */
-  replyHold: number
+  /**
+   * Gap (ms) AFTER each reply sentence before the next appears — one entry per
+   * sentence (the last is unused for reveal, but keeps the array aligned). Sized
+   * per sentence so each honors the reading-time floor before the next lands.
+   */
+  replyHolds: number[]
 }
 
 const EASE = 'cubic-bezier(0.4, 0, 0.2, 1)'
@@ -55,7 +59,7 @@ export function ChatInputShell({
   typeDuration,
   sendAt,
   replyStartAt,
-  replyHold,
+  replyHolds,
 }: ChatInputShellProps) {
   const typing = elapsed >= typeStartAt && elapsed < sendAt
   const sent = elapsed >= sendAt
@@ -69,13 +73,15 @@ export function ChatInputShell({
   // Chips are only present before the user commits to typing a query.
   const showChips = elapsed < typeStartAt
 
-  const revealedReplies =
-    elapsed >= replyStartAt
-      ? replyLines.slice(
-          0,
-          Math.min(replyLines.length, Math.floor((elapsed - replyStartAt) / replyHold) + 1),
-        )
-      : []
+  // Cumulative reveal time for each reply sentence: sentence i appears after the
+  // sum of the preceding sentences' holds, so each gets its own reading window.
+  let revealAcc = replyStartAt
+  const revealTimes = replyLines.map((_, i) => {
+    const at = revealAcc
+    revealAcc += replyHolds[i] ?? 0
+    return at
+  })
+  const revealedReplies = replyLines.filter((_, i) => elapsed >= revealTimes[i])
 
   return (
     <div className="w-full max-w-md">

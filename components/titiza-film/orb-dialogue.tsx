@@ -22,7 +22,7 @@ export function OrbDialogue({ lines, hold, elapsed }: OrbDialogueProps) {
     <p
       key={idx}
       className="text-balance px-2 text-center font-serif text-3xl font-light leading-tight text-foreground sm:text-4xl"
-      style={{ animation: 'fadeIn 0.6s ease both' }}
+      style={{ animation: 'fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) both' }}
     >
       {lines[idx]}
     </p>

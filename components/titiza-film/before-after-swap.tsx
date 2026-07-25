@@ -52,7 +52,7 @@ export function BeforeAfterSwap({
   return (
     <div
       className="relative aspect-[4/5] w-40 sm:w-48"
-      style={{ animation: 'fadeIn 0.6s ease both' }}
+      style={{ animation: 'fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) both' }}
     >
       {mode === 'single' ? (
         <Frame tone="before" opacity={1} />

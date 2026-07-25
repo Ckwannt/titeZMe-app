@@ -94,7 +94,7 @@ type View =
       typeDuration: number
       sendAt: number
       replyStartAt: number
-      replyHold: number
+      replyHolds: number[]
     }
   | { type: 'photo'; at?: number; until?: number }
   | { type: 'beforeAfter'; at?: number; until?: number; swapAt: number }
@@ -122,7 +122,8 @@ const SCENES: Scene[] = [
     duration: 3000,
     orb: false,
     views: [
-      { type: 'title', variant: 'intro', primary: 'Introducing', secondary: 'Titiza', fadeIn: 600, fadeOut: 0 },
+      // fadeOut 400 (V3): softens the cut from the intro card into s2's birth.
+      { type: 'title', variant: 'intro', primary: 'Introducing', secondary: 'Titiza', fadeIn: 600, fadeOut: 400 },
     ],
   },
   {
@@ -155,32 +156,33 @@ const SCENES: Scene[] = [
     // send moment (ring + brighten), not when the reply begins.
     id: 's2b',
     title: 'First Conversation',
-    // ~1200ms lead (the orb's anchor transform settles, then a 50ms breath)
-    // before the chat view mounts, + the conversation itself.
-    duration: 7600,
+    // 1300ms lead (300ms delay + 900ms transform + 100ms breath) before the
+    // chat mounts, + the conversation (now paced to the reading-time floor).
+    duration: 10600,
     orb: true,
     orbEvents: [
-      // CHANGE 3 — a single SUBTLE pulse (ring only, no sustained brighten) the
-      // instant the user's line settles into the bubble (chat mount 1200 +
-      // sendAt 2550 + 300ms bubble lift = 4050).
-      { at: 4050, kind: 'ring' },
-      // CHANGE 4 — the orb brightens slightly WHILE each reply sentence appears
-      // (reply i at 1200 + 3100 + i*500), easing back to idle between them.
-      { at: 4300, kind: 'state', value: 'bright' },
-      { at: 4550, kind: 'state', value: 'idle' },
-      { at: 4800, kind: 'state', value: 'bright' },
-      { at: 5050, kind: 'state', value: 'idle' },
+      // TASK 4 — bubble settles (chat mount 1300 + sendAt 2550 + 300ms lift =
+      // 4150), the orb stays still for 200ms, THEN a single subtle warm pulse
+      // (ring only) at 4350 — after which the reply begins.
+      { at: 4350, kind: 'ring' },
+      // TASK 3/CHANGE 4 — the orb brightens slightly WHILE each reply sentence
+      // appears (reveal scene times 4400 / 5300 / 7300 / 9500), easing back
+      // between. Kept subtle (the 'bright' state, not a ring).
+      { at: 4400, kind: 'state', value: 'bright' },
+      { at: 4650, kind: 'state', value: 'idle' },
       { at: 5300, kind: 'state', value: 'bright' },
       { at: 5550, kind: 'state', value: 'idle' },
-      { at: 5800, kind: 'state', value: 'bright' },
-      { at: 6050, kind: 'state', value: 'idle' },
+      { at: 7300, kind: 'state', value: 'bright' },
+      { at: 7550, kind: 'state', value: 'idle' },
+      { at: 9500, kind: 'state', value: 'bright' },
+      { at: 9750, kind: 'state', value: 'idle' },
     ],
     views: [
       {
         type: 'chat',
-        // Waits for the orb's 900ms anchor transform (which starts 250ms into
-        // this scene) to fully complete before anything fades in (frozen #4).
-        at: 1200,
+        // Waits for the orb's 900ms anchor transform (which starts 300ms into
+        // this scene, completing at 1200) to finish before anything fades in.
+        at: 1300,
         placeholder: 'What would you like to improve today?',
         chips: [
           'Help me find a haircut that suits me',
@@ -195,31 +197,33 @@ const SCENES: Scene[] = [
           'The best way to do that is with a professional hair analysis.',
           "Let's start there.",
         ],
-        // View-relative offsets: input rises in at 0, chips 250ms later (staggered
-        // 150ms), query types 1400–2300, +250ms pause → send 2550, reply from
-        // 3100 (250ms fade + 250ms pause per sentence).
+        // View-relative offsets: input rises at 0, chips at 250 (150ms stagger),
+        // query types 1400–2300, +250ms pause → send 2550, settle 2850, +200ms
+        // still, pulse 3050, reply from 3100. Per-sentence reply holds honor the
+        // reading floor (~180ms/word, 900 min): 900 / 2000 / 2200 / 900.
         chipsAt: 250,
         chipStagger: 150,
         typeStartAt: 1400,
         typeDuration: 900,
         sendAt: 2550,
         replyStartAt: 3100,
-        replyHold: 500,
+        replyHolds: [900, 2000, 2200, 900],
       },
     ],
   },
   {
     id: 's3',
     title: 'Learning About You',
-    duration: 5600,
+    duration: 8000,
     orb: true,
     views: [
       {
         type: 'typing',
         at: 0,
-        until: 1500,
-        // Each row appears separately, 250ms apart, each rising in over 250ms.
-        stagger: 250,
+        until: 4000,
+        // TASK 1 — each row now holds ~900ms (the reading-time floor) as the
+        // newest line before the next appears, raised from V2's 250ms.
+        stagger: 900,
         revealDuration: 250,
         lines: [
           'Checking your Beauty Profile...',
@@ -230,8 +234,9 @@ const SCENES: Scene[] = [
         ],
       },
       {
+        // hold 1900 clears the floor for both lines (7w→1260, 3w→900).
         type: 'dialogue',
-        at: 1700,
+        at: 4200,
         hold: 1900,
         lines: ["I don't know enough about your hair.", "Let's change that."],
       },
@@ -240,19 +245,21 @@ const SCENES: Scene[] = [
   {
     id: 's4',
     title: 'Finding the Right Analyst',
-    // ~25% shorter than the original 10000 — every step kept, pauses tightened.
-    duration: 7500,
+    // TASK 8 — search idle tightened again (stagger 650, only a 400ms gap after
+    // the last line before the card). 'thinking' → 'idle' at the card = the orb
+    // glow stabilizing/calming when the professional is found (TASK 3).
+    duration: 6500,
     orb: true,
     orbEvents: [
       { at: 0, kind: 'state', value: 'thinking' },
-      { at: 3600, kind: 'state', value: 'idle' },
+      { at: 3000, kind: 'state', value: 'idle' },
     ],
     views: [
       {
         type: 'typing',
         at: 0,
-        until: 3400,
-        stagger: 700,
+        until: 3000,
+        stagger: 650,
         lines: [
           'Searching nearby certified hair analysts...',
           'Checking certifications...',
@@ -263,13 +270,13 @@ const SCENES: Scene[] = [
       },
       {
         type: 'card',
-        at: 3600,
+        at: 3000,
         name: 'Dr. Sarah',
         role: 'Hair Analyst',
         meta: '2.3 km · English',
         rating: '★★★★★ · Tomorrow 10:30',
         button: 'Book Analysis',
-        pressAt: 2400, // scene ~6000ms
+        pressAt: 2400, // scene ~5400ms
       },
     ],
   },
@@ -360,25 +367,26 @@ const SCENES: Scene[] = [
   {
     id: 's8',
     title: 'Recommendation',
-    // Swap completes at ~2100 (mount 900 + 1200 cross-fade); the result then
-    // holds untouched for 1400ms before the dialogue — satisfying the ≥1200ms
-    // still-hold — and again after it, before s9.
-    duration: 6000,
+    // Swap completes at ~2100 (mount 900 + 1200 cross-fade); TASK 10 holds the
+    // final result untouched for 1500ms (V2 was ~1400) before the dialogue.
+    duration: 6100,
     orb: true,
     views: [
       { type: 'beforeAfter', at: 900, swapAt: 0 },
-      { type: 'dialogue', at: 3500, hold: 2500, lines: ['I like this one.'] },
+      { type: 'dialogue', at: 3600, hold: 2500, lines: ['I like this one.'] },
     ],
   },
   {
     id: 's9',
     title: 'Finding the Right Barber',
-    // Search pacing tightened (every line kept), + a 1000ms hold after "Booked."
-    duration: 9600,
+    // TASK 8 — search idle tightened further (stagger 600, card 300ms after the
+    // last line); + a 1000ms hold after "Booked." (TASK 12). Dialogue hold 1300
+    // already clears the floor (7w→1260), so TASK 1 leaves it.
+    duration: 9100,
     orb: true,
     orbEvents: [
       { at: 2800, kind: 'state', value: 'thinking' },
-      { at: 6600, kind: 'state', value: 'idle' },
+      { at: 6100, kind: 'state', value: 'idle' },
     ],
     views: [
       {
@@ -391,8 +399,8 @@ const SCENES: Scene[] = [
       {
         type: 'typing',
         at: 2800,
-        until: 6600,
-        stagger: 650,
+        until: 6100,
+        stagger: 600,
         lines: [
           'Searching...',
           'Specialists in this hairstyle',
@@ -404,13 +412,13 @@ const SCENES: Scene[] = [
       },
       {
         type: 'card',
-        at: 6600,
+        at: 6100,
         name: 'Alex Barber Studio',
         meta: '1.8 km · English',
         rating: '★★★★★ · Tomorrow 15:00',
         button: 'Book Appointment',
-        pressAt: 1600, // scene ~8200ms
-        confirmAt: 2000, // scene ~8600ms ("Booked."), then +1000ms hold to 9600
+        pressAt: 1600, // scene ~7700ms
+        confirmAt: 2000, // scene ~8100ms ("Booked."), then +1000ms hold to 9100
         confirmText: 'Booked.',
       },
     ],
@@ -435,20 +443,22 @@ const SCENES: Scene[] = [
   {
     id: 's11',
     title: 'Final Message',
-    // Line 1 (subtle breathing only) → 900ms → line 2 (orb brightens) → 1200ms
-    // → fade to black (handled by the end card that follows).
-    duration: 2400,
+    // TASK 11 — the orb holds ALONE for 1000ms (nothing else on screen) before
+    // line 1; line 1 (subtle breathing only) → line 2 at 2100 (orb brightens) →
+    // ~1200ms → fade to black (handled by the end card). hold 1100 clears the
+    // reading floor (both lines 6w → 1080ms), raised from V2's 900.
+    duration: 3400,
     orb: true,
     orbEvents: [
-      // No brightening until the second line arrives.
-      { at: 900, kind: 'ring' },
-      { at: 900, kind: 'state', value: 'bright' },
+      // No brightening until the second line lands (1000 lead + 1100 hold = 2100).
+      { at: 2100, kind: 'ring' },
+      { at: 2100, kind: 'state', value: 'bright' },
     ],
     views: [
       {
         type: 'dialogue',
-        at: 0,
-        hold: 900,
+        at: 1000,
+        hold: 1100,
         lines: ['The more I know about you...', 'The better I can help you.'],
       },
     ],
@@ -553,9 +563,10 @@ export function FilmSequencer() {
   // every remaining scene (s2b → end). Purely a layout transform on the wrapper;
   // the orb component itself is untouched. `anchored` flips true at the s2/s2b
   // boundary and never flips back.
-  // Starts ~250ms after s2's birth dialogue resolves (i.e. 250ms into s2b), then
-  // the wrapper runs its 900ms transform; the chat view (at 1200) waits for it.
-  const anchorStart = starts[SCENES.findIndex((s) => s.id === 's2b')] + 250
+  // Starts 300ms after s2's birth dialogue resolves (i.e. 300ms into s2b — V3
+  // raised this from V2's 250ms), then the wrapper runs its 900ms transform,
+  // completing at 1200ms; the chat view (at 1300) waits for it to finish.
+  const anchorStart = starts[SCENES.findIndex((s) => s.id === 's2b')] + 300
   const anchored = elapsed >= anchorStart
 
   // Conversation strip — a continuity cue spanning the beauty-profile check
@@ -699,7 +710,7 @@ export function FilmSequencer() {
                   typeDuration={v.typeDuration}
                   sendAt={v.sendAt}
                   replyStartAt={v.replyStartAt}
-                  replyHold={v.replyHold}
+                  replyHolds={v.replyHolds}
                 />
               )
             }

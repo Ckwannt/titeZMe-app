@@ -80,7 +80,7 @@ export function ProfessionalCard({
       {confirmed && confirmText && (
         <p
           className="mt-3 text-center text-sm font-medium text-gold-soft"
-          style={{ animation: 'fadeIn 0.4s ease both' }}
+          style={{ animation: 'fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both' }}
         >
           {confirmText}
         </p>
