@@ -28,6 +28,7 @@ import { BeforeAfterSwap } from './before-after-swap'
 import { VerticalMontage } from './vertical-montage'
 import { ChatInputShell } from './chat-input-shell'
 import { ConversationStrip } from './conversation-strip'
+import { LaunchDateCard } from './launch-date-card'
 
 type OrbState = 'idle' | 'thinking' | 'bright'
 
@@ -99,6 +100,19 @@ type View =
   | { type: 'photo'; at?: number; until?: number }
   | { type: 'beforeAfter'; at?: number; until?: number; swapAt: number }
   | { type: 'montage'; at?: number; until?: number; words: string[]; visibleDuration: number; overlap: number }
+  | {
+      type: 'launch'
+      at?: number
+      until?: number
+      line1: string
+      line2: string
+      line3: string
+      line1At: number
+      line2At: number
+      line3At: number
+      lineFade: number
+      finalFadeOut: number
+    }
 
 type Scene = {
   id: string
@@ -480,6 +494,29 @@ const SCENES: Scene[] = [
       },
     ],
   },
+  {
+    // Closing chapter, appended after the end card (which fades itself to black
+    // via its own fadeOut). Opens on ~1000ms of pure black (line1At), then three
+    // lines cascade in and hold, then a slow whole-composition fade to black.
+    id: 'launch',
+    title: 'Launch Date',
+    // 1000 black + line cascade + 2500 hold-together + 1800 slow fade-out.
+    duration: 7800,
+    orb: false,
+    views: [
+      {
+        type: 'launch',
+        line1: 'The journey begins.',
+        line2: '17 September 2026',
+        line3: 'Madrid, Spain',
+        line1At: 1000, // ~1000ms of black first
+        line2At: 2500, // ~500ms after line 1 has held ~1000ms
+        line3At: 3000, // same ~500ms cadence after line 2
+        lineFade: 500,
+        finalFadeOut: 1800, // slower than the film's other fades (this is the close)
+      },
+    ],
+  },
 ]
 
 /** Is a view active at the given scene-relative time? */
@@ -740,6 +777,25 @@ export function FilmSequencer() {
             duration={scene.duration}
             fadeIn={v.fadeIn}
             fadeOut={v.fadeOut}
+          />
+        ) : null,
+      )}
+
+      {/* Closing launch-date chapter (full-screen, after the end card). */}
+      {activeViews.map((v, i) =>
+        v.type === 'launch' ? (
+          <LaunchDateCard
+            key={`launch-${i}`}
+            line1={v.line1}
+            line2={v.line2}
+            line3={v.line3}
+            elapsed={local(v)}
+            duration={scene.duration}
+            line1At={v.line1At}
+            line2At={v.line2At}
+            line3At={v.line3At}
+            lineFade={v.lineFade}
+            finalFadeOut={v.finalFadeOut}
           />
         ) : null,
       )}
