@@ -44,7 +44,7 @@ const en: LocaleContent = {
   s1: { primary: 'Introducing', secondary: 'Titiza' },
   s2: {
     lines: [
-      'Hello there.',
+      'Hello CKwant.',
       "I'm Titiza.",
       'Before I can help you...',
       'I need to understand you.',
@@ -150,7 +150,7 @@ const es: LocaleContent = {
   s1: { primary: 'Presentamos', secondary: 'Titiza' },
   s2: {
     lines: [
-      'Hola, Ibrahim.',
+      'Hola, CKwant.',
       'Soy Titiza.',
       'Antes de poder ayudarte...',
       'necesito conocerte.',
