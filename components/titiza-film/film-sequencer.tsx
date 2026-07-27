@@ -29,6 +29,7 @@ import { VerticalMontage } from './vertical-montage'
 import { ChatInputShell } from './chat-input-shell'
 import { ConversationStrip } from './conversation-strip'
 import { LaunchDateCard } from './launch-date-card'
+import { content, type Locale, type LocaleContent } from './content'
 
 type OrbState = 'idle' | 'thinking' | 'bright'
 
@@ -126,10 +127,12 @@ type Scene = {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  THE TIMELINE — copy is final and verbatim; do not paraphrase.              */
+/*  THE TIMELINE — structure/timing/counts are SHARED across locales; only the */
+/*  text is swapped, read from `content[locale]` (see content.ts).             */
 /* -------------------------------------------------------------------------- */
 
-const SCENES: Scene[] = [
+function buildScenes(c: LocaleContent): Scene[] {
+  return [
   {
     id: 's1',
     title: 'Black Screen',
@@ -137,7 +140,7 @@ const SCENES: Scene[] = [
     orb: false,
     views: [
       // fadeOut 400 (V3): softens the cut from the intro card into s2's birth.
-      { type: 'title', variant: 'intro', primary: 'Introducing', secondary: 'Titiza', fadeIn: 600, fadeOut: 400 },
+      { type: 'title', variant: 'intro', primary: c.s1.primary, secondary: c.s1.secondary, fadeIn: 600, fadeOut: 400 },
     ],
   },
   {
@@ -155,12 +158,7 @@ const SCENES: Scene[] = [
         type: 'dialogue',
         at: 0,
         hold: 2500,
-        lines: [
-          'Hello there.',
-          "I'm Titiza.",
-          'Before I can help you...',
-          'I need to understand you.',
-        ],
+        lines: c.s2.lines,
       },
     ],
   },
@@ -197,20 +195,10 @@ const SCENES: Scene[] = [
         // Waits for the orb's 900ms anchor transform (which starts 300ms into
         // this scene, completing at 1200) to finish before anything fades in.
         at: 1300,
-        placeholder: 'What would you like to improve today?',
-        chips: [
-          'Help me find a haircut that suits me',
-          'Why is my hair falling out?',
-          'Build my skincare routine',
-          'Recommend products for my skin',
-        ],
-        query: 'I want a haircut',
-        replyLines: [
-          'Absolutely.',
-          'Before I recommend a haircut, I need to understand your hair.',
-          'The best way to do that is with a professional hair analysis.',
-          "Let's start there.",
-        ],
+        placeholder: c.s2b.placeholder,
+        chips: c.s2b.chips,
+        query: c.s2b.query,
+        replyLines: c.s2b.reply,
         // View-relative offsets: input rises at 0, chips at 250 (150ms stagger),
         // query types 1400–2300, +250ms pause → send 2550, settle 2850, +200ms
         // still, pulse 3050, reply from 3100. Per-sentence reply holds honor the
@@ -239,20 +227,14 @@ const SCENES: Scene[] = [
         // newest line before the next appears, raised from V2's 250ms.
         stagger: 900,
         revealDuration: 250,
-        lines: [
-          'Checking your Beauty Profile...',
-          'Hair... No Professional Analysis',
-          'Goals... Unknown',
-          'Progress... Unknown',
-          'Routine... Unknown',
-        ],
+        lines: c.s3.typing,
       },
       {
         // hold 1900 clears the floor for both lines (7w→1260, 3w→900).
         type: 'dialogue',
         at: 4200,
         hold: 1900,
-        lines: ["I don't know enough about your hair.", "Let's change that."],
+        lines: c.s3.dialogue,
       },
     ],
   },
@@ -274,22 +256,16 @@ const SCENES: Scene[] = [
         at: 0,
         until: 3000,
         stagger: 650,
-        lines: [
-          'Searching nearby certified hair analysts...',
-          'Checking certifications...',
-          'Checking language...',
-          'Checking availability...',
-          'Checking reviews...',
-        ],
+        lines: c.s4.typing,
       },
       {
         type: 'card',
         at: 3000,
-        name: 'Dr. Sarah',
-        role: 'Hair Analyst',
-        meta: '2.3 km · English',
-        rating: '★★★★★ · Tomorrow 10:30',
-        button: 'Book Analysis',
+        name: c.s4.card.name,
+        role: c.s4.card.role,
+        meta: c.s4.card.meta,
+        rating: c.s4.card.rating,
+        button: c.s4.card.button,
         pressAt: 2400, // scene ~5400ms
       },
     ],
@@ -301,7 +277,7 @@ const SCENES: Scene[] = [
     duration: 1400,
     orb: true, // stays mounted (covered by the black title) to avoid a remount
     views: [
-      { type: 'title', variant: 'timeskip', primary: 'A few days later.', fadeIn: 250, fadeOut: 250 },
+      { type: 'title', variant: 'timeskip', primary: c.s5.primary, fadeIn: 250, fadeOut: 250 },
     ],
   },
   {
@@ -330,21 +306,13 @@ const SCENES: Scene[] = [
         pause: 200,
         travelDuration: 800,
         centerYVh: 24, // converge on the anchored orb (translateY -26vh from center)
-        chips: [
-          'Hair Density',
-          'Hair Thickness',
-          'Hairline',
-          'Scalp Health',
-          'Hair Type',
-          'Lifestyle Notes',
-          'Professional Recommendations',
-        ],
+        chips: c.s6.chips,
       },
       {
         type: 'dialogue',
         at: 3700,
         hold: 1200,
-        lines: ['Now I understand your hair.', "Let's see what's possible."],
+        lines: c.s6.dialogue,
       },
     ],
   },
@@ -359,22 +327,14 @@ const SCENES: Scene[] = [
         at: 0,
         until: 2400,
         hold: 2400,
-        lines: ['Show me how your hair looks today.'],
+        lines: [c.s7.ask],
       },
       { type: 'photo', at: 1400 },
       {
         type: 'typing',
         at: 2400,
         stagger: 900,
-        lines: [
-          'Comparing...',
-          'Professional Analysis',
-          "Today's Hair",
-          'Face Shape',
-          'Hair Density',
-          'Your Goals',
-          'Current Style',
-        ],
+        lines: c.s7.typing,
       },
     ],
   },
@@ -387,7 +347,7 @@ const SCENES: Scene[] = [
     orb: true,
     views: [
       { type: 'beforeAfter', at: 900, swapAt: 0 },
-      { type: 'dialogue', at: 3600, hold: 2500, lines: ['I like this one.'] },
+      { type: 'dialogue', at: 3600, hold: 2500, lines: [c.s8.line] },
     ],
   },
   {
@@ -408,32 +368,25 @@ const SCENES: Scene[] = [
         at: 0,
         until: 2800,
         hold: 1300,
-        lines: ['Great choice.', "Now let's find someone who can create it."],
+        lines: c.s9.dialogue,
       },
       {
         type: 'typing',
         at: 2800,
         until: 6100,
         stagger: 600,
-        lines: [
-          'Searching...',
-          'Specialists in this hairstyle',
-          'English speaking',
-          'Near your location',
-          'Available tomorrow',
-          'Highly rated',
-        ],
+        lines: c.s9.typing,
       },
       {
         type: 'card',
         at: 6100,
-        name: 'Alex Barber Studio',
-        meta: '1.8 km · English',
-        rating: '★★★★★ · Tomorrow 15:00',
-        button: 'Book Appointment',
+        name: c.s9.card.name,
+        meta: c.s9.card.meta,
+        rating: c.s9.card.rating,
+        button: c.s9.card.button,
         pressAt: 1600, // scene ~7700ms
         confirmAt: 2000, // scene ~8100ms ("Booked."), then +1000ms hold to 9100
-        confirmText: 'Booked.',
+        confirmText: c.s9.booked,
       },
     ],
   },
@@ -450,7 +403,7 @@ const SCENES: Scene[] = [
         // so the sequence reads continuous rather than as discrete steps.
         visibleDuration: 950,
         overlap: 150,
-        words: ['Hair', 'Skin & Facial', 'Dental', 'Nails', 'Fitness', 'More...'],
+        words: c.s10.words,
       },
     ],
   },
@@ -473,7 +426,7 @@ const SCENES: Scene[] = [
         type: 'dialogue',
         at: 1000,
         hold: 1100,
-        lines: ['The more I know about you...', 'The better I can help you.'],
+        lines: c.s11.lines,
       },
     ],
   },
@@ -487,8 +440,8 @@ const SCENES: Scene[] = [
       {
         type: 'title',
         variant: 'end',
-        primary: 'Titiza',
-        secondary: 'Your Personal Beauty Intelligence',
+        primary: c.end.primary,
+        secondary: c.end.secondary,
         fadeIn: 400,
         fadeOut: 400,
       },
@@ -506,9 +459,9 @@ const SCENES: Scene[] = [
     views: [
       {
         type: 'launch',
-        line1: 'The journey begins.',
-        line2: '17 September 2026',
-        line3: 'Madrid, Spain',
+        line1: c.launch.line1,
+        line2: c.launch.line2,
+        line3: c.launch.line3,
         line1At: 1000, // ~1000ms of black first
         line2At: 2500, // ~500ms after line 1 has held ~1000ms
         line3At: 3000, // same ~500ms cadence after line 2
@@ -517,7 +470,8 @@ const SCENES: Scene[] = [
       },
     ],
   },
-]
+  ]
+}
 
 /** Is a view active at the given scene-relative time? */
 function viewActive(view: View, sceneElapsed: number, sceneDuration: number) {
@@ -526,31 +480,37 @@ function viewActive(view: View, sceneElapsed: number, sceneDuration: number) {
   return sceneElapsed >= start && sceneElapsed < end
 }
 
-export function FilmSequencer() {
+export function FilmSequencer({ locale = 'en' }: { locale?: Locale } = {}) {
   const [elapsed, setElapsed] = useState(0)
 
-  // Cumulative scene start offsets + total runtime (data-derived, stable).
+  // The active locale's copy. Structure/timing are shared; only text differs.
+  const c = content[locale]
+
+  // Scenes for this locale: identical shape/timing/counts, text from `content`.
+  const scenes = useMemo(() => buildScenes(c), [c])
+
+  // Cumulative scene start offsets + total runtime (data-derived).
   const { starts, total } = useMemo(() => {
     const s: number[] = []
     let acc = 0
-    for (const scene of SCENES) {
+    for (const scene of scenes) {
       s.push(acc)
       acc += scene.duration
     }
     return { starts: s, total: acc }
-  }, [])
+  }, [scenes])
 
   // Absolute times of every ring event, ascending. ringTrigger is simply how
   // many have passed — monotonic, so each crossing advances it by exactly one.
   const ringTimes = useMemo(() => {
     const times: number[] = []
-    SCENES.forEach((scene, i) => {
+    scenes.forEach((scene, i) => {
       scene.orbEvents?.forEach((ev) => {
         if (ev.kind === 'ring') times.push(starts[i] + ev.at)
       })
     })
     return times.sort((a, b) => a - b)
-  }, [starts])
+  }, [scenes, starts])
 
   // Single rAF clock for the whole film.
   useEffect(() => {
@@ -567,10 +527,10 @@ export function FilmSequencer() {
 
   // Resolve the active scene + scene-relative time.
   let sceneIndex = 0
-  for (let i = 0; i < SCENES.length; i++) {
+  for (let i = 0; i < scenes.length; i++) {
     if (elapsed >= starts[i]) sceneIndex = i
   }
-  const scene = SCENES[sceneIndex]
+  const scene = scenes[sceneIndex]
   const sceneElapsed = elapsed - starts[sceneIndex]
 
   // Orb state for this moment: latest state event reached, else 'idle'.
@@ -603,7 +563,7 @@ export function FilmSequencer() {
   // Starts 300ms after s2's birth dialogue resolves (i.e. 300ms into s2b — V3
   // raised this from V2's 250ms), then the wrapper runs its 900ms transform,
   // completing at 1200ms; the chat view (at 1300) waits for it to finish.
-  const anchorStart = starts[SCENES.findIndex((s) => s.id === 's2b')] + 300
+  const anchorStart = starts[scenes.findIndex((s) => s.id === 's2b')] + 300
   const anchored = elapsed >= anchorStart
 
   // Conversation strip — a continuity cue spanning the beauty-profile check
@@ -756,11 +716,12 @@ export function FilmSequencer() {
         </div>
       )}
 
-      {/* Conversation strip — continuity cue across s3 and s4. */}
+      {/* Conversation strip — continuity cue across s3 and s4. Text mirrors the
+          chat: the user's query + Titiza's closing reply (localized via content). */}
       {stripOpacity > 0 && (
         <ConversationStrip
-          userLine="I want a haircut"
-          titizaLine="Let's start there."
+          userLine={c.s2b.query}
+          titizaLine={c.s2b.reply[c.s2b.reply.length - 1]}
           opacity={stripOpacity}
         />
       )}
