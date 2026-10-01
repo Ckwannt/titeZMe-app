@@ -1,0 +1,38 @@
+[
+  {
+    "file": "public/apple-touch-icon.png",
+    "bytes": 22182,
+    "format": "png",
+    "sha256": "fc3d057399f6086ceb64c2bc2252c2a22859734742af89b1a7471d3ebe6954d0"
+  },
+  {
+    "file": "public/ckwant-challenge.png",
+    "bytes": 2253472,
+    "format": "png",
+    "sha256": "0281aea83fe727db0da0be0e0680d8bcb6d66196c29ee100f4431c54df85dd27"
+  },
+  {
+    "file": "public/favicon-96x96.png",
+    "bytes": 8770,
+    "format": "png",
+    "sha256": "950ab9088fcf4280298996a155a9862a986548a74ee15bfb91925770b2c4a90c"
+  },
+  {
+    "file": "public/favicon.ico",
+    "bytes": 15086,
+    "format": "ico",
+    "sha256": "bdec7d498c69bc09ebe09c7c148a2ddcde8f957ecde44ccb0c8b4daa5c2a8a26"
+  },
+  {
+    "file": "public/web-app-manifest-192x192.png",
+    "bytes": 24531,
+    "format": "png",
+    "sha256": "4102e23a4c2130cdb879de5ee64e05e7649b571151b54a6e90e96ad1feb4f4fa"
+  },
+  {
+    "file": "public/web-app-manifest-512x512.png",
+    "bytes": 106643,
+    "format": "png",
+    "sha256": "05fe4d94b0b516b29a52202b8213b2e92d488227b4912c58b1ef0b232f15d866"
+  }
+]

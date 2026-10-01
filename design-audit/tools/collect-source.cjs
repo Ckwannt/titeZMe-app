@@ -1,0 +1,30 @@
+const fs=require('fs'),path=require('path'),ts=require('typescript'),crypto=require('crypto');
+const out='design-audit';for(const d of ['','tools','evidence','screenshots'])fs.mkdirSync(path.join(out,d),{recursive:true});
+function walk(d){return fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>['node_modules','.git','.next','design-audit'].includes(e.name)?[]:e.isDirectory()?walk(path.join(d,e.name)):[path.join(d,e.name).replaceAll('\\','/')]);}
+const all=walk('.');
+const files=all.filter(f=>/^(app|components|hooks|lib|functions\/src)\//.test(f)&&/\.(tsx?|css)$/.test(f));
+const records=files.map(file=>{const s=fs.readFileSync(file,'utf8'),ast=ts.createSourceFile(file,s,ts.ScriptTarget.Latest,true,file.endsWith('.tsx')?ts.ScriptKind.TSX:ts.ScriptKind.TS),imports=[],funcs=[],classes=[],styles=[],jsx=[];
+const line=n=>ast.getLineAndCharacterOfPosition(n.getStart(ast)).line+1;
+function visit(n){if(ts.isImportDeclaration(n))imports.push({line:line(n),text:n.getText(ast),module:n.moduleSpecifier.text});
+if(ts.isFunctionDeclaration(n)&&n.name)funcs.push({name:n.name.text,line:line(n),exported:!!n.modifiers?.some(m=>m.kind===ts.SyntaxKind.ExportKeyword),text:n.getText(ast)});
+if(ts.isJsxAttribute(n)&&n.name.getText(ast)==='className'&&n.initializer)classes.push({line:line(n),value:n.initializer.getText(ast)});
+if(ts.isPropertyAssignment(n)&&/^(background.*|color|border.*|boxShadow|textShadow|filter|backdropFilter|opacity|font.*|lineHeight|letterSpacing|textTransform|padding.*|margin.*|gap|width|height|maxWidth|minWidth|maxHeight|minHeight|display|grid.*|flex.*|align.*|justify.*|animation.*|transition.*|transform.*|zIndex|stroke.*|fill)$/.test(n.name.getText(ast)))styles.push({line:line(n),name:n.name.getText(ast),value:n.initializer.getText(ast)});
+if(ts.isJsxOpeningElement(n)||ts.isJsxSelfClosingElement(n))jsx.push({line:line(n),tag:n.tagName.getText(ast),text:n.getText(ast)});ts.forEachChild(n,visit);}visit(ast);
+return {file,lines:s.split(/\r?\n/).map((text,i)=>({line:i+1,text})),imports,funcs,classes,styles,jsx};});
+fs.writeFileSync(out+'/evidence/source-inventory.json',JSON.stringify({date:'2026-10-01',allFiles:all,records},null,2));
+const esc=s=>String(s).replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('|','\\|').replaceAll('\n',' ');
+const rows=re=>records.flatMap(r=>r.lines.filter(l=>re.test(l.text)).map(l=>({file:r.file,...l})));
+function evidence(name,title,rs){fs.writeFileSync(out+'/evidence/'+name,'# '+title+'\n\nExact source occurrences; comments may disagree with behavior. Static occurrences do not prove runtime reachability. Values are not normalized.\n\n| Source | Exact source |\n|---|---|\n'+rs.map(r=>'| ['+r.file+':'+r.line+'](../../'+r.file+'#L'+r.line+') | '+esc(r.text)+' |').join('\n')+'\n');}
+evidence('colors.md','Colors, gradients and glows',rows(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|oklch\(|--color-|gradient|\b(color|GOLD|GOLD_BRIGHT|WARM_WHITE)\s*[:=]/));
+evidence('typography.md','Typography occurrences',records.flatMap(r=>[...r.classes.filter(c=>/text-|font-|leading-|tracking-|uppercase|lowercase|capitalize/.test(c.value)).map(c=>({file:r.file,line:c.line,text:c.value})),...r.styles.filter(x=>/font|lineHeight|letterSpacing|textTransform/.test(x.name)).map(x=>({file:r.file,line:x.line,text:x.name+': '+x.value})),...r.lines.filter(l=>/next\/font|font-family|--font/.test(l.text)).map(l=>({file:r.file,...l}))]));
+evidence('spacing-geometry-layout.md','Spacing, geometry and layouts',records.flatMap(r=>[...r.classes.filter(c=>/\b(p[xytrblse]?|m[xytrblse]?|gap|space|rounded|border|shadow|blur|opacity|z|w|h|max-w|min-w|max-h|min-h|grid|flex|items|justify|container|ring|size)-/.test(c.value)).map(c=>({file:r.file,line:c.line,text:c.value})),...r.styles.filter(x=>!/font|lineHeight|letterSpacing|textTransform|animation|transition/.test(x.name)).map(x=>({file:r.file,line:x.line,text:x.name+': '+x.value}))]));
+evidence('responsive.md','Responsive implementation',rows(/@media|matchMedia|innerWidth|MOBILE_BREAKPOINT|(?:sm|md|lg|xl|2xl|max-\w+|min-\w+):|clamp\(/));
+evidence('motion.md','Motion implementation',rows(/animation|transition|@keyframes|requestAnimationFrame|setTimeout|duration-|delay-|ease-|prefers-reduced-motion|IntersectionObserver|performance\.now|THREE\.MathUtils\.damp/));
+evidence('accessibility.md','Accessibility implementation',rows(/aria-|role=|tabIndex|onKeyDown|focus|<label|htmlFor|alt=|<img|<Image|<button|<input|<select|<textarea|<main|<nav|<header|<footer|<form|<h[1-6]|prefers-reduced-motion/));
+evidence('imagery-icons.md','Imagery and icon source occurrences',rows(/https?:\/\/|<svg|strokeWidth|viewBox|<img|<Image|photoUrl|profilePhotoUrl|imageUrl|backgroundImage|<video|<canvas|fontFamily|\p{Extended_Pictographic}/u));
+evidence('states-and-overlays.md','States and secondary interfaces',rows(/useState|ComingSoon|Skeleton|loading|error|empty|modal|Modal|lightbox|drawer|show[A-Z]|ConfirmDialog|disabled=|aria-expanded|not found|Not found|no-op|placeholder/));
+evidence('data-and-routing.md','Data and routing',rows(/collection\(|doc\(|where\(|router\.(push|replace)|href=|PUBLIC_ROUTES|PUBLIC_PREFIXES|role ===|role !==|role:|ownsShop|professionalProfiles|businesses|paymentMethod|isLive|isSolo|isOnboarded/));
+const assets=all.filter(f=>/\.(png|jpe?g|webp|gif|svg|ico|avif|mp4|webm|mov|woff2?|ttf|otf|lottie)$/.test(f)).map(file=>{const b=fs.readFileSync(file);return {file,bytes:b.length,format:path.extname(file).slice(1),sha256:crypto.createHash('sha256').update(b).digest('hex')}});
+fs.writeFileSync(out+'/evidence/assets.json',JSON.stringify(assets,null,2));
+fs.writeFileSync(out+'/evidence/repository-files.md','# Repository file inventory\n\nExcludes generated caches, dependencies, Git metadata and audit output. Environment secrets are not copied.\n\n'+all.filter(f=>!/(^|\/)\.env/.test(f)).map(f=>'- '+f).join('\n')+'\n');
+console.log(JSON.stringify({routes:records.filter(r=>/\/page\.tsx$/.test(r.file)).length,componentFiles:records.filter(r=>r.file.startsWith('components/')&&r.file.endsWith('.tsx')).length,files:records.length,assets:assets.length}));

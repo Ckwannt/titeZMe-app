@@ -1,0 +1,139 @@
+
+./app/admin/(protected)/featured/page.tsx
+198:6  Warning: React Hook useEffect has a missing dependency: 'checkExpiry'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/barber/[barberId]/BarberProfileClient.tsx
+269:6  Warning: React Hook useEffect has a missing dependency: 'data.profile'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/book/shop/[shopId]/page.tsx
+128:6  Warning: React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/book/[barberId]/page.tsx
+76:6  Warning: React Hook useEffect has a missing dependency: 'router'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/dashboard/barber/bookings/page.tsx
+122:6  Warning: React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/dashboard/shop/bookings/page.tsx
+129:9  Warning: The 'weekEnd' object construction makes the dependencies of useMemo Hook (at line 169) change on every render. To fix this, wrap the initialization of 'weekEnd' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+
+./app/dashboard/shop/earnings/page.tsx
+140:6  Warning: React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/review/[bookingId]/page.tsx
+63:6  Warning: React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/titiza/path-analysis.tsx
+64:11  Warning: Unused eslint-disable directive (no problems were reported from 'no-console').
+
+./components/titiza/path-direct.tsx
+35:5  Warning: Unused eslint-disable directive (no problems were reported from 'no-console').
+42:5  Warning: Unused eslint-disable directive (no problems were reported from 'no-console').
+
+./components/titiza/titiza-core-scene.tsx
+793:6  Warning: React Hook useEffect has missing dependencies: 'apiRef' and 'genesis'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/75) ...
+   Generating static pages (18/75) 
+   Generating static pages (37/75) 
+   Generating static pages (56/75) 
+ ✓ Generating static pages (75/75)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                    7.85 kB         445 kB
+├ ○ /_not-found                            337 B         170 kB
+├ ○ /about                               2.53 kB         173 kB
+├ ○ /admin                               5.63 kB         322 kB
+├ ○ /admin/barbers                       3.62 kB         326 kB
+├ ƒ /admin/barbers/[id]                  7.83 kB         349 kB
+├ ○ /admin/bookings                      4.55 kB         324 kB
+├ ○ /admin/challenge                     7.58 kB         346 kB
+├ ○ /admin/clients                       4.45 kB         324 kB
+├ ○ /admin/fake-data                     2.05 kB         317 kB
+├ ○ /admin/featured                      3.66 kB         323 kB
+├ ○ /admin/login                         3.12 kB         318 kB
+├ ○ /admin/messages                       2.3 kB         317 kB
+├ ○ /admin/reviews                       3.47 kB         323 kB
+├ ○ /admin/settings                      1.85 kB         317 kB
+├ ○ /admin/shops                         3.36 kB         320 kB
+├ ƒ /admin/shops/[id]                    6.61 kB         342 kB
+├ ○ /admin/team                          3.39 kB         342 kB
+├ ○ /admin/users                            2 kB         317 kB
+├ ƒ /api/admin/upload-reference-photo      337 B         170 kB
+├ ƒ /api/delete-account                    337 B         170 kB
+├ ● /barber/[barberId]                   7.38 kB         459 kB
+├ ○ /barbers                              5.2 kB         482 kB
+├ ƒ /book/[barberId]                     7.83 kB         454 kB
+├ ƒ /book/shop/[shopId]                  10.4 kB         459 kB
+├ ○ /challenge                           7.25 kB         470 kB
+├ ○ /cities                              2.31 kB         319 kB
+├ ○ /contact                             5.32 kB         428 kB
+├ ○ /cookies                             2.02 kB         172 kB
+├ ○ /dashboard/barber                    14.4 kB         548 kB
+├ ○ /dashboard/barber/availability       15.6 kB         443 kB
+├ ○ /dashboard/barber/billing              615 B         265 kB
+├ ○ /dashboard/barber/bookings           8.46 kB         446 kB
+├ ○ /dashboard/barber/challenge            665 B         465 kB
+├ ○ /dashboard/barber/challenge/payment    463 B         435 kB
+├ ○ /dashboard/barber/create-shop        3.15 kB         461 kB
+├ ○ /dashboard/barber/invites            5.65 kB         429 kB
+├ ○ /dashboard/barber/portfolio           5.3 kB         448 kB
+├ ○ /dashboard/barber/services           5.57 kB         446 kB
+├ ○ /dashboard/barber/settings           9.41 kB         479 kB
+├ ○ /dashboard/client                      562 B         171 kB
+├ ○ /dashboard/client/badges               639 B         433 kB
+├ ○ /dashboard/client/bookings           6.48 kB         436 kB
+├ ○ /dashboard/client/favorites          4.61 kB         444 kB
+├ ○ /dashboard/client/gift-a-cut           644 B         433 kB
+├ ○ /dashboard/client/messages             644 B         433 kB
+├ ○ /dashboard/client/my-look              642 B         433 kB
+├ ○ /dashboard/client/reviews            5.08 kB         443 kB
+├ ○ /dashboard/client/settings           4.95 kB         446 kB
+├ ○ /dashboard/client/titiza             12.5 kB         439 kB
+├ ○ /dashboard/shop                      10.2 kB         435 kB
+├ ○ /dashboard/shop/availability         8.87 kB         446 kB
+├ ○ /dashboard/shop/billing                611 B         265 kB
+├ ○ /dashboard/shop/bookings             9.05 kB         437 kB
+├ ○ /dashboard/shop/challenge              818 B         474 kB
+├ ○ /dashboard/shop/challenge/payment      463 B         435 kB
+├ ○ /dashboard/shop/earnings             13.9 kB         537 kB
+├ ○ /dashboard/shop/photos                4.8 kB         442 kB
+├ ○ /dashboard/shop/reviews              5.85 kB         429 kB
+├ ○ /dashboard/shop/services             6.22 kB         438 kB
+├ ○ /dashboard/shop/settings             7.62 kB         469 kB
+├ ○ /dashboard/shop/team                 9.31 kB         445 kB
+├ ○ /for-barbers                         1.76 kB         266 kB
+├ ○ /for-shops                           5.53 kB         269 kB
+├ ○ /forgot-password                     1.97 kB         411 kB
+├ ○ /how-it-works                         1.6 kB         174 kB
+├ ○ /login                               3.58 kB         434 kB
+├ ○ /onboarding/client                    6.3 kB         459 kB
+├ ○ /onboarding/professional             7.48 kB         467 kB
+├ ○ /preview/titiza-film                   566 B         180 kB
+├ ○ /preview/titiza-film-es                572 B         180 kB
+├ ○ /privacy                             3.24 kB         173 kB
+├ ƒ /review/[bookingId]                  2.44 kB         434 kB
+├ ○ /robots.txt                            336 B         170 kB
+├ ƒ /shop/[shopId]                       7.07 kB         456 kB
+├ ○ /shops                               7.09 kB         470 kB
+├ ○ /signup                              5.12 kB         436 kB
+├ ○ /sitemap.xml                           337 B         170 kB
+├ ○ /terms                               3.22 kB         173 kB
+└ ○ /terms/challenge                     7.61 kB         425 kB
++ First Load JS shared by all             170 kB
+  ├ chunks/260-dae8d95525c11e1d.js        113 kB
+  ├ chunks/4bd1b696-1d88624c3158c861.js  53.4 kB
+  └ other shared chunks (total)          3.46 kB
+
+
+ƒ Middleware                             97.2 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+

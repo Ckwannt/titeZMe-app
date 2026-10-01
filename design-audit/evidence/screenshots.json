@@ -1,0 +1,1093 @@
+{
+  "records": [
+    {
+      "file": "client-home__desktop__1440x1000.png",
+      "fullFile": "client-home__desktop__1440x1000__full-page.png",
+      "route": "/",
+      "actualUrl": "http://localhost:3000/",
+      "notes": "Fresh anonymous context, cookie banner visible.",
+      "capturedAt": "2026-10-01T20:05:55.053Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1365,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.",
+      "errors": []
+    },
+    {
+      "file": "search-barbers__desktop__1440x1000.png",
+      "fullFile": "search-barbers__desktop__1440x1000__full-page.png",
+      "route": "/barbers",
+      "actualUrl": "http://localhost:3000/barbers",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:06:22.163Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1373,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nFind your barber\n\nBrowse barbers by city...\n\nChoose a country\nAfghanistan\nAland Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua And Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nThe Bahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelgium\nBelize\nBenin\nBermuda\nBhutan\nBolivia\nBosnia and Herzegovina\nBotswana\nBouvet Island\nBrazil\nBritish Indian Ocean Territory\nBrunei\nBulgaria\nBurkina Faso\nBurundi\nCambodia\nCameroon\nCanada\nCape Verde\nCayman Islands\nCentral African Republic\nChad\nChile\nChina\nChristmas Island\nCocos (Keeling) Islands\nColombia\nComoros\nCongo\nDemocratic Republic of the Congo\nCook Islands\nCosta Rica\nCote D'Ivoire (Ivory Coast)\nCroatia\nCuba\nCyprus\nCzech Republic\nDenmark\nDjibouti\nDominica\nDominican Republic\nEast Timor\nEcuador\nEgypt\nEl Salvador\nEquatorial Guinea\nEritrea\nEstonia\nEthiopia\nFalkland Islands\nFaroe Islands\nFiji Islands\nFinland\nFrance\nFrench Guiana\nFrench Polynesia\nFrench Southern Territories\nGabon\nThe Gambia\nGeorgia\nGermany\nGhana\nGibraltar\nGreece\nGreenland\nGrenada\nGuadeloupe\nGuam\nGuatemala\nGuernsey and Alderney\nGuinea\nGuinea-Bissau\nGuyana\nHaiti\nHeard Island and McDonald Islands\nHonduras\nHong Kong S.A.R.\nHungary\nIceland\nIndia\nIndonesia\nIran\nIraq\nIreland\nIsrael\nItaly\nJamaica\nJapan\nJersey\nJordan\nKazakhstan\nKenya\nKiribati\nNorth Korea\nSouth Korea\nKuwait\nKyrgyzstan\nLaos\nLatvia\nLebanon\nLesotho\nLiberia\nLibya\nLiechtenstein\nLithuania\nLuxembourg\nMacau S.A.R.\nMacedonia\nMadagascar\nMalawi\nMalaysia\nMaldives\nMali\nMalta\nMan (Isle of)\nMarshall Islands\nMartinique\nMauritania\nMauritius\nMayotte\nMexico\nMicronesia\nMoldova\nMonaco\nMongolia\nMontenegro\nMontserrat\nMorocco\nMozambique\nMyanmar\nNamibia\nNauru\nNepal\nBonaire, Sint Eustatius and Saba\nNetherlands\nNew Caledonia\nNew Zealand\nNicaragua\nNiger\nNigeria\nNiue\nNorfolk Island\nNorthern Mariana Islands\nNorway\nOman\nPakistan\nPalau\nPalestinian Territory Occupied\nPanama\nPapua new Guinea\nParaguay\nPeru\nPhilippines\nPitcairn Island\nPoland\nPortugal\nPuerto Rico\nQatar\nReunion\nRomania\nRussia\nRwanda\nSaint Helena\nSaint Kitts And Nevis\nSaint Lucia\nSaint Pierre and Miquelon\nSaint Vincent And The Grenadines\nSaint-Barthelemy\nSaint-Martin (French part)\nSamoa\nSan Marino\nSao Tome and Principe\nSaudi Arabia\nSenegal\nSerbia\nSeychelles\nSierra Leone\nSingapore\nSlovakia\nSlovenia\nSolomon Islands\nSomalia\nSouth Africa\nSouth Georgia\nSouth Sudan\nSpain\nSri Lanka\nSudan\nSuriname\nSvalbard And Jan Mayen Islands\nSwaziland\nSweden\nSwitzerland\nSyria\nTaiwan\nTajikistan\nTanzania\nThailand\nTogo\nTokelau\nTonga\nTrinidad And Tobago\nTunisia\nTurkey\nTurkmenistan\nTurks And Caicos Islands\nTuvalu\nUganda\nUkraine\nUnited Arab Emirates\nUnited Kingdom\nUnited States\nUnited States Minor Outlying Islands\nUruguay\nUzbekistan\nVanuatu\nVatican City State (Holy See)\nVenezuela\nVietnam\nVirgin Islands (British)\nVirgin Islands (US)\nWallis And Futuna Islands\nWestern Sahara\nYemen\nZambia\nZimbabwe\nKosovo\nCuraçao\nSint Maarten (Dutch part)\nChoose a region\nChoose a city\nSearch barbers →\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "search-shops__desktop__1440x1000.png",
+      "fullFile": null,
+      "route": "/shops",
+      "actualUrl": "http://localhost:3000/shops",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:06:36.447Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1000,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "Application error: a client-side exception has occurred while loading localhost (see the browser console for more information).",
+      "errors": [
+        "Invalid src prop (https://randomuser.me/api/portraits/men/57.jpg) on `next/image`, hostname \"randomuser.me\" is not configured under images in your `next.config.js`\nSee more info: https://nextjs.org/docs/messages/next-image-unconfigured-host"
+      ]
+    },
+    {
+      "file": "signup__desktop__1440x1000.png",
+      "fullFile": "signup__desktop__1440x1000__full-page.png",
+      "route": "/signup",
+      "actualUrl": "http://localhost:3000/signup",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:06:53.479Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1163,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n🔥\nJoin titeZMe\n\nCreate an account to get started.\n\nI AM A...\n👤\nClient\n✂️\nBarber\nChoose your role before signing up\nContinue with Google\nor\nFIRST NAME *\nLAST NAME *\nEMAIL *\nPASSWORD *\nCONFIRM PASSWORD *\nBy creating an account you agree to our Terms of Service and Privacy Policy.\nCreate Account\nAlready have an account? Log in\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "signup-validation__desktop__1440x1000.png",
+      "fullFile": "signup-validation__desktop__1440x1000__full-page.png",
+      "route": "/signup",
+      "actualUrl": "http://localhost:3000/signup",
+      "notes": "Invalid local email then blur; no account created or form submitted.",
+      "capturedAt": "2026-10-01T20:06:53.900Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1184,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n🔥\nJoin titeZMe\n\nCreate an account to get started.\n\nI AM A...\n👤\nClient\n✂️\nBarber\nChoose your role before signing up\nContinue with Google\nor\nFIRST NAME *\nLAST NAME *\nEMAIL *\nPlease enter a valid email address\nPASSWORD *\nCONFIRM PASSWORD *\nBy creating an account you agree to our Terms of Service and Privacy Policy.\nCreate Account\nAlready have an account? Log in\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "forgot-password__desktop__1440x1000.png",
+      "fullFile": "forgot-password__desktop__1440x1000__full-page.png",
+      "route": "/forgot-password",
+      "actualUrl": "http://localhost:3000/forgot-password",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:07:00.865Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n← Back to login\nReset your password\nEnter your email and we'll send you a reset link.\nSend reset link →\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "contact__desktop__1440x1000.png",
+      "fullFile": "contact__desktop__1440x1000__full-page.png",
+      "route": "/contact",
+      "actualUrl": "http://localhost:3000/contact",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:07:15.698Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1365,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nGet in touch\n\nHave a question?\nWe respond within 24 hours.\n\nTrusted by barbers in Madrid\n\nNAME\nEMAIL\nI AM A...\nClient\nBarber\nShop owner\nBarber school\nBrand / Sponsor\nCity partner\nInvestor\nPress\nOther\nSUBJECT\nReport a bug\nBooking help\nPartnership\nPress & media\nBook a demo\nBilling\nGeneral question\nMESSAGE\nSend message\nDirect contact\n📧\nEMAIL US\nhello@titezme.com\n📍\nBASED IN\nMadrid, España\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "for-shops__desktop__1440x1000.png",
+      "fullFile": "for-shops__desktop__1440x1000__full-page.png",
+      "route": "/for-shops",
+      "actualUrl": "http://localhost:3000/for-shops",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:07:34.638Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 7870,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💬\nFOR BARBERSHOPS — BORN IN MADRID\nYour barbershop is\nlosing money.\n\nNo-shows. Empty chairs. Clients you never knew existed. titeZMe fixes all three.\n\nStart free. 6 days →\nNo credit card. No commitment.\n30s\nTO BOOK AN APPOINTMENT\n0€\nMONTHLY FEE\n24/7\nYOUR PROFILE VISIBLE\n∞\nBARBERS IN YOUR TEAM\nTHE REALITY\nBefore and after titeZMe\nWITHOUT TITEZME\nClients calling while you are cutting\nWhatsApp at 11pm to book an appointment\nNo-shows costing you €80/month\nEvery barber manages their own bookings\nNo online presence. Invisible to new clients.\nYou have no idea how much each barber earns\nWITH TITEZME\n✓\nClients book themselves — you cut in peace\n✓\nOnline bookings 24/7, even while you sleep\n✓\nAutomatic reminders. No-shows drop 80%.\n✓\nEntire team in one dashboard\n✓\nProfessional profile visible in your city and beyond\n✓\nEarnings per barber, service and time of day\nOUR PROMISE\nYou keep 100% of every euro.\n\nWe do not touch your money. We do not take a cut. Ever.\n\n👤\nYour existing clients\n100%\n100% yours. Always has been, always will be.\n🆕\nNew clients you bring\n100%\n100% yours. You found them, you keep every euro.\n🚀\nClients we send you\n100%\n100% yours. We send the lead, you keep the money.\nNo commission. No transaction fees. No marketing fees. No SMS fees. One flat monthly subscription. That is it.\n\nYou built your shop. Every euro your clients pay stays yours.\n\nAVAILABLE AUGUST 2026\nEmpty chair.\nWe fill it.\n\nIndependent barbers rent your chair. We send them clients. Your chair is never empty.\n\n✓\nZero effort from you\n✓\nWe handle bookings and communication\n✓\nYou receive your share of every cut\n✓\nYour chair earns money even while you rest\n✂️\nChair rental\nWe connect independent barbers with barbershops that have free chairs. All managed through titeZMe.\nComing August 2026\nAVAILABLE AUGUST 2026\nNeed a barber?\nFind one in minutes.\n\nStop posting on WhatsApp groups. titeZMe connects you with barbers who have real reviews and booking history, already vetted by clients.\n\n✓\nSearch by location, experience and specialties\n✓\nSee their profile, reviews and booking stats. No CV needed.\n✓\nSend an invite directly from their profile\n✓\nThey accept. Automatically added to your team.\n✓\nNo agency fees. No headhunter costs. Ever.\n🔍\nBarber recruitment\nBrowse independent barbers on titeZMe who are open to joining a shop team. Filter by city, skills and availability.\nCOMING AUGUST 2026\nHOW IT WORKS\nYour barbershop online in minutes\n01\nCreate your profile\nSign up as a barber and create your barbershop from the dashboard. Name, address, services and photos.\n02\nAdd your team\nInvite your barbers with their titeZMe code. Each keeps their own profile.\n03\nFill your chairs\nClients find you on titeZMe and book directly. All in real time.\nNo code. No meetings. No bullshit.\nPRICING\nFirst 100 barbershops.\nHonest pricing. Nothing hidden.\n\n6 days free. No credit card. The exact price appears in your dashboard once your shop is set up.\n\n6 DAYS\n0€\nFull trial. No card required.\nFIRST 100 BARBERSHOPS\nVIP\nSpecial price for 12 months. See it in your dashboard.\nAFTER 100\nSTD\nStandard price. See it in your dashboard.\nCreate my barbershop free →\nFAQ\nFrequently asked questions\nWhat if I do not get more bookings?\n+\nCan I cancel anytime?\n+\nDo my barbers need their own accounts?\n+\nHow many barbers can I add?\n+\nIs there a setup fee?\n+\nEvery day you wait,\nsomeone fills their chairs.\n\nStart your 6-day trial. See the difference before they do.\n\nCreate my barbershop free →\nNo credit card · No monthly fees · Born in Madrid\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "admin-login__desktop__1440x1000.png",
+      "fullFile": null,
+      "route": "/admin/login",
+      "actualUrl": "http://localhost:3000/admin/login",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:07:49.739Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1000,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nADMIN\nAdmin access only\nSign in →\nNot an admin? Regular login →\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "not-found__desktop__1440x1000.png",
+      "fullFile": "not-found__desktop__1440x1000__full-page.png",
+      "route": "/audit-route-not-found",
+      "actualUrl": "http://localhost:3000/login?redirect=%2Faudit-route-not-found",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:08:06.741Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "shop-profile-missing__desktop__1440x1000.png",
+      "fullFile": "shop-profile-missing__desktop__1440x1000__full-page.png",
+      "route": "/shop/audit-nonexistent-id",
+      "actualUrl": "http://localhost:3000/shop/audit-nonexistent-id",
+      "notes": "Deliberately nonexistent identifier to observe implemented missing-profile branch.",
+      "capturedAt": "2026-10-01T20:08:34.042Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1373,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n🏪\nShop not found\n\nThis shop doesn't exist.\n\nBrowse shops →\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "titiza-access-gate__desktop__1440x1000.png",
+      "fullFile": "titiza-access-gate__desktop__1440x1000__full-page.png",
+      "route": "/dashboard/client/titiza",
+      "actualUrl": "http://localhost:3000/login?redirect=%2Fdashboard%2Fclient%2Ftitiza",
+      "notes": "Anonymous access result; NOT a screenshot of the protected Titiza interface.",
+      "capturedAt": "2026-10-01T20:08:50.485Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-birth__desktop__1440x1000.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Public scripted preview; naturally elapsed approximately 9s after DOMContentLoaded.",
+      "capturedAt": "2026-10-01T20:09:07.679Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\n\nBefore I can help you...\n\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-conversation__desktop__1440x1000.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Public scripted conversation, approximately 20s; NOT live AI chat.",
+      "capturedAt": "2026-10-01T20:09:18.961Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\n\nI want a haircut\n\nAbsolutely.\n\nBefore I recommend a haircut, I need to understand your hair.\n\nWhat would you like to improve today?\n→\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-recommendation__desktop__1440x1000.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Public scripted professional recommendation, approximately 36s; NOT live search results.",
+      "capturedAt": "2026-10-01T20:09:35.107Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\nSearching nearby certified hair analysts...\nChecking certifications...\nChecking language...\nChecking availability...\nChecking reviews...\nI want a haircut\nLet's start there.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "client-home__mobile__390x844.png",
+      "fullFile": "client-home__mobile__390x844__full-page.png",
+      "route": "/",
+      "actualUrl": "http://localhost:3000/",
+      "notes": "Fresh anonymous context, cookie banner visible.",
+      "capturedAt": "2026-10-01T20:09:43.372Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 1329,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.",
+      "errors": []
+    },
+    {
+      "file": "search-barbers__mobile__390x844.png",
+      "fullFile": "search-barbers__mobile__390x844__full-page.png",
+      "route": "/barbers",
+      "actualUrl": "http://localhost:3000/barbers",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:09:53.549Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 2069,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nFind your barber\n\nBrowse barbers by city...\n\nChoose a country\nAfghanistan\nAland Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua And Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nThe Bahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelgium\nBelize\nBenin\nBermuda\nBhutan\nBolivia\nBosnia and Herzegovina\nBotswana\nBouvet Island\nBrazil\nBritish Indian Ocean Territory\nBrunei\nBulgaria\nBurkina Faso\nBurundi\nCambodia\nCameroon\nCanada\nCape Verde\nCayman Islands\nCentral African Republic\nChad\nChile\nChina\nChristmas Island\nCocos (Keeling) Islands\nColombia\nComoros\nCongo\nDemocratic Republic of the Congo\nCook Islands\nCosta Rica\nCote D'Ivoire (Ivory Coast)\nCroatia\nCuba\nCyprus\nCzech Republic\nDenmark\nDjibouti\nDominica\nDominican Republic\nEast Timor\nEcuador\nEgypt\nEl Salvador\nEquatorial Guinea\nEritrea\nEstonia\nEthiopia\nFalkland Islands\nFaroe Islands\nFiji Islands\nFinland\nFrance\nFrench Guiana\nFrench Polynesia\nFrench Southern Territories\nGabon\nThe Gambia\nGeorgia\nGermany\nGhana\nGibraltar\nGreece\nGreenland\nGrenada\nGuadeloupe\nGuam\nGuatemala\nGuernsey and Alderney\nGuinea\nGuinea-Bissau\nGuyana\nHaiti\nHeard Island and McDonald Islands\nHonduras\nHong Kong S.A.R.\nHungary\nIceland\nIndia\nIndonesia\nIran\nIraq\nIreland\nIsrael\nItaly\nJamaica\nJapan\nJersey\nJordan\nKazakhstan\nKenya\nKiribati\nNorth Korea\nSouth Korea\nKuwait\nKyrgyzstan\nLaos\nLatvia\nLebanon\nLesotho\nLiberia\nLibya\nLiechtenstein\nLithuania\nLuxembourg\nMacau S.A.R.\nMacedonia\nMadagascar\nMalawi\nMalaysia\nMaldives\nMali\nMalta\nMan (Isle of)\nMarshall Islands\nMartinique\nMauritania\nMauritius\nMayotte\nMexico\nMicronesia\nMoldova\nMonaco\nMongolia\nMontenegro\nMontserrat\nMorocco\nMozambique\nMyanmar\nNamibia\nNauru\nNepal\nBonaire, Sint Eustatius and Saba\nNetherlands\nNew Caledonia\nNew Zealand\nNicaragua\nNiger\nNigeria\nNiue\nNorfolk Island\nNorthern Mariana Islands\nNorway\nOman\nPakistan\nPalau\nPalestinian Territory Occupied\nPanama\nPapua new Guinea\nParaguay\nPeru\nPhilippines\nPitcairn Island\nPoland\nPortugal\nPuerto Rico\nQatar\nReunion\nRomania\nRussia\nRwanda\nSaint Helena\nSaint Kitts And Nevis\nSaint Lucia\nSaint Pierre and Miquelon\nSaint Vincent And The Grenadines\nSaint-Barthelemy\nSaint-Martin (French part)\nSamoa\nSan Marino\nSao Tome and Principe\nSaudi Arabia\nSenegal\nSerbia\nSeychelles\nSierra Leone\nSingapore\nSlovakia\nSlovenia\nSolomon Islands\nSomalia\nSouth Africa\nSouth Georgia\nSouth Sudan\nSpain\nSri Lanka\nSudan\nSuriname\nSvalbard And Jan Mayen Islands\nSwaziland\nSweden\nSwitzerland\nSyria\nTaiwan\nTajikistan\nTanzania\nThailand\nTogo\nTokelau\nTonga\nTrinidad And Tobago\nTunisia\nTurkey\nTurkmenistan\nTurks And Caicos Islands\nTuvalu\nUganda\nUkraine\nUnited Arab Emirates\nUnited Kingdom\nUnited States\nUnited States Minor Outlying Islands\nUruguay\nUzbekistan\nVanuatu\nVatican City State (Holy See)\nVenezuela\nVietnam\nVirgin Islands (British)\nVirgin Islands (US)\nWallis And Futuna Islands\nWestern Sahara\nYemen\nZambia\nZimbabwe\nKosovo\nCuraçao\nSint Maarten (Dutch part)\nChoose a region\nChoose a city\nSearch barbers →\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": [
+        "Invalid or unexpected token"
+      ]
+    },
+    {
+      "file": "login__mobile__390x844.png",
+      "fullFile": "login__mobile__390x844__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:10:03.083Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": [
+        "Invalid src prop (https://randomuser.me/api/portraits/men/4.jpg) on `next/image`, hostname \"randomuser.me\" is not configured under images in your `next.config.js`\nSee more info: https://nextjs.org/docs/messages/next-image-unconfigured-host"
+      ]
+    },
+    {
+      "file": "login-email-focus__mobile__390x844.png",
+      "fullFile": "login-email-focus__mobile__390x844__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Focused email field using keyboard focus.",
+      "capturedAt": "2026-10-01T20:10:03.261Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "login-password-visible__mobile__390x844.png",
+      "fullFile": "login-password-visible__mobile__390x844__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Existing password visibility toggle, dummy local text; not submitted.",
+      "capturedAt": "2026-10-01T20:10:03.513Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "signup__mobile__390x844.png",
+      "fullFile": "signup__mobile__390x844__full-page.png",
+      "route": "/signup",
+      "actualUrl": "http://localhost:3000/signup",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:10:42.170Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 942,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n🔥\nJoin titeZMe\n\nCreate an account to get started.\n\nI AM A...\n👤\nClient\n✂️\nBarber\nChoose your role before signing up\nContinue with Google\nor\nFIRST NAME *\nLAST NAME *\nEMAIL *\nPASSWORD *\nCONFIRM PASSWORD *\nBy creating an account you agree to our Terms of Service and Privacy Policy.\nCreate Account\nAlready have an account? Log in\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "signup-validation__mobile__390x844.png",
+      "fullFile": "signup-validation__mobile__390x844__full-page.png",
+      "route": "/signup",
+      "actualUrl": "http://localhost:3000/signup",
+      "notes": "Invalid local email then blur; no account created or form submitted.",
+      "capturedAt": "2026-10-01T20:10:42.546Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 1138,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n🔥\nJoin titeZMe\n\nCreate an account to get started.\n\nI AM A...\n👤\nClient\n✂️\nBarber\nChoose your role before signing up\nContinue with Google\nor\nFIRST NAME *\nLAST NAME *\nEMAIL *\nPlease enter a valid email address\nPASSWORD *\nCONFIRM PASSWORD *\nBy creating an account you agree to our Terms of Service and Privacy Policy.\nCreate Account\nAlready have an account? Log in\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "forgot-password__mobile__390x844.png",
+      "fullFile": "forgot-password__mobile__390x844__full-page.png",
+      "route": "/forgot-password",
+      "actualUrl": "http://localhost:3000/forgot-password",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:10:52.598Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n← Back to login\nReset your password\nEnter your email and we'll send you a reset link.\nSend reset link →\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "contact__mobile__390x844.png",
+      "fullFile": "contact__mobile__390x844__full-page.png",
+      "route": "/contact",
+      "actualUrl": "http://localhost:3000/contact",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:11:03.113Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 1329,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.",
+      "errors": []
+    },
+    {
+      "file": "for-shops__mobile__390x844.png",
+      "fullFile": "for-shops__mobile__390x844__full-page.png",
+      "route": "/for-shops",
+      "actualUrl": "http://localhost:3000/for-shops",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:11:12.947Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 11124,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💬\nFOR BARBERSHOPS — BORN IN MADRID\nYour barbershop is\nlosing money.\n\nNo-shows. Empty chairs. Clients you never knew existed. titeZMe fixes all three.\n\nStart free. 6 days →\nNo credit card. No commitment.\n30s\nTO BOOK AN APPOINTMENT\n0€\nMONTHLY FEE\n24/7\nYOUR PROFILE VISIBLE\n∞\nBARBERS IN YOUR TEAM\nTHE REALITY\nBefore and after titeZMe\nWITHOUT TITEZME\nClients calling while you are cutting\nWhatsApp at 11pm to book an appointment\nNo-shows costing you €80/month\nEvery barber manages their own bookings\nNo online presence. Invisible to new clients.\nYou have no idea how much each barber earns\nWITH TITEZME\n✓\nClients book themselves — you cut in peace\n✓\nOnline bookings 24/7, even while you sleep\n✓\nAutomatic reminders. No-shows drop 80%.\n✓\nEntire team in one dashboard\n✓\nProfessional profile visible in your city and beyond\n✓\nEarnings per barber, service and time of day\nOUR PROMISE\nYou keep 100% of every euro.\n\nWe do not touch your money. We do not take a cut. Ever.\n\n👤\nYour existing clients\n100%\n100% yours. Always has been, always will be.\n🆕\nNew clients you bring\n100%\n100% yours. You found them, you keep every euro.\n🚀\nClients we send you\n100%\n100% yours. We send the lead, you keep the money.\nNo commission. No transaction fees. No marketing fees. No SMS fees. One flat monthly subscription. That is it.\n\nYou built your shop. Every euro your clients pay stays yours.\n\nAVAILABLE AUGUST 2026\nEmpty chair.\nWe fill it.\n\nIndependent barbers rent your chair. We send them clients. Your chair is never empty.\n\n✓\nZero effort from you\n✓\nWe handle bookings and communication\n✓\nYou receive your share of every cut\n✓\nYour chair earns money even while you rest\n✂️\nChair rental\nWe connect independent barbers with barbershops that have free chairs. All managed through titeZMe.\nComing August 2026\nAVAILABLE AUGUST 2026\nNeed a barber?\nFind one in minutes.\n\nStop posting on WhatsApp groups. titeZMe connects you with barbers who have real reviews and booking history, already vetted by clients.\n\n✓\nSearch by location, experience and specialties\n✓\nSee their profile, reviews and booking stats. No CV needed.\n✓\nSend an invite directly from their profile\n✓\nThey accept. Automatically added to your team.\n✓\nNo agency fees. No headhunter costs. Ever.\n🔍\nBarber recruitment\nBrowse independent barbers on titeZMe who are open to joining a shop team. Filter by city, skills and availability.\nCOMING AUGUST 2026\nHOW IT WORKS\nYour barbershop online in minutes\n01\nCreate your profile\nSign up as a barber and create your barbershop from the dashboard. Name, address, services and photos.\n02\nAdd your team\nInvite your barbers with their titeZMe code. Each keeps their own profile.\n03\nFill your chairs\nClients find you on titeZMe and book directly. All in real time.\nNo code. No meetings. No bullshit.\nPRICING\nFirst 100 barbershops.\nHonest pricing. Nothing hidden.\n\n6 days free. No credit card. The exact price appears in your dashboard once your shop is set up.\n\n6 DAYS\n0€\nFull trial. No card required.\nFIRST 100 BARBERSHOPS\nVIP\nSpecial price for 12 months. See it in your dashboard.\nAFTER 100\nSTD\nStandard price. See it in your dashboard.\nCreate my barbershop free →\nFAQ\nFrequently asked questions\nWhat if I do not get more bookings?\n+\nCan I cancel anytime?\n+\nDo my barbers need their own accounts?\n+\nHow many barbers can I add?\n+\nIs there a setup fee?\n+\nEvery day you wait,\nsomeone fills their chairs.\n\nStart your 6-day trial. See the difference before they do.\n\nCreate my barbershop free →\nNo credit card · No monthly fees · Born in Madrid\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "admin-login__mobile__390x844.png",
+      "fullFile": null,
+      "route": "/admin/login",
+      "actualUrl": "http://localhost:3000/admin/login",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:11:21.212Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 844,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nADMIN\nAdmin access only\nSign in →\nNot an admin? Regular login →\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "not-found__mobile__390x844.png",
+      "fullFile": "not-found__mobile__390x844__full-page.png",
+      "route": "/audit-route-not-found",
+      "actualUrl": "http://localhost:3000/audit-route-not-found",
+      "notes": "Anonymous session; cookie consent rejected via existing UI after home.",
+      "capturedAt": "2026-10-01T20:11:29.987Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 942,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →",
+      "errors": []
+    },
+    {
+      "file": "shop-profile-missing__mobile__390x844.png",
+      "fullFile": "shop-profile-missing__mobile__390x844__full-page.png",
+      "route": "/shop/audit-nonexistent-id",
+      "actualUrl": "http://localhost:3000/shop/audit-nonexistent-id",
+      "notes": "Deliberately nonexistent identifier to observe implemented missing-profile branch.",
+      "capturedAt": "2026-10-01T20:11:41.006Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 1333,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n🏪\nShop not found\n\nThis shop doesn't exist.\n\nBrowse shops →\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "titiza-access-gate__mobile__390x844.png",
+      "fullFile": "titiza-access-gate__mobile__390x844__full-page.png",
+      "route": "/dashboard/client/titiza",
+      "actualUrl": "http://localhost:3000/login?redirect=%2Fdashboard%2Fclient%2Ftitiza",
+      "notes": "Anonymous access result; NOT a screenshot of the protected Titiza interface.",
+      "capturedAt": "2026-10-01T20:11:48.825Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-birth__mobile__390x844.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Public scripted preview; naturally elapsed approximately 9s after DOMContentLoaded.",
+      "capturedAt": "2026-10-01T20:12:03.167Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\n\nI need to understand you.\n\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-conversation__mobile__390x844.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Public scripted conversation, approximately 20s; NOT live AI chat.",
+      "capturedAt": "2026-10-01T20:12:14.432Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\n\nI want a haircut\n\nAbsolutely.\n\nBefore I recommend a haircut, I need to understand your hair.\n\nThe best way to do that is with a professional hair analysis.\n\nWhat would you like to improve today?\n→\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-recommendation__mobile__390x844.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Public scripted professional recommendation, approximately 36s; NOT live search results.",
+      "capturedAt": "2026-10-01T20:12:30.534Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\n\nDr. Sarah\n\nHAIR ANALYST\n\n2.3 km · English\n★★★★★ · Tomorrow 10:30\nBOOK ANALYSIS\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "client-home-settled__desktop__1440x1000.png",
+      "fullFile": "client-home-settled__desktop__1440x1000__full-page.png",
+      "route": "/",
+      "actualUrl": "http://localhost:3000/",
+      "notes": "Waited for implemented landing heading; fresh anonymous session/cookie banner.",
+      "capturedAt": "2026-10-01T20:30:12.964Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 4727,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n2,400+ barbers · 18 cities · live now\nFind your barber.\nBook your cut.\nNo waiting.\n\nThe barbers people actually trust, all in one place. Pick your city, pick your barber, book in seconds.\n\nFind a barber →\nFind a barbershop →\n2.4k+\nBarbers\n4.97\nAvg rating\n551\nBooked today\n0%\nFees\n\nLIVE IN SPAIN\n\nEarly access. Real barbers.\n\ntiteZMe is live across Spain. The barbers signing up now are the ones clients will find first.\n\nHOW IT WORKS\nBooked in 3 steps.\n01\n📍\nPick your city\n\nOpen the app on any device or browser. We detect your location automatically, or choose your city and availability.\n\n02\n✂️\nChoose your barber\n\nFilter by specialty, language, vibe, price. See who's open right now in real time this very minute.\n\n03\n💵\nShow up. Pay cash.\n\nBook in under 30 seconds. Arrive, get the cut you chose directly. Zero drama. 100% real.\n\nFOR BARBERS\nYour chair. Your rules. Your money.\n\nNo commission fees during beta. Set your hours, set your price, keep everything. We send clients to your chair.\n\n✓\n0% commission. Every euro stays yours.\n✓\nProfile live in under 10 minutes\n✓\nYour schedule. Nobody owns your time.\n✓\nClients find you. You just cut.\nJoin free during beta →\nSee how it works\n0%\nCOMMISSION\n10 min\nTO SET UP YOUR PROFILE\n400+\nBARBERS ALREADY JOINED\nBeta = Free\nJOIN NOW, PAY NOTHING DURING BETA\nFOR SHOPS\nYour shop. Your team. Your reputation.\n\nManage your barbers, track performance, and let clients find your shop online. All in one place.\n\n✓\nInvite barbers by their unique code\n✓\nSee earnings per barber per month\n✓\nYour own public shop profile\n✓\nClients book directly with your team\nCreate your shop →\nSee how it works\nFree\nDURING BETA\n4\nSTEPS TO SET UP\n100%\nDATA VISIBILITY\n24/7\nBOOKING MANAGEMENT\nCITIES\nWe're live where you are\nAmsterdam\nComing soon\nRequest it →\nBerlin\nComing soon\nRequest it →\nRome\nComing soon\nRequest it →\nDubai\nComing soon\nRequest it →\nLondon\nComing soon\nRequest it →\nBarcelona\nComing soon\nRequest it →\nONE LAST THING\nYour next cut is\n30 seconds away.\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "cookie-preferences__desktop__1440x1000.png",
+      "fullFile": "cookie-preferences__desktop__1440x1000__full-page.png",
+      "route": "/",
+      "actualUrl": "http://localhost:3000/",
+      "notes": "Existing Customize overlay; no settings saved.",
+      "capturedAt": "2026-10-01T20:30:14.159Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 4727,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n2,400+ barbers · 18 cities · live now\nFind your barber.\nBook your cut.\nNo waiting.\n\nThe barbers people actually trust, all in one place. Pick your city, pick your barber, book in seconds.\n\nFind a barber →\nFind a barbershop →\n2.4k+\nBarbers\n4.97\nAvg rating\n551\nBooked today\n0%\nFees\n\nLIVE IN SPAIN\n\nEarly access. Real barbers.\n\ntiteZMe is live across Spain. The barbers signing up now are the ones clients will find first.\n\nHOW IT WORKS\nBooked in 3 steps.\n01\n📍\nPick your city\n\nOpen the app on any device or browser. We detect your location automatically, or choose your city and availability.\n\n02\n✂️\nChoose your barber\n\nFilter by specialty, language, vibe, price. See who's open right now in real time this very minute.\n\n03\n💵\nShow up. Pay cash.\n\nBook in under 30 seconds. Arrive, get the cut you chose directly. Zero drama. 100% real.\n\nFOR BARBERS\nYour chair. Your rules. Your money.\n\nNo commission fees during beta. Set your hours, set your price, keep everything. We send clients to your chair.\n\n✓\n0% commission. Every euro stays yours.\n✓\nProfile live in under 10 minutes\n✓\nYour schedule. Nobody owns your time.\n✓\nClients find you. You just cut.\nJoin free during beta →\nSee how it works\n0%\nCOMMISSION\n10 min\nTO SET UP YOUR PROFILE\n400+\nBARBERS ALREADY JOINED\nBeta = Free\nJOIN NOW, PAY NOTHING DURING BETA\nFOR SHOPS\nYour shop. Your team. Your reputation.\n\nManage your barbers, track performance, and let clients find your shop online. All in one place.\n\n✓\nInvite barbers by their unique code\n✓\nSee earnings per barber per month\n✓\nYour own public shop profile\n✓\nClients book directly with your team\nCreate your shop →\nSee how it works\nFree\nDURING BETA\n4\nSTEPS TO SET UP\n100%\nDATA VISIBILITY\n24/7\nBOOKING MANAGEMENT\nCITIES\nWe're live where you are\nAmsterdam\nComing soon\nRequest it →\nBerlin\nComing soon\nRequest it →\nRome\nComing soon\nRequest it →\nDubai\nComing soon\nRequest it →\nLondon\nComing soon\nRequest it →\nBarcelona\nComing soon\nRequest it →\nONE LAST THING\nYour next cut is\n30 seconds away.\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize\nCookie Preferences\nEssential\n\nRequired for the site to function properly. Cannot be disabled.\n\nPreferences\n\nRemembers your settings like language and city.\n\nAnalytics\n\nHelps us understand how visitors interact with the website.\n\nSave preferences",
+      "errors": []
+    },
+    {
+      "file": "search-barbers-settled__desktop__1440x1000.png",
+      "fullFile": "search-barbers-settled__desktop__1440x1000__full-page.png",
+      "route": "/barbers",
+      "actualUrl": "http://localhost:3000/barbers",
+      "notes": "Natural data state after7s; no data interception/injection.",
+      "capturedAt": "2026-10-01T20:30:33.437Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1373,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nFind your barber\n\nBrowse barbers by city...\n\nChoose a country\nAfghanistan\nAland Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua And Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nThe Bahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelgium\nBelize\nBenin\nBermuda\nBhutan\nBolivia\nBosnia and Herzegovina\nBotswana\nBouvet Island\nBrazil\nBritish Indian Ocean Territory\nBrunei\nBulgaria\nBurkina Faso\nBurundi\nCambodia\nCameroon\nCanada\nCape Verde\nCayman Islands\nCentral African Republic\nChad\nChile\nChina\nChristmas Island\nCocos (Keeling) Islands\nColombia\nComoros\nCongo\nDemocratic Republic of the Congo\nCook Islands\nCosta Rica\nCote D'Ivoire (Ivory Coast)\nCroatia\nCuba\nCyprus\nCzech Republic\nDenmark\nDjibouti\nDominica\nDominican Republic\nEast Timor\nEcuador\nEgypt\nEl Salvador\nEquatorial Guinea\nEritrea\nEstonia\nEthiopia\nFalkland Islands\nFaroe Islands\nFiji Islands\nFinland\nFrance\nFrench Guiana\nFrench Polynesia\nFrench Southern Territories\nGabon\nThe Gambia\nGeorgia\nGermany\nGhana\nGibraltar\nGreece\nGreenland\nGrenada\nGuadeloupe\nGuam\nGuatemala\nGuernsey and Alderney\nGuinea\nGuinea-Bissau\nGuyana\nHaiti\nHeard Island and McDonald Islands\nHonduras\nHong Kong S.A.R.\nHungary\nIceland\nIndia\nIndonesia\nIran\nIraq\nIreland\nIsrael\nItaly\nJamaica\nJapan\nJersey\nJordan\nKazakhstan\nKenya\nKiribati\nNorth Korea\nSouth Korea\nKuwait\nKyrgyzstan\nLaos\nLatvia\nLebanon\nLesotho\nLiberia\nLibya\nLiechtenstein\nLithuania\nLuxembourg\nMacau S.A.R.\nMacedonia\nMadagascar\nMalawi\nMalaysia\nMaldives\nMali\nMalta\nMan (Isle of)\nMarshall Islands\nMartinique\nMauritania\nMauritius\nMayotte\nMexico\nMicronesia\nMoldova\nMonaco\nMongolia\nMontenegro\nMontserrat\nMorocco\nMozambique\nMyanmar\nNamibia\nNauru\nNepal\nBonaire, Sint Eustatius and Saba\nNetherlands\nNew Caledonia\nNew Zealand\nNicaragua\nNiger\nNigeria\nNiue\nNorfolk Island\nNorthern Mariana Islands\nNorway\nOman\nPakistan\nPalau\nPalestinian Territory Occupied\nPanama\nPapua new Guinea\nParaguay\nPeru\nPhilippines\nPitcairn Island\nPoland\nPortugal\nPuerto Rico\nQatar\nReunion\nRomania\nRussia\nRwanda\nSaint Helena\nSaint Kitts And Nevis\nSaint Lucia\nSaint Pierre and Miquelon\nSaint Vincent And The Grenadines\nSaint-Barthelemy\nSaint-Martin (French part)\nSamoa\nSan Marino\nSao Tome and Principe\nSaudi Arabia\nSenegal\nSerbia\nSeychelles\nSierra Leone\nSingapore\nSlovakia\nSlovenia\nSolomon Islands\nSomalia\nSouth Africa\nSouth Georgia\nSouth Sudan\nSpain\nSri Lanka\nSudan\nSuriname\nSvalbard And Jan Mayen Islands\nSwaziland\nSweden\nSwitzerland\nSyria\nTaiwan\nTajikistan\nTanzania\nThailand\nTogo\nTokelau\nTonga\nTrinidad And Tobago\nTunisia\nTurkey\nTurkmenistan\nTurks And Caicos Islands\nTuvalu\nUganda\nUkraine\nUnited Arab Emirates\nUnited Kingdom\nUnited States\nUnited States Minor Outlying Islands\nUruguay\nUzbekistan\nVanuatu\nVatican City State (Holy See)\nVenezuela\nVietnam\nVirgin Islands (British)\nVirgin Islands (US)\nWallis And Futuna Islands\nWestern Sahara\nYemen\nZambia\nZimbabwe\nKosovo\nCuraçao\nSint Maarten (Dutch part)\nChoose a region\nChoose a city\nSearch barbers →\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "search-barbers-filter__desktop__1440x1000.png",
+      "fullFile": "search-barbers-filter__desktop__1440x1000__full-page.png",
+      "route": "/barbers",
+      "actualUrl": "http://localhost:3000/barbers",
+      "notes": "Existing name filter filled with unmatched text; no writes.",
+      "capturedAt": "2026-10-01T20:30:35.612Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1373,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nFind your barber\n\nBrowse barbers by city...\n\nChoose a country\nAfghanistan\nAland Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua And Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nThe Bahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelgium\nBelize\nBenin\nBermuda\nBhutan\nBolivia\nBosnia and Herzegovina\nBotswana\nBouvet Island\nBrazil\nBritish Indian Ocean Territory\nBrunei\nBulgaria\nBurkina Faso\nBurundi\nCambodia\nCameroon\nCanada\nCape Verde\nCayman Islands\nCentral African Republic\nChad\nChile\nChina\nChristmas Island\nCocos (Keeling) Islands\nColombia\nComoros\nCongo\nDemocratic Republic of the Congo\nCook Islands\nCosta Rica\nCote D'Ivoire (Ivory Coast)\nCroatia\nCuba\nCyprus\nCzech Republic\nDenmark\nDjibouti\nDominica\nDominican Republic\nEast Timor\nEcuador\nEgypt\nEl Salvador\nEquatorial Guinea\nEritrea\nEstonia\nEthiopia\nFalkland Islands\nFaroe Islands\nFiji Islands\nFinland\nFrance\nFrench Guiana\nFrench Polynesia\nFrench Southern Territories\nGabon\nThe Gambia\nGeorgia\nGermany\nGhana\nGibraltar\nGreece\nGreenland\nGrenada\nGuadeloupe\nGuam\nGuatemala\nGuernsey and Alderney\nGuinea\nGuinea-Bissau\nGuyana\nHaiti\nHeard Island and McDonald Islands\nHonduras\nHong Kong S.A.R.\nHungary\nIceland\nIndia\nIndonesia\nIran\nIraq\nIreland\nIsrael\nItaly\nJamaica\nJapan\nJersey\nJordan\nKazakhstan\nKenya\nKiribati\nNorth Korea\nSouth Korea\nKuwait\nKyrgyzstan\nLaos\nLatvia\nLebanon\nLesotho\nLiberia\nLibya\nLiechtenstein\nLithuania\nLuxembourg\nMacau S.A.R.\nMacedonia\nMadagascar\nMalawi\nMalaysia\nMaldives\nMali\nMalta\nMan (Isle of)\nMarshall Islands\nMartinique\nMauritania\nMauritius\nMayotte\nMexico\nMicronesia\nMoldova\nMonaco\nMongolia\nMontenegro\nMontserrat\nMorocco\nMozambique\nMyanmar\nNamibia\nNauru\nNepal\nBonaire, Sint Eustatius and Saba\nNetherlands\nNew Caledonia\nNew Zealand\nNicaragua\nNiger\nNigeria\nNiue\nNorfolk Island\nNorthern Mariana Islands\nNorway\nOman\nPakistan\nPalau\nPalestinian Territory Occupied\nPanama\nPapua new Guinea\nParaguay\nPeru\nPhilippines\nPitcairn Island\nPoland\nPortugal\nPuerto Rico\nQatar\nReunion\nRomania\nRussia\nRwanda\nSaint Helena\nSaint Kitts And Nevis\nSaint Lucia\nSaint Pierre and Miquelon\nSaint Vincent And The Grenadines\nSaint-Barthelemy\nSaint-Martin (French part)\nSamoa\nSan Marino\nSao Tome and Principe\nSaudi Arabia\nSenegal\nSerbia\nSeychelles\nSierra Leone\nSingapore\nSlovakia\nSlovenia\nSolomon Islands\nSomalia\nSouth Africa\nSouth Georgia\nSouth Sudan\nSpain\nSri Lanka\nSudan\nSuriname\nSvalbard And Jan Mayen Islands\nSwaziland\nSweden\nSwitzerland\nSyria\nTaiwan\nTajikistan\nTanzania\nThailand\nTogo\nTokelau\nTonga\nTrinidad And Tobago\nTunisia\nTurkey\nTurkmenistan\nTurks And Caicos Islands\nTuvalu\nUganda\nUkraine\nUnited Arab Emirates\nUnited Kingdom\nUnited States\nUnited States Minor Outlying Islands\nUruguay\nUzbekistan\nVanuatu\nVatican City State (Holy See)\nVenezuela\nVietnam\nVirgin Islands (British)\nVirgin Islands (US)\nWallis And Futuna Islands\nWestern Sahara\nYemen\nZambia\nZimbabwe\nKosovo\nCuraçao\nSint Maarten (Dutch part)\nChoose a region\nChoose a city\nSearch barbers →\n\"audit-no-matching-provider\"\nClear all ✕\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "login-settled__desktop__1440x1000.png",
+      "fullFile": "login-settled__desktop__1440x1000__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Natural anonymous auth form; cookie banner as rendered.",
+      "capturedAt": "2026-10-01T20:30:58.299Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "login-input-focus__desktop__1440x1000.png",
+      "fullFile": "login-input-focus__desktop__1440x1000__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Existing email input focused, no submit.",
+      "capturedAt": "2026-10-01T20:30:59.087Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account",
+      "errors": []
+    },
+    {
+      "file": "login-password-toggle__desktop__1440x1000.png",
+      "fullFile": "login-password-toggle__desktop__1440x1000__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Existing password visibility toggle, empty value.",
+      "capturedAt": "2026-10-01T20:30:59.406Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account",
+      "errors": []
+    },
+    {
+      "file": "login-submit-hover__desktop__1440x1000.png",
+      "fullFile": "login-submit-hover__desktop__1440x1000__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Existing submit hovered, no submit.",
+      "capturedAt": "2026-10-01T20:31:01.691Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account",
+      "errors": []
+    },
+    {
+      "file": "language-menu-open__desktop__1440x1000.png",
+      "fullFile": "language-menu-open__desktop__1440x1000__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Existing desktop language dropdown, no locale changed.",
+      "capturedAt": "2026-10-01T20:31:05.058Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\n🇬🇧\nEnglish\nEN\n🇪🇸\nEspañol\nES\n🇫🇷\nFrançais\nFR\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account",
+      "errors": []
+    },
+    {
+      "file": "provider-profile-fixture__desktop__1440x1000.png",
+      "fullFile": "provider-profile-fixture__desktop__1440x1000__full-page.png",
+      "route": "/barber/fake_4673422712ac44d181b5ef43688e56e9",
+      "actualUrl": "http://localhost:3000/barber/fake_4673422712ac44d181b5ef43688e56e9",
+      "notes": "Existing frozen fixture identifier from lib/fakeUIData.ts; result/error as rendered; no fixture created.",
+      "capturedAt": "2026-10-01T20:33:43.849Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1373,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n⚠️\nSomething went wrong here\nThis section failed to load.\nTry again\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.",
+      "errors": []
+    },
+    {
+      "file": "search-shops-runtime__desktop__1440x1000.png",
+      "fullFile": null,
+      "route": "/shops",
+      "actualUrl": "http://localhost:3000/shops",
+      "notes": "Natural existing listing/error state after7s.",
+      "capturedAt": "2026-10-01T20:34:06.975Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1000,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "Application error: a client-side exception has occurred while loading localhost (see the browser console for more information).",
+      "errors": [
+        "Invalid src prop (https://randomuser.me/api/portraits/men/44.jpg) on `next/image`, hostname \"randomuser.me\" is not configured under images in your `next.config.js`\nSee more info: https://nextjs.org/docs/messages/next-image-unconfigured-host"
+      ]
+    },
+    {
+      "file": "client-home-settled__mobile__390x844.png",
+      "fullFile": "client-home-settled__mobile__390x844__full-page.png",
+      "route": "/",
+      "actualUrl": "http://localhost:3000/",
+      "notes": "Waited for implemented landing heading; fresh anonymous session/cookie banner.",
+      "capturedAt": "2026-10-01T20:34:15.222Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 7384,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n2,400+ barbers · 18 cities · live now\nFind your barber. Book your cut.\nNo waiting.\n\nThe barbers people actually trust, all in one place. Pick your city, pick your barber, book in seconds.\n\nFind a barber →\nFind a barbershop →\n2.4k+\nBarbers\n4.97\nAvg rating\n551\nBooked today\n0%\nFees\n\nLIVE IN SPAIN\n\nEarly access. Real barbers.\n\ntiteZMe is live across Spain. The barbers signing up now are the ones clients will find first.\n\nHOW IT WORKS\nBooked in 3 steps.\n01\n📍\nPick your city\n\nOpen the app on any device or browser. We detect your location automatically, or choose your city and availability.\n\n02\n✂️\nChoose your barber\n\nFilter by specialty, language, vibe, price. See who's open right now in real time this very minute.\n\n03\n💵\nShow up. Pay cash.\n\nBook in under 30 seconds. Arrive, get the cut you chose directly. Zero drama. 100% real.\n\nFOR BARBERS\nYour chair. Your rules. Your money.\n\nNo commission fees during beta. Set your hours, set your price, keep everything. We send clients to your chair.\n\n✓\n0% commission. Every euro stays yours.\n✓\nProfile live in under 10 minutes\n✓\nYour schedule. Nobody owns your time.\n✓\nClients find you. You just cut.\nJoin free during beta →\nSee how it works\n0%\nCOMMISSION\n10 min\nTO SET UP YOUR PROFILE\n400+\nBARBERS ALREADY JOINED\nBeta = Free\nJOIN NOW, PAY NOTHING DURING BETA\nFOR SHOPS\nYour shop. Your team. Your reputation.\n\nManage your barbers, track performance, and let clients find your shop online. All in one place.\n\n✓\nInvite barbers by their unique code\n✓\nSee earnings per barber per month\n✓\nYour own public shop profile\n✓\nClients book directly with your team\nCreate your shop →\nSee how it works\nFree\nDURING BETA\n4\nSTEPS TO SET UP\n100%\nDATA VISIBILITY\n24/7\nBOOKING MANAGEMENT\nCITIES\nWe're live where you are\nAmsterdam\nComing soon\nRequest it →\nBerlin\nComing soon\nRequest it →\nRome\nComing soon\nRequest it →\nDubai\nComing soon\nRequest it →\nLondon\nComing soon\nRequest it →\nBarcelona\nComing soon\nRequest it →\nONE LAST THING\nYour next cut is\n30 seconds away.\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "cookie-preferences__mobile__390x844.png",
+      "fullFile": "cookie-preferences__mobile__390x844__full-page.png",
+      "route": "/",
+      "actualUrl": "http://localhost:3000/",
+      "notes": "Existing Customize overlay; no settings saved.",
+      "capturedAt": "2026-10-01T20:34:15.589Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 7384,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n2,400+ barbers · 18 cities · live now\nFind your barber. Book your cut.\nNo waiting.\n\nThe barbers people actually trust, all in one place. Pick your city, pick your barber, book in seconds.\n\nFind a barber →\nFind a barbershop →\n2.4k+\nBarbers\n4.97\nAvg rating\n551\nBooked today\n0%\nFees\n\nLIVE IN SPAIN\n\nEarly access. Real barbers.\n\ntiteZMe is live across Spain. The barbers signing up now are the ones clients will find first.\n\nHOW IT WORKS\nBooked in 3 steps.\n01\n📍\nPick your city\n\nOpen the app on any device or browser. We detect your location automatically, or choose your city and availability.\n\n02\n✂️\nChoose your barber\n\nFilter by specialty, language, vibe, price. See who's open right now in real time this very minute.\n\n03\n💵\nShow up. Pay cash.\n\nBook in under 30 seconds. Arrive, get the cut you chose directly. Zero drama. 100% real.\n\nFOR BARBERS\nYour chair. Your rules. Your money.\n\nNo commission fees during beta. Set your hours, set your price, keep everything. We send clients to your chair.\n\n✓\n0% commission. Every euro stays yours.\n✓\nProfile live in under 10 minutes\n✓\nYour schedule. Nobody owns your time.\n✓\nClients find you. You just cut.\nJoin free during beta →\nSee how it works\n0%\nCOMMISSION\n10 min\nTO SET UP YOUR PROFILE\n400+\nBARBERS ALREADY JOINED\nBeta = Free\nJOIN NOW, PAY NOTHING DURING BETA\nFOR SHOPS\nYour shop. Your team. Your reputation.\n\nManage your barbers, track performance, and let clients find your shop online. All in one place.\n\n✓\nInvite barbers by their unique code\n✓\nSee earnings per barber per month\n✓\nYour own public shop profile\n✓\nClients book directly with your team\nCreate your shop →\nSee how it works\nFree\nDURING BETA\n4\nSTEPS TO SET UP\n100%\nDATA VISIBILITY\n24/7\nBOOKING MANAGEMENT\nCITIES\nWe're live where you are\nAmsterdam\nComing soon\nRequest it →\nBerlin\nComing soon\nRequest it →\nRome\nComing soon\nRequest it →\nDubai\nComing soon\nRequest it →\nLondon\nComing soon\nRequest it →\nBarcelona\nComing soon\nRequest it →\nONE LAST THING\nYour next cut is\n30 seconds away.\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize\nCookie Preferences\nEssential\n\nRequired for the site to function properly. Cannot be disabled.\n\nPreferences\n\nRemembers your settings like language and city.\n\nAnalytics\n\nHelps us understand how visitors interact with the website.\n\nSave preferences",
+      "errors": []
+    },
+    {
+      "file": "search-barbers-settled__mobile__390x844.png",
+      "fullFile": "search-barbers-settled__mobile__390x844__full-page.png",
+      "route": "/barbers",
+      "actualUrl": "http://localhost:3000/barbers",
+      "notes": "Natural data state after7s; no data interception/injection.",
+      "capturedAt": "2026-10-01T20:34:29.883Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 2069,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nFind your barber\n\nBrowse barbers by city...\n\nChoose a country\nAfghanistan\nAland Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua And Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nThe Bahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelgium\nBelize\nBenin\nBermuda\nBhutan\nBolivia\nBosnia and Herzegovina\nBotswana\nBouvet Island\nBrazil\nBritish Indian Ocean Territory\nBrunei\nBulgaria\nBurkina Faso\nBurundi\nCambodia\nCameroon\nCanada\nCape Verde\nCayman Islands\nCentral African Republic\nChad\nChile\nChina\nChristmas Island\nCocos (Keeling) Islands\nColombia\nComoros\nCongo\nDemocratic Republic of the Congo\nCook Islands\nCosta Rica\nCote D'Ivoire (Ivory Coast)\nCroatia\nCuba\nCyprus\nCzech Republic\nDenmark\nDjibouti\nDominica\nDominican Republic\nEast Timor\nEcuador\nEgypt\nEl Salvador\nEquatorial Guinea\nEritrea\nEstonia\nEthiopia\nFalkland Islands\nFaroe Islands\nFiji Islands\nFinland\nFrance\nFrench Guiana\nFrench Polynesia\nFrench Southern Territories\nGabon\nThe Gambia\nGeorgia\nGermany\nGhana\nGibraltar\nGreece\nGreenland\nGrenada\nGuadeloupe\nGuam\nGuatemala\nGuernsey and Alderney\nGuinea\nGuinea-Bissau\nGuyana\nHaiti\nHeard Island and McDonald Islands\nHonduras\nHong Kong S.A.R.\nHungary\nIceland\nIndia\nIndonesia\nIran\nIraq\nIreland\nIsrael\nItaly\nJamaica\nJapan\nJersey\nJordan\nKazakhstan\nKenya\nKiribati\nNorth Korea\nSouth Korea\nKuwait\nKyrgyzstan\nLaos\nLatvia\nLebanon\nLesotho\nLiberia\nLibya\nLiechtenstein\nLithuania\nLuxembourg\nMacau S.A.R.\nMacedonia\nMadagascar\nMalawi\nMalaysia\nMaldives\nMali\nMalta\nMan (Isle of)\nMarshall Islands\nMartinique\nMauritania\nMauritius\nMayotte\nMexico\nMicronesia\nMoldova\nMonaco\nMongolia\nMontenegro\nMontserrat\nMorocco\nMozambique\nMyanmar\nNamibia\nNauru\nNepal\nBonaire, Sint Eustatius and Saba\nNetherlands\nNew Caledonia\nNew Zealand\nNicaragua\nNiger\nNigeria\nNiue\nNorfolk Island\nNorthern Mariana Islands\nNorway\nOman\nPakistan\nPalau\nPalestinian Territory Occupied\nPanama\nPapua new Guinea\nParaguay\nPeru\nPhilippines\nPitcairn Island\nPoland\nPortugal\nPuerto Rico\nQatar\nReunion\nRomania\nRussia\nRwanda\nSaint Helena\nSaint Kitts And Nevis\nSaint Lucia\nSaint Pierre and Miquelon\nSaint Vincent And The Grenadines\nSaint-Barthelemy\nSaint-Martin (French part)\nSamoa\nSan Marino\nSao Tome and Principe\nSaudi Arabia\nSenegal\nSerbia\nSeychelles\nSierra Leone\nSingapore\nSlovakia\nSlovenia\nSolomon Islands\nSomalia\nSouth Africa\nSouth Georgia\nSouth Sudan\nSpain\nSri Lanka\nSudan\nSuriname\nSvalbard And Jan Mayen Islands\nSwaziland\nSweden\nSwitzerland\nSyria\nTaiwan\nTajikistan\nTanzania\nThailand\nTogo\nTokelau\nTonga\nTrinidad And Tobago\nTunisia\nTurkey\nTurkmenistan\nTurks And Caicos Islands\nTuvalu\nUganda\nUkraine\nUnited Arab Emirates\nUnited Kingdom\nUnited States\nUnited States Minor Outlying Islands\nUruguay\nUzbekistan\nVanuatu\nVatican City State (Holy See)\nVenezuela\nVietnam\nVirgin Islands (British)\nVirgin Islands (US)\nWallis And Futuna Islands\nWestern Sahara\nYemen\nZambia\nZimbabwe\nKosovo\nCuraçao\nSint Maarten (Dutch part)\nChoose a region\nChoose a city\nSearch barbers →\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "search-barbers-filter__mobile__390x844.png",
+      "fullFile": "search-barbers-filter__mobile__390x844__full-page.png",
+      "route": "/barbers",
+      "actualUrl": "http://localhost:3000/barbers",
+      "notes": "Existing name filter filled with unmatched text; no writes.",
+      "capturedAt": "2026-10-01T20:34:32.313Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 1419,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nFind your barber\n\nBrowse barbers by city...\n\nChoose a country\nAfghanistan\nAland Islands\nAlbania\nAlgeria\nAmerican Samoa\nAndorra\nAngola\nAnguilla\nAntarctica\nAntigua And Barbuda\nArgentina\nArmenia\nAruba\nAustralia\nAustria\nAzerbaijan\nThe Bahamas\nBahrain\nBangladesh\nBarbados\nBelarus\nBelgium\nBelize\nBenin\nBermuda\nBhutan\nBolivia\nBosnia and Herzegovina\nBotswana\nBouvet Island\nBrazil\nBritish Indian Ocean Territory\nBrunei\nBulgaria\nBurkina Faso\nBurundi\nCambodia\nCameroon\nCanada\nCape Verde\nCayman Islands\nCentral African Republic\nChad\nChile\nChina\nChristmas Island\nCocos (Keeling) Islands\nColombia\nComoros\nCongo\nDemocratic Republic of the Congo\nCook Islands\nCosta Rica\nCote D'Ivoire (Ivory Coast)\nCroatia\nCuba\nCyprus\nCzech Republic\nDenmark\nDjibouti\nDominica\nDominican Republic\nEast Timor\nEcuador\nEgypt\nEl Salvador\nEquatorial Guinea\nEritrea\nEstonia\nEthiopia\nFalkland Islands\nFaroe Islands\nFiji Islands\nFinland\nFrance\nFrench Guiana\nFrench Polynesia\nFrench Southern Territories\nGabon\nThe Gambia\nGeorgia\nGermany\nGhana\nGibraltar\nGreece\nGreenland\nGrenada\nGuadeloupe\nGuam\nGuatemala\nGuernsey and Alderney\nGuinea\nGuinea-Bissau\nGuyana\nHaiti\nHeard Island and McDonald Islands\nHonduras\nHong Kong S.A.R.\nHungary\nIceland\nIndia\nIndonesia\nIran\nIraq\nIreland\nIsrael\nItaly\nJamaica\nJapan\nJersey\nJordan\nKazakhstan\nKenya\nKiribati\nNorth Korea\nSouth Korea\nKuwait\nKyrgyzstan\nLaos\nLatvia\nLebanon\nLesotho\nLiberia\nLibya\nLiechtenstein\nLithuania\nLuxembourg\nMacau S.A.R.\nMacedonia\nMadagascar\nMalawi\nMalaysia\nMaldives\nMali\nMalta\nMan (Isle of)\nMarshall Islands\nMartinique\nMauritania\nMauritius\nMayotte\nMexico\nMicronesia\nMoldova\nMonaco\nMongolia\nMontenegro\nMontserrat\nMorocco\nMozambique\nMyanmar\nNamibia\nNauru\nNepal\nBonaire, Sint Eustatius and Saba\nNetherlands\nNew Caledonia\nNew Zealand\nNicaragua\nNiger\nNigeria\nNiue\nNorfolk Island\nNorthern Mariana Islands\nNorway\nOman\nPakistan\nPalau\nPalestinian Territory Occupied\nPanama\nPapua new Guinea\nParaguay\nPeru\nPhilippines\nPitcairn Island\nPoland\nPortugal\nPuerto Rico\nQatar\nReunion\nRomania\nRussia\nRwanda\nSaint Helena\nSaint Kitts And Nevis\nSaint Lucia\nSaint Pierre and Miquelon\nSaint Vincent And The Grenadines\nSaint-Barthelemy\nSaint-Martin (French part)\nSamoa\nSan Marino\nSao Tome and Principe\nSaudi Arabia\nSenegal\nSerbia\nSeychelles\nSierra Leone\nSingapore\nSlovakia\nSlovenia\nSolomon Islands\nSomalia\nSouth Africa\nSouth Georgia\nSouth Sudan\nSpain\nSri Lanka\nSudan\nSuriname\nSvalbard And Jan Mayen Islands\nSwaziland\nSweden\nSwitzerland\nSyria\nTaiwan\nTajikistan\nTanzania\nThailand\nTogo\nTokelau\nTonga\nTrinidad And Tobago\nTunisia\nTurkey\nTurkmenistan\nTurks And Caicos Islands\nTuvalu\nUganda\nUkraine\nUnited Arab Emirates\nUnited Kingdom\nUnited States\nUnited States Minor Outlying Islands\nUruguay\nUzbekistan\nVanuatu\nVatican City State (Holy See)\nVenezuela\nVietnam\nVirgin Islands (British)\nVirgin Islands (US)\nWallis And Futuna Islands\nWestern Sahara\nYemen\nZambia\nZimbabwe\nKosovo\nCuraçao\nSint Maarten (Dutch part)\nChoose a region\nChoose a city\nSearch barbers →\n\"audit-no-matching-provider\"\nClear all ✕\n💈\nNo barbers found\n\nCheck back soon.\n\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "login-settled__mobile__390x844.png",
+      "fullFile": "login-settled__mobile__390x844__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Natural anonymous auth form; cookie banner as rendered.",
+      "capturedAt": "2026-10-01T20:34:41.724Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account\nWe value your privacy\n\nWe use cookies to improve your experience. Essential cookies are always on. You can choose to accept others or customize your preferences.\n\nAccept all\nReject all\nCustomize",
+      "errors": []
+    },
+    {
+      "file": "login-input-focus__mobile__390x844.png",
+      "fullFile": "login-input-focus__mobile__390x844__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Existing email input focused, no submit.",
+      "capturedAt": "2026-10-01T20:34:43.232Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account",
+      "errors": []
+    },
+    {
+      "file": "login-password-toggle__mobile__390x844.png",
+      "fullFile": "login-password-toggle__mobile__390x844__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Existing password visibility toggle, empty value.",
+      "capturedAt": "2026-10-01T20:34:43.462Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account",
+      "errors": []
+    },
+    {
+      "file": "login-submit-hover__mobile__390x844.png",
+      "fullFile": "login-submit-hover__mobile__390x844__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Existing submit hovered, no submit.",
+      "capturedAt": "2026-10-01T20:34:43.685Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account",
+      "errors": []
+    },
+    {
+      "file": "mobile-navigation-open__mobile__390x844.png",
+      "fullFile": "mobile-navigation-open__mobile__390x844__full-page.png",
+      "route": "/login",
+      "actualUrl": "http://localhost:3000/login",
+      "notes": "Implemented full-screen navigation drawer.",
+      "capturedAt": "2026-10-01T20:34:45.681Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHome\nBarbers\nShops\nChallenge\nFor Barbers\nFor Shops\nSign up free\nLog in\n🇬🇧\nEnglish\nEN\n🇪🇸\nEspañol\nES\n🇫🇷\nFrançais\nFR\nWelcome Back\n\nLog in to your titeZMe account.\n\nContinue with Google\nor\nEMAIL\nPASSWORD\nRemember me\nForgot password?\nLog In →\nBy logging in you agree to our Terms of Service and Privacy Policy.\nNew here? Create Account",
+      "errors": []
+    },
+    {
+      "file": "provider-profile-fixture__mobile__390x844.png",
+      "fullFile": "provider-profile-fixture__mobile__390x844__full-page.png",
+      "route": "/barber/fake_4673422712ac44d181b5ef43688e56e9",
+      "actualUrl": "http://localhost:3000/barber/fake_4673422712ac44d181b5ef43688e56e9",
+      "notes": "Existing frozen fixture identifier from lib/fakeUIData.ts; result/error as rendered; no fixture created.",
+      "capturedAt": "2026-10-01T20:36:18.309Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 1333,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n⚠️\nSomething went wrong here\nThis section failed to load.\nTry again\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.",
+      "errors": []
+    },
+    {
+      "file": "search-shops-runtime__mobile__390x844.png",
+      "fullFile": "search-shops-runtime__mobile__390x844__full-page.png",
+      "route": "/shops",
+      "actualUrl": "http://localhost:3000/shops",
+      "notes": "Natural existing listing/error state after7s.",
+      "capturedAt": "2026-10-01T20:36:28.928Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 1329,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-birth-consent-dismissed__desktop__1440x1000.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Existing cookie Reject all clicked. Natural scripted birth/greeting after9s.",
+      "capturedAt": "2026-10-01T20:40:51.394Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\n\nBefore I can help you...",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-chat-consent-dismissed__desktop__1440x1000.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Natural scripted chat after19s. No live AI or timeline interception.",
+      "capturedAt": "2026-10-01T20:41:01.615Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\n\nI want a haircut\n\nAbsolutely.\n\nBefore I recommend a haircut, I need to understand your hair.\n\nWhat would you like to improve today?\n→",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-analyst-consent-dismissed__desktop__1440x1000.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Waited for existing scripted Dr. Sarah recommendation card; no live provider search.",
+      "capturedAt": "2026-10-01T20:41:18.062Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1108,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\n\nDr. Sarah\n\nHAIR ANALYST\n\n2.3 km · English\n★★★★★ · Tomorrow 10:30\nBOOK ANALYSIS",
+      "errors": []
+    },
+    {
+      "file": "contact-settled__desktop__1440x1000.png",
+      "fullFile": null,
+      "route": "/contact",
+      "actualUrl": "http://localhost:3000/contact",
+      "notes": "Waited for rendered contact heading; no form sent.",
+      "capturedAt": "2026-10-01T20:41:32.678Z",
+      "viewport": {
+        "width": 1440,
+        "height": 1000,
+        "scrollHeight": 1662,
+        "scrollWidth": 1440,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nHome\nCuts\nSoon\nBarbers\nShops\nChallenge\n🇬🇧\nEN\nLog in\nSign up\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nGet in touch\n\nHave a question?\nWe respond within 24 hours.\n\nTrusted by barbers in Madrid\n\nNAME\nEMAIL\nI AM A...\nClient\nBarber\nShop owner\nBarber school\nBrand / Sponsor\nCity partner\nInvestor\nPress\nOther\nSUBJECT\nReport a bug\nBooking help\nPartnership\nPress & media\nBook a demo\nBilling\nGeneral question\nMESSAGE\nSend message\nDirect contact\n📧\nEMAIL US\nhello@titezme.com\n📍\nBASED IN\nMadrid, España\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-birth-consent-dismissed__mobile__390x844.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Existing cookie Reject all clicked. Natural scripted birth/greeting after9s.",
+      "capturedAt": "2026-10-01T20:41:45.931Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\n\nBefore I can help you...",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-chat-consent-dismissed__mobile__390x844.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Natural scripted chat after19s. No live AI or timeline interception.",
+      "capturedAt": "2026-10-01T20:41:56.022Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\n\nI want a haircut\n\nAbsolutely.\n\nBefore I recommend a haircut, I need to understand your hair.\n\nWhat would you like to improve today?\n→",
+      "errors": []
+    },
+    {
+      "file": "titiza-film-analyst-consent-dismissed__mobile__390x844.png",
+      "fullFile": null,
+      "route": "/preview/titiza-film",
+      "actualUrl": "http://localhost:3000/preview/titiza-film",
+      "notes": "Waited for existing scripted Dr. Sarah recommendation card; no live provider search.",
+      "capturedAt": "2026-10-01T20:42:12.886Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 946,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nHAIR PROFILE\nBEAUTY PROFILE\nPROFESSIONAL ANALYSIS\nRECOMMENDATIONS\nVERIFIED DATA\nTitiza, an abstract living light presence representing your personal beauty intelligence.\n\nDr. Sarah\n\nHAIR ANALYST\n\n2.3 km · English\n★★★★★ · Tomorrow 10:30\nBOOK ANALYSIS",
+      "errors": []
+    },
+    {
+      "file": "contact-settled__mobile__390x844.png",
+      "fullFile": null,
+      "route": "/contact",
+      "actualUrl": "http://localhost:3000/contact",
+      "notes": "Waited for rendered contact heading; no form sent.",
+      "capturedAt": "2026-10-01T20:42:15.452Z",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "scrollHeight": 1974,
+        "scrollWidth": 390,
+        "font": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\""
+      },
+      "body": "titeZMe\nLog in\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\n💈 Trusted by barbers nationwide\n—\nBook your next cut in 30 seconds\n—\nZero phone calls\n—\nReal availability\n—\nFind barbers near you →\nGet in touch\n\nHave a question?\nWe respond within 24 hours.\n\nTrusted by barbers in Madrid\n\nNAME\nEMAIL\nI AM A...\nClient\nBarber\nShop owner\nBarber school\nBrand / Sponsor\nCity partner\nInvestor\nPress\nOther\nSUBJECT\nReport a bug\nBooking help\nPartnership\nPress & media\nBook a demo\nBilling\nGeneral question\nMESSAGE\nSend message\nDirect contact\n📧\nEMAIL US\nhello@titezme.com\n📍\nBASED IN\nMadrid, España\ntiteZMe\nKeeping you sharp.\nAbout\nFor Barbers\nFor Shops\nCities\nPrivacy\nTerms\nContact\nCookie settings\niOS & Android app coming soon\n© 2026 titeZMe. All rights reserved.",
+      "errors": []
+    }
+  ],
+  "issues": [
+    {
+      "kind": "desktop",
+      "route": "/login",
+      "error": "page.goto: net::ERR_ABORTED at http://localhost:3000/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/login\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    },
+    {
+      "kind": "mobile",
+      "route": "/shops",
+      "error": "page.goto: net::ERR_ABORTED at http://localhost:3000/shops\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/shops\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    },
+    {
+      "kind": "mobile",
+      "route": "/login",
+      "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"password\"]').first()\u001b[22m\n"
+    },
+    {
+      "kind": "desktop",
+      "route": "/signup supplement",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /Barber/ }).first()\u001b[22m\n"
+    },
+    {
+      "kind": "mobile",
+      "route": "/signup supplement",
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /Barber/ }).first()\u001b[22m\n"
+    }
+  ]
+}

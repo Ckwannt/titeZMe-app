@@ -1,0 +1,433 @@
+{
+  "files": 106,
+  "viewportCaptures": 62,
+  "fullPageCaptures": 44,
+  "dimensions": {
+    "admin-login__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "admin-login__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "client-home-settled__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "client-home-settled__desktop__1440x1000__full-page.png": [
+      1440,
+      4727
+    ],
+    "client-home-settled__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "client-home-settled__mobile__390x844__full-page.png": [
+      390,
+      7384
+    ],
+    "client-home__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "client-home__desktop__1440x1000__full-page.png": [
+      1440,
+      1365
+    ],
+    "client-home__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "client-home__mobile__390x844__full-page.png": [
+      390,
+      1329
+    ],
+    "contact-settled__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "contact-settled__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "contact__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "contact__desktop__1440x1000__full-page.png": [
+      1440,
+      1662
+    ],
+    "contact__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "contact__mobile__390x844__full-page.png": [
+      390,
+      1329
+    ],
+    "cookie-preferences__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "cookie-preferences__desktop__1440x1000__full-page.png": [
+      1440,
+      4727
+    ],
+    "cookie-preferences__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "cookie-preferences__mobile__390x844__full-page.png": [
+      390,
+      7384
+    ],
+    "for-shops__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "for-shops__desktop__1440x1000__full-page.png": [
+      1440,
+      7870
+    ],
+    "for-shops__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "for-shops__mobile__390x844__full-page.png": [
+      390,
+      11124
+    ],
+    "forgot-password__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "forgot-password__desktop__1440x1000__full-page.png": [
+      1440,
+      1108
+    ],
+    "forgot-password__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "forgot-password__mobile__390x844__full-page.png": [
+      390,
+      946
+    ],
+    "language-menu-open__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "language-menu-open__desktop__1440x1000__full-page.png": [
+      1440,
+      1108
+    ],
+    "login-email-focus__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "login-email-focus__mobile__390x844__full-page.png": [
+      390,
+      946
+    ],
+    "login-input-focus__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "login-input-focus__desktop__1440x1000__full-page.png": [
+      1440,
+      1108
+    ],
+    "login-input-focus__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "login-input-focus__mobile__390x844__full-page.png": [
+      390,
+      946
+    ],
+    "login-password-toggle__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "login-password-toggle__desktop__1440x1000__full-page.png": [
+      1440,
+      1108
+    ],
+    "login-password-toggle__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "login-password-toggle__mobile__390x844__full-page.png": [
+      390,
+      946
+    ],
+    "login-password-visible__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "login-password-visible__mobile__390x844__full-page.png": [
+      390,
+      946
+    ],
+    "login-settled__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "login-settled__desktop__1440x1000__full-page.png": [
+      1440,
+      1108
+    ],
+    "login-settled__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "login-settled__mobile__390x844__full-page.png": [
+      390,
+      946
+    ],
+    "login-submit-hover__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "login-submit-hover__desktop__1440x1000__full-page.png": [
+      1440,
+      1108
+    ],
+    "login-submit-hover__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "login-submit-hover__mobile__390x844__full-page.png": [
+      390,
+      946
+    ],
+    "login__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "login__mobile__390x844__full-page.png": [
+      390,
+      946
+    ],
+    "mobile-navigation-open__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "mobile-navigation-open__mobile__390x844__full-page.png": [
+      390,
+      946
+    ],
+    "not-found__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "not-found__desktop__1440x1000__full-page.png": [
+      1440,
+      1108
+    ],
+    "not-found__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "not-found__mobile__390x844__full-page.png": [
+      390,
+      942
+    ],
+    "provider-profile-fixture__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "provider-profile-fixture__desktop__1440x1000__full-page.png": [
+      1440,
+      1373
+    ],
+    "provider-profile-fixture__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "provider-profile-fixture__mobile__390x844__full-page.png": [
+      390,
+      1333
+    ],
+    "search-barbers-filter__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "search-barbers-filter__desktop__1440x1000__full-page.png": [
+      1440,
+      1373
+    ],
+    "search-barbers-filter__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "search-barbers-filter__mobile__390x844__full-page.png": [
+      390,
+      1419
+    ],
+    "search-barbers-settled__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "search-barbers-settled__desktop__1440x1000__full-page.png": [
+      1440,
+      1373
+    ],
+    "search-barbers-settled__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "search-barbers-settled__mobile__390x844__full-page.png": [
+      390,
+      2069
+    ],
+    "search-barbers__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "search-barbers__desktop__1440x1000__full-page.png": [
+      1440,
+      1373
+    ],
+    "search-barbers__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "search-barbers__mobile__390x844__full-page.png": [
+      390,
+      2069
+    ],
+    "search-shops-runtime__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "search-shops-runtime__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "search-shops-runtime__mobile__390x844__full-page.png": [
+      390,
+      1329
+    ],
+    "search-shops__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "shop-profile-missing__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "shop-profile-missing__desktop__1440x1000__full-page.png": [
+      1440,
+      1373
+    ],
+    "shop-profile-missing__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "shop-profile-missing__mobile__390x844__full-page.png": [
+      390,
+      1333
+    ],
+    "signup-validation__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "signup-validation__desktop__1440x1000__full-page.png": [
+      1440,
+      1184
+    ],
+    "signup-validation__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "signup-validation__mobile__390x844__full-page.png": [
+      390,
+      1138
+    ],
+    "signup__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "signup__desktop__1440x1000__full-page.png": [
+      1440,
+      1163
+    ],
+    "signup__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "signup__mobile__390x844__full-page.png": [
+      390,
+      942
+    ],
+    "titiza-access-gate__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "titiza-access-gate__desktop__1440x1000__full-page.png": [
+      1440,
+      1108
+    ],
+    "titiza-access-gate__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "titiza-access-gate__mobile__390x844__full-page.png": [
+      390,
+      946
+    ],
+    "titiza-film-analyst-consent-dismissed__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "titiza-film-analyst-consent-dismissed__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "titiza-film-birth-consent-dismissed__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "titiza-film-birth-consent-dismissed__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "titiza-film-birth__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "titiza-film-birth__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "titiza-film-chat-consent-dismissed__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "titiza-film-chat-consent-dismissed__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "titiza-film-conversation__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "titiza-film-conversation__mobile__390x844.png": [
+      390,
+      844
+    ],
+    "titiza-film-recommendation__desktop__1440x1000.png": [
+      1440,
+      1000
+    ],
+    "titiza-film-recommendation__mobile__390x844.png": [
+      390,
+      844
+    ]
+  },
+  "badDimensions": [],
+  "unindexedFiles": []
+}
