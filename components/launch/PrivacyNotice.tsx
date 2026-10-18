@@ -8,7 +8,7 @@ export default function PrivacyNotice() {
     <button className={styles.privacyLink} type="button" aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>Privacy notice (draft)</button>
     <dialog ref={dialog} className={styles.privacyDialog} aria-labelledby="privacy-heading">
       <h2 id="privacy-heading">City-notification privacy notice — draft</h2>
-      <p>Registration is currently disabled. The form does not send or save your registration details.</p>
+      <p>Registration is currently disabled. Registration requests are not sent or saved. Place searches are processed on this server; the application does not store the search text.</p>
       <p>Controller: Ibrahim MELLOULI, Cristo de la Victoria, 108, 3°B, Madrid, Spain, 28026. Contact: <a href="mailto:privacy@titezme.com">privacy@titezme.com</a>.</p>
       <p>The intended purpose is to email you when titeZMe becomes available in your selected city. No account, confirmation email, newsletter or unrelated marketing is included.</p>
       <p>The planned information is country, selected or self-declared place, email, and evidence of your notification-specific consent. Place searches run against a local GeoNames catalogue; search text is not sent to GeoNames.</p>

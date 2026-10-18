@@ -90,7 +90,7 @@ export default function WaitlistForm() {
       </div>
       <button className={styles.submit} type="submit" disabled={status === 'loading'} aria-busy={status === 'loading'}>{status === 'loading' ? 'Checking details…' : <>Keep me in the loop <span aria-hidden="true">→</span></>}</button>
     </form>
-    <p id="signup-status" className={styles.signupStatus} role="status">{status === 'processed' ? <>Thanks! We&apos;ve received your request. If this is your first registration, you&apos;re on the list. We&apos;ll notify you when titeZMe becomes available in the city you originally selected.</> : status === 'retry' ? 'We could not confirm processing. Please retry. No successful registration is confirmed.' : status === 'limited' ? 'Too many attempts. Please wait before retrying.' : status === 'inactive' ? 'Signup is not yet active. Your details have not been saved or sent.' : 'Signup is not yet active. No details are collected.'}</p>
+    <p id="signup-status" className={styles.signupStatus} role="status">{status === 'processed' ? <>Thanks! We&apos;ve received your request. If this is your first registration, you&apos;re on the list. We&apos;ll notify you when titeZMe becomes available in the city you originally selected.</> : status === 'loading' ? 'Processing your request…' : status === 'retry' ? 'We could not confirm processing. Please retry. No successful registration is confirmed.' : status === 'limited' ? 'Too many attempts. Please wait before retrying.' : 'Signup is not yet active. No registration has been submitted.'}</p>
     {status === 'processed' && <ReceiptControls receipt={receipt} />}
     {Object.keys(errors).length > 0 && <span className={styles.srOnly} role="alert">Please check the highlighted fields.</span>}
   </section>;
