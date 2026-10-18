@@ -1,0 +1,12 @@
+design-audit/
+tests/
+scripts/
+.git/
+.next/
+node_modules/
+.env*
+**/service-account*.json
+**/*.pem
+backup/
+AGENTS.md
+.codex/

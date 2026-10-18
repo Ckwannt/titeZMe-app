@@ -81,6 +81,10 @@ const nextConfig: NextConfig = {
     ],
   },
   output: 'standalone',
+  outputFileTracingIncludes: {
+    '/api/places': ['./data/places/*.json.gz'],
+    '/api/waitlist': ['./data/places/*.json.gz'],
+  },
   transpilePackages: ['motion', 'iso-639-1'],
   experimental: {
     optimizePackageImports: ['country-state-city', 'recharts'],
@@ -150,4 +154,5 @@ export default withSentryConfig(nextConfig, {
   silent: true,
   disableLogger: true,
   automaticVercelMonitors: false,
+  excludeServerRoutes: ['/api/waitlist', '/api/waitlist/withdraw', '/api/waitlist/delete', '/api/places'],
 });

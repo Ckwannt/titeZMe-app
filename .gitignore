@@ -22,3 +22,4 @@ scripts/backup-before-wipe.ts
 scripts/count-titezme-prod.ts
 scripts/inspect-challenge-submissions.ts
 scripts/wipe-barber-shop-data.ts
+design-audit/final-release/geonames-allCountries.zip
