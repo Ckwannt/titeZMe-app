@@ -1,8 +1,9 @@
 // Server Component — ISR with 60-second revalidation
-import { notFound } from 'next/navigation';
+import { notFound, unstable_rethrow } from 'next/navigation';
 import { adminDb } from '@/lib/firebase-admin';
 import BarberProfileClient, { type BarberProfileInitialData } from './BarberProfileClient';
 import { getScheduleDocId } from '@/lib/schedule-utils';
+import { publicFields, publicPersonFields, publicProfessionalFields, isPublicProfessional } from '@/lib/public-profile';
 
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,7 @@ export async function generateMetadata({
       adminDb.collection('users').doc(barberId).get(),
     ]);
 
-    if (!profileDoc.exists) return { title: 'Barber not found' };
+    if (!profileDoc.exists || !isPublicProfessional(profileDoc.data() || {})) return { title: 'Barber not found' };
 
     const p = profileDoc.data() || {};
     const u = userDoc.data() || {};
@@ -142,13 +143,12 @@ export default async function BarberProfilePage({
     }
 
     const profileData = profileDoc.data() || {};
+    if (!isPublicProfessional(profileData)) notFound();
     const userData = userDoc.exists ? userDoc.data() || {} : {};
     const pData = profileData as any;
     const uData = userData as any;
 
-    // Heal: if professionalProfiles is missing public display fields, copy them
-    // from users doc automatically. Fixes existing barbers who completed
-    // onboarding before the security migration.
+    // Public GETs only project display fields in memory; never repair database records.
     if (!pData.firstName && uData.firstName) {
       const healData: Record<string, any> = {};
       if (!pData.firstName && uData.firstName) healData.firstName = uData.firstName;
@@ -159,24 +159,12 @@ export default async function BarberProfilePage({
       if (!pData.country   && uData.country)   healData.country   = uData.country;
 
       if (Object.keys(healData).length > 0) {
-        try {
-          await adminDb
-            .collection('professionalProfiles')
-            .doc(barberId)
-            .update(healData);
-          Object.assign(pData, healData);
-          console.log('[heal] professionalProfiles healed for:', barberId, healData);
-        } catch (healErr) {
-          console.error('[heal] FAILED for:', barberId, healErr);
-          // Apply in memory even if Firestore write failed so the name
-          // shows correctly on this page load regardless.
-          Object.assign(pData, healData);
-        }
+        Object.assign(pData, healData);
       }
     }
 
     const mergedUserProfile = {
-      ...userData,
+      ...publicFields(userData, publicPersonFields),
       firstName: pData.firstName || uData.firstName,
       lastName: pData.lastName || uData.lastName,
     };
@@ -185,7 +173,11 @@ export default async function BarberProfilePage({
     let shopData: any = null;
     if ((profileData as any).businessId) {
       const shopDoc = await adminDb.collection('businesses').doc((profileData as any).businessId).get();
-      if (shopDoc.exists) shopData = { id: shopDoc.id, ...shopDoc.data() };
+      if (shopDoc.exists) {
+        const value = shopDoc.data() || {};
+        const address = value.address && typeof value.address === 'object' ? publicFields(value.address, ['street', 'number', 'city', 'country']) : undefined;
+        shopData = { id: shopDoc.id, ...publicFields(value, ['name', 'googleMapsUrl']), address };
+      }
     }
 
     // Fetch services + reviews in parallel
@@ -201,16 +193,16 @@ export default async function BarberProfilePage({
         .get(),
     ]);
 
-    const services = servicesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const services = servicesSnap.docs.map(d => ({ id: d.id, ...publicFields(d.data(), ['name', 'price', 'durationMinutes', 'duration', 'isActive']) }));
 
     // Enrich reviews with client names server-side
     const reviews = await Promise.all(
       reviewsSnap.docs.map(async d => {
-        const rev: any = { id: d.id, ...d.data() };
+        const rev: any = { id: d.id, ...publicFields(d.data(), ['clientId', 'providerId', 'rating', 'comment', 'createdAt']) };
         if (rev.clientId) {
           try {
             const clientDoc = await adminDb.collection('users').doc(rev.clientId).get();
-            if (clientDoc.exists) rev.user = clientDoc.data();
+            if (clientDoc.exists) rev.user = publicFields(clientDoc.data() || {}, ['firstName', 'photoUrl']);
           } catch {
             // Non-critical
           }
@@ -224,7 +216,7 @@ export default async function BarberProfilePage({
       : null;
 
     const initialData: BarberProfileInitialData = {
-      profile: { id: barberId, ...profileData } as any,
+      profile: { id: barberId, ...publicFields(profileData, publicProfessionalFields) } as any,
       userProfile: mergedUserProfile as any,
       shop: shopData,
       services: services as any[],
@@ -234,6 +226,7 @@ export default async function BarberProfilePage({
 
     return <BarberProfileClient barberId={barberId} initialData={initialData} />;
   } catch (err) {
+    unstable_rethrow(err);
     console.error('BarberProfilePage server error:', err);
     // Fall back to client-side fetching on error
     return <BarberProfileClient barberId={barberId} />;

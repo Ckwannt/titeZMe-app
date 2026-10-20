@@ -82,8 +82,8 @@ const nextConfig: NextConfig = {
   },
   output: 'standalone',
   outputFileTracingIncludes: {
-    '/api/places': ['./data/places/*.json.gz'],
-    '/api/waitlist': ['./data/places/*.json.gz'],
+    '/api/places': ['./data/places/normalized/*.json.gz'],
+    '/api/waitlist': ['./data/places/normalized/*.json.gz'],
   },
   transpilePackages: ['motion', 'iso-639-1'],
   experimental: {

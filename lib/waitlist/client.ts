@@ -5,7 +5,7 @@ import { z } from 'zod';
 let attempt: { fingerprint: string; key: string } | undefined;
 const resultSchema = z.object({ status: z.literal('processed'), withdrawalReceipt: z.string().regex(/^[a-f0-9]{64}$/) }).strict();
 const fieldCode = z.enum(['required', 'invalid', 'too_long', 'email_policy_unresolved', 'place_required', 'version_changed']);
-const failureSchema = z.object({ code: z.literal('validation_failed'), fields: z.object({ country: fieldCode.optional(), city: fieldCode.optional(), email: fieldCode.optional(), consent: fieldCode.optional() }).strict() }).strict();
+const failureSchema = z.object({ code: z.literal('validation_failed'), fields: z.object({ country: fieldCode.optional(), city: fieldCode.optional(), placeRegion: fieldCode.optional(), email: fieldCode.optional(), consent: fieldCode.optional() }).strict() }).strict();
 /** Input and retry key live only in this tab's memory. Public collection stays gated. */
 export const submitWaitlist: WaitlistTransport = async request => {
   if (!enrollmentAllowed()) return { code: 'enrollment_disabled' };

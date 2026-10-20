@@ -22,8 +22,10 @@ export function validateWaitlist(input: unknown): WaitlistValidation {
   if (!city) fields.city = 'required';
   else if (controlCharacters.test(raw.city)) fields.city = 'invalid';
   else if ([...city].length > 120) fields.city = 'too_long';
-  else if (raw.placeRegion.length > 120 || controlCharacters.test(raw.placeRegion)) fields.city = 'invalid';
-  else if (raw.missingPlace ? raw.placeId !== null || !raw.placeRegion.trim() : !/^geonames:[0-9]+$/.test(raw.placeId || '')) fields.city = 'place_required';
+  else if (raw.missingPlace ? raw.placeId !== null : !/^geonames:[0-9]+$/.test(raw.placeId || '')) fields.city = 'place_required';
+  if (raw.placeRegion.length > 120) fields.placeRegion = 'too_long';
+  else if (controlCharacters.test(raw.placeRegion)) fields.placeRegion = 'invalid';
+  else if (raw.missingPlace && !raw.placeRegion.trim()) fields.placeRegion = 'required';
   if (!raw.consent) fields.consent = 'required';
   else if (raw.consentVersion !== CONSENT_VERSION || raw.privacyVersion !== PRIVACY_VERSION) fields.consent = 'version_changed';
 

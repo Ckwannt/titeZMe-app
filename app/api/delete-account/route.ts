@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { isIsolatedPreview } from '@/lib/preview-boundary';
 
 export async function POST(req: Request) {
+  if (isIsolatedPreview()) return NextResponse.json({ error: 'Not found' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
   try {
     const admin = await import('firebase-admin');
     if (!admin.apps.length) {
@@ -14,7 +16,10 @@ export async function POST(req: Request) {
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await admin.auth().verifyIdToken(token);
     const uid = decodedToken.uid;
-    const db = admin.firestore();
+    const age = Date.now() / 1000 - Number(decodedToken.auth_time);
+    if (!Number.isFinite(age) || age < -60 || age > 300) return NextResponse.json({ error: 'Recent authentication required' }, { status: 401, headers: { 'Cache-Control': 'no-store' } });
+    const { getFirestore } = await import('firebase-admin/firestore');
+    const db = getFirestore(admin.app(), 'titezme-prod');
 
     // Fetch user doc to determine if they own a shop
     const userDoc = await db.collection('users').doc(uid).get();
@@ -70,7 +75,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
-    console.error('Delete API Error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Account deletion unavailable' }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
   }
 }

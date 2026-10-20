@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getApps } from 'firebase-admin/app';
 import { adminDb } from '@/lib/firebase-admin';
+import { hasAdminAuthority } from '@/lib/admin-authority';
+import { isIsolatedPreview } from '@/lib/preview-boundary';
 
 const ALLOWED_LABELS = ['back', 'left', 'right', 'front'] as const;
 const MAX_BYTES = 5 * 1024 * 1024;
 const BUCKET_NAME = 'gen-lang-client-0539007834.firebasestorage.app';
 
 export async function POST(req: Request) {
+  if (isIsolatedPreview()) return NextResponse.json({ error: 'Not found' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
   try {
     const authHeader = req.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -32,9 +35,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
-    const data = userDoc.data();
-    const isAdmin = data?.isAdmin === true || data?.role === 'admin';
+    const isAdmin = hasAdminAuthority(decoded);
     if (!isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

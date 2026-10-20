@@ -149,7 +149,8 @@ BEGIN
   SELECT suppression_days INTO days FROM waitlist.policy WHERE singleton;
   IF days IS NULL THEN RETURN jsonb_build_object('code','enrollment_disabled'); END IF;
   INSERT INTO waitlist.suppressions(email_lookup,reason,expires_at) VALUES(matched.email_lookup,p_mode,clock_timestamp()+make_interval(days=>days))
-    ON CONFLICT(email_lookup) DO NOTHING;
+    ON CONFLICT(email_lookup) DO UPDATE SET reason=excluded.reason,created_at=excluded.created_at,expires_at=excluded.expires_at
+    WHERE waitlist.suppressions.expires_at<=clock_timestamp();
   DELETE FROM waitlist.subscriptions WHERE id=matched.id;
   RETURN jsonb_build_object('status','processed');
 END $$;
@@ -161,7 +162,9 @@ BEGIN
   IF days IS NULL THEN RETURN; END IF;
   FOR item IN SELECT * FROM waitlist.subscriptions WHERE expires_at<=clock_timestamp() LOOP
     PERFORM pg_advisory_xact_lock(hashtextextended('email:'||item.email_lookup,0));
-    INSERT INTO waitlist.suppressions(email_lookup,reason,expires_at) VALUES(item.email_lookup,'expiry',clock_timestamp()+make_interval(days=>days)) ON CONFLICT DO NOTHING;
+    INSERT INTO waitlist.suppressions(email_lookup,reason,expires_at) VALUES(item.email_lookup,'expiry',clock_timestamp()+make_interval(days=>days))
+      ON CONFLICT(email_lookup) DO UPDATE SET reason=excluded.reason,created_at=excluded.created_at,expires_at=excluded.expires_at
+      WHERE waitlist.suppressions.expires_at<=clock_timestamp();
     DELETE FROM waitlist.subscriptions WHERE id=item.id AND expires_at<=clock_timestamp();
   END LOOP;
   DELETE FROM waitlist.suppressions WHERE expires_at<=clock_timestamp();

@@ -1,11 +1,11 @@
 import Image from 'next/image';
 import MobileNavigation from './MobileNavigation';
+import { navigationItems } from './navigation';
 import WaitlistForm from './WaitlistForm';
 import TextScaling from './TextScaling';
 import styles from './launch.module.css';
 
 const categories = ['Hair', 'Skin', 'Dental', 'Body', 'Wellness', 'Products', 'Professionals'];
-const links = ['Watch the film', 'Meet titiZa', 'For professionals', 'Our vision'];
 
 function DecorativeLayer({ name, width, height, className }: { name: string; width: number; height: number; className: string }) {
   return <Image className={className} src={`/launch/corrected/${name}.png`} width={width} height={height} sizes="(max-width: 1100px) 28vw, 14vw" alt="" />;
@@ -29,30 +29,33 @@ export default function LaunchHomepage() {
       </div>
     </div>
     <div className={styles.mobileScene} aria-hidden="true">
-      <Image className={styles.mobilePlate} src="/launch/scene/mobile-clean-reconstruction.webp" alt="" width={1031} height={1525} sizes="(max-width: 1100px) 100vw, 1px" />
-      <Image className={styles.mobileRestoration} src="/launch/corrected/mobile-approved-foreground-refined.webp" alt="" width={704} height={574} loading="eager" unoptimized />
+      <Image className={styles.mobilePlate} src="/launch/scene/mobile-clean-reconstruction.webp" alt="" width={1031} height={1525} sizes="(max-width: 1100px) 100vw, 1px" loading="eager" fetchPriority="high" />
+      <Image className={styles.mobileRestoration} src="/launch/optimized/mobile-foreground.webp" alt="" width={704} height={574} loading="eager" unoptimized />
       <DecorativeLayer name="note-better-mobile-extract" width={154} height={241} className={styles.betterNote} />
       <DecorativeLayer name="photo-comb-mobile-extract" width={153} height={180} className={styles.combPhoto} />
       <DecorativeLayer name="photo-bottle-mobile-extract" width={180} height={181} className={styles.bottlePhoto} />
     </div>
     <header className={styles.header}>
       <Image className={styles.wordmark} src="/launch/wordmark-extract.png" width={214} height={55} alt="titeZMe" priority />
-      <nav className={styles.desktopNavigation} aria-label="Main navigation" aria-description="These destinations are not yet available.">
-        {links.map(label => <span key={label} aria-disabled="true" title="Coming soon">{label}</span>)}
+      <nav className={styles.desktopNavigation} aria-label="Main navigation">
+        {navigationItems.map(item => <a key={item.href} href={item.href}>{item.label}</a>)}
       </nav>
       <p className={styles.statement}>A more intelligent<br />beauty &amp; wellness<br />world.</p>
       <MobileNavigation />
     </header>
     <section className={styles.introduction} aria-labelledby="launch-title">
+      <div className={styles.introStage}>
       <Image className={styles.passionNote} src="/launch/passion-ink-extract.png" width={210} height={123} alt="Same passion. Different people. Better choices." sizes="(max-width: 1100px) 30vw, 13vw" />
       <h1 id="launch-title" tabIndex={-1}>Beauty has<br />a <em>brain now.</em></h1>
-      <p>Understand what suits you. Discover beauty and wellness professionals with the expertise you need.</p>
+      <p>titeZMe is a beauty and wellness platform preparing to launch, starting in Madrid.</p>
+      </div>
+      <p className={styles.introContext}>We&apos;re developing titiZa to help you understand what suits you before you choose, with relevant professional expertise.</p>
     </section>
     <WaitlistForm />
     <ul className={styles.categories} aria-label="Beauty and wellness categories">
       {categories.map(label => <li key={label}><Image src={`/launch/icons/${label.toLowerCase()}.svg`} alt="" width={34} height={36} /><span>{label}</span></li>)}
     </ul>
-    <footer className={styles.footer}>
+    <footer id="launch-contact" tabIndex={-1} className={styles.footer}>
       <div><p>General inquiries</p><a href="mailto:hello@titezme.com">hello@titezme.com</a></div>
       <span className={styles.ornament} aria-hidden="true"><i />Z<i /></span>
       <div><p>Professionals &amp; businesses</p><a href="mailto:operations@titezme.com">operations@titezme.com</a></div>

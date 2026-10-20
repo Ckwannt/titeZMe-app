@@ -4,6 +4,7 @@
  */
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { isIsolatedPreview } from './preview-boundary';
 
 function getAdminApp(): App {
   const existingApps = getApps();
@@ -25,5 +26,8 @@ function getAdminApp(): App {
   return initializeApp();
 }
 
-const adminApp = getAdminApp();
-export const adminDb = getFirestore(adminApp, 'titezme-prod');
+export const adminDb = isIsolatedPreview()
+  ? new Proxy({} as ReturnType<typeof getFirestore>, {
+    get() { throw new Error('Firebase Admin is unavailable in isolated previews'); },
+  })
+  : getFirestore(getAdminApp(), 'titezme-prod');

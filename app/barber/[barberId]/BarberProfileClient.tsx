@@ -172,7 +172,9 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
     isToday: boolean;
     hasSlots: boolean;
   }>>([]);
-  const reviewUserCache = useRef<Record<string, ReviewDoc['user']>>({});
+  const reviewUserCache = useRef<Record<string, ReviewDoc['user']>>(Object.fromEntries(
+    (initialData?.reviews ?? []).filter(review => review.clientId && review.user).map(review => [review.clientId!, review.user])
+  ));
 
   // ─── queries ─────────────────────────────────────────────────────────────────
 
@@ -233,7 +235,7 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
 
   // ─── real-time reviews ────────────────────────────────────────────────────────
   // New reviews appear on the public profile the moment a client submits them.
-  // User names are fetched once per unique clientId and cached in reviewUserCache.
+  // Public display names come from the server projection; never read private users here.
 
   useEffect(() => {
     const q = query(
@@ -242,21 +244,8 @@ export default function BarberProfileClient({ barberId, initialData }: BarberPro
       orderBy('createdAt', 'desc'),
       limit(20),
     );
-    const unsub = onSnapshot(q, async (snap) => {
+    const unsub = onSnapshot(q, (snap) => {
       const raw: ReviewDoc[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as ReviewDoc));
-      // Fetch names only for clientIds not yet in our local cache
-      const missing = raw.filter(r => r.clientId && !reviewUserCache.current[r.clientId]);
-      if (missing.length > 0) {
-        await Promise.all(
-          missing.map(async r => {
-            try {
-              const uSnap = await getDoc(doc(db, 'users', r.clientId!));
-              if (uSnap.exists())
-                reviewUserCache.current[r.clientId!] = uSnap.data() as ReviewDoc['user'];
-            } catch { /* non-critical */ }
-          })
-        );
-      }
       setReviews(
         raw.map(r => ({ ...r, user: r.clientId ? reviewUserCache.current[r.clientId] : undefined }))
       );

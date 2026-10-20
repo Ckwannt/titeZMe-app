@@ -1,0 +1,6 @@
+// Offline derivative of the existing GeoNames catalogue; no network or visitor data.
+const fs=require('fs'),path=require('path'),zlib=require('zlib'),crypto=require('crypto');
+const destination=process.argv[2]||path.resolve('data/places/normalized');fs.mkdirSync(destination,{recursive:true});const fold=s=>s.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const manifest={format:1,description:'Original IDs/names/regions/populations; pre-normalized search-only name and aliases',countries:{},total:0};
+for(const file of fs.readdirSync('data/places').filter(f=>f.endsWith('.json.gz'))){const input=fs.readFileSync('data/places/'+file),rows=JSON.parse(zlib.gunzipSync(input));for(const row of rows){row[3]=fold(row[3]);row[5]=fold(row[1]);}const output=zlib.gzipSync(JSON.stringify(rows),{level:9});fs.writeFileSync(path.join(destination,file),output);manifest.countries[file.slice(0,2)]={count:rows.length,sourceSha256:crypto.createHash('sha256').update(input).digest('hex')};manifest.total+=rows.length;}
+fs.writeFileSync(path.join(destination,'manifest.json'),JSON.stringify(manifest,null,2));console.log(JSON.stringify({countries:Object.keys(manifest.countries).length,places:manifest.total,output:destination}));

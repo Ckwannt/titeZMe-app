@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { isIsolatedPreview, isPreviewPathAllowed } from './lib/preview-boundary'
 
 const rateLimitMap = new Map<string, {
   count: number
@@ -50,6 +51,9 @@ function tooManyRequests() {
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
+  if (isIsolatedPreview() && !isPreviewPathAllowed(path, request.nextUrl.searchParams.get('url'))) {
+    return new NextResponse('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } })
+  }
   const ip = getIP(request)
 
   // Skip static files completely

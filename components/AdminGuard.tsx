@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import type { AdminPermissions } from '@/lib/types';
+import { hasAdminAuthority, hasSuperAdminAuthority } from '@/lib/admin-authority';
 
 export interface AdminData {
   isAdmin: boolean;
@@ -72,7 +73,8 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
         }
 
         const data = snap.data();
-        const isAdminUser = data?.isAdmin === true || data?.role === 'admin';
+        const token = await auth.currentUser?.getIdTokenResult(true);
+        const isAdminUser = hasAdminAuthority(token?.claims);
 
         if (!isAdminUser) {
           router.replace('/');
@@ -82,7 +84,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
         setAdminData({
           isAdmin: true,
-          isSuperAdmin: data?.isSuperAdmin === true,
+          isSuperAdmin: hasSuperAdminAuthority(token?.claims),
           firstName: data?.firstName || 'Admin',
           lastName: data?.lastName || '',
           email: data?.email || auth.currentUser?.email || '',

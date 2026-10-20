@@ -17,20 +17,14 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid != null;
     }
 
-    // Admin check — accepts both isAdmin:true flag and role:'admin'
+    // Privileged authority is issued by trusted Admin SDK custom claims only.
     function isAdmin() {
-      return request.auth != null
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true
-          ||
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin'
-        );
+      return isSignedIn() && request.auth.token.get('admin', false) == true;
     }
 
     function isSuperAdmin() {
       return isAdmin()
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isSuperAdmin', false) == true;
+        && request.auth.token.get('superAdmin', false) == true;
     }
 
     function isValidId(id) {
@@ -181,7 +175,7 @@ service cloud.firestore {
 
     // Users
     match /users/{userId} {
-      allow get: if request.auth != null;
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow list: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
 
       allow create: if isSignedIn()
@@ -192,6 +186,7 @@ service cloud.firestore {
             && isValidUser(incoming())
             && incoming().uid == request.auth.uid
             && incoming().role in ['client', 'professional']
+            && !incoming().keys().hasAny(['isAdmin', 'isSuperAdmin', 'permissions'])
           )
         );
 
@@ -201,6 +196,7 @@ service cloud.firestore {
             request.auth.uid == userId
             && isValidUser(incoming())
             && incoming().uid == existing().uid
+            && !incoming().diff(existing()).affectedKeys().hasAny(['isAdmin', 'isSuperAdmin', 'permissions'])
             && (
               incoming().role == existing().role
               || incoming().role == 'professional'
@@ -268,8 +264,14 @@ service cloud.firestore {
           isAdmin()
           || (
             request.auth.uid == incoming().userId
+            && profileId == request.auth.uid
             && isValidProfessionalProfile(incoming())
             && request.auth.token.email_verified == true
+            && incoming().approvalStatus == 'pending' && incoming().isLive == false
+            && incoming().get('rating', 0) == 0 && incoming().get('reviewCount', 0) == 0
+            && incoming().get('totalReviews', 0) == 0 && incoming().get('totalCuts', 0) == 0
+            && incoming().get('businessId', null) == null
+            && incoming().get('canManage', false) == false && incoming().get('ownsBusiness', false) == false
           )
         );
 
@@ -284,7 +286,8 @@ service cloud.firestore {
             && incoming().userId == existing().userId
             && incoming().approvalStatus == existing().approvalStatus
             && incoming().isLive == existing().isLive
-            && !incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalCuts'])
+            && !incoming().diff(existing()).affectedKeys().hasAny(['rating', 'reviewCount', 'totalReviews', 'totalCuts', 'canManage', 'ownsBusiness'])
+            && (incoming().get('businessId', null) == existing().get('businessId', null) || incoming().get('businessId', null) == null)
             && (
               existing().get('experienceLocked', false) == false
               || (
@@ -504,6 +507,8 @@ service cloud.firestore {
             (
               request.auth.uid == existing().barberId
               && (incoming().status in ['confirmed', 'completed', 'cancelled', 'cancelled_by_barber'])
+              && ((existing().status == 'pending' && incoming().status in ['confirmed', 'cancelled', 'cancelled_by_barber'])
+                || (existing().status == 'confirmed' && incoming().status in ['completed', 'cancelled', 'cancelled_by_barber']))
               && incoming().diff(existing()).affectedKeys()
                  .hasOnly(['status', 'updatedAt', 'completedAt'])
             )
@@ -586,6 +591,9 @@ service cloud.firestore {
             && exists(/databases/$(database)/documents/bookings/$(incoming().bookingId))
             && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.clientId == request.auth.uid
             && get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.status == 'completed'
+            && reviewId == incoming().bookingId + '_' + request.auth.uid
+            && ((incoming().providerType == 'barber' && incoming().providerId == get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.barberId)
+              || (incoming().providerType == 'shop' && incoming().providerId == get(/databases/$(database)/documents/bookings/$(incoming().bookingId)).data.shopId))
             && !exists(/databases/$(database)/documents/reviews/$(incoming().bookingId + '_' + request.auth.uid))
           )
         );

@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { PasswordInput } from '@/components/PasswordInput';
+import { hasAdminAuthority } from '@/lib/admin-authority';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -38,23 +39,20 @@ export default function AdminLoginPage() {
         console.error('[AdminLogin] ERROR: users/' + uid + ' document does not exist in Firestore');
         await signOut(auth);
         setError(
-          'User document not found. Make sure a Firestore document exists at users/' +
-          uid + ' with isAdmin:true'
+          'Administrator access is unavailable. Contact the account administrator.'
         );
         setLoading(false);
         return;
       }
 
-      const userData = snap.data();
-      const isAdminUser = userData?.isAdmin === true || userData?.role === 'admin';
+      const verifiedToken = await credential.user.getIdTokenResult(true);
+      const isAdminUser = hasAdminAuthority(verifiedToken.claims);
 
       if (!isAdminUser) {
         console.warn('[AdminLogin] Step 6: access denied — not an admin account');
         await signOut(auth);
         setError(
-          'Access denied. isAdmin: ' + userData?.isAdmin +
-          ', role: ' + userData?.role +
-          '. This is not an admin account.'
+          'Access denied. Trusted administrative authorization is required.'
         );
         setLoading(false);
         return;

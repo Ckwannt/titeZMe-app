@@ -2,8 +2,7 @@
 
 import { useRef, useState } from 'react';
 import styles from './launch.module.css';
-
-export const navigationLabels = ['Watch the film', 'Meet titiZa', 'For professionals', 'Our vision'];
+import { navigationItems } from './navigation';
 
 export default function MobileNavigation() {
   const [open, setOpen] = useState(false);
@@ -15,7 +14,7 @@ export default function MobileNavigation() {
       <span /><span /><span />
     </button>
     {open && <nav id="launch-navigation" className={styles.mobileMenu} aria-label="Main navigation">
-      {navigationLabels.map(label => <span key={label} aria-disabled="true">{label}<small>Coming soon</small></span>)}
+      {navigationItems.map(item => <a key={item.href} href={item.href} onClick={() => setOpen(false)}>{item.label}</a>)}
     </nav>}
   </div>;
 }

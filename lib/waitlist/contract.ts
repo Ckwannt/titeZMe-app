@@ -3,7 +3,7 @@ export const WAITLIST_ENDPOINT = '/api/waitlist';
 export const MAX_WAITLIST_BODY_BYTES = 2048;
 export const CONSENT_VERSION = 'city-notification-v1';
 export const PRIVACY_VERSION = 'draft-2026-10-18';
-export const waitlistFields = ['country', 'city', 'email', 'consent'] as const;
+export const waitlistFields = ['country', 'city', 'placeRegion', 'email', 'consent'] as const;
 export type WaitlistField = typeof waitlistFields[number];
 
 export interface WaitlistRequest {
@@ -31,6 +31,7 @@ export type WaitlistValidation = { valid: true; value: WaitlistRequest } | { val
 export type WaitlistTransport = (request: WaitlistRequest) => Promise<WaitlistResponse>;
 
 export function waitlistErrorMessage(field: WaitlistField, code: WaitlistFieldError): string {
+  if (field === 'placeRegion') return code === 'too_long' ? 'Use no more than 120 characters for the region.' : code === 'invalid' ? 'Enter a region without control characters.' : 'Enter the state, province or region for this missing place.';
   if (code === 'version_changed') return 'The notice has changed. Please review it again.';
   if (field === 'consent') return 'Please agree to the city-availability notification.';
   if (code === 'place_required') return 'Choose a place from the results or use the missing-place option.';

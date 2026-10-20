@@ -1,4 +1,4 @@
-import { searchPlaces } from '../../../lib/waitlist/places';
+import { searchPlaces, PlaceSearchBusyError } from '../../../lib/waitlist/places';
 
 export const runtime = 'nodejs';
 export async function POST(request: Request) {
@@ -24,6 +24,6 @@ export async function POST(request: Request) {
     const { country, query } = input as { country: unknown; query: unknown };
     if (typeof country !== 'string' || typeof query !== 'string') return Response.json({ places: [] }, { status: 400, headers });
     return Response.json({ places: await searchPlaces(country, query) }, { headers });
-  } catch { return Response.json({ places: [] }, { status: 400, headers }); }
+  } catch (error) { return Response.json({ places: [] }, { status: error instanceof PlaceSearchBusyError ? 429 : 400, headers: error instanceof PlaceSearchBusyError ? { ...headers, 'Retry-After': '1' } : headers }); }
   finally { clearTimeout(timer); reader.releaseLock(); }
 }

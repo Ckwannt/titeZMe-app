@@ -7,8 +7,8 @@
 //   * Cut counts are preserved on the per-booking record (barberId is left
 //     untouched when a shop is deleted, shopId is left untouched when a
 //     barber is deleted), so neither side loses historical numbers.
-//   * Firebase Auth is deleted LAST so a `requires-recent-login` error
-//     surfaces before any irreversible Firestore writes happen on retry.
+//   * Recent authentication is checked BEFORE any Firestore work.
+//     Full crash-safe server orchestration still requires separate release verification.
 //
 // All Firestore writes go through BatchManager which auto-flushes at 400
 // operations (Firestore's hard cap is 500 — we leave headroom).
@@ -34,6 +34,17 @@ import { db, auth } from './firebase';
 
 // Firestore caps batches at 500 ops. We chunk at 400 to leave headroom.
 const MAX_OPS_PER_BATCH = 400;
+
+async function requireRecentDeletionAuth(uid: string): Promise<void> {
+  const user = auth.currentUser;
+  if (!user || user.uid !== uid) throw Object.assign(new Error('Unauthorized'), { code: 'auth/user-mismatch' });
+  const token = await user.getIdTokenResult(true);
+  const authenticatedAt = Number(token.claims.auth_time);
+  const age = Date.now() / 1000 - authenticatedAt;
+  if (!Number.isFinite(age) || age < -60 || age > 300) {
+    throw Object.assign(new Error('Recent authentication required'), { code: 'auth/requires-recent-login' });
+  }
+}
 
 // Sentinel values used to anonymize records of deleted accounts.
 const DELETED_USER_ID = 'deleted_user';
@@ -118,6 +129,7 @@ class BatchManager {
  *   6. Delete the Firebase Auth user (LAST — irreversible).
  */
 export async function deleteClientAccount(uid: string): Promise<void> {
+  await requireRecentDeletionAuth(uid);
   const mgr = new BatchManager();
 
   // 1. Cancel future bookings + notify barbers
@@ -212,6 +224,7 @@ export async function deleteClientAccount(uid: string): Promise<void> {
  *  12. Delete Firebase Auth (LAST).
  */
 export async function deleteBarberAccount(uid: string): Promise<void> {
+  await requireRecentDeletionAuth(uid);
   const mgr = new BatchManager();
 
   // 1. Read professional profile to check business membership
@@ -356,6 +369,7 @@ export async function deleteBarberAccount(uid: string): Promise<void> {
  *      auto-skipped because the business doc no longer exists.
  */
 export async function deleteShopOwnerAccount(uid: string, shopId: string): Promise<void> {
+  await requireRecentDeletionAuth(uid);
   const mgr = new BatchManager();
 
   // 1. Query team members by businessId. The barbers[] array no longer exists;
